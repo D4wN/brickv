@@ -33,6 +33,7 @@ from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
 from brickv.flashing import FlashingWindow
 from brickv.advanced import AdvancedWindow
+from brickv.logger_setup import LoggerSetupWindow 
 from brickv.async_call import async_start_thread, async_next_session
 from brickv.bindings.brick_master import BrickMaster
 from brickv.bindings.brick_red import BrickRED
@@ -128,6 +129,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.flashing_window = None
         self.advanced_window = None
+        self.logger_setup_window = None # MARV: logger_setup_window
         self.delayed_refresh_updates_timer = QTimer()
         self.delayed_refresh_updates_timer.timeout.connect(self.delayed_refresh_updates)
         self.delayed_refresh_updates_timer.setInterval(500)
@@ -139,6 +141,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tab_widget.tabBar().installEventFilter(self)
 
         self.button_connect.pressed.connect(self.connect_pressed)
+        self.button_logger_setup.pressed.connect(self.logger_setup_pressed) # TODO: marvs entrie
         self.button_flashing.pressed.connect(self.flashing_pressed)
         self.button_advanced.pressed.connect(self.advanced_pressed)
         self.plugin_manager = PluginManager()
@@ -385,6 +388,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.ipcon.set_auto_reconnect(True)
 
         return True
+
+    # FIXME: meine funktionen
+    # TODO: KEKSE
+    def logger_setup_pressed(self): 
+        print "HELLO LOGGER_SETUP"
+        
+        if self.logger_setup_window is None:
+            self.logger_setup_window = LoggerSetupWindow(self)
+            
+        self.logger_setup_window.show()
 
     def flashing_pressed(self):
         first = False

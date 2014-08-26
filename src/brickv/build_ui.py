@@ -6,6 +6,7 @@ import os
 os.system("pyuic4 -o ui_mainwindow.py ui/brickv.ui")
 os.system("pyuic4 -o ui_flashing.py ui/flashing.ui")
 os.system("pyuic4 -o ui_advanced.py ui/advanced.ui")
+os.system("pyuic4 -o ui_logger_setup.py ui/logger_setup.ui")
 
 # Servo Brick
 os.system("pyuic4 -o plugin_system/plugins/servo/ui_servo.py plugin_system/plugins/servo/ui/servo.ui")
