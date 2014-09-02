@@ -1,6 +1,35 @@
+# -*- coding: utf-8 -*-  
+"""
+brickv (Brick Viewer) 
+Copyright (C) 2012, 2014 Roland Dudko  <roland.dudko@gmail.com>
+Copyright (C) 2012, 2014 Marvin Lutz <>
+
+data_logger_util.py: Util classes for the data logger
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License 
+as published by the Free Software Foundation; either version 2 
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
+"""
+
 """"CSV_Data"""
 import datetime #CSV_Data
 
+'''
+/*---------------------------------------------------------------------------
+                                CSVData
+ ---------------------------------------------------------------------------*/
+ '''
 class CSVData(object):
     '''
     This class is used as a temporary save spot for all csv relevant data.
@@ -41,6 +70,11 @@ import os #CSV_Writer
 import sys #CSV_Writer
 import csv #CSV_Writer
 
+'''
+/*---------------------------------------------------------------------------
+                                CSVWriter
+ ---------------------------------------------------------------------------*/
+ '''
 class CSVWriter(object):
     '''
     This class is used for writing a csv file.
@@ -63,6 +97,7 @@ class CSVWriter(object):
         4. Write Data Rows in File
         5. Close File
         """
+    
     
     def __open_file_A(self):
         """Opens a file in append mode."""
@@ -100,8 +135,7 @@ class CSVWriter(object):
             return
     
         self.__csv_file.writerow(["UID"] + ["NAME"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
-    
-    
+        
     def write_data_row(self, csv_data):
         """
         Write a row into the csv file.
@@ -167,11 +201,22 @@ class CSVWriter(object):
 """"TODO: LoggerTimer"""
 from threading import Timer
 
+'''
+/*---------------------------------------------------------------------------
+                                LoggerTimer
+ ---------------------------------------------------------------------------*/
+ '''
 class LoggerTimer(object):
-    
-    Timers = [] # global array for all running timers
+    '''
+    TODO: comment goes here
+    '''
+	Timers = [] # global array for all running timers
     
     def __init__(self, interval, func):
+        ''' 
+        interval -- the repeat interval in ms
+        func -- the function which will be called
+        '''
         interval /= 1000 #for ms
         if interval < 0:
             interval = 0
@@ -179,24 +224,26 @@ class LoggerTimer(object):
         self.__interval = interval
         self.__func = func      
         self.__t = Timer(self.__interval, self.__loop)
+   
     
     def __loop(self):
-        #print "FUNC"
+        '''Runs the <self.__func> function every <self.__interval> seconds'''
         self.__func()
         self.cancel()
         self.__t = Timer(self.__interval, self.__loop)
         self.start()
-        
-    
+           
     def start(self):
+        '''Starts the timer if <self.__interval> is not 0 otherwise the 
+           timer will be canceled 
+        '''
         if self.__interval == 0:
             self.cancel()
             return     
-        #print "START -> " + str(self.__interval)   
+ 
         self.__t.start()
     
     def cancel(self):
-        #print "CANCEL"
         self.__t.cancel()
         
     def join(self):
@@ -205,10 +252,15 @@ class LoggerTimer(object):
         self.__t.join();
 
 """"TODO: INI-PARSER"""
-import ConfigParser,codecs, os
-from ConfigParser import SafeConfigParser
+import codecs # DataLoggerConfig to read the file in correct encoding
+from ConfigParser import SafeConfigParser # DataLoggerConfig parser class
 
-class Data_Logger_Config(object):
+'''
+/*---------------------------------------------------------------------------
+                                DataLoggerConfig
+ ---------------------------------------------------------------------------*/
+ '''
+class DataLoggerConfig(object):
     '''
     This class provides the read-in functionality for the Data Logger configuration file
     '''
@@ -229,6 +281,8 @@ class Data_Logger_Config(object):
     def __get_section_as_hashmap(self,section_name ,parser ):
         '''
         saves variables out of an section to a hashmap.
+        key -- variable name
+        value -- variable value
         '''
         hashMap = {}
         for section_key in parser.options(section_name):
@@ -238,7 +292,7 @@ class Data_Logger_Config(object):
     def read_config_file(self):
         '''
         reads the entries out of the configuration file and 
-        saves them into a <Bricklet_Info> structure            
+        saves them into a <BrickletInfo> structure            
         '''
         parser = SafeConfigParser()
         # Open the file with the correct encoding
@@ -259,7 +313,7 @@ class Data_Logger_Config(object):
                 bricklet_name = parser.get(section_name, self.__NAME_KEY)
                 bricklet_uid =  parser.get(section_name, self.__UID_KEY)
                 
-                tmp_bricklet = Bricklet_Info(bricklet_name,bricklet_uid)
+                tmp_bricklet = BrickletInfo(bricklet_name,bricklet_uid)
                 for section_key in parser.options(section_name):
                     if (section_key != self.__NAME_KEY and section_key != self.__UID_KEY):
                         tmp_bricklet.addKeyValuePair(section_key, parser.get(section_name, section_key))
@@ -299,8 +353,12 @@ class Data_Logger_Config(object):
         
         return self.__bricklets
 
-""""Bricklet_Info"""
-class Bricklet_Info(object):
+""""
+/*---------------------------------------------------------------------------
+                                BrickletInfo
+ ---------------------------------------------------------------------------*/
+"""
+class BrickletInfo(object):
     '''
     This class holds the information about an entry out of the configuration file
     '''
@@ -309,6 +367,7 @@ class Bricklet_Info(object):
         self.__name = name
         self.__uid = uid
         self.__variables = { }
+   
         
     def addKeyValuePair(self, key, value):
         '''
@@ -334,7 +393,11 @@ class Bricklet_Info(object):
         '''
         return self.__uid
 
-"""WriterThread"""
+""""
+/*---------------------------------------------------------------------------
+                                WriterThread
+ ---------------------------------------------------------------------------*/
+"""
 import Queue, threading, time
 
 Q = Queue.Queue()       #gloabl queue for write jobs
@@ -348,6 +411,7 @@ CB_COUNT = 0
 THREAD_SLEEP = 0
 if CB_SUM > 0 and CB_COUNT > 0:
     THREAD_SLEEP = CB_SUM/1000/CB_COUNT/CB_COUNT     #TODO: magical thread sleep 
+
 
 def writer_thread():
     csv_writer = CSVWriter(DEFAULT_FILE_PATH)
