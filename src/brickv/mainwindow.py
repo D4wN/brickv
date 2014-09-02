@@ -23,11 +23,11 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import pyqtSignal, QVariant, Qt, QTimer, QEvent
-from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, QIcon, \
+from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, \
                         QPushButton, QWidget, QHBoxLayout, QVBoxLayout, \
                         QLabel, QFrame, QSpacerItem, QSizePolicy, \
                         QStandardItemModel, QStandardItem, QToolButton, \
-                        QLineEdit, QCursor
+                        QLineEdit, QCursor, QIcon
 from brickv.ui_mainwindow import Ui_MainWindow
 from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
@@ -40,41 +40,13 @@ from brickv.bindings.brick_red import BrickRED
 from brickv.program_path import get_program_path
 from brickv import config
 from brickv import infos
+from brickv.tab_window import TabWindow
 
 import os
 import signal
 import sys
 import time
 
-class PluginWindow(QWidget):
-    def __init__(self, tab_widget, ipcon, name, icon, parent=None):
-        super(PluginWindow, self).__init__(parent)
-        self.tab_widget = tab_widget
-        self.ipcon = ipcon
-        self.name = name
-
-        self.setWindowIcon(icon)
-
-    def closeEvent(self, event):
-        self.tab()
-        event.accept()
-
-    def untab(self):
-        index = self.tab_widget.indexOf(self)
-        if index > -1:
-            self.tab_widget.removeTab(index)
-            self.setWindowFlags(Qt.Window)
-            self.setWindowTitle(self.name)
-            self.adjustSize()
-            self.show()
-
-    def tab(self):
-        if self.windowFlags() & Qt.Window:
-            self.setWindowFlags(Qt.Widget)
-            index = self.tab_widget.addTab(self, self.name)
-
-            if self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_PENDING:
-                self.tab_widget.setTabEnabled(index, False)
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     qtcb_enumerate = pyqtSignal(str, str, 'char', type((0,)), type((0,)), int, int)
@@ -302,7 +274,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def remove_tab(self, tab_id):
         exists = tab_id is not -1
         if exists:
-            #print "Removing tab %d" % tab_id
             self.tab_widget.removeTab(tab_id)
         return exists
 
@@ -443,8 +414,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_plugin(uid_text)
 
     def create_plugin_container(self, info, connected_uid, position):
-        container = PluginWindow(self.tab_widget, self.ipcon, info.name, self.icon)
+        container = TabWindow(self.tab_widget, info.name, self.icon, self.untab)
         container._info = info
+        container.set_callback_on_tab(lambda index:
+            self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_PENDING and \
+                self.tab_widget.setTabEnabled(index, False))
+
         layout = QVBoxLayout(container)
         info_bar = QHBoxLayout()
 
@@ -509,7 +484,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return container
 
-    def tab_state_change(self, event):
+    def tab_move(self, event):
         # visualize rearranging of tabs (if allowed by tab_widget)
         if self.tab_widget.isMovable():
             if event.type() == QEvent.MouseButtonPress and event.button() & Qt.LeftButton:
@@ -518,22 +493,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             elif event.type() == QEvent.MouseButtonRelease and event.button() & Qt.LeftButton:
                 QApplication.restoreOverrideCursor()
 
-        # detach tab on double click
-        if event.type() == QEvent.MouseButtonDblClick:
-            index = self.tab_widget.currentIndex()
-            tab = self.tab_widget.widget(index)
-
-            if self.tab_widget.tabText(index) != "Setup":
-                tab.untab()
-                tab._info.plugin.start_plugin()
-
-                self.tab_widget.setCurrentIndex(0)
-
         return False
+
+    def untab(self, tab_index):
+        tab = self.tab_widget.widget(tab_index)
+        tab.untab()
+        tab._info.plugin.start_plugin()
+        self.tab_widget.setCurrentIndex(0)
 
     def eventFilter(self, source, event):
         if source is self.tab_widget.tabBar():
-            return self.tab_state_change(event)
+            return self.tab_move(event)
 
         return False
 
@@ -625,7 +595,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 info.plugin_container = c
                 self.plugins[plugin.uid] = c
                 c.setWindowFlags(Qt.Widget)
-                self.tab_widget.addTab(c, info.name)
+                c.tab()
         elif enumeration_type == IPConnection.ENUMERATION_TYPE_DISCONNECTED:
             for info in infos.infos.values():
                 if info.type in ('brick', 'bricklet') and info.uid == uid:
