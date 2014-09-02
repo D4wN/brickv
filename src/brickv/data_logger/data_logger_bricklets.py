@@ -1,3 +1,12 @@
+from data_logger_utils import LoggerTimer   #Timer for getVariable
+#from data_logger_utils import Timers        #all global timers
+from data_logger_utils import Q             #gloabl thread/job queue -> brickelts callbacks/timer
+from data_logger_utils import CSVData       #bricklets
+
+
+###GLOABL###
+IPCON = None
+
 ###Sections###
 GENERAL_SECTION = "GENERAL"
 GENERAL_LOG_TO_FILE = "log_to_file"
@@ -30,35 +39,35 @@ class Barometer_Bricklet():
     
     def __init__(self, uid):
         self.uid = uid
-        self.__device = Barometer(self.uid, ipcon)
+        
+        print str(uid) + " - " + str(IPCON)
+        
+        self.__device = Barometer(self.uid, IPCON)
 
     def start_timer(self, data):
         
         t = LoggerTimer(1000, self.__timer_air_pressure)
-        timers.append(t)
+        LoggerTimer.Timers.append(t)
         t.start()
         
         t = LoggerTimer(1000, self.__timer_altitude)
-        timers.append(t)
+        LoggerTimer.Timers.append(t)
         t.start()
-        
-#         self.__timer_air_pressure()
-#         t = Timer(5, self.__timer_air_pressure)        
-#         t.start()
+
         #TODO: check with hasKey
 
 
     def __timer_air_pressure(self):
         value = self.__device.get_air_pressure()
         csv = CSVData(self.uid, BAROMETER, BAROMETER_AIR_PRESSURE, value)
-        q.put(csv)
-        print q.get().to_string()
+        Q.put(csv)
+        #print Q.get().to_string()
         
     def __timer_altitude(self):
         value = self.__device.get_altitude()
         csv = CSVData(self.uid, BAROMETER, BAROMETER_ALTITUDE, value)
-        q.put(csv)   
-        print q.get().to_string() 
+        Q.put(csv)   
+        #print Q.get().to_string() 
 
 #Breakout
 #Color

@@ -168,6 +168,9 @@ class CSVWriter(object):
 from threading import Timer
 
 class LoggerTimer(object):
+    
+    Timers = [] # global array for all running timers
+    
     def __init__(self, interval, func):
         interval /= 1000 #for ms
         if interval < 0:
@@ -332,6 +335,20 @@ class Bricklet_Info(object):
         return self.__uid
 
 """WriterThread"""
+import Queue, threading, time
+
+Q = Queue.Queue()       #gloabl queue for write jobs
+Threads = []            #gloabl thread array for all running threads/jobs
+
+THREAD_EXIT_FLAG = 0    #flag for stopping the thread   
+#CB_SUM / CB_COUNT = CB_MED per sec
+#CB_MED / CB_COUNT = Thread time for each write
+CB_SUM = 0
+CB_COUNT = 0
+THREAD_SLEEP = 0
+if CB_SUM > 0 and CB_COUNT > 0:
+    THREAD_SLEEP = CB_SUM/1000/CB_COUNT/CB_COUNT     #TODO: magical thread sleep 
+
 def writer_thread():
     csv_writer = CSVWriter(DEFAULT_FILE_PATH)
     
