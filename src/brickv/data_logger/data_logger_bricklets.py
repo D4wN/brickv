@@ -1,11 +1,8 @@
 from data_logger_utils import LoggerTimer   #Timer for getVariable
-#from data_logger_utils import Timers        #all global timers
 from data_logger_utils import Q             #gloabl thread/job queue -> brickelts callbacks/timer
 from data_logger_utils import CSVData       #bricklets
 
-
-###GLOABL###
-IPCON = None
+import data_logger_utils as dlu             #for gloabl variables
 
 ###Sections###
 GENERAL_SECTION = "GENERAL"
@@ -38,36 +35,37 @@ BAROMETER_ALTITUDE = "Altitude"
 class Barometer_Bricklet():
     
     def __init__(self, uid):
-        self.uid = uid
-        
-        print str(uid) + " - " + str(IPCON)
-        
-        self.__device = Barometer(self.uid, IPCON)
+        self.uid = uid        
+        self.__device = Barometer(self.uid, dlu.IPCON)
 
-    def start_timer(self, data):
+
+    def start_timer(self, data):        
+        value1 = data[BAROMETER_AIR_PRESSURE]
+        value2 = data[BAROMETER_ALTITUDE]
         
-        t = LoggerTimer(1000, self.__timer_air_pressure)
+        if value1 != 0:
+            dlu.CB_COUNT += 1
+            dlu.CB_SUM += value1            
+        if value2 != 0:
+            dlu.CB_COUNT += 1
+            dlu.CB_SUM += value2        
+        
+        t = LoggerTimer(value1, self.__timer_air_pressure)
+        LoggerTimer.Timers.append(t)         
+        t = LoggerTimer(value2, self.__timer_altitude)
         LoggerTimer.Timers.append(t)
-        t.start()
-        
-        t = LoggerTimer(1000, self.__timer_altitude)
-        LoggerTimer.Timers.append(t)
-        t.start()
-
-        #TODO: check with hasKey
-
 
     def __timer_air_pressure(self):
         value = self.__device.get_air_pressure()
         csv = CSVData(self.uid, BAROMETER, BAROMETER_AIR_PRESSURE, value)
         Q.put(csv)
-        #print Q.get().to_string()
+        print "BAR_AP : " + str(value)
         
     def __timer_altitude(self):
         value = self.__device.get_altitude()
         csv = CSVData(self.uid, BAROMETER, BAROMETER_ALTITUDE, value)
         Q.put(csv)   
-        #print Q.get().to_string() 
+        print "BAR_AL : " + str(value)
 
 #Breakout
 #Color

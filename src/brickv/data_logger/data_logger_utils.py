@@ -2,7 +2,7 @@
 """
 brickv (Brick Viewer) 
 Copyright (C) 2012, 2014 Roland Dudko  <roland.dudko@gmail.com>
-Copyright (C) 2012, 2014 Marvin Lutz <>
+Copyright (C) 2012, 2014 Marvin Lutz <marvin.lutz.mail@gmail.com>
 
 data_logger_util.py: Util classes for the data logger
 
@@ -21,6 +21,13 @@ License along with this program; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
+
+"""GLOBAL-VARIABLES"""
+#TODO: DEFAULT VALUES!
+DEFAULT_FILE_PATH = "logged_data.csv"
+IPCON = None
+HOST = "localhost"
+PORT = 4223
 
 """"CSV_Data"""
 import datetime #CSV_Data
@@ -210,7 +217,8 @@ class LoggerTimer(object):
     '''
     TODO: comment goes here
     '''
-	Timers = [] # global array for all running timers
+    
+    Timers = [] # global array for all running timers
     
     def __init__(self, interval, func):
         ''' 
@@ -408,28 +416,30 @@ THREAD_EXIT_FLAG = 0    #flag for stopping the thread
 #CB_MED / CB_COUNT = Thread time for each write
 CB_SUM = 0
 CB_COUNT = 0
-THREAD_SLEEP = 0
-if CB_SUM > 0 and CB_COUNT > 0:
-    THREAD_SLEEP = CB_SUM/1000/CB_COUNT/CB_COUNT     #TODO: magical thread sleep 
+THREAD_SLEEP = -1               #in seconds!; fail state = -1
+
 
 
 def writer_thread():
+    print "THREAD-STARTED"
     csv_writer = CSVWriter(DEFAULT_FILE_PATH)
     
     while (True):
-        if not q.empty():
-            csv_data = q.get()
-            #print "WR--THREAD      : %s" % (str(data.raw_data))
+        if not Q.empty():
+            csv_data = Q.get()
+            print "WR--THREAD      : %s" % (str(csv_data.raw_data))
             if not csv_writer.write_data_row(csv_data):
                 print "csv_writer.write_data_row failed!"
         #TODO: sleep time?
-        time.sleep(THREAD_SLEEP)
+        if not THREAD_EXIT_FLAG:            #TODO: qucikfix for slow writing queue after end
+            time.sleep(THREAD_SLEEP)
         
-        if(EXIT_FLAG and q.empty()): 
+        if(THREAD_EXIT_FLAG and Q.empty()): 
             
-            exit = csv_writer.close_file()
-            if exit:
+            exit_flag = csv_writer.close_file()
+            if exit_flag:
                 print "csv_writer closed!"
             else:
                 print "csv_writer not closed! -> " + str(exit)
+            print "THREAD-FINISHED"
             break
