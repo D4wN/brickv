@@ -29,14 +29,13 @@ IPCON = None
 HOST = "localhost"
 PORT = 4223
 
-""""CSV_Data"""
-import datetime #CSV_Data
-
 '''
 /*---------------------------------------------------------------------------
                                 CSVData
  ---------------------------------------------------------------------------*/
  '''
+import datetime #CSV_Data
+
 class CSVData(object):
     '''
     This class is used as a temporary save spot for all csv relevant data.
@@ -44,12 +43,12 @@ class CSVData(object):
     
     def __init__(self, uid, name, var_name, raw_data):
         '''
-        uid      = uid of the bricklet
-        name     = name of the bricklet
-        var_name = variable name of the logged value
-        raw_data = the logged value
+        uid      -- uid of the bricklet
+        name     -- name of the bricklet
+        var_name -- variable name of the logged value
+        raw_data -- the logged value
         
-        The timestamp is added automaticaly.
+        The timestamp is added automatically.
         '''        
         self.uid = uid
         self.name = name;
@@ -71,17 +70,17 @@ class CSVData(object):
         Simple Debug function for easier display of the object.
         """
         return "UID =" + self.uid + "\nNAME=" + self.name + "\nVAR =" + self.var_name + "\nRAW =" + str(self.raw_data) + "\nTIME=" + str(self.timestamp) + "\n"
-    
-""""CSV_Writer"""
-import os #CSV_Writer
-import sys #CSV_Writer
-import csv #CSV_Writer
+
 
 '''
 /*---------------------------------------------------------------------------
                                 CSVWriter
  ---------------------------------------------------------------------------*/
  '''
+import os #CSV_Writer
+import sys #CSV_Writer
+import csv #CSV_Writer
+
 class CSVWriter(object):
     '''
     This class is used for writing a csv file.
@@ -205,18 +204,16 @@ class CSVWriter(object):
         except ValueError:
             return False
 
-""""TODO: LoggerTimer"""
-from threading import Timer
 
 '''
 /*---------------------------------------------------------------------------
                                 LoggerTimer
  ---------------------------------------------------------------------------*/
  '''
+from threading import Timer
+
 class LoggerTimer(object):
-    '''
-    TODO: comment goes here
-    '''
+    '''This class provides a timer with a repeat functionality based on a interval'''
     
     Timers = [] # global array for all running timers
     
@@ -259,15 +256,15 @@ class LoggerTimer(object):
             return
         self.__t.join();
 
-""""TODO: INI-PARSER"""
-import codecs # DataLoggerConfig to read the file in correct encoding
-from ConfigParser import SafeConfigParser # DataLoggerConfig parser class
 
 '''
 /*---------------------------------------------------------------------------
                                 DataLoggerConfig
  ---------------------------------------------------------------------------*/
  '''
+import codecs # DataLoggerConfig to read the file in correct encoding
+from ConfigParser import SafeConfigParser # DataLoggerConfig parser class
+
 class DataLoggerConfig(object):
     '''
     This class provides the read-in functionality for the Data Logger configuration file
@@ -288,7 +285,7 @@ class DataLoggerConfig(object):
         
     def __get_section_as_hashmap(self,section_name ,parser ):
         '''
-        saves variables out of an section to a hashmap.
+        saves variables out of an (configuration file) section to a hashmap.
         key -- variable name
         value -- variable value
         '''
@@ -361,6 +358,7 @@ class DataLoggerConfig(object):
         
         return self.__bricklets
 
+
 """"
 /*---------------------------------------------------------------------------
                                 BrickletInfo
@@ -401,6 +399,7 @@ class BrickletInfo(object):
         '''
         return self.__uid
 
+
 """"
 /*---------------------------------------------------------------------------
                                 WriterThread
@@ -417,7 +416,6 @@ THREAD_EXIT_FLAG = 0    #flag for stopping the thread
 CB_SUM = 0
 CB_COUNT = 0
 THREAD_SLEEP = -1               #in seconds!; fail state = -1
-
 
 
 def writer_thread():
