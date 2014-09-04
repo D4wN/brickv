@@ -55,17 +55,17 @@ class CSVData(object):
         self.var_name = var_name
         self.raw_data = raw_data
         self.timestamp = None
-        self.__set_timestamp()
+        self._set_timestamp()
         
         
-    def __set_timestamp(self):
+    def _set_timestamp(self):
         """
         Adds a timestamp in ISO 8601 standard, with ms
         ISO 8061 = YYYY-MM-DD hh:mm:ss.msmsms
         """
         self.timestamp = datetime.datetime.now()
     
-    def to_string(self):
+    def __str__(self):
         """
         Simple Debug function for easier display of the object.
         """
@@ -90,11 +90,11 @@ class CSVWriter(object):
         '''
         file_path = Path to the csv file
         ''' 
-        self.__file_path = file_path
-        self.__raw_file = None
-        self.__csv_file = None
+        self._file_path = file_path
+        self._raw_file = None
+        self._csv_file = None
         
-        self.__open_file_A()
+        self._open_file_A()
         """
         1. Open File
         2. Check if File is empty
@@ -105,22 +105,22 @@ class CSVWriter(object):
         """
     
     
-    def __open_file_A(self):
+    def _open_file_A(self):
         """Opens a file in append mode."""
 
         #newline problem solved + import sys
         if sys.version_info >= (3, 0, 0):
-            self.__raw_file = open(self.__file_path, 'a', newline='')
+            self._raw_file = open(self._file_path, 'a', newline='')
         else:
-            self.__raw_file = open(self.__file_path, 'ab')
+            self._raw_file = open(self._file_path, 'ab')
         
-        self.__csv_file = csv.writer(self.__raw_file, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        self._csv_file = csv.writer(self._raw_file, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
         
         #if the file is empty, create a csv header
-        if self.__file_is_empty():
-            self.__write_header()
+        if self._file_is_empty():
+            self._write_header()
 
-    def __file_is_empty(self):
+    def _file_is_empty(self):
         """
         Simple check if the file is empty.
         Return:
@@ -128,19 +128,19 @@ class CSVWriter(object):
             False - File is not empty
         """
         try:
-            if os.stat(self.__file_path).st_size > 0:
+            if os.stat(self._file_path).st_size > 0:
                 return False
             else:
                 return True
         except OSError:
             return True
 
-    def __write_header(self):
+    def _write_header(self):
         """Writes a csv header into the file"""
-        if(not self.__file_is_empty()):
+        if(not self._file_is_empty()):
             return
     
-        self.__csv_file.writerow(["UID"] + ["NAME"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
+        self._csv_file.writerow(["UID"] + ["NAME"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
         
     def write_data_row(self, csv_data):
         """
@@ -149,10 +149,10 @@ class CSVWriter(object):
             True  - Row was written into thee file
             False - Row was not written into the File
         """
-        if self.__raw_file == None or self.__csv_file == None:
+        if self._raw_file == None or self._csv_file == None:
             return False
         
-        self.__csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [csv_data.raw_data] + [csv_data.timestamp])        
+        self._csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [csv_data.raw_data] + [csv_data.timestamp])        
         return True
     
     def set_file_path(self, new_file_path):
@@ -162,15 +162,15 @@ class CSVWriter(object):
             True  - File path was updated and successfully opened
             False - File path could not be updated or opened
         """
-        if self.__file_path == new_file_path:
+        if self._file_path == new_file_path:
             return True
         
         if not self.close_file():
             #print "CSV_Writer.set_file_path(" + new_file_path + ") failed!"
             return False
         
-        self.__file_path = new_file_path
-        self.__open_file_A()
+        self._file_path = new_file_path
+        self._open_file_A()
         return True
                           
     def reopen_file(self):
@@ -180,10 +180,10 @@ class CSVWriter(object):
             True  - File could be reopened
             False - File could not be reopened
         """
-        if self.__raw_file != None and self.__csv_file != None:
+        if self._raw_file != None and self._csv_file != None:
             return False
         
-        self.__open_file_A()        
+        self._open_file_A()        
         return True
     
     def close_file(self):
@@ -193,12 +193,12 @@ class CSVWriter(object):
             True  - File was close
             False - File could not be closed
         """
-        if self.__raw_file == None or self.__csv_file == None:
+        if self._raw_file == None or self._csv_file == None:
             return False
         try:
-            self.__raw_file.close()
-            self.__csv_file = None
-            self.__raw_file = None
+            self._raw_file.close()
+            self._csv_file = None
+            self._raw_file = None
             return True
         
         except ValueError:
@@ -226,35 +226,35 @@ class LoggerTimer(object):
         if interval < 0:
             interval = 0
         
-        self.__interval = interval
-        self.__func = func      
-        self.__t = Timer(self.__interval, self.__loop)
+        self._interval = interval
+        self._func = func      
+        self._t = Timer(self._interval, self._loop)
    
     
-    def __loop(self):
-        '''Runs the <self.__func> function every <self.__interval> seconds'''
-        self.__func()
+    def _loop(self):
+        '''Runs the <self._func> function every <self._interval> seconds'''
+        self._func()
         self.cancel()
-        self.__t = Timer(self.__interval, self.__loop)
+        self._t = Timer(self._interval, self._loop)
         self.start()
            
     def start(self):
-        '''Starts the timer if <self.__interval> is not 0 otherwise the 
+        '''Starts the timer if <self._interval> is not 0 otherwise the 
            timer will be canceled 
         '''
-        if self.__interval == 0:
+        if self._interval == 0:
             self.cancel()
             return     
  
-        self.__t.start()
+        self._t.start()
     
     def cancel(self):
-        self.__t.cancel()
+        self._t.cancel()
         
     def join(self):
-        if self.__interval == 0: #quick fix for no timer.start()
+        if self._interval == 0: #quick fix for no timer.start()
             return
-        self.__t.join();
+        self._t.join();
 
 
 '''
@@ -276,14 +276,14 @@ class DataLoggerConfig(object):
     __UID_KEY = "uid"
 
     def __init__(self,name):
-        self.__isParsed = False
+        self.__is_parsed = False
         self.filenName = name
-        self.__general = {}
-        self.__xively = {}
-        self.__bricklets = []
+        self._general = {}
+        self._xively = {}
+        self._bricklets = []
+                
         
-        
-    def __get_section_as_hashmap(self,section_name ,parser ):
+    def _get_section_as_hashmap(self,section_name ,parser ):
         '''
         saves variables out of an (configuration file) section to a hashmap.
         key -- variable name
@@ -307,11 +307,11 @@ class DataLoggerConfig(object):
         for section_name in parser.sections():
             if (section_name == self.__GENERAL_SECTION):
                 # Get GENERAL section
-                self.__general =self.__get_section_as_hashmap(section_name,parser)
+                self.general =self._get_section_as_hashmap(section_name,parser)
 
             elif (section_name == self.__XIVELY_SECTION):
                 # Get XIVELY section
-                self.__xively = self.__get_section_as_hashmap(section_name,parser)
+                self.xively = self._get_section_as_hashmap(section_name,parser)
 
             else:
                 # Get all other variables  
@@ -323,7 +323,7 @@ class DataLoggerConfig(object):
                     if (section_key != self.__NAME_KEY and section_key != self.__UID_KEY):
                         tmp_bricklet.addKeyValuePair(section_key, parser.get(section_name, section_key))
 
-                self.__bricklets.append(tmp_bricklet)
+                self._bricklets.append(tmp_bricklet)
                 
         # configuration file is parsed an ready to use     
         self.__isParsed = True
@@ -333,30 +333,30 @@ class DataLoggerConfig(object):
         Returns the variables out of the "GENERAL" section in the configuration file if it
         was already parsed otherwise it call the <read_config_file()> function first
         '''
-        if(not self.__isParsed):
+        if(not self._is_parsed):
             self.read_config_file()
             
-        return self.__general
+        return self._general
 
     def get_xively_section(self):
         '''
         Returns the variables out of the "XIVELY" section in the configuration file if it
         was already parsed otherwise it call the <read_config_file()> function first
         '''
-        if(not self.__isParsed):
+        if(not self._is_parsed):
             self.read_config_file()
             
-        return self.__xively
+        return self._xively
         
     def get_bricklets(self):
         '''
         Returns an array of bricklets out of the configuration file if it
         was already parsed. Otherwise it call the <read_config_file()> function first
         '''
-        if(not self.__isParsed):
+        if(not self._is_parsed):
             self.read_config_file()
         
-        return self.__bricklets
+        return self._bricklets
 
 
 """"
@@ -370,35 +370,17 @@ class BrickletInfo(object):
     '''
     
     def __init__(self, name, uid):
-        self.__name = name
-        self.__uid = uid
-        self.__variables = { }
+        self.name = name
+        self.uid = uid
+        self.variables = { }
    
         
-    def addKeyValuePair(self, key, value):
+    def add_key_value_pair(self, key, value):
         '''
         adds a key-value pair to the bricklet dictionary
         '''
-        self.__variables[key] = value
- 
-    def get_variables(self):
-        '''
-        Returns the dictionary which provides the variable name and its value 
-        '''
-        return self.__variables  
+        self.variables[key] = value
     
-    def get_name(self):
-        '''
-        Returns the bricklet name
-        '''
-        return self.__name
-    
-    def get_uid(self):
-        '''
-        Returns the bricklet uid
-        '''
-        return self.__uid
-
 
 """"
 /*---------------------------------------------------------------------------
