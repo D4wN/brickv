@@ -1,8 +1,8 @@
-from data_logger_utils import LoggerTimer   #Timer for getVariable
-from data_logger_utils import Q             #gloabl thread/job queue -> brickelts callbacks/timer
-from data_logger_utils import CSVData       #bricklets
+from brickv.data_logger.utils import LoggerTimer   #Timer for getVariable
+from brickv.data_logger.utils import Q             #gloabl thread/job queue -> brickelts callbacks/timer
+from brickv.data_logger.utils import CSVData       #bricklets
 
-import data_logger_utils as dlu             #for gloabl variables
+import brickv.data_logger.utils as dlu             #for gloabl variables
 
 ###Sections##############################################################
 GENERAL_SECTION = "GENERAL"

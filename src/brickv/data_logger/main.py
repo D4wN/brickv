@@ -1,8 +1,8 @@
 #MAIN DATA_LOGGER PROGRAMM
-from data_logger_bricklets import *
-from data_logger_utils import *
+from brickv.data_logger.bricklets import *
+from brickv.data_logger.utils import *
 
-import data_logger_utils as dlu             #for gloabl vars
+import brickv.data_logger.utils as dlu
 
 import getopt                               #command_line()
 
