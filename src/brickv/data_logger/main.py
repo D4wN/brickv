@@ -4,7 +4,7 @@ from brickv.data_logger.utils import *
 
 import brickv.data_logger.utils as dlu
 
-import getopt                               #command_line()
+import argparse                             # command line argument parser
 
 """ 
 - __main__
@@ -13,13 +13,8 @@ import getopt                               #command_line()
 
 """
 ###switch###
-def main_switch(data):  
-    general_switch(data)
-    xively_switch(data)
-    bricklet_switch(data)
-
 def general_switch(data):
-    #TODO: write code
+    #TODO: write code to process data out of the xively
     pass
 
 def xively_switch(data):
@@ -27,12 +22,108 @@ def xively_switch(data):
     pass
 
 def bricklet_switch(data):
-    #TODO: write code
-    tmp = data[0]
-    b = Barometer_Bricklet(tmp.get_uid())
-    b.start_timer(tmp.get_variables())
+    # TODO: Check if there are bricklets
+    
+    for current_bricklet in data:
+        bricklet_name = current_bricklet.name
+        bricklet_uid = current_bricklet.uid
+        bricklet_variables = current_bricklet.variables
         
-
+        # TODO: yes add all bricklets here
+        if (bricklet_name == AMBIENT_LIGHT ):
+            print bricklet_variables
+            AmbientLightBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == ANALOG_IN):
+            AnalogInBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == ANALOG_OUT):
+            AnalogOutBricklet(bricklet_uid).start_timer(bricklet_variables)              
+        elif(bricklet_name == BAROMETER):
+            BarometerBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == COLOR):
+            ColorBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == CURRENT_12):
+            Current12Bricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == CURRENT_25):
+            Current25Bricklet(bricklet_uid).start_timer(bricklet_variables)    
+        elif(bricklet_name == DISTANCE_IR):
+            DistanceIRBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == DISTANCE_US):
+            DistanceUSBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == DUAL_BUTTON ):
+            DualButtonBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == DUAL_RELAY):
+            DualRelayBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == GPS_BRICKLET):
+            GPSBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == HALL_EFFECT):
+            HallEffectBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == HUMIDITY ):
+            HumidityBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == INDUSTRIAL_DIGITAL_IN_4 ):
+            IndustrialDigitalIn4Bricklet(bricklet_uid).start_timer(bricklet_variables)      
+        elif(bricklet_name == INDUSTRIAL_DIGITAL_OUT_4):
+            IndustrialDigitalOut4Bricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == INDUSTRIAL_DUAL_0_20_MA):
+            IndustrialDual020mABricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == INDUSTRIAL_QUAD_RELAY ):
+            IndustrialQuadRelayBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == IO_16):
+            IO16Bricklet(bricklet_uid).start_timer(bricklet_variables) 
+        elif(bricklet_name == IO_4):
+            IO4Bricklet(bricklet_uid).start_timer(bricklet_variables) 
+        elif(bricklet_name == JOYSTICK ):
+            JoystickBricklet(bricklet_uid).start_timer(bricklet_variables) 
+        elif(bricklet_name == LCD_16x2 ):
+            LCD16x2Bricklet(bricklet_uid).start_timer(bricklet_variables) 
+        elif(bricklet_name == LCD_20x4 ):
+            LCD20x4Bricklet(bricklet_uid).start_timer(bricklet_variables) 
+        elif(bricklet_name == LED_STRIP ):
+            LEDStripBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == LINE):
+            LineBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == LINEAR_POTI ):
+            LinearPotiBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == MOISTURE ):
+            MoistureBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == MOTION_DETECTOR ):
+            MotionDetectorBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == MULTI_TOUCH ):
+            MultiTouchBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == NFC_RFID):
+            NFCRFIDBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == PIEZO_BUZZER ):
+            PiezoBuzzerBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == PIEZO_SPEAKER ):
+            PiezoSpeakerBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == PTC_BRICKLET):
+            PTCBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == REMOTE_SWITCH ):
+            RemoteSwitchBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == ROTARY_ENCODER ):
+            RotaryEncoderBricklet(bricklet_uid).start_timer(bricklet_variables)  
+        elif(bricklet_name == ROTARY_POTI ):
+            RotaryPotiBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == SEGMENT_DISPLAY_4x7 ):
+            SegmentDisplay4x7Bricklet(bricklet_uid).start_timer(bricklet_variables)  
+        elif(bricklet_name == SOLID_STATE_RELAY ):
+            SolidStateRelayBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == SOUND_INTENSITY ):
+            SoundIntensityBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == TEMPERATURE ):
+            TemperatureBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == TEMPERATURE_IR ):
+            TemperatureIRBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == TILT ):
+            TiltBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == VOLTAGE ):
+            VoltageBricklet(bricklet_uid).start_timer(bricklet_variables)
+        elif(bricklet_name == VOLTAGE_CURRENT ):
+            VoltageCurrentBricklet(bricklet_uid).start_timer(bricklet_variables)
+        else:
+            # TODO: Send err msg to user
+            print "There is no bricklet with name: " + bricklet_name
+                     
+            
 def main(ini_file_path):
     print "data_logger.main ini_file_paht = " + ini_file_path
     
@@ -44,20 +135,14 @@ def main(ini_file_path):
     print "IPCON.CONNECT"
     # Don't use device before ipcon is connected
     
-    """SWITCH-CASE"""
-    #TODO: switch-case
-    #DUMMYS
-    bricklets = []
-    b1 = BrickletInfo(BAROMETER, "fVP")
-    b1.addKeyValuePair(BAROMETER_AIR_PRESSURE, 1000)
-    b1.addKeyValuePair(BAROMETER_ALTITUDE, 5000)
-#     b2 = Bricklet_Info("Amb", AMBIENT_LIGHT, {AMBIENT_LIGHT_ANALOG_VALUE:1250,AMBIENT_LIGHT_ILLUMINANCE:3000})
-#     b3 = Bricklet_Info("Hum", HUMIDITY, {HUMIDITY_ANALOG_VALUE:1111,HUMIDITY_HUMIDITY:2750})
-    bricklets.append(b1)
-#     bricklets.append(b2)
-#     bricklets.append(b3)
+    '''Parse configuration file'''
+    configFile = DataLoggerConfig(ini_file_path);
+    configFile.read_config_file()
     
-    main_switch(bricklets)
+    general_switch(configFile.get_general_section())
+    xively_switch(configFile.get_xively_section())
+    bricklet_switch(configFile.get_bricklets())
+    
     
     """START-WRITE-THREAD
     + create the magic sleep time
@@ -108,42 +193,23 @@ def main(ini_file_path):
     dlu.IPCON.disconnect()
     print "IPCON.DISCONNECT()"
 
-def command_line(argv, program_name):
-    #http://www.diveintopython.net/scripts_and_streams/command_line_arguments.html
-    help_response = program_name + " -c <config-file> [-m <host-address> -p <host-port>]"
-    cl_ini_file = ""
-        
-    try:
-        opts, args = getopt.getopt(argv,"hc:m:p:",["help", "config=", "host=", "port="])
-        
-    except getopt.GetoptError:
-        print help_response
-        sys.exit(2)
-        
-    for opt, arg in opts:
-        if opt == '-h' or opt == "--help":
-            print help_response
-            sys.exit()
-        
-        elif opt in ("-c", "--config"):
-            cl_ini_file = arg
-        
-        elif opt in ("-m", "--host"):
-            dlu.HOST = arg
-        
-        elif opt in ("-p", "--port"):
-            dlu.PORT = arg
+def command_line_start(argv,program_name):
+    cl_parser = argparse.ArgumentParser(description=' -c <config-file> [-m <host-address> -p <host-port>]')
     
-    if cl_ini_file == "":
-        print "No config file!"
-        print help_response
-        sys.exit(2)
-            
-    print "HOST        = " + dlu.HOST
-    print "PORT        = " + str(dlu.PORT)
-    print "Config-File = " + cl_ini_file     
+    # TODO: help option
+    # TODO: -- options
+    # TODO: exception handling
+    cl_parser.add_argument('-c', action="store", dest="config_file", default="", help="Path of the configuration file")
+    cl_parser.add_argument('-m', action="store", dest="host", default="localhost", help="Host address")
+    cl_parser.add_argument('-p', action="store", dest="port", default=4223, help="Port", type=int)
     
-    return cl_ini_file
+    results = cl_parser.parse_args(argv)
+    
+    dlu.PORT = results.port
+    dlu.HOST = results.host
+    
+    return results.config_file
+
 
 from tinkerforge.ip_connection import IPConnection
 ###main###
@@ -161,14 +227,5 @@ if __name__ == '__main__':
     both:
         - set DEFAULT_FILE_PATH
     """ 
-    ini_file_path = command_line(sys.argv[1:], sys.argv[0])
-    
+    ini_file_path = command_line_start(sys.argv[1:], sys.argv[0])   
     main(ini_file_path)
-    
-    
-    
-    
-    
-
-    
-    
