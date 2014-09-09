@@ -2,8 +2,6 @@
 from brickv.data_logger.bricklets import *
 from brickv.data_logger.utils import *
 
-import brickv.data_logger.utils as dlu
-
 import getopt                               #command_line()
 
 """ 
@@ -29,18 +27,25 @@ def xively_switch(data):
 def bricklet_switch(data):
     #TODO: write code
     tmp = data[0]
-    b = Barometer_Bricklet(tmp.get_uid())
-    b.start_timer(tmp.get_variables())
-        
+    b = BarometerBricklet(tmp.uid)
+#     b.start_timer(tmp.variables)
+     
+    tmp = data[1]
+    a = AmbientLightBricklet("amb")
+    a.start_timer(tmp.variables)
+     
+    tmp = data[2]
+    h = HumidityBricklet(tmp.uid)
+#     h.start_timer(tmp.variables)        
 
 def main(ini_file_path):
     print "data_logger.main ini_file_paht = " + ini_file_path
     
     """CREATE-CONNECTION-TO-BRICKD"""
     #open IPConnection    
-    dlu.IPCON = IPConnection()
+    DataLogger.ipcon = IPConnection()
   
-    dlu.IPCON.connect(dlu.HOST, dlu.PORT)  # Connect to brickd
+    DataLogger.ipcon.connect(DataLogger.host, DataLogger.port)  # Connect to brickd
     print "IPCON.CONNECT"
     # Don't use device before ipcon is connected
     
@@ -49,13 +54,20 @@ def main(ini_file_path):
     #DUMMYS
     bricklets = []
     b1 = BrickletInfo(BAROMETER, "fVP")
-    b1.addKeyValuePair(BAROMETER_AIR_PRESSURE, 1000)
-    b1.addKeyValuePair(BAROMETER_ALTITUDE, 5000)
-#     b2 = Bricklet_Info("Amb", AMBIENT_LIGHT, {AMBIENT_LIGHT_ANALOG_VALUE:1250,AMBIENT_LIGHT_ILLUMINANCE:3000})
-#     b3 = Bricklet_Info("Hum", HUMIDITY, {HUMIDITY_ANALOG_VALUE:1111,HUMIDITY_HUMIDITY:2750})
+    b1.add_key_value_pair(BAROMETER_AIR_PRESSURE, 1000)
+    b1.add_key_value_pair(BAROMETER_ALTITUDE, 5000)
+    
+    b2 = BrickletInfo(AMBIENT_LIGHT, "hZD")
+    b2.add_key_value_pair(AMBIENT_LIGHT_ANALOG_VALUE, 2000)
+    b2.add_key_value_pair(AMBIENT_LIGHT_ILLUMINANCE, 1500)
+    
+    b3 = BrickletInfo(HUMIDITY, "hTH")
+    b3.add_key_value_pair(HUMIDITY_ANALOG_VALUE, 4000)
+    b3.add_key_value_pair(HUMIDITY_HUMIDITY, 6000)
+    
     bricklets.append(b1)
-#     bricklets.append(b2)
-#     bricklets.append(b3)
+    bricklets.append(b2)
+    bricklets.append(b3)
     
     main_switch(bricklets)
     
@@ -63,21 +75,21 @@ def main(ini_file_path):
     + create the magic sleep time
     """   
     #TODO: magic sleep time    
-    if dlu.CB_SUM > 0 and dlu.CB_COUNT > 0:
-        dlu.THREAD_SLEEP = dlu.CB_SUM/1000.0/dlu.CB_COUNT/dlu.CB_COUNT     #TODO: magical thread sleep -> need optimazation!
-        print "magic thread sleep time = " + str(dlu.THREAD_SLEEP)
-        print "CB_SUM   = " + str(dlu.CB_SUM)
-        print "CB_COUNT = " + str(dlu.CB_COUNT)
+    if DataLogger.CB_SUM > 0 and DataLogger.CB_COUNT > 0:
+        DataLogger.THREAD_SLEEP = DataLogger.CB_SUM/1000.0/DataLogger.CB_COUNT/DataLogger.CB_COUNT     #TODO: magical thread sleep -> need optimazation!
+        print "magic thread sleep time = " + str(DataLogger.THREAD_SLEEP)
+        print "CB_SUM   = " + str(DataLogger.CB_SUM)
+        print "CB_COUNT = " + str(DataLogger.CB_COUNT)
          
     else:
         #TODO: else do smth?
         print "magic thread sleep time not defined! -> exit!"
-        dlu.IPCON.disconnect()
+        DataLogger.ipcon.disconnect()
         sys.exit(3)    
         
     #create write thread
-    t = threading.Thread(name="Writer_Thread", target=dlu.writer_thread)
-    dlu.Threads.append(t)
+    t = threading.Thread(name="Writer_Thread", target=writer_thread)
+    DataLogger.Threads.append(t)
     t.start()
     
     
@@ -98,14 +110,14 @@ def main(ini_file_path):
     
     #stop writer thread-------------
     #set stop flag for writer thread
-    dlu.THREAD_EXIT_FLAG = 1
+    DataLogger.THREAD_EXIT_FLAG = 1
     #wait for writer thread
-    for th in  dlu.Threads:
+    for th in  DataLogger.Threads:
         th.join()
     print "ALL WRITER-THREADS STOPPED"
      
     
-    dlu.IPCON.disconnect()
+    DataLogger.ipcon.disconnect()
     print "IPCON.DISCONNECT()"
 
 def command_line(argv, program_name):
@@ -129,18 +141,18 @@ def command_line(argv, program_name):
             cl_ini_file = arg
         
         elif opt in ("-m", "--host"):
-            dlu.HOST = arg
+            DataLogger.host = arg
         
         elif opt in ("-p", "--port"):
-            dlu.PORT = arg
+            DataLogger.port = arg
     
     if cl_ini_file == "":
         print "No config file!"
         print help_response
         sys.exit(2)
             
-    print "HOST        = " + dlu.HOST
-    print "PORT        = " + str(dlu.PORT)
+    print "HOST        = " + DataLogger.host
+    print "PORT        = " + str(DataLogger.port)
     print "Config-File = " + cl_ini_file     
     
     return cl_ini_file

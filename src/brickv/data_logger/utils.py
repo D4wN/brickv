@@ -23,11 +23,38 @@ Boston, MA 02111-1307, USA.
 """
 
 """GLOBAL-VARIABLES"""
-#TODO: DEFAULT VALUES!
-DEFAULT_FILE_PATH = "logged_data.csv"
-IPCON = None
-HOST = "localhost"
-PORT = 4223
+
+import Queue, threading, time                       #Writer Thread
+
+class DataLogger():
+    
+    DEFAULT_FILE_PATH = "logged_data.csv"
+    ipcon = None
+    host = "localhost"
+    port = 4223
+    
+    Q = Queue.Queue()       #gloabl queue for write jobs
+    Threads = []            #gloabl thread array for all running threads/jobs
+
+    THREAD_EXIT_FLAG = 0    #flag for stopping the thread   
+    #CB_SUM / CB_COUNT = CB_MED per sec
+    #CB_MED / CB_COUNT = Thread time for each write
+    CB_SUM = 0
+    CB_COUNT = 0
+    THREAD_SLEEP = -1               #in seconds!; fail state = -1
+    
+    def parse_to_int(string):
+        try:
+            ret = int(float(string))
+            if ret < 0:
+                ret = 0
+            return ret
+        except ValueError:
+            return 0
+    
+    parse_to_int = staticmethod(parse_to_int) 
+
+
 
 '''
 /*---------------------------------------------------------------------------
@@ -387,34 +414,23 @@ class BrickletInfo(object):
                                 WriterThread
  ---------------------------------------------------------------------------*/
 """
-import Queue, threading, time
-
-Q = Queue.Queue()       #gloabl queue for write jobs
-Threads = []            #gloabl thread array for all running threads/jobs
-
-THREAD_EXIT_FLAG = 0    #flag for stopping the thread   
-#CB_SUM / CB_COUNT = CB_MED per sec
-#CB_MED / CB_COUNT = Thread time for each write
-CB_SUM = 0
-CB_COUNT = 0
-THREAD_SLEEP = -1               #in seconds!; fail state = -1
 
 
 def writer_thread():
     print "THREAD-STARTED"
-    csv_writer = CSVWriter(DEFAULT_FILE_PATH)
+    csv_writer = CSVWriter(DataLogger.DEFAULT_FILE_PATH)
     
     while (True):
-        if not Q.empty():
-            csv_data = Q.get()
+        if not DataLogger.Q.empty():
+            csv_data = DataLogger.Q.get()
             print "WR--THREAD      : %s" % (str(csv_data.raw_data))
             if not csv_writer.write_data_row(csv_data):
                 print "csv_writer.write_data_row failed!"
         #TODO: sleep time?
-        if not THREAD_EXIT_FLAG:            #TODO: qucikfix for slow writing queue after end
-            time.sleep(THREAD_SLEEP)
+        if not DataLogger.THREAD_EXIT_FLAG:            #TODO: qucikfix for slow writing queue after end
+            time.sleep(DataLogger.THREAD_SLEEP)
         
-        if(THREAD_EXIT_FLAG and Q.empty()): 
+        if(DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty()): 
             
             exit_flag = csv_writer.close_file()
             if exit_flag:
