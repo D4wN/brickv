@@ -2,6 +2,14 @@ from brickv.data_logger.utils import LoggerTimer   #Timer for getVariable
 from brickv.data_logger.utils import DataLogger    #gloabl thread/job queue -> brickelts callbacks/timer
 from brickv.data_logger.utils import CSVData       #bricklets
 
+#TODO: DBG ONLY!
+class TMP_EXCEPTION(Exception):
+    
+    def __init__(self, value, desc):
+        self.value = value
+        self.description = desc
+
+
 ###Sections##############################################################
 GENERAL_SECTION = "GENERAL"
 GENERAL_LOG_TO_FILE = "log_to_file"
@@ -16,57 +24,66 @@ XIVELY_UPDATE_RATE = "update_rate"
 ###Bricklets and Variables###
 
 #ALL BRICKLETS + FUNCTIONS##################################################################
+class AbstractBricklet(object):
+    """DEBUG and Inheritance only class"""
+    def __init__(self, uid):
+        self.uid = uid        
+        self._device = None
+        print self
+
+
+    def start_timer(self, data):
+        print ""+ self.__str__() +" data=" + str(data)
+                
+        
+    def _try_catch(self, func):
+        value = "[NYI-FAIL-TIMER]"
+        err = 0
+        try:
+            value = func()
+        except Exception as e:
+            value = "Error[" + str(e.value) + "]: " + str(e.description)
+            err = 1
+        return (value, err)
+    
+    def __str__(self):
+        return "Bricklet" + str(type(self)) + "<UID="+ self.uid +">" 
+    
+
 ############################################################################################
 #TODO: TEST Ambient Light
 from tinkerforge.bricklet_ambient_light import AmbientLight
 AMBIENT_LIGHT = "Ambient Light"
 AMBIENT_LIGHT_ILLUMINANCE = "Illuminance"
 AMBIENT_LIGHT_ANALOG_VALUE = "Analog Value"
-class AmbientLightBricklet():
-    """
-    TODO:
-        - exception handling value1,2 in timer_XXXXX
-        - data[XXXXX] parse to int + excep handling
-    """
+class AmbientLightBricklet(AbstractBricklet):
     
     def __init__(self, uid):
-        self.uid = uid        
+        self.uid = uid  
         self._device = AmbientLight(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
-        print data
+        print ""+ self.__str__() +" data=" + str(data)
                 
         value1 = DataLogger.parse_to_int(data[AMBIENT_LIGHT_ANALOG_VALUE])
-        value2 = DataLogger.parse_to_int(data[AMBIENT_LIGHT_ILLUMINANCE])
-        
-        if value1 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value1            
-        if value2 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value2        
+        value2 = DataLogger.parse_to_int(data[AMBIENT_LIGHT_ILLUMINANCE])     
         
         t = LoggerTimer(value1, self._timer_analog_value)
         LoggerTimer.Timers.append(t)         
         t = LoggerTimer(value2, self._timer_illuminance)
         LoggerTimer.Timers.append(t)
 
-    def _timer_analog_value(self):
-        value = "TMP-Error"
-        try:
-            value = self._device.get_analog_value()
-        except:
-            value = "Hallo Welt"
-        
+    def _timer_analog_value(self):        
+        value, err = self._try_catch(self._device.get_analog_value)
+        print "Analog_Value_Err = " + str(err) #TODO: solution for error adding system
         csv = CSVData(self.uid, AMBIENT_LIGHT, AMBIENT_LIGHT_ANALOG_VALUE, value)
         DataLogger.Q.put(csv)
         
     def _timer_illuminance(self):
-#         value = self._device.get_illuminance()
-#         csv = CSVData(self.uid, AMBIENT_LIGHT, AMBIENT_LIGHT_ILLUMINANCE, value)
-#         DataLogger.Q.put(csv)  
-        pass
+        value, err = self._try_catch(self._device.get_illuminance)
+        csv = CSVData(self.uid, AMBIENT_LIGHT, AMBIENT_LIGHT_ILLUMINANCE, value)
+        DataLogger.Q.put(csv)  
 
 ############################################################################################
 #TODO: TEST Analog In                                
@@ -84,14 +101,7 @@ class AnalogInBricklet():
     def start_timer(self, data):        
         value1 = DataLogger.parse_to_int(data[ANALOG_IN_ANALOG_VALUE])
         value2 = DataLogger.parse_to_int(data[ANALOG_IN_VOLTAGE])
-        
-        if value1 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value1            
-        if value2 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value2        
-        
+              
         t = LoggerTimer(value1, self._timer_analog_value)
         LoggerTimer.Timers.append(t)         
         t = LoggerTimer(value2, self._timer_voltage)
@@ -120,11 +130,7 @@ class AnalogOutBricklet():
 
 
     def start_timer(self, data):        
-        value1 = DataLogger.parse_to_int(data[ANALOG_OUT_VOLTAGE])
-        
-        if value1 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value1         
+        value1 = DataLogger.parse_to_int(data[ANALOG_OUT_VOLTAGE]) 
         
         t = LoggerTimer(value1, self._timer_voltage()())
         LoggerTimer.Timers.append(t)         
@@ -149,14 +155,7 @@ class BarometerBricklet():
 
     def start_timer(self, data):        
         value1 = DataLogger.parse_to_int(data[BAROMETER_AIR_PRESSURE])
-        value2 = DataLogger.parse_to_int(data[BAROMETER_ALTITUDE])
-        
-        if value1 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value1            
-        if value2 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value2        
+        value2 = DataLogger.parse_to_int(data[BAROMETER_ALTITUDE])      
         
         t = LoggerTimer(value1, self._timer_air_pressure)
         LoggerTimer.Timers.append(t)         
@@ -178,13 +177,13 @@ class BarometerBricklet():
 #TODO: Needs testing!!
 from tinkerforge.bricklet_color import Color
 COLOR = "Color"
-COLOR_COLOR = "RGBC"
 COLOR_RED = "Red"
-COLOR_BLUE = "Blue"
 COLOR_GREEN = "Green"
+COLOR_BLUE = "Blue"
 COLOR_CLEAR = "Clear"
-COLOR_ILLUMINANCE = "ILLUMINANCE"
-COLOR_TEMPERATUR = "Temperatur"
+COLOR_COLOR = COLOR_RED+" "+COLOR_GREEN+" "+COLOR_BLUE+" "+COLOR_CLEAR
+COLOR_ILLUMINANCE = "Illuminance"
+COLOR_TEMPERATURE = "Temperature"
 class ColorBricklet():
     
     def __init__(self, uid):
@@ -192,20 +191,11 @@ class ColorBricklet():
         self._device = Color(self.uid, DataLogger.ipcon)
 
 
-    def start_timer(self, data):        
+    def start_timer(self, data):     
+        print str(data)   
         value1 = DataLogger.parse_to_int(data[COLOR_COLOR])
         value2 = DataLogger.parse_to_int(data[COLOR_ILLUMINANCE])
-        value3 = DataLogger.parse_to_int(data[COLOR_TEMPERATUR])
-        
-        if value1 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value1            
-        if value2 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value2   
-        if value3 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value3      
+        value3 = DataLogger.parse_to_int(data[COLOR_TEMPERATURE])   
         
         t = LoggerTimer(value1, self._timer_color)
         LoggerTimer.Timers.append(t)         
@@ -214,22 +204,29 @@ class ColorBricklet():
         t = LoggerTimer(value3, self._timer_color_temperature)
         LoggerTimer.Timers.append(t)
 
+
+
     def _timer_color(self):
         #TODO: TEST NEEDED !!!!!
-        value = self._device.get_color()
-        print "COLOR: TEST -> " +str(value)
-#         csv = CSVData(self.uid, COLOR, COLOR, value)
-#         DataLogger.Q.put(csv)
+        try:
+            r, g, b, c = self.__TEMP_GET_COLOR()#self._device.get_color()
+            print "r="+str(r)+" g="+str(g)+" b="+str(b)+" c="+str(c)
+            DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_RED, r))
+            DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_GREEN, g))
+            DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_BLUE, b))
+            DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_CLEAR, c))
+        except Exception as e:
+            DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_COLOR, "ERROR["+str(e.value)+"]: "+str(e.description)))       
+
+    def __TEMP_GET_COLOR(self):
+        raise TMP_EXCEPTION(42, "Hallo WElt EXCEPTION")
+        return (10, 20, 30, 40)
         
     def _timer_illuminance(self):
-        value = self._device.get_illuminance()
-        csv = CSVData(self.uid, COLOR, COLOR_ILLUMINANCE, value)
-        DataLogger.Q.put(csv) 
+        pass 
         
     def _timer_color_temperature(self):
-        value = self._device.get_color_temperature()
-        csv = CSVData(self.uid, COLOR, COLOR_TEMPERATUR, value)
-        DataLogger.Q.put(csv) 
+        pass
 
 ############################################################################################
 #TODO: TEST Current12
@@ -362,14 +359,7 @@ class HumidityBricklet():
 
     def start_timer(self, data):        
         value1 = DataLogger.parse_to_int(data[HUMIDITY_ANALOG_VALUE])
-        value2 = DataLogger.parse_to_int(data[HUMIDITY_HUMIDITY])
-        
-        if value1 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value1            
-        if value2 != 0:
-            DataLogger.CB_COUNT += 1
-            DataLogger.CB_SUM += value2        
+        value2 = DataLogger.parse_to_int(data[HUMIDITY_HUMIDITY])       
         
         t = LoggerTimer(value1, self._timer_analog_value)
         LoggerTimer.Timers.append(t)         
