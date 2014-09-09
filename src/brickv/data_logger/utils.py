@@ -325,7 +325,9 @@ class DataLoggerConfig(object):
     def read_config_file(self):
         '''
         reads the entries out of the configuration file and 
-        saves them into a <BrickletInfo> structure            
+        saves them into a <BrickletInfo> structure.
+        
+        Call sys.exit() if there are no bricklets configured            
         '''
         parser = SafeConfigParser()
         # Open the file with the correct encoding
@@ -356,6 +358,11 @@ class DataLoggerConfig(object):
                 
         # configuration file is parsed an ready to use     
         self._is_parsed = True
+        
+        # TODO: define error number for this exception
+        if(len(self._bricklets) == 0):
+            print "There are no bricklets configured in the configuration file"
+            sys.exit(-1)  
         
     def get_general_section(self):
         '''
