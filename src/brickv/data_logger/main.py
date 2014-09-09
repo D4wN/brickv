@@ -5,6 +5,7 @@ from brickv.data_logger.utils import *
 import brickv.data_logger.utils as dlu
 
 import argparse                             # command line argument parser
+import sys
 
 """ 
 - __main__
@@ -126,6 +127,13 @@ def bricklet_switch(data):
             
 def main(ini_file_path):
     print "data_logger.main ini_file_paht = " + ini_file_path
+    # exit if the path to the configuration file is invalid
+    if (ini_file_path == "None"):
+        sys.exit(-1) 
+        
+    '''Parse configuration file'''
+    configFile = DataLoggerConfig(ini_file_path);
+    configFile.read_config_file()
     
     """CREATE-CONNECTION-TO-BRICKD"""
     #open IPConnection    
@@ -134,10 +142,6 @@ def main(ini_file_path):
     dlu.IPCON.connect(dlu.HOST, dlu.PORT)  # Connect to brickd
     print "IPCON.CONNECT"
     # Don't use device before ipcon is connected
-    
-    '''Parse configuration file'''
-    configFile = DataLoggerConfig(ini_file_path);
-    configFile.read_config_file()
     
     general_switch(configFile.get_general_section())
     xively_switch(configFile.get_xively_section())
@@ -194,20 +198,12 @@ def main(ini_file_path):
     print "IPCON.DISCONNECT()"
 
 def command_line_start(argv,program_name):
-    cl_parser = argparse.ArgumentParser(description=' -c <config-file> [-m <host-address> -p <host-port>]')
+    cl_parser = argparse.ArgumentParser(description=' -c <config-file>')
     
-    # TODO: help option
-    # TODO: -- options
-    # TODO: exception handling
-    cl_parser.add_argument('-c', action="store", dest="config_file", default="", help="Path of the configuration file")
-    cl_parser.add_argument('-m', action="store", dest="host", default="localhost", help="Host address")
-    cl_parser.add_argument('-p', action="store", dest="port", default=4223, help="Port", type=int)
-    
+
+    cl_parser.add_argument('-c', action="store", dest="config_file", default="None", help="Path to the configuration file")
     results = cl_parser.parse_args(argv)
-    
-    dlu.PORT = results.port
-    dlu.HOST = results.host
-    
+
     return results.config_file
 
 
@@ -227,5 +223,5 @@ if __name__ == '__main__':
     both:
         - set DEFAULT_FILE_PATH
     """ 
-    ini_file_path = command_line_start(sys.argv[1:], sys.argv[0])   
+    ini_file_path = command_line_start(sys.argv[1:], sys.argv[0]) 
     main(ini_file_path)
