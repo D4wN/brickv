@@ -2,7 +2,6 @@
 from brickv.data_logger.bricklets import *
 from brickv.data_logger.utils import *
 
-import brickv.data_logger.utils as dlu
 
 import argparse                             # command line argument parser
 
@@ -31,7 +30,6 @@ def bricklet_switch(data):
         
         # TODO: yes add all bricklets here
         if (bricklet_name == AMBIENT_LIGHT ):
-            print bricklet_variables
             AmbientLightBricklet(bricklet_uid).start_timer(bricklet_variables)
         elif(bricklet_name == ANALOG_IN):
             AnalogInBricklet(bricklet_uid).start_timer(bricklet_variables)
@@ -147,18 +145,6 @@ def main(ini_file_path):
     """START-WRITE-THREAD
     + create the magic sleep time
     """   
-    #TODO: magic sleep time    
-    if DataLogger.CB_SUM > 0 and DataLogger.CB_COUNT > 0:
-        DataLogger.THREAD_SLEEP = DataLogger.CB_SUM/1000.0/DataLogger.CB_COUNT/DataLogger.CB_COUNT     #TODO: magical thread sleep -> need optimazation!
-        print "magic thread sleep time = " + str(DataLogger.THREAD_SLEEP)
-        print "CB_SUM   = " + str(DataLogger.CB_SUM)
-        print "CB_COUNT = " + str(DataLogger.CB_COUNT)
-         
-    else:
-        #TODO: else do smth?
-        print "magic thread sleep time not defined! -> exit!"
-        DataLogger.ipcon.disconnect()
-        sys.exit(3)    
         
     #create write thread
     t = threading.Thread(name="Writer_Thread", target=writer_thread)
@@ -174,8 +160,9 @@ def main(ini_file_path):
     raw_input('Press key to close\n')  # Use input() in Python 3
     
     #stop Timers--------------------
-    for t in LoggerTimer.Timers:
-        t.cancel()
+#     for t in LoggerTimer.Timers:
+#         t.cancel()
+    LoggerTimer.EXIT_FLAG = True
     #check if timer stopped
     for t in LoggerTimer.Timers:
         t.join()
@@ -183,12 +170,11 @@ def main(ini_file_path):
     
     #stop writer thread-------------
     #set stop flag for writer thread
-    DataLogger.THREAD_EXIT_FLAG = 1
+    DataLogger.THREAD_EXIT_FLAG = True
     #wait for writer thread
     for th in  DataLogger.Threads:
         th.join()
     print "ALL WRITER-THREADS STOPPED"
-     
     
     DataLogger.ipcon.disconnect()
     print "IPCON.DISCONNECT()"
