@@ -303,7 +303,7 @@ class DataLoggerConfig(object):
     __UID_KEY = "uid"
 
     def __init__(self,name):
-        self.__is_parsed = False
+        self._is_parsed = False
         self.filenName = name
         self._general = {}
         self._xively = {}
@@ -348,12 +348,13 @@ class DataLoggerConfig(object):
                 tmp_bricklet = BrickletInfo(bricklet_name,bricklet_uid)
                 for section_key in parser.options(section_name):
                     if (section_key != self.__NAME_KEY and section_key != self.__UID_KEY):
-                        tmp_bricklet.addKeyValuePair(section_key, parser.get(section_name, section_key))
+                        # All variables (key and value) are of type string                     
+                        tmp_bricklet.add_key_value_pair(str(section_key).title(),str(parser.get(section_name, section_key)).title() )
 
                 self._bricklets.append(tmp_bricklet)
                 
         # configuration file is parsed an ready to use     
-        self.__isParsed = True
+        self._is_parsed = True
         
     def get_general_section(self):
         '''

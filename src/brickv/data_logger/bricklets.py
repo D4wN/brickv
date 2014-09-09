@@ -585,7 +585,7 @@ class MotionDetectorBricklet():
 ############################################################################################
 #TODO: TEST Multi Touch
 from tinkerforge.bricklet_multi_touch import MultiTouch
-MUTLI_TOUCH = "Mutli Touch"
+MULTI_TOUCH = "Multi Touch"
 class MultiTouchBricklet():
     
     def __init__(self, uid):
@@ -739,7 +739,7 @@ class SoundIntensityBricklet():
 ############################################################################################
 #TODO: TEST Temperature
 from tinkerforge.bricklet_temperature import BrickletTemperature
-TMEPERATURE = "Tmeperature"
+TEMPERATURE = "Temperature"
 class TemperatureBricklet():
     
     def __init__(self, uid):
