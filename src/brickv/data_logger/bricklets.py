@@ -184,7 +184,7 @@ COLOR_BLUE = "Blue"
 COLOR_GREEN = "Green"
 COLOR_CLEAR = "Clear"
 COLOR_ILLUMINANCE = "ILLUMINANCE"
-COLOR_TEMPERATUR = "Temperatur"
+COLOR_TEMPERATURE = "Temperature"
 class ColorBricklet():
     
     def __init__(self, uid):
@@ -195,7 +195,7 @@ class ColorBricklet():
     def start_timer(self, data):        
         value1 = DataLogger.parse_to_int(data[COLOR_COLOR])
         value2 = DataLogger.parse_to_int(data[COLOR_ILLUMINANCE])
-        value3 = DataLogger.parse_to_int(data[COLOR_TEMPERATUR])
+        value3 = DataLogger.parse_to_int(data[COLOR_TEMPERATURE])
         
         if value1 != 0:
             DataLogger.CB_COUNT += 1
@@ -228,14 +228,15 @@ class ColorBricklet():
         
     def _timer_color_temperature(self):
         value = self._device.get_color_temperature()
-        csv = CSVData(self.uid, COLOR, COLOR_TEMPERATUR, value)
+        csv = CSVData(self.uid, COLOR, COLOR_TEMPERATURE, value)
         DataLogger.Q.put(csv) 
 
 ############################################################################################
 #TODO: TEST Current12
 from tinkerforge.bricklet_current12 import Current12
 CURRENT_12 = "Current 12"
-
+CURRENT_12_CURRENT = "Current"
+CURRENT_12_ANALOG_VALUE = "Analog Value"
 class Current12Bricklet():
     
     def __init__(self, uid):
@@ -250,7 +251,8 @@ class Current12Bricklet():
 #TODO: TEST Current25
 from tinkerforge.bricklet_current25 import Current25
 CURRENT_25 = "Current 25"
-
+CURRENT_25_CURRENT = "Current"
+CURRENT_25_ANALOG_VALUE = "Analog Value"
 class Current25Bricklet():
     
     def __init__(self, uid):
@@ -265,7 +267,8 @@ class Current25Bricklet():
 #TODO: TEST Distance IR
 from tinkerforge.bricklet_distance_ir import DistanceIR
 DISTANCE_IR = "Distance IR"
-
+DISTANCE_IR_DISTANCE = "Distance"
+DISTANCE_IR_ANALOG_VALUE = "Analog Value"
 class DistanceIRBricklet():
     
     def __init__(self, uid):
@@ -280,7 +283,7 @@ class DistanceIRBricklet():
 #TODO: TEST Distance US
 from tinkerforge.bricklet_distance_us import DistanceUS
 DISTANCE_US = "Distance US"
-
+DISTANCE_US_DISTANCE = "Distance"
 class DistanceUSBricklet():
     
     def __init__(self, uid):
@@ -293,6 +296,7 @@ class DistanceUSBricklet():
 
 ############################################################################################
 #TODO: TEST Dual Button
+#TODO: Dual Button variables
 from tinkerforge.bricklet_dual_button import DualButton
 DUAL_BUTTON = "Dual Button"
 class DualButtonBricklet():
@@ -307,6 +311,7 @@ class DualButtonBricklet():
 
 ############################################################################################
 #TODO: TEST Dual Relay
+#TODO: Dual Relay variables
 from tinkerforge.bricklet_dual_relay import DualRelay
 DUAL_RELAY = "Dual Relay"
 class DualRelayBricklet():
@@ -321,6 +326,7 @@ class DualRelayBricklet():
 
 ############################################################################################
 #TODO: TEST GPS
+#TODO: GPS variables
 from tinkerforge.bricklet_gps import GPS
 GPS_BRICKLET = "GPS"
 class GPSBricklet():
@@ -337,6 +343,7 @@ class GPSBricklet():
 #TODO: TEST Hall Effect
 from tinkerforge.bricklet_hall_effect import HallEffect
 HALL_EFFECT = "Hall Effect"
+HALL_EFFECT_EDGE_COUNT = "Edge Count"
 class HallEffectBricklet():
     
     def __init__(self, uid):
@@ -388,6 +395,7 @@ class HumidityBricklet():
 
 ############################################################################################
 #TODO: TEST Industrial Digital In 4
+#TODO: Industrial Digital In 4 variables
 from tinkerforge.bricklet_industrial_digital_in_4 import IndustrialDigitalIn4
 INDUSTRIAL_DIGITAL_IN_4 = "Industrial Digital In 4"
 class IndustrialDigitalIn4Bricklet():
@@ -402,6 +410,7 @@ class IndustrialDigitalIn4Bricklet():
 
 ############################################################################################
 #TODO: TEST Industrial Digital Out 4
+#TODO: Industrial Digital Out 4 variables
 from tinkerforge.bricklet_industrial_digital_out_4 import IndustrialDigitalOut4
 INDUSTRIAL_DIGITAL_OUT_4 = "Industrial Digital Out 4"
 class IndustrialDigitalOut4Bricklet():
@@ -418,6 +427,7 @@ class IndustrialDigitalOut4Bricklet():
 #TODO: TEST Industrial Dual 0-20mA
 from tinkerforge.bricklet_industrial_dual_0_20ma import IndustrialDual020mA
 INDUSTRIAL_DUAL_0_20_MA = "Industrial Dual 0 20 mA"
+INDUSTRIAL_DUAL_0_20_MA_CURRENT = "Current"
 class IndustrialDual020mABricklet():
     
     def __init__(self, uid):
@@ -430,6 +440,7 @@ class IndustrialDual020mABricklet():
 
 ############################################################################################
 #TODO: TEST Industrial Quad Relay
+#TODO: Industrial Industrial Quad Relay variables
 from tinkerforge.bricklet_industrial_quad_relay import IndustrialQuadRelay
 INDUSTRIAL_QUAD_RELAY = "Industrial Quad Relay"
 class IndustrialQuadRelayBricklet():
@@ -444,6 +455,7 @@ class IndustrialQuadRelayBricklet():
 
 ############################################################################################
 #TODO: TEST IO-16
+#TODO: IO-16 variables
 from tinkerforge.bricklet_io16 import IO16
 IO_16 = "IO-16"
 class IO16Bricklet():
@@ -458,6 +470,7 @@ class IO16Bricklet():
 
 ############################################################################################
 #TODO: TEST IO-4
+#TODO: IO-4 variables
 from tinkerforge.bricklet_io4 import IO4
 IO_4 = "IO-4"
 class IO4Bricklet():
@@ -474,6 +487,9 @@ class IO4Bricklet():
 #TODO: TEST Joystick
 from tinkerforge.bricklet_joystick import Joystick
 JOYSTICK = "Joystick"
+JOYSTICK_POSITION = "Position"
+JOYSTICK_ANALOG_VALUE = "Analog Value"
+JOYSTICK_PRESSED = "Pressed"
 class JoystickBricklet():
     
     def __init__(self, uid):
@@ -486,6 +502,7 @@ class JoystickBricklet():
 
 ############################################################################################
 #TODO: TEST LCD 16x2
+#TODO: LCD 16x2 variables
 from tinkerforge.bricklet_lcd_16x2 import LCD16x2
 LCD_16x2 = "LCD 16x2"
 class LCD16x2Bricklet():
@@ -500,6 +517,7 @@ class LCD16x2Bricklet():
 
 ############################################################################################
 #TODO: TEST LCD 20x4
+#TODO: LCD 20x4 variables
 from tinkerforge.bricklet_lcd_20x4 import LCD20x4
 LCD_20x4 = "LCD 20x4"
 class LCD20x4Bricklet():
@@ -516,6 +534,9 @@ class LCD20x4Bricklet():
 #TODO: TEST LED Strip
 from tinkerforge.bricklet_led_strip import LEDStrip
 LED_STRIP = "LED Strip"
+LED_STRIP_FRAME_DURATION = "Frame Duration"
+LED_STRIP_SUPPLY_VOLTAGE = "Supply Voltage"
+LED_STRIP_CLOCK_FEQUENCY = "Clock Frequency"
 class LEDStripBricklet():
     
     def __init__(self, uid):
@@ -530,6 +551,7 @@ class LEDStripBricklet():
 #TODO: TEST Line
 from tinkerforge.bricklet_line import BrickletLine
 LINE = "line"
+LINE_REFLECTIVITY = "Reflectivity"
 class LineBricklet():
     
     def __init__(self, uid):
@@ -544,6 +566,8 @@ class LineBricklet():
 #TODO: TEST Linear Poti
 from tinkerforge.bricklet_linear_poti import BrickletLinearPoti
 LINEAR_POTI = "Linear Poti"
+LINEAR_POTI_POSITION = "Position"
+LINEAR_POTI_ANALOG_VALUE = "Analog Value"
 class LinearPotiBricklet():
     
     def __init__(self, uid):
@@ -558,6 +582,7 @@ class LinearPotiBricklet():
 #TODO: TEST Moisture
 from tinkerforge.bricklet_moisture import Moisture
 MOISTURE = "Moisture"
+MOISTURE_MOISTURE_VALUE = "Moisture Value"
 class MoistureBricklet():
     
     def __init__(self, uid):
@@ -572,6 +597,7 @@ class MoistureBricklet():
 #TODO: TEST Motion Detector
 from tinkerforge.bricklet_motion_detector import MotionDetector
 MOTION_DETECTOR = "Motion Detector"
+MOTION_DETECTOR_MOTION_DETECTED = "Motion Detected"
 class MotionDetectorBricklet():
     
     def __init__(self, uid):
@@ -586,6 +612,7 @@ class MotionDetectorBricklet():
 #TODO: TEST Multi Touch
 from tinkerforge.bricklet_multi_touch import MultiTouch
 MULTI_TOUCH = "Multi Touch"
+MULTI_TOUCH_TOUCH_STATE = "Touch State"
 class MultiTouchBricklet():
     
     def __init__(self, uid):
@@ -598,8 +625,10 @@ class MultiTouchBricklet():
 
 ############################################################################################
 #TODO: TEST NFC/RFID
+#TODO: LCD NFC/RFID variables
 from tinkerforge.bricklet_nfc_rfid import BrickletNFCRFID
 NFC_RFID = "NFC RFID"
+NFC_RFID_STATE = "State"
 class NFCRFIDBricklet():
     
     def __init__(self, uid):
@@ -612,6 +641,7 @@ class NFCRFIDBricklet():
 
 ############################################################################################
 #TODO: TEST Piezo Buzzer
+#TODO: Piezo Buzzer variables
 from tinkerforge.bricklet_piezo_buzzer import BrickletPiezoBuzzer
 PIEZO_BUZZER = "Pirezo Buzzer"
 class PiezoBuzzerBricklet():
@@ -626,6 +656,7 @@ class PiezoBuzzerBricklet():
 
 ############################################################################################
 #TODO: TEST Piezo Speaker
+#TODO: Piezo Speaker variables
 from tinkerforge.bricklet_piezo_speaker import PiezoSpeaker
 PIEZO_SPEAKER = "Piezo Speaker"
 class PiezoSpeakerBricklet():
