@@ -1,8 +1,6 @@
 from brickv.data_logger.utils import LoggerTimer   #Timer for getVariable
-from brickv.data_logger.utils import Q             #gloabl thread/job queue -> brickelts callbacks/timer
+from brickv.data_logger.utils import DataLogger    #gloabl thread/job queue -> brickelts callbacks/timer
 from brickv.data_logger.utils import CSVData       #bricklets
-
-import brickv.data_logger.utils as dlu             #for gloabl variables
 
 ###Sections##############################################################
 GENERAL_SECTION = "GENERAL"
@@ -25,22 +23,29 @@ AMBIENT_LIGHT = "Ambient Light"
 AMBIENT_LIGHT_ILLUMINANCE = "Illuminance"
 AMBIENT_LIGHT_ANALOG_VALUE = "Analog Value"
 class AmbientLightBricklet():
+    """
+    TODO:
+        - exception handling value1,2 in timer_XXXXX
+        - data[XXXXX] parse to int + excep handling
+    """
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = AmbientLight(self.uid, dlu.IPCON)
+        self._device = AmbientLight(self.uid, DataLogger.ipcon)
 
 
-    def start_timer(self, data):        
-        value1 = data[AMBIENT_LIGHT_ANALOG_VALUE]
-        value2 = data[AMBIENT_LIGHT_ILLUMINANCE]
+    def start_timer(self, data):
+        print data
+                
+        value1 = DataLogger.parse_to_int(data[AMBIENT_LIGHT_ANALOG_VALUE])
+        value2 = DataLogger.parse_to_int(data[AMBIENT_LIGHT_ILLUMINANCE])
         
         if value1 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value1            
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value1            
         if value2 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value2        
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value2        
         
         t = LoggerTimer(value1, self._timer_analog_value)
         LoggerTimer.Timers.append(t)         
@@ -48,14 +53,20 @@ class AmbientLightBricklet():
         LoggerTimer.Timers.append(t)
 
     def _timer_analog_value(self):
-        value = self._device.get_analog_value()
+        value = "TMP-Error"
+        try:
+            value = self._device.get_analog_value()
+        except:
+            value = "Hallo Welt"
+        
         csv = CSVData(self.uid, AMBIENT_LIGHT, AMBIENT_LIGHT_ANALOG_VALUE, value)
-        Q.put(csv)
+        DataLogger.Q.put(csv)
         
     def _timer_illuminance(self):
-        value = self._device.get_illuminance()
-        csv = CSVData(self.uid, AMBIENT_LIGHT, AMBIENT_LIGHT_ILLUMINANCE, value)
-        Q.put(csv)  
+#         value = self._device.get_illuminance()
+#         csv = CSVData(self.uid, AMBIENT_LIGHT, AMBIENT_LIGHT_ILLUMINANCE, value)
+#         DataLogger.Q.put(csv)  
+        pass
 
 ############################################################################################
 #TODO: TEST Analog In                                
@@ -67,19 +78,19 @@ class AnalogInBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = AnalogIn(self.uid, dlu.IPCON)
+        self._device = AnalogIn(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):        
-        value1 = data[ANALOG_IN_ANALOG_VALUE]
-        value2 = data[ANALOG_IN_VOLTAGE]
+        value1 = DataLogger.parse_to_int(data[ANALOG_IN_ANALOG_VALUE])
+        value2 = DataLogger.parse_to_int(data[ANALOG_IN_VOLTAGE])
         
         if value1 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value1            
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value1            
         if value2 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value2        
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value2        
         
         t = LoggerTimer(value1, self._timer_analog_value)
         LoggerTimer.Timers.append(t)         
@@ -89,12 +100,12 @@ class AnalogInBricklet():
     def _timer_analog_value(self):
         value = self._device.get_analog_value()
         csv = CSVData(self.uid, ANALOG_IN, ANALOG_IN_ANALOG_VALUE, value)
-        Q.put(csv)
+        DataLogger.Q.put(csv)
         
     def _timer_voltage(self):
         value = self._device.get_voltage()
         csv = CSVData(self.uid, ANALOG_IN, ANALOG_IN_VOLTAGE, value)
-        Q.put(csv)  
+        DataLogger.Q.put(csv)  
 
 ############################################################################################
 #TODO: TEST Analog Out
@@ -105,15 +116,15 @@ class AnalogOutBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = AnalogOut(self.uid, dlu.IPCON)
+        self._device = AnalogOut(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):        
-        value1 = data[ANALOG_OUT_VOLTAGE]
+        value1 = DataLogger.parse_to_int(data[ANALOG_OUT_VOLTAGE])
         
         if value1 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value1         
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value1         
         
         t = LoggerTimer(value1, self._timer_voltage()())
         LoggerTimer.Timers.append(t)         
@@ -121,7 +132,7 @@ class AnalogOutBricklet():
     def _timer_voltage(self):
         value = self._device.get_voltage()
         csv = CSVData(self.uid, ANALOG_OUT, ANALOG_OUT_VOLTAGE, value)
-        Q.put(csv)
+        DataLogger.Q.put(csv)
 
 ############################################################################################
 #Barometer
@@ -133,19 +144,19 @@ class BarometerBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = Barometer(self.uid, dlu.IPCON)
+        self._device = Barometer(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):        
-        value1 = data[BAROMETER_AIR_PRESSURE]
-        value2 = data[BAROMETER_ALTITUDE]
+        value1 = DataLogger.parse_to_int(data[BAROMETER_AIR_PRESSURE])
+        value2 = DataLogger.parse_to_int(data[BAROMETER_ALTITUDE])
         
         if value1 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value1            
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value1            
         if value2 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value2        
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value2        
         
         t = LoggerTimer(value1, self._timer_air_pressure)
         LoggerTimer.Timers.append(t)         
@@ -155,12 +166,12 @@ class BarometerBricklet():
     def _timer_air_pressure(self):
         value = self._device.get_air_pressure()
         csv = CSVData(self.uid, BAROMETER, BAROMETER_AIR_PRESSURE, value)
-        Q.put(csv)
+        DataLogger.Q.put(csv)
         
     def _timer_altitude(self):
         value = self._device.get_altitude()
         csv = CSVData(self.uid, BAROMETER, BAROMETER_ALTITUDE, value)
-        Q.put(csv)   
+        DataLogger.Q.put(csv)   
 
 ############################################################################################
 #TODO: TEST Color
@@ -178,23 +189,23 @@ class ColorBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = Color(self.uid, dlu.IPCON)
+        self._device = Color(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):        
-        value1 = data[COLOR_COLOR]
-        value2 = data[COLOR_ILLUMINANCE]
-        value3 = data[COLOR_TEMPERATUR]
+        value1 = DataLogger.parse_to_int(data[COLOR_COLOR])
+        value2 = DataLogger.parse_to_int(data[COLOR_ILLUMINANCE])
+        value3 = DataLogger.parse_to_int(data[COLOR_TEMPERATUR])
         
         if value1 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value1            
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value1            
         if value2 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value2   
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value2   
         if value3 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value3      
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value3      
         
         t = LoggerTimer(value1, self._timer_color)
         LoggerTimer.Timers.append(t)         
@@ -208,17 +219,17 @@ class ColorBricklet():
         value = self._device.get_color()
         print "COLOR: TEST -> " +str(value)
 #         csv = CSVData(self.uid, COLOR, COLOR, value)
-#         Q.put(csv)
+#         DataLogger.Q.put(csv)
         
     def _timer_illuminance(self):
         value = self._device.get_illuminance()
         csv = CSVData(self.uid, COLOR, COLOR_ILLUMINANCE, value)
-        Q.put(csv) 
+        DataLogger.Q.put(csv) 
         
     def _timer_color_temperature(self):
         value = self._device.get_color_temperature()
         csv = CSVData(self.uid, COLOR, COLOR_TEMPERATUR, value)
-        Q.put(csv) 
+        DataLogger.Q.put(csv) 
 
 ############################################################################################
 #TODO: TEST Current12
@@ -229,7 +240,7 @@ class Current12Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = Current12(self.uid, dlu.IPCON)
+        self._device = Current12(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -244,7 +255,7 @@ class Current25Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = Current25(self.uid, dlu.IPCON)
+        self._device = Current25(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -259,7 +270,7 @@ class DistanceIRBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = DistanceIR(self.uid, dlu.IPCON)
+        self._device = DistanceIR(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -274,7 +285,7 @@ class DistanceUSBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = DistanceUS(self.uid, dlu.IPCON)
+        self._device = DistanceUS(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -288,7 +299,7 @@ class DualButtonBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = DualButton(self.uid, dlu.IPCON)
+        self._device = DualButton(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -302,7 +313,7 @@ class DualRelayBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = DualRelay(self.uid, dlu.IPCON)
+        self._device = DualRelay(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -316,7 +327,7 @@ class GPSBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = GPS(self.uid, dlu.IPCON)
+        self._device = GPS(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -330,7 +341,7 @@ class HallEffectBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = HallEffect(self.uid, dlu.IPCON)
+        self._device = HallEffect(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -346,19 +357,19 @@ class HumidityBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = Humidity(self.uid, dlu.IPCON)
+        self._device = Humidity(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):        
-        value1 = data[HUMIDITY_ANALOG_VALUE]
-        value2 = data[HUMIDITY_HUMIDITY]
+        value1 = DataLogger.parse_to_int(data[HUMIDITY_ANALOG_VALUE])
+        value2 = DataLogger.parse_to_int(data[HUMIDITY_HUMIDITY])
         
         if value1 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value1            
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value1            
         if value2 != 0:
-            dlu.CB_COUNT += 1
-            dlu.CB_SUM += value2        
+            DataLogger.CB_COUNT += 1
+            DataLogger.CB_SUM += value2        
         
         t = LoggerTimer(value1, self._timer_analog_value)
         LoggerTimer.Timers.append(t)         
@@ -368,12 +379,12 @@ class HumidityBricklet():
     def _timer_analog_value(self):
         value = self._device.get_analog_value()
         csv = CSVData(self.uid, HUMIDITY, HUMIDITY_ANALOG_VALUE, value)
-        Q.put(csv)
+        DataLogger.Q.put(csv)
         
     def _timer_humidity(self):
         value = self._device.get_humidity()
         csv = CSVData(self.uid, HUMIDITY, HUMIDITY_HUMIDITY, value)
-        Q.put(csv)   
+        DataLogger.Q.put(csv)   
 
 ############################################################################################
 #TODO: TEST Industrial Digital In 4
@@ -383,7 +394,7 @@ class IndustrialDigitalIn4Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = IndustrialDigitalIn4(self.uid, dlu.IPCON)
+        self._device = IndustrialDigitalIn4(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -397,7 +408,7 @@ class IndustrialDigitalOut4Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = IndustrialDigitalOut4(self.uid, dlu.IPCON)
+        self._device = IndustrialDigitalOut4(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -411,7 +422,7 @@ class IndustrialDual020mABricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = IndustrialDual020mA(self.uid, dlu.IPCON)
+        self._device = IndustrialDual020mA(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -425,7 +436,7 @@ class IndustrialQuadRelayBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = IndustrialQuadRelay(self.uid, dlu.IPCON)
+        self._device = IndustrialQuadRelay(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -439,7 +450,7 @@ class IO16Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = IO16(self.uid, dlu.IPCON)
+        self._device = IO16(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -453,7 +464,7 @@ class IO4Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = IO4(self.uid, dlu.IPCON)
+        self._device = IO4(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -467,7 +478,7 @@ class JoystickBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = Joystick(self.uid, dlu.IPCON)
+        self._device = Joystick(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -481,7 +492,7 @@ class LCD16x2Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = LCD16x2(self.uid, dlu.IPCON)
+        self._device = LCD16x2(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -495,7 +506,7 @@ class LCD20x4Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = LCD20x4(self.uid, dlu.IPCON)
+        self._device = LCD20x4(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -509,7 +520,7 @@ class LEDStripBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = LEDStrip(self.uid, dlu.IPCON)
+        self._device = LEDStrip(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -523,7 +534,7 @@ class LineBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletLine(self.uid, dlu.IPCON)
+        self._device = BrickletLine(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -537,7 +548,7 @@ class LinearPotiBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletLinearPoti(self.uid, dlu.IPCON)
+        self._device = BrickletLinearPoti(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -551,7 +562,7 @@ class MoistureBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = Moisture(self.uid, dlu.IPCON)
+        self._device = Moisture(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -565,7 +576,7 @@ class MotionDetectorBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = MotionDetector(self.uid, dlu.IPCON)
+        self._device = MotionDetector(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -579,7 +590,7 @@ class MultiTouchBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = MultiTouch(self.uid, dlu.IPCON)
+        self._device = MultiTouch(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -593,7 +604,7 @@ class NFCRFIDBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletNFCRFID(self.uid, dlu.IPCON)
+        self._device = BrickletNFCRFID(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -607,7 +618,7 @@ class PiezoBuzzerBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletPiezoBuzzer(self.uid, dlu.IPCON)
+        self._device = BrickletPiezoBuzzer(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -621,7 +632,7 @@ class PiezoSpeakerBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = PiezoSpeaker(self.uid, dlu.IPCON)
+        self._device = PiezoSpeaker(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -635,7 +646,7 @@ class PTCBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = PTC(self.uid, dlu.IPCON)
+        self._device = PTC(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -649,7 +660,7 @@ class RemoteSwitchBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = RemoteSwitch(self.uid, dlu.IPCON)
+        self._device = RemoteSwitch(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -663,7 +674,7 @@ class RotaryEncoderBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = RotaryEncoder(self.uid, dlu.IPCON)
+        self._device = RotaryEncoder(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -677,7 +688,7 @@ class RotaryPotiBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = RotaryPoti(self.uid, dlu.IPCON)
+        self._device = RotaryPoti(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -691,7 +702,7 @@ class SegmentDisplay4x7Bricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletSegmentDisplay4x7(self.uid, dlu.IPCON)
+        self._device = BrickletSegmentDisplay4x7(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -705,7 +716,7 @@ class SolidStateRelayBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletSolidStateRelay(self.uid, dlu.IPCON)
+        self._device = BrickletSolidStateRelay(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -719,7 +730,7 @@ class SoundIntensityBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletSoundIntensity(self.uid, dlu.IPCON)
+        self._device = BrickletSoundIntensity(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -733,7 +744,7 @@ class TemperatureBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletTemperature(self.uid, dlu.IPCON)
+        self._device = BrickletTemperature(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -747,7 +758,7 @@ class TemperatureIRBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletTemperatureIR(self.uid, dlu.IPCON)
+        self._device = BrickletTemperatureIR(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -761,7 +772,7 @@ class TiltBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletTilt(self.uid, dlu.IPCON)
+        self._device = BrickletTilt(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -775,7 +786,7 @@ class VoltageBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletVoltage(self.uid, dlu.IPCON)
+        self._device = BrickletVoltage(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):
@@ -789,7 +800,7 @@ class VoltageCurrentBricklet():
     
     def __init__(self, uid):
         self.uid = uid        
-        self._device = BrickletVoltageCurrent(self.uid, dlu.IPCON)
+        self._device = BrickletVoltageCurrent(self.uid, DataLogger.ipcon)
 
 
     def start_timer(self, data):

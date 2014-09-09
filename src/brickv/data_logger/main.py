@@ -137,9 +137,9 @@ def main(ini_file_path):
     
     """CREATE-CONNECTION-TO-BRICKD"""
     #open IPConnection    
-    dlu.IPCON = IPConnection()
+    DataLogger.ipcon = IPConnection()
   
-    dlu.IPCON.connect(dlu.HOST, dlu.PORT)  # Connect to brickd
+    DataLogger.ipcon.connect(DataLogger.host, DataLogger.port)  # Connect to brickd
     print "IPCON.CONNECT"
     # Don't use device before ipcon is connected
     
@@ -152,21 +152,21 @@ def main(ini_file_path):
     + create the magic sleep time
     """   
     #TODO: magic sleep time    
-    if dlu.CB_SUM > 0 and dlu.CB_COUNT > 0:
-        dlu.THREAD_SLEEP = dlu.CB_SUM/1000.0/dlu.CB_COUNT/dlu.CB_COUNT     #TODO: magical thread sleep -> need optimazation!
-        print "magic thread sleep time = " + str(dlu.THREAD_SLEEP)
-        print "CB_SUM   = " + str(dlu.CB_SUM)
-        print "CB_COUNT = " + str(dlu.CB_COUNT)
+    if DataLogger.CB_SUM > 0 and DataLogger.CB_COUNT > 0:
+        DataLogger.THREAD_SLEEP = DataLogger.CB_SUM/1000.0/DataLogger.CB_COUNT/DataLogger.CB_COUNT     #TODO: magical thread sleep -> need optimazation!
+        print "magic thread sleep time = " + str(DataLogger.THREAD_SLEEP)
+        print "CB_SUM   = " + str(DataLogger.CB_SUM)
+        print "CB_COUNT = " + str(DataLogger.CB_COUNT)
          
     else:
         #TODO: else do smth?
         print "magic thread sleep time not defined! -> exit!"
-        dlu.IPCON.disconnect()
+        DataLogger.ipcon.disconnect()
         sys.exit(3)    
         
     #create write thread
-    t = threading.Thread(name="Writer_Thread", target=dlu.writer_thread)
-    dlu.Threads.append(t)
+    t = threading.Thread(name="Writer_Thread", target=writer_thread)
+    DataLogger.Threads.append(t)
     t.start()
     
     
@@ -187,14 +187,14 @@ def main(ini_file_path):
     
     #stop writer thread-------------
     #set stop flag for writer thread
-    dlu.THREAD_EXIT_FLAG = 1
+    DataLogger.THREAD_EXIT_FLAG = 1
     #wait for writer thread
-    for th in  dlu.Threads:
+    for th in  DataLogger.Threads:
         th.join()
     print "ALL WRITER-THREADS STOPPED"
      
     
-    dlu.IPCON.disconnect()
+    DataLogger.ipcon.disconnect()
     print "IPCON.DISCONNECT()"
 
 def command_line_start(argv,program_name):
