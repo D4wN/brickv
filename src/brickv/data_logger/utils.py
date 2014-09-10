@@ -330,8 +330,17 @@ class DataLoggerConfig(object):
         hashMap = {}
         for section_key in parser.options(section_name):
             hashMap[section_key] =  parser.get(section_name, section_key)
-        return hashMap     
+        return hashMap
     
+
+    def __parse_first(self):
+        '''
+        Checks if the configuration file is already parsed. If not it'll
+        call the <read_config_file()> function
+        '''   
+        if(not self._is_parsed):
+            self.read_config_file()
+            
     def read_config_file(self):
         '''
         reads the entries out of the configuration file and 
@@ -379,9 +388,8 @@ class DataLoggerConfig(object):
         Returns the variables out of the "GENERAL" section in the configuration file if it
         was already parsed otherwise it call the <read_config_file()> function first
         '''
-        if(not self._is_parsed):
-            self.read_config_file()
-            
+        self.__parse_first()
+           
         return self._general
 
     def get_xively_section(self):
@@ -389,9 +397,8 @@ class DataLoggerConfig(object):
         Returns the variables out of the "XIVELY" section in the configuration file if it
         was already parsed otherwise it call the <read_config_file()> function first
         '''
-        if(not self._is_parsed):
-            self.read_config_file()
-            
+        self.__parse_first()
+           
         return self._xively
         
     def get_bricklets(self):
@@ -399,9 +406,8 @@ class DataLoggerConfig(object):
         Returns an array of bricklets out of the configuration file if it
         was already parsed. Otherwise it call the <read_config_file()> function first
         '''
-        if(not self._is_parsed):
-            self.read_config_file()
-        
+        self.__parse_first()
+           
         return self._bricklets
 
 
