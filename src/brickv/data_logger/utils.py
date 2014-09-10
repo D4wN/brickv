@@ -24,21 +24,31 @@ Boston, MA 02111-1307, USA.
 
 """GLOBAL-VARIABLES"""
 
-import Queue, threading, time                       #Writer Thread
+import Queue, threading, time, logging                               #Writer Thread
 
 class DataLogger():
     
+    #Logger
+    FILE_EVENT_LOGGING = True                              #for event logging in to a file
+    EVENT_LOGGING_FILE_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
+    LOGGING_EVENT_LEVEL = logging.DEBUG
+    
+    #General
     DEFAULT_FILE_PATH = "logged_data.csv"
     ipcon = None
     host = "localhost"
-    port = 4223
+    port = 4223  
     
-    Q = Queue.Queue()       #gloabl queue for write jobs
-    Threads = []            #gloabl thread array for all running threads/jobs
-
-    THREAD_EXIT_FLAG = False    #flag for stopping the thread   
-    THREAD_SLEEP = 5              #in seconds!; fail state = -1 TODO: Enahncement -> use condition objects
+    #Queues
+    Q = Queue.Queue()                                       #gloabl queue for write jobs
     
+    #Thread things
+    Threads = []                                            #gloabl thread array for all running threads/jobs
+    THREAD_EXIT_FLAG = False                                #flag for stopping the thread   
+    THREAD_SLEEP = 5                                        #in seconds!; fail state = -1 TODO: Enahncement -> use condition objects
+    
+    
+    #Functions
     def parse_to_int(string):
         try:
             ret = int(float(string))

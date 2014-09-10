@@ -2,9 +2,9 @@
 from brickv.data_logger.bricklets import *
 from brickv.data_logger.utils import *
 
-
 import argparse                             # command line argument parser
 import sys
+import logging                              #static logging system
 
 """ 
 - __main__
@@ -124,6 +124,11 @@ def bricklet_switch(data):
                      
             
 def main(ini_file_path):
+    if DataLogger.FILE_EVENT_LOGGING:
+        logging.basicConfig(filename=DataLogger.EVENT_LOGGING_FILE_PATH,format='%(asctime)s - %(levelname)8s - %(message)s',level=DataLogger.LOGGING_EVENT_LEVEL)  
+    else:
+        logging.basicConfig(format="%(asctime)s - %(levelname)8s - %(message)s",level=DataLogger.LOGGING_EVENT_LEVEL)  
+    
     print "data_logger.main ini_file_paht = " + ini_file_path
     # exit if the path to the configuration file is invalid
     if (ini_file_path == "None"):
@@ -138,6 +143,7 @@ def main(ini_file_path):
     DataLogger.ipcon = IPConnection()
   
     DataLogger.ipcon.connect(DataLogger.host, DataLogger.port)  # Connect to brickd
+    logging.info("Connection to " + DataLogger.host + ":" + str(DataLogger.port) + " established.")
     print "IPCON.CONNECT"
     # Don't use device before ipcon is connected
     
@@ -170,7 +176,8 @@ def main(ini_file_path):
     #check if timer stopped
     for t in LoggerTimer.Timers:
         t.join()
-    print "ALL TIMERS STOPPED"
+    
+    logging.debug("All Timer Callbacks stopped.")
     
     #stop writer thread-------------
     #set stop flag for writer thread
@@ -178,10 +185,20 @@ def main(ini_file_path):
     #wait for writer thread
     for th in  DataLogger.Threads:
         th.join()
-    print "ALL WRITER-THREADS STOPPED"
+    
+    logging.debug("All working Threads stopped.")
     
     DataLogger.ipcon.disconnect()
-    print "IPCON.DISCONNECT()"
+    logging.info("Connection successfully disconnected.")
+    
+    #TODO: delet this!
+    logging.debug("Level 10")
+    logging.info("Level 20")
+    logging.warn("Level 30")
+    logging.warning("Level 30")
+    logging.error("Level 40")
+    #logging.exception("Level 40")
+    logging.critical("Level 50")
 
 def command_line_start(argv,program_name):
     cl_parser = argparse.ArgumentParser(description=' -c <config-file>')

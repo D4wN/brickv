@@ -217,16 +217,16 @@ class ColorBricklet():
             DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_CLEAR, c))
         except Exception as e:
             DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_COLOR, "ERROR["+str(e.value)+"]: "+str(e.description)))       
-
-    def __TEMP_GET_COLOR(self):
-        raise TMP_EXCEPTION(42, "Hallo WElt EXCEPTION")
-        return (10, 20, 30, 40)
         
     def _timer_illuminance(self):
         pass 
         
     def _timer_color_temperature(self):
         pass
+    
+    def __TEMP_GET_COLOR(self): #TODO: delete this!
+        raise TMP_EXCEPTION(42, "Hallo WElt EXCEPTION")
+        return (10, 20, 30, 40)
 
 ############################################################################################
 #TODO: TEST Current12
