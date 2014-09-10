@@ -21,9 +21,7 @@ def xively_switch(data):
     #TODO: write code
     pass
 
-def bricklet_switch(data):
-    # TODO: Check if there are bricklets
-    
+def bricklet_switch(data):   
     for current_bricklet in data:
         bricklet_name = current_bricklet.name
         bricklet_uid = current_bricklet.uid
@@ -121,7 +119,17 @@ def bricklet_switch(data):
         else:
             # TODO: Send err msg to user
             logging.warning("There is no bricklet with the name: " + bricklet_name)                     
-            
+
+def __exit_condition():
+    '''
+    Waits for an 'exit' or 'quit' to stop logging and close the program
+    '''
+    input_option = ""
+    while (True):
+        input_option = raw_input("Type 'quit' or 'exit' to stop logging and close the program\n")  # Use input() in Python 3
+        if((input_option == "quit") or (input_option == "exit") ):
+            break
+              
 def main(ini_file_path):
     if DataLogger.FILE_EVENT_LOGGING:
         logging.basicConfig(filename=DataLogger.EVENT_LOGGING_FILE_PATH,format='%(asctime)s - %(levelname)8s - %(message)s',level=DataLogger.LOGGING_EVENT_LEVEL)  
@@ -150,8 +158,7 @@ def main(ini_file_path):
     xively_switch(configFile.get_xively_section())
     bricklet_switch(configFile.get_bricklets())    
     
-    """START-WRITE-THREAD"""   
-        
+    """START-WRITE-THREAD"""       
     #create write thread
     DataLogger.Threads.append(threading.Thread(name="CSV Writer Thread", target=writer_thread))
     for t in DataLogger.Threads:
@@ -164,8 +171,9 @@ def main(ini_file_path):
     logging.debug("Get-Timers started.")  
       
     """END_CONDITIONS"""
-    raw_input('Press key to close\n')  # Use input() in Python 3
+    __exit_condition()
     
+    """CLEANUP_AFTER_STOP """
     #set EXIT_FLAG for Get-Timers
     LoggerTimer.EXIT_FLAG = True
     #check if all timers stopped
