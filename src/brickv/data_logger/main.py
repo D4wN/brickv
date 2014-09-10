@@ -3,8 +3,8 @@ from brickv.data_logger.bricklets import *
 from brickv.data_logger.utils import *
 
 import argparse                             # command line argument parser
-import sys
-import logging                              #static logging system
+#import sys
+#import logging                              #static logging system
 
 """ 
 - __main__
@@ -120,8 +120,7 @@ def bricklet_switch(data):
             VoltageCurrentBricklet(bricklet_uid).start_timer(bricklet_variables)
         else:
             # TODO: Send err msg to user
-            print "There is no bricklet with name: " + bricklet_name
-                     
+            logging.warning("There is no bricklet with the name: " + bricklet_name)                     
             
 def main(ini_file_path):
     if DataLogger.FILE_EVENT_LOGGING:
@@ -129,9 +128,10 @@ def main(ini_file_path):
     else:
         logging.basicConfig(format="%(asctime)s - %(levelname)8s - %(message)s",level=DataLogger.LOGGING_EVENT_LEVEL)  
     
-    print "data_logger.main ini_file_paht = " + ini_file_path
+    logging.debug("data_logger.main main->ini_file_path: "+ ini_file_path)
     # exit if the path to the configuration file is invalid
     if (ini_file_path == "None"):
+        logging.critical("No config.ini file found!")
         sys.exit(-1) 
         
     '''Parse configuration file'''
@@ -144,61 +144,53 @@ def main(ini_file_path):
   
     DataLogger.ipcon.connect(DataLogger.host, DataLogger.port)  # Connect to brickd
     logging.info("Connection to " + DataLogger.host + ":" + str(DataLogger.port) + " established.")
-    print "IPCON.CONNECT"
     # Don't use device before ipcon is connected
     
     general_switch(configFile.get_general_section())
     xively_switch(configFile.get_xively_section())
-    bricklet_switch(configFile.get_bricklets())
+    bricklet_switch(configFile.get_bricklets())    
     
-    
-    """START-WRITE-THREAD
-    + create the magic sleep time
-    """   
+    """START-WRITE-THREAD"""   
         
     #create write thread
-    t = threading.Thread(name="Writer_Thread", target=writer_thread)
-    DataLogger.Threads.append(t)
-    t.start()
-    
+    DataLogger.Threads.append(threading.Thread(name="CSV Writer Thread", target=writer_thread))
+    for t in DataLogger.Threads:
+        t.start()
+    logging.debug("Work Threads started.")    
     
     """START-TIMERS"""
     for t in LoggerTimer.Timers:
         t.start()
-        
+    logging.debug("Get-Timers started.")  
+      
     """END_CONDITIONS"""
     raw_input('Press key to close\n')  # Use input() in Python 3
     
-    #stop Timers--------------------
-#     for t in LoggerTimer.Timers:
-#         t.cancel()
+    #set EXIT_FLAG for Get-Timers
     LoggerTimer.EXIT_FLAG = True
-    #check if timer stopped
+    #check if all timers stopped
     for t in LoggerTimer.Timers:
-        t.join()
+        t.join()    
+    logging.debug("Get-Timers stopped.")
     
-    logging.debug("All Timer Callbacks stopped.")
-    
-    #stop writer thread-------------
-    #set stop flag for writer thread
+    #set THREAD_EXIT_FLAG for all work threads
     DataLogger.THREAD_EXIT_FLAG = True
-    #wait for writer thread
+    #wait for all threads to stop
     for th in  DataLogger.Threads:
-        th.join()
-    
-    logging.debug("All working Threads stopped.")
+        th.join()    
+    logging.debug("Work Threads stopped.")
     
     DataLogger.ipcon.disconnect()
-    logging.info("Connection successfully disconnected.")
+    logging.info("Connection closed successfully.")
     
     #TODO: delet this!
-    logging.debug("Level 10")
-    logging.info("Level 20")
-    logging.warn("Level 30")
-    logging.warning("Level 30")
-    logging.error("Level 40")
-    #logging.exception("Level 40")
-    logging.critical("Level 50")
+#     logging.debug("Level 10")          #Detailed information, typically of interest only when diagnosing problems.
+#     logging.info("Level 20"            #Confirmation that things are working as expected.
+#     logging.warn("Level 30")           #An indication that something unexpected happened, or indicative of some problem in the near future (e.g. disk space low). The software is still working as expected.     
+#     logging.warning("Level 30")        #Use warning instead of warn
+#     logging.error("Level 40")          #Due to a more serious problem, the software has not been able to perform some function.
+#     logging.exception("Level 40")      #DO NOT USE! OR ONLY FOR EXCEPTIONS!
+#     logging.critical("Level 50")       #A serious error, indicating that the program itself may be unable to continue running.
 
 def command_line_start(argv,program_name):
     cl_parser = argparse.ArgumentParser(description=' -c <config-file>')

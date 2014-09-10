@@ -29,7 +29,7 @@ import Queue, threading, time, logging                               #Writer Thr
 class DataLogger():
     
     #Logger
-    FILE_EVENT_LOGGING = True                              #for event logging in to a file
+    FILE_EVENT_LOGGING = False                              #for event logging in to a file
     EVENT_LOGGING_FILE_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
     LOGGING_EVENT_LEVEL = logging.DEBUG
     
@@ -56,6 +56,7 @@ class DataLogger():
                 ret = 0
             return ret
         except ValueError:
+            logging.debug("DataLogger.parse_to_int("+ string +") could not be parsed! Return 0 for the Timer.")
             return 0
     
     parse_to_int = staticmethod(parse_to_int) 
@@ -173,6 +174,7 @@ class CSVWriter(object):
         if(not self._file_is_empty()):
             return
     
+        logging.debug("CSVWriter._write_header() - done")
         self._csv_file.writerow(["UID"] + ["NAME"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
         
     def write_data_row(self, csv_data):
@@ -199,7 +201,6 @@ class CSVWriter(object):
             return True
         
         if not self.close_file():
-            #print "CSV_Writer.set_file_path(" + new_file_path + ") failed!"
             return False
         
         self._file_path = new_file_path
@@ -271,7 +272,6 @@ class LoggerTimer(object):
         self.cancel()
         if LoggerTimer.EXIT_FLAG:
             self._t.cancel()
-            print "Timer - CANCEL"
             return
         self._t = Timer(self._interval, self._loop)
         self.start()
@@ -371,7 +371,7 @@ class DataLoggerConfig(object):
         
         # TODO: define error number for this exception
         if(len(self._bricklets) == 0):
-            print "There are no bricklets configured in the configuration file"
+            logging.error("There are no bricklets configured in the configuration file!")
             sys.exit(-1)  
         
     def get_general_section(self):
@@ -436,26 +436,27 @@ class BrickletInfo(object):
 
 
 def writer_thread():
-    print "THREAD-STARTED"
+    thread_name = "Work Thread(" + threading.current_thread().name + ")"
+    logging.debug(thread_name + " started.")
     csv_writer = CSVWriter(DataLogger.DEFAULT_FILE_PATH)
     
     while (True):
         if not DataLogger.Q.empty():
             csv_data = DataLogger.Q.get()
-            print "WR--THREAD      : %s" % (str(csv_data.raw_data))
+            logging.debug(thread_name + " -> " + str(csv_data.raw_data))
             if not csv_writer.write_data_row(csv_data):
-                print "csv_writer.write_data_row failed!"
-        #TODO: sleep time?
+                print logging.warning(thread_name + " could not write csv row!")
+                                      
         if not DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
-            print "WR--THREAD      : SLEEP("+ str(DataLogger.THREAD_SLEEP) +"s)"
+            logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
             time.sleep(DataLogger.THREAD_SLEEP)
         
         if DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
             
             exit_flag = csv_writer.close_file()
             if exit_flag:
-                print "csv_writer closed!"
+                logging.debug(thread_name + " closed his csv_writer.")
             else:
-                print "csv_writer not closed! -> " + str(exit)
-            print "THREAD-FINISHED"
+                logging.debug(thread_name + " could NOT close his csv_writer! EXIT_FLAG=" + str(exit))
+            logging.debug(thread_name + " finished his work.")
             break
