@@ -673,6 +673,8 @@ class PiezoSpeakerBricklet():
 #TODO: TEST PTC
 from tinkerforge.bricklet_ptc import PTC
 PTC_BRICKLET = "PTC"
+PTC_BRICKLET_TEMPERATURE = "Temperature"
+PTC_BRICKLET_RESISTANCE = "Resistance"
 class PTCBricklet():
     
     def __init__(self, uid):
@@ -685,6 +687,7 @@ class PTCBricklet():
 
 ############################################################################################
 #TODO: TEST Remote Switch
+#TODO: Remote Switch variables
 from tinkerforge.bricklet_remote_switch import RemoteSwitch
 REMOTE_SWITCH = "Remote Switch"
 class RemoteSwitchBricklet():
@@ -701,6 +704,7 @@ class RemoteSwitchBricklet():
 #TODO: TEST Rotary Encoder
 from tinkerforge.bricklet_rotary_encoder import RotaryEncoder
 ROTARY_ENCODER = "Rotary Encoder"
+ROTARY_ENCODER_COUNT = "Count"
 class RotaryEncoderBricklet():
     
     def __init__(self, uid):
@@ -715,6 +719,8 @@ class RotaryEncoderBricklet():
 #TODO: TEST Rotary Poti
 from tinkerforge.bricklet_rotary_poti import RotaryPoti
 ROTARY_POTI = "Rotary Poti"
+ROTARY_POTI_POSITION = "Position"
+ROTARY_POTI_ANALOG_VALUE = "Analog Value"
 class RotaryPotiBricklet():
     
     def __init__(self, uid):
@@ -729,6 +735,8 @@ class RotaryPotiBricklet():
 #TODO: TEST Segment Display 4x7
 from tinkerforge.bricklet_segment_display_4x7 import BrickletSegmentDisplay4x7 
 SEGMENT_DISPLAY_4x7 = "Segment Display 4x7"
+SEGMENT_DISPLAY_4x7_SEGMENTS = "Segments"
+SEGMENT_DISPLAY_4x7_COUNTER_VALUE = "Counter Value"
 class SegmentDisplay4x7Bricklet():
     
     def __init__(self, uid):
@@ -743,6 +751,8 @@ class SegmentDisplay4x7Bricklet():
 #TODO: TEST Solid State Relay
 from tinkerforge.bricklet_solid_state_relay import BrickletSolidStateRelay
 SOLID_STATE_RELAY = "Solid State Relay"
+SOLID_STATE_RELAY_STATE = "State"
+SOLID_STATE_RELAY_MONOFLOP = "Monoflop"
 class SolidStateRelayBricklet():
     
     def __init__(self, uid):
@@ -757,6 +767,7 @@ class SolidStateRelayBricklet():
 #TODO: TEST Sound Intensity
 from tinkerforge.bricklet_sound_intensity import BrickletSoundIntensity
 SOUND_INTENSITY = "Sound Intensity"
+SOUND_INTENSITY_INTENSITY = "Intensity"
 class SoundIntensityBricklet():
     
     def __init__(self, uid):
@@ -771,6 +782,7 @@ class SoundIntensityBricklet():
 #TODO: TEST Temperature
 from tinkerforge.bricklet_temperature import BrickletTemperature
 TEMPERATURE = "Temperature"
+TEMPERATURE_TEMPERATURE = "Temperature"
 class TemperatureBricklet():
     
     def __init__(self, uid):
@@ -785,6 +797,8 @@ class TemperatureBricklet():
 #TODO: Temperature IR
 from tinkerforge.bricklet_temperature_ir import BrickletTemperatureIR
 TEMPERATURE_IR = "Temperature IR"
+TEMPERATURE_IR_AMBIENT_TEMPERATURE = "Ambient Temperature"
+TEMPERATURE_IR_OBJECT_TEMPERATURE ="Object Temperature"
 class TemperatureIRBricklet():
     
     def __init__(self, uid):
@@ -799,6 +813,7 @@ class TemperatureIRBricklet():
 #TODO: TEST Tilt
 from tinkerforge.bricklet_tilt import BrickletTilt
 TILT = "Tilt"
+TILT_STATE = "State"
 class TiltBricklet():
     
     def __init__(self, uid):
@@ -813,6 +828,8 @@ class TiltBricklet():
 #TODO: TEST Voltage
 from tinkerforge.bricklet_voltage import BrickletVoltage
 VOLTAGE = "Voltage"
+VOLTAGE_VOLTAGE = "Voltage"
+VOLTAGE_ANALOG_VALUE = "Analog Value"
 class VoltageBricklet():
     
     def __init__(self, uid):
@@ -827,6 +844,9 @@ class VoltageBricklet():
 #TODO: TEST Voltage/Current
 from tinkerforge.bricklet_voltage_current import BrickletVoltageCurrent
 VOLTAGE_CURRENT = "Voltage Current"
+VOLTAGE_CURRENT_CURRENT = "Current"
+VOLTAGE_CURRENT_VOLTAGE = "Voltage"
+VOLTAGE_CURRENT_POWER = "Power"
 class VoltageCurrentBricklet():
     
     def __init__(self, uid):
