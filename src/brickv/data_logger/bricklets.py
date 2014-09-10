@@ -39,13 +39,16 @@ class AbstractBricklet(object):
         
     def _try_catch(self, func):
         value = "[NYI-FAIL-TIMER]"
-        err = 0
+        #err = 0
         try:
             value = func()
         except Exception as e:
-            value = "Error[" + str(e.value) + "]: " + str(e.description)
-            err = 1
-        return (value, err)
+            value = self._exception_msg(e.value, e.description)
+            #err = 1
+        return value
+    
+    def _exception_msg(self, value, msg):
+        return "ERROR[" + str(value) + "]: " + str(msg)
     
     def __str__(self):
         return "Bricklet=" + str(type(self)) + " | <UID="+ self.uid +">"
@@ -135,7 +138,7 @@ class AnalogOutBricklet(AbstractBricklet):
              
         value1 = DataLogger.parse_to_int(data[ANALOG_OUT_VOLTAGE]) 
         
-        t = LoggerTimer(value1, self._timer_voltage()())
+        t = LoggerTimer(value1, self._timer_voltage)
         LoggerTimer.Timers.append(t)         
 
     def _timer_voltage(self):
@@ -215,19 +218,21 @@ class ColorBricklet(AbstractBricklet):
     def _timer_color(self):
         #TODO: TEST NEEDED !!!!!
         try:
-            r, g, b, c = self._device.get_color
+            r, g, b, c = self._device.get_color()
             DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_RED, r))
             DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_GREEN, g))
             DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_BLUE, b))
             DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_CLEAR, c))
         except Exception as e:
-            DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_COLOR, "ERROR["+str(e.value)+"]: "+str(e.description)))       
+            DataLogger.Q.put(CSVData(self.uid, COLOR, COLOR_COLOR, self._exception_msg(e.value, e.description)))
         
     def _timer_illuminance(self):
-        logging.debug("Color._timer_illuminance [NYI]")
+        #logging.debug("Color._timer_illuminance [NYI]")
+        pass
         
     def _timer_color_temperature(self):
-        logging.debug("Color._timer_color_temperature [NYI]")
+        #logging.debug("Color._timer_color_temperature [NYI]")
+        pass
     
 
 ############################################################################################
