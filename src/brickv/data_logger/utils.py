@@ -36,12 +36,8 @@ class DataLogger():
     Q = Queue.Queue()       #gloabl queue for write jobs
     Threads = []            #gloabl thread array for all running threads/jobs
 
-    THREAD_EXIT_FLAG = 0    #flag for stopping the thread   
-    #CB_SUM / CB_COUNT = CB_MED per sec
-    #CB_MED / CB_COUNT = Thread time for each write
-    CB_SUM = 0
-    CB_COUNT = 0
-    THREAD_SLEEP = -1               #in seconds!; fail state = -1
+    THREAD_EXIT_FLAG = False    #flag for stopping the thread   
+    THREAD_SLEEP = 5              #in seconds!; fail state = -1 TODO: Enahncement -> use condition objects
     
     def parse_to_int(string):
         try:
@@ -243,6 +239,7 @@ class LoggerTimer(object):
     '''This class provides a timer with a repeat functionality based on a interval'''
     
     Timers = [] # global array for all running timers
+    EXIT_FLAG = False
     
     def __init__(self, interval, func):
         ''' 
@@ -262,6 +259,10 @@ class LoggerTimer(object):
         '''Runs the <self._func> function every <self._interval> seconds'''
         self._func()
         self.cancel()
+        if LoggerTimer.EXIT_FLAG:
+            self._t.cancel()
+            print "Timer - CANCEL"
+            return
         self._t = Timer(self._interval, self._loop)
         self.start()
            
@@ -435,10 +436,11 @@ def writer_thread():
             if not csv_writer.write_data_row(csv_data):
                 print "csv_writer.write_data_row failed!"
         #TODO: sleep time?
-        if not DataLogger.THREAD_EXIT_FLAG:            #TODO: qucikfix for slow writing queue after end
+        if not DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
+            print "WR--THREAD      : SLEEP("+ str(DataLogger.THREAD_SLEEP) +"s)"
             time.sleep(DataLogger.THREAD_SLEEP)
         
-        if(DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty()): 
+        if DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
             
             exit_flag = csv_writer.close_file()
             if exit_flag:
