@@ -585,9 +585,9 @@ class MoistureBricklet():
 
 ############################################################################################
 #TODO: TEST Motion Detector
+#TODO: Motion Detector variables
 from tinkerforge.bricklet_motion_detector import MotionDetector
 MOTION_DETECTOR = "Motion Detector"
-MOTION_DETECTOR_MOTION_DETECTED = "Motion Detected"
 class MotionDetectorBricklet():
     
     def __init__(self, uid):
