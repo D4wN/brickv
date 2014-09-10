@@ -14,3 +14,7 @@ brickv.creator
 brickv.creator.user
 brickv.files
 brickv.includes
+src/brickv/data_logger/*.ini
+src/brickv/data_logger/*.cfg
+src/brickv/data_logger/*.csv
+src/brickv/data_logger/*.log
