@@ -13,21 +13,27 @@ import argparse                             # command line argument parser
 
 """
 ###switch###
-def general_switch(data):
-    #TODO: write code to process data out of the xively
-    pass
+def general_switch(data):           
+    DataLogger.LOG_TO_FILE = DataLogger.parse_to_bool(data.get(GENERAL_LOG_TO_FILE))
+    DataLogger.DEFAULT_FILE_PATH = data.get(GENERAL_PATH_TO_FILE)
 
 def xively_switch(data):
-    #TODO: write code
+    #TODO: write code for xively handling
+    
+    # = data.get(XIVELY_ACTIVE)
+    # = data.get(XIVELY_AGENT_DESCRIPTION)
+    # = data.get(XIVELY_FEED)
+    # = data.get(XIVELY_API_KEY)
+    # = DataLogger.parse_to_int(data.get(XIVELY_UPDATE_RATE))
     pass
 
-def bricklet_switch(data):   
+def bricklet_switch(data):
+
     for current_bricklet in data:
         bricklet_name = current_bricklet.name
         bricklet_uid = current_bricklet.uid
         bricklet_variables = current_bricklet.variables
         
-        # TODO: yes add all bricklets here
         if (bricklet_name == AMBIENT_LIGHT ):
             AmbientLightBricklet(bricklet_uid).start_timer(bricklet_variables)
         elif(bricklet_name == ANALOG_IN):
@@ -117,13 +123,13 @@ def bricklet_switch(data):
         elif(bricklet_name == VOLTAGE_CURRENT ):
             VoltageCurrentBricklet(bricklet_uid).start_timer(bricklet_variables)
         else:
-            # TODO: Send err msg to user
-            logging.warning("There is no bricklet with the name: " + bricklet_name)                     
+            logging.warning("The bricklet [" +bricklet_name+ "] is not yet supported")                     
 
 def __exit_condition():
     '''
     Waits for an 'exit' or 'quit' to stop logging and close the program
     '''
+    # TODO: Need another exit condition for the brickv GUI
     input_option = ""
     while (True):
         input_option = raw_input("Type 'quit' or 'exit' to stop logging and close the program\n")  # Use input() in Python 3
@@ -155,7 +161,7 @@ def main(ini_file_path):
     # Don't use device before ipcon is connected
     
     general_switch(configFile.get_general_section())
-    xively_switch(configFile.get_xively_section())
+    xively_switch(configFile.get_xively_section())      
     bricklet_switch(configFile.get_bricklets())    
     
     """START-WRITE-THREAD"""       
@@ -203,7 +209,6 @@ def main(ini_file_path):
 def command_line_start(argv,program_name):
     cl_parser = argparse.ArgumentParser(description=' -c <config-file>')
     
-
     cl_parser.add_argument('-c', action="store", dest="config_file", default="None", help="Path to the configuration file")
     results = cl_parser.parse_args(argv)
 
@@ -213,18 +218,5 @@ def command_line_start(argv,program_name):
 from tinkerforge.ip_connection import IPConnection
 ###main###
 if __name__ == '__main__':      
-    """PARSE-INI
-    command-line-start:
-        - check arguments
-            - must have: config-file-path
-        - get HOST and PORT from command-line arguments / ini file
-            - create DEFAULT values for both ("localhost", 4223)
-        
-        
-    gui-start:
-        
-    both:
-        - set DEFAULT_FILE_PATH
-    """ 
     ini_file_path = command_line_start(sys.argv[1:], sys.argv[0]) 
     main(ini_file_path)
