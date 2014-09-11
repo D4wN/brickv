@@ -12,19 +12,6 @@ class TMP_EXCEPTION(Exception):
         self.description = desc
 
 
-###Sections##############################################################
-GENERAL_SECTION = "GENERAL"
-GENERAL_LOG_TO_FILE = "log_to_file"
-GENERAL_PATH_TO_FILE = "path_to_file"
-
-XIVELY_SECTION = "XIVELY"
-XIVELY_ACTIVE = "active"
-XIVELY_AGENT_DESCRIPTION = "agent_description"
-XIVELY_FEED = "feed"
-XIVELY_API_KEY = "api_key"
-XIVELY_UPDATE_RATE = "update_rate"
-###Bricklets and Variables###
-
 #ALL BRICKLETS + FUNCTIONS##################################################################
 class AbstractBricklet(object):
     """DEBUG and Inheritance only class"""
