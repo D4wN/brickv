@@ -35,6 +35,7 @@ class DataLogger():
     
     #General
     DEFAULT_FILE_PATH = "logged_data.csv"
+    LOG_TO_FILE = True
     ipcon = None
     host = "localhost"
     port = 4223  
@@ -50,6 +51,10 @@ class DataLogger():
     
     #Functions
     def parse_to_int(string):
+        '''
+        Returns an integer out of a string.
+        0(Zero) -- if string is negative or an exception raised during the converting process.
+        '''
         try:
             ret = int(float(string))
             if ret < 0:
@@ -60,8 +65,19 @@ class DataLogger():
             return 0
     
     parse_to_int = staticmethod(parse_to_int) 
-
-
+    
+    def parse_to_bool(bool_string):
+        '''
+        Returns a 'True', if the string is equals to 'true' or 'True'.
+        Otherwise it'll return a False
+        '''
+        if (bool_string == "true" or bool_string == "Ture"):
+            return True
+        else:
+            return False
+            
+    parse_to_bool = staticmethod(parse_to_bool) 
+            
 
 '''
 /*---------------------------------------------------------------------------
@@ -303,13 +319,23 @@ class LoggerTimer(object):
 import codecs # DataLoggerConfig to read the file in correct encoding
 from ConfigParser import SafeConfigParser # DataLoggerConfig parser class
 
+###Sections##############################################################
+GENERAL_SECTION = "GENERAL"
+GENERAL_LOG_TO_FILE = "log_to_file"
+GENERAL_PATH_TO_FILE = "path_to_file"
+
+XIVELY_SECTION = "XIVELY"
+XIVELY_ACTIVE = "active"
+XIVELY_AGENT_DESCRIPTION = "agent_description"
+XIVELY_FEED = "feed"
+XIVELY_API_KEY = "api_key"
+XIVELY_UPDATE_RATE = "update_rate"
+###Bricklets and Variables###
+
 class DataLoggerConfig(object):
     '''
     This class provides the read-in functionality for the Data Logger configuration file
-    '''
-    __GENERAL_SECTION = "GENERAL"
-    __XIVELY_SECTION = "XIVELY"
-    
+    '''   
     __NAME_KEY = "name"
     __UID_KEY = "uid"
 
@@ -352,15 +378,15 @@ class DataLoggerConfig(object):
         # Open the file with the correct encoding
         with codecs.open(self.filenName, 'r', encoding='utf-8') as f:
             parser.readfp(f)
-      
+        # TODO: Use the variables out of bricklets
         for section_name in parser.sections():
-            if (section_name == self.__GENERAL_SECTION):
+            if (section_name == GENERAL_SECTION):
                 # Get GENERAL section
-                self.general =self._get_section_as_hashmap(section_name,parser)
+                self._general =self._get_section_as_hashmap(section_name,parser)
 
-            elif (section_name == self.__XIVELY_SECTION):
+            elif (section_name == XIVELY_SECTION):
                 # Get XIVELY section
-                self.xively = self._get_section_as_hashmap(section_name,parser)
+                self._xively = self._get_section_as_hashmap(section_name,parser)
 
             else:
                 # Get all other variables  
