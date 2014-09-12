@@ -1,0 +1,318 @@
+Bricklet
+	- TODO real values			#handling of real values from brickd
+	- timeout					#exceeption handling of the _timer_xxxxx() functions
+
+TODO means  that this need to be tested
+No TODO means it was tested
+----------------------------------------------------------------------------------
+
+Ambient Light
+	Vars:
+		- Illuminance
+		- Analog Value
+	Tests:
+		- real_values
+		- timeout
+Analog In
+	Vars:
+		- Voltage
+		-Analog Value
+	Tests:
+		- TODO real_values
+		- timeout
+Analog Out
+	Vars:
+		- Voltage
+	Tests:
+		- TODO real_values
+		- timeout
+Barometer
+	Vars:
+		- Air Pressure
+		- Altitude
+		- Chip Temperature
+	Tests:
+		- real_values
+		- timeout
+Breakout
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Color
+	Vars:
+		- Red Green Blue Clear
+		- Illumincance
+		- Temperature		
+	Tests:
+		- TODO real_values
+		- timeout
+Current12
+	Vars:
+		- Analog Value
+		- Current
+	Tests:
+		- TODO real_values
+		- timeout
+Current25
+	Vars:
+		- Analog Value
+		- Current		
+	Tests:
+		- TODO real_values
+		- timeout
+Distance IR
+	Vars:
+		- Analog Value
+		- Distance
+	Tests:
+		- TODO real_values
+		- timeout
+Distance US
+	Vars:
+		- Distance		
+	Tests:
+		- TODO real_values
+		- timeout
+Dual Button
+	Vars:
+		- Buttons
+		- Leds
+	Tests:
+		- TODO real_values
+		- timeout
+Dual Relay
+	Vars:
+		- state
+		
+	Tests:
+		- TODO real_values
+		- timeout
+GPS
+	Vars:
+		- Coordiantes
+		- Altitude
+		- Motion
+		- Date Time		
+	Tests:
+		- TODO real_values
+		- timeout
+Hall Effect
+	Vars:
+		- Value		
+	Tests:
+		- TODO real_values
+		- timeout
+Humidity
+	Vars:
+		- Humidity
+		- Analog Value		
+	Tests:
+		- real_values
+		- timeout
+Industrial Digital In 4
+	Vars:
+		- TODO		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Industrial Digital Out 4
+	Vars:
+		- TODO		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Industrial Dual 0-20mA
+	Vars:
+		- Current		
+	Tests:
+		- TODO real_values
+		- timeout
+Industrial Quad Relay
+	Vars:
+		- TODO		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+IO-16
+	Vars:
+		- Ports		
+	Tests:
+		- TODO real_values
+		- timeout
+IO-4
+	Vars:
+		- Value		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Joystick
+	Vars:
+		- Position
+		- Analog Value
+		- Pressed
+	Tests:
+		- TODO real_values
+		- timeout
+LCD 16x2
+	Vars:
+		- TODO		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+LCD 20x4
+	Vars:
+		- TODO
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+LED Strip
+	Vars:
+		<---------
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Line
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Linear Poti
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Moisture
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Motion Detector
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Multi Touch
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+NFC/RFID
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Piezo Buzzer
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Piezo Speaker
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+PTC
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Remote Switch
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Rotary Encoder
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Rotary Poti
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Segment Display 4x7
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Solid State Relay
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Sound Intensity
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Temperature
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Temperature IR
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Tilt
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Voltage
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
+Voltage/Current
+	Vars:
+		
+		
+	Tests:
+		- TODO real_values
+		- TODO timeout
