@@ -1,9 +1,9 @@
 #MAIN DATA_LOGGER PROGRAMM
 from brickv.data_logger.bricklets import *
-from brickv.data_logger.utils import *
+from brickv.data_logger.utils import * 
 
 import argparse                             # command line argument parser
-#import sys
+import sys
 #import logging                              #static logging system
 
 """ 
@@ -149,7 +149,7 @@ def main(ini_file_path):
         sys.exit(-1) 
         
     '''Parse configuration file'''
-    configFile = DataLoggerConfig(ini_file_path);
+    configFile = DataLoggerConfig(ini_file_path); 
     configFile.read_config_file()
     
     """CREATE-CONNECTION-TO-BRICKD"""
@@ -157,8 +157,11 @@ def main(ini_file_path):
     DataLogger.ipcon = IPConnection()
   
     DataLogger.ipcon.connect(DataLogger.host, DataLogger.port)  # Connect to brickd
+	# Don't use device before ipcon is connected
     logging.info("Connection to " + DataLogger.host + ":" + str(DataLogger.port) + " established.")
-    # Don't use device before ipcon is connected
+    DataLogger.ipcon.set_timeout(1) #TODO: Timeout number 
+    logging.debug("Set ipcon.time_out to 1.")
+    
     
     general_switch(configFile.get_general_section())
     xively_switch(configFile.get_xively_section())      
@@ -177,8 +180,10 @@ def main(ini_file_path):
     logging.debug("Get-Timers started.")  
       
     """END_CONDITIONS"""
+	logging.info("DataLogger is runninng...")
     __exit_condition()
-    
+	logging.info("Closing Timers and Threads...")    
+
     """CLEANUP_AFTER_STOP """
     #set EXIT_FLAG for Get-Timers
     LoggerTimer.EXIT_FLAG = True

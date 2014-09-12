@@ -28,7 +28,7 @@ import Queue, threading, time, logging                               #Writer Thr
 
 class DataLogger():
     
-    ###Sections##############################################################
+    #Section Identifier
     GENERAL_SECTION = "GENERAL"
     GENERAL_LOG_TO_FILE = "log_to_file"
     GENERAL_PATH_TO_FILE = "path_to_file"
@@ -39,8 +39,7 @@ class DataLogger():
     XIVELY_FEED = "feed"
     XIVELY_API_KEY = "api_key"
     XIVELY_UPDATE_RATE = "update_rate"
-    ###Bricklets and Variables###
-
+    
     #Logger
     FILE_EVENT_LOGGING = False                              #for event logging in to a file
     EVENT_LOGGING_FILE_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
@@ -56,14 +55,25 @@ class DataLogger():
     
     #Queues
     Q = Queue.Queue()                                       #gloabl queue for write jobs
+    XQ = Queue.Queue()                                      #Xively Queue
     
     #Thread things
     Threads = []                                            #gloabl thread array for all running threads/jobs
     THREAD_EXIT_FLAG = False                                #flag for stopping the thread   
-    THREAD_SLEEP = 5                                        #in seconds!; fail state = -1 TODO: Enahncement -> use condition objects
-    
+    THREAD_SLEEP = 1#TODO: qucik testing fix                                        #in seconds!; fail state = -1 TODO: Enahncement -> use condition objects
     
     #Functions
+    def add_to_queue(csv):
+        #Look which queues are logging
+        if DataLogger.LOG_TO_FILE:
+            DataLogger.Q.put(csv)
+        
+        if DataLogger.LOG_TO_XIVELY:
+            #DataLogger.XQ.put(csv)
+            logging.warning("Xively is not supported!")
+    
+    add_to_queue = staticmethod(add_to_queue)
+    
     def parse_to_int(string):
         '''
         Returns an integer out of a string.
@@ -125,9 +135,13 @@ class CSVData(object):
     def _set_timestamp(self):
         """
         Adds a timestamp in ISO 8601 standard, with ms
-        ISO 8061 = YYYY-MM-DD hh:mm:ss.msmsms
+        ISO 8061 =  YYYY-MM-DDThh:mm:ss
+                    2014-09-10T14:12:05
+        Python doees not support Timezones without extra libraries!
         """
-        self.timestamp = datetime.datetime.now()
+        t = datetime.datetime.now();
+        
+        self.timestamp = '{:%Y-%m-%dT%H:%M:%S}'.format(t)
     
     def __str__(self):
         """
@@ -174,9 +188,9 @@ class CSVWriter(object):
 
         #newline problem solved + import sys
         if sys.version_info >= (3, 0, 0):
-            self._raw_file = open(self._file_path, 'a', newline='')
+            self._raw_file = open(self._file_path, 'w', newline='')  #TODO: test fix change w into a
         else:
-            self._raw_file = open(self._file_path, 'ab')
+            self._raw_file = open(self._file_path, 'wb')#TODO: test fix change w into a
         
         self._csv_file = csv.writer(self._raw_file, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
         
@@ -217,7 +231,7 @@ class CSVWriter(object):
         if self._raw_file == None or self._csv_file == None:
             return False
         
-        self._csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [csv_data.raw_data] + [csv_data.timestamp])        
+        self._csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [str(csv_data.raw_data)] + [csv_data.timestamp])        
         return True
     
     def set_file_path(self, new_file_path):
@@ -481,7 +495,7 @@ def writer_thread():
                 print logging.warning(thread_name + " could not write csv row!")
                                       
         if not DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
-            logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
+            #TODO: qucik testing fix logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
             time.sleep(DataLogger.THREAD_SLEEP)
         
         if DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
