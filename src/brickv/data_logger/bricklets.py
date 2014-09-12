@@ -210,10 +210,14 @@ class ColorBricklet(AbstractBricklet):
     def _timer_color(self):
         try:
             r, g, b, c = self.__TEMP_get_color()#self._device.get_color()
-            DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_RED, r))
-            DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_GREEN, g))
-            DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_BLUE, b))
-            DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_CLEAR, c))
+            if DataLogger.parse_to_bool(self._data[COLOR_RED]):
+                DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_RED, r))
+            if DataLogger.parse_to_bool(self._data[COLOR_GREEN]):
+                DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_GREEN, g))
+            if DataLogger.parse_to_bool(self._data[COLOR_BLUE]):
+                DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_BLUE, b))
+            if DataLogger.parse_to_bool(self._data[COLOR_CLEAR]): 
+                DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_CLEAR, c))
         except Exception as e:
             DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_COLOR, self._exception_msg(e.value, e.description)))
         
@@ -385,16 +389,20 @@ class DualButtonBricklet(AbstractBricklet):
     def _timer_buttons(self):
         try:
             button_l, button_r = self._device.get_button_state()
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_BUTTON_L, button_l))
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_BUTTON_R, button_r))
+            if DataLogger.parse_to_bool(self._data[DUAL_BUTTON_BUTTON_L]):
+                DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_BUTTON_L, button_l))
+            if DataLogger.parse_to_bool(self._data[DUAL_BUTTON_BUTTON_R]):
+                DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_BUTTON_R, button_r))
         except Exception as e:
             DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_BUTTONS, self._exception_msg(e.value, e.description)))
 
     def _timer_leds(self):
         try:
             led_l, led_r = self._device.get_led_state()
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_LED_L, led_l))
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_LED_R, led_r))
+            if DataLogger.parse_to_bool(self._data[DUAL_BUTTON_LED_L]):
+                DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_LED_L, led_l))
+            if DataLogger.parse_to_bool(self._data[DUAL_BUTTON_LED_R]):
+                DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_LED_R, led_r))
         except Exception as e:
             DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_LEDS, self._exception_msg(e.value, e.description)))
 
@@ -424,8 +432,10 @@ class DualRelayBricklet(AbstractBricklet):
     def _timer_state(self):
         try:
             r1, r2 = self._device.get_state()
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_RELAY, DUAL_RELAY_1, r1))
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_RELAY, DUAL_RELAY_2, r2))
+            if DataLogger.parse_to_bool(self._data[DUAL_RELAY_1]):
+                DataLogger.add_to_queue(CSVData(self.uid, DUAL_RELAY, DUAL_RELAY_1, r1))
+            if DataLogger.parse_to_bool(self._data[DUAL_RELAY_2]):
+                DataLogger.add_to_queue(CSVData(self.uid, DUAL_RELAY, DUAL_RELAY_2, r2))
         except Exception as e:
             DataLogger.add_to_queue(CSVData(self.uid, DUAL_RELAY, DUAL_RELAY_STATE, self._exception_msg(e.value, e.description)))
 
@@ -447,6 +457,7 @@ GPS_HDOP = "Hdop"
 GPS_VDOP = "Vdop"
 GPS_EPE = "Epe"
 GPS_ALTITUDE = "Altitude"
+GPS_ALTITUDE_VALUE = "Altitude Value"
 GPS_GEOIDAL_SEPERATION = "Geoidal Seperation"
 GPS_MOTION = "Motion"
 GPS_COURSE = "Course"
@@ -478,73 +489,88 @@ class GPSBricklet(AbstractBricklet):
     def _timer_coordinates(self):
         try:
             #check for the FIX Value of get_status()
-            fix, satellites_view, satellites_used = self._device.get_status()
-            #fix, satellites_view, satellites_used = self.__TMP_get_status()#TODO: TMP ONLY
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_FIX_STATUS, fix))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_VIEW, satellites_view))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_USED, satellites_used))
-              
+            fix = self._get_fix_status()
+                          
             if fix == GPS.FIX_NO_FIX:
                 DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_COORDINATES, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was 1, but needs to be 2 or 3 for valid Coordinates.")))
                 return
 
             latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self._device.get_coordinates()     
             #latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.__TMP_get_coordinates()  #TODO: TMP ONLY       
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_LATITUDE, latitude))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_NS, ns))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_LONGITUDE, longitude))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_EW, ew))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_PDOP, pdop))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_HDOP, hdop))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_VDOP, vdop))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_EPE, epe))
+            if DataLogger.parse_to_bool(self._data[GPS_LATITUDE]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_LATITUDE, latitude))
+            if DataLogger.parse_to_bool(self._data[GPS_NS]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_NS, ns))
+            if DataLogger.parse_to_bool(self._data[GPS_LONGITUDE]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_LONGITUDE, longitude))
+            if DataLogger.parse_to_bool(self._data[GPS_EW]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_EW, ew))
+            if DataLogger.parse_to_bool(self._data[GPS_PDOP]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_PDOP, pdop))
+            if DataLogger.parse_to_bool(self._data[GPS_HDOP]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_HDOP, hdop))
+            if DataLogger.parse_to_bool(self._data[GPS_VDOP]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_VDOP, vdop))
+            if DataLogger.parse_to_bool(self._data[GPS_EPE]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_EPE, epe))
         except Exception as e:
             DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_COORDINATES, self._exception_msg(e.value, e.description)))
 
     def _timer_altitude(self):
         try:
             #check for the FIX Value of get_status()
-            fix, satellites_view, satellites_used = self._device.get_status()
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_FIX_STATUS, fix))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_VIEW, satellites_view))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_USED, satellites_used))
+            fix = self._get_fix_status()
               
             if fix != GPS.FIX_3D_FIX:
                 DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_ALTITUDE, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 3 for valid Altitude Values.")))
                 return
 
             altitude, geoidal_separation = self._device.get_altitude()            
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_ALTITUDE, GPS_ALTITUDE, altitude))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_ALTITUDE, GPS_GEOIDAL_SEPERATION, geoidal_separation))
+            if DataLogger.parse_to_bool(self._data[GPS_ALTITUDE_VALUE]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_ALTITUDE, GPS_ALTITUDE_VALUE, altitude))
+            if DataLogger.parse_to_bool(self._data[GPS_GEOIDAL_SEPERATION]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_ALTITUDE, GPS_GEOIDAL_SEPERATION, geoidal_separation))
         except Exception as e:
             DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_ALTITUDE, self._exception_msg(e.value, e.description)))
 
     def _timer_motion(self):
         try:
             #check for the FIX Value of get_status()
-            fix, satellites_view, satellites_used = self._device.get_status()
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_FIX_STATUS, fix))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_VIEW, satellites_view))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_USED, satellites_used))
+            fix = self._get_fix_status()
               
             if fix == GPS.FIX_NO_FIX:
                 DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_MOTION, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 2 or 3 for valid Altitude Values.")))
                 return
 
             course, speed = self._device.get_motion()
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_COURSE, course))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SPEED, speed))
+            if DataLogger.parse_to_bool(self._data[GPS_COURSE]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_COURSE, course))
+            if DataLogger.parse_to_bool(self._data[GPS_SPEED]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SPEED, speed))
         except Exception as e:
             DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_MOTION, self._exception_msg(e.value, e.description)))
 
     def _timer_date_time(self):
         try:
             date, time = self._device.get_date_time()
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_DATE, date))
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_TIME, time))
+            if DataLogger.parse_to_bool(self._data[GPS_DATE]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_DATE, date))
+            if DataLogger.parse_to_bool(self._data[GPS_TIME]):
+                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_TIME, time))
         except Exception as e:
             DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_DATE_TIME, self._exception_msg(e.value, e.description)))
 
+    def _get_fix_status(self):
+        fix, satellites_view, satellites_used = self._device.get_status()
+        #fix, satellites_view, satellites_used = self.__TMP_get_status()#TODO: TMP ONLY
+        
+        if DataLogger.parse_to_bool(self._data[GPS_FIX_STATUS]):
+            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_FIX_STATUS, fix))
+        if DataLogger.parse_to_bool(self._data[GPS_SATELLITES_VIEW]):
+            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_VIEW, satellites_view))
+        if DataLogger.parse_to_bool(self._data[GPS_SATELLITES_USED]):
+            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_USED, satellites_used))
+        return fix
     
     #TODO: delete Dummys
     def __TMP_get_status(self):
@@ -675,10 +701,10 @@ class IndustrialDual020mABricklet(AbstractBricklet):
             sensor_0 = self._device.get_current(0)
             sensor_1 = self._device.get_current(1)
             
-            csv = CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, INDUSTRIAL_DUAL_0_20_MA_SENSOR_0, sensor_0)
-            DataLogger.add_to_queue(csv)            
-            csv = CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, INDUSTRIAL_DUAL_0_20_MA_SENSOR_1, sensor_1)
-            DataLogger.add_to_queue(csv)
+            if DataLogger.parse_to_bool(self._data[INDUSTRIAL_DUAL_0_20_MA_SENSOR_0]):
+                DataLogger.add_to_queue(CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, INDUSTRIAL_DUAL_0_20_MA_SENSOR_0, sensor_0))            
+            if DataLogger.parse_to_bool(self._data[INDUSTRIAL_DUAL_0_20_MA_SENSOR_1]):
+                DataLogger.add_to_queue(CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, INDUSTRIAL_DUAL_0_20_MA_SENSOR_1, sensor_1))
 
         except Exception as e:
             csv = CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, INDUSTRIAL_DUAL_0_20_MA_CURRENT, self._exception_msg(e.value, e.description))
@@ -729,10 +755,10 @@ class IO16Bricklet(AbstractBricklet):
             port_a = self._device.get_port('a')
             port_b = self._device.get_port('b')
             
-            csv = CSVData(self.uid, IO_16, IO_16_PORT_A, port_a)
-            DataLogger.add_to_queue(csv)            
-            csv = CSVData(self.uid, IO_16, IO_16_PORT_B, port_b)
-            DataLogger.add_to_queue(csv)
+            if DataLogger.parse_to_bool(self._data[IO_16_PORT_A]):
+                DataLogger.add_to_queue(CSVData(self.uid, IO_16, IO_16_PORT_A, port_a))           
+            if DataLogger.parse_to_bool(self._data[IO_16_PORT_B]):
+                DataLogger.add_to_queue(CSVData(self.uid, IO_16, IO_16_PORT_B, port_b))
 
         except Exception as e:
             csv = CSVData(self.uid, IO_16, IO_16_PORTS, self._exception_msg(e.value, e.description))
@@ -795,11 +821,11 @@ class JoystickBricklet(AbstractBricklet):
     def _timer_position(self):
         try:
             x, y = self._device.get_position()
-            
-            csv = CSVData(self.uid, JOYSTICK, JOYSTICK_POSITION_X, x)
-            DataLogger.add_to_queue(csv)            
-            csv = CSVData(self.uid, JOYSTICK, JOYSTICK_POSITION_Y, y)
-            DataLogger.add_to_queue(csv)
+
+            if DataLogger.parse_to_bool(self._data[JOYSTICK_POSITION_X]):
+                DataLogger.add_to_queue(CSVData(self.uid, JOYSTICK, JOYSTICK_POSITION_X, x))       
+            if DataLogger.parse_to_bool(self._data[JOYSTICK_POSITION_Y]):
+                DataLogger.add_to_queue(CSVData(self.uid, JOYSTICK, JOYSTICK_POSITION_Y, y))
 
         except Exception as e:
             csv = CSVData(self.uid, JOYSTICK, JOYSTICK_POSITION, self._exception_msg(e.value, e.description))
