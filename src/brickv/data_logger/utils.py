@@ -507,3 +507,7 @@ def writer_thread():
                 logging.debug(thread_name + " could NOT close his csv_writer! EXIT_FLAG=" + str(exit))
             logging.debug(thread_name + " finished his work.")
             break
+
+def xively_thread():
+    thread_name = "Work Thread(" + threading.current_thread().name + ")"
+    logging.warning(thread_name + " is not yet supported!")
