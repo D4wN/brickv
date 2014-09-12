@@ -49,6 +49,7 @@ class DataLogger():
     #General
     DEFAULT_FILE_PATH = "logged_data.csv"
     LOG_TO_FILE = True
+    LOG_TO_XIVELY = False
     ipcon = None
     host = "localhost"
     port = 4223  
