@@ -118,7 +118,7 @@ class CSVData(object):
     def __init__(self, uid, name, var_name, raw_data):
         '''
         uid      -- uid of the bricklet
-        name     -- name of the bricklet
+        name     -- DEVICE_IDENTIFIER of the bricklet
         var_name -- variable name of the logged value
         raw_data -- the logged value
         
@@ -147,7 +147,7 @@ class CSVData(object):
         """
         Simple Debug function for easier display of the object.
         """
-        return "UID =" + self.uid + "\nNAME=" + self.name + "\nVAR =" + self.var_name + "\nRAW =" + str(self.raw_data) + "\nTIME=" + str(self.timestamp) + "\n"
+        return "UID =" + str(self.uid) + "\nNAME=" + str(self.name) + "\nVAR =" + str(self.var_name) + "\nRAW =" + str(self.raw_data) + "\nTIME=" + str(self.timestamp) + "\n"
 
 
 '''
@@ -219,7 +219,7 @@ class CSVWriter(object):
             return
     
         logging.debug("CSVWriter._write_header() - done")
-        self._csv_file.writerow(["UID"] + ["NAME"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
+        self._csv_file.writerow(["UID"] + ["DEVICE_IDENTIFIER"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
         
     def write_data_row(self, csv_data):
         """

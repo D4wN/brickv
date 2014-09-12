@@ -20,10 +20,10 @@ class AbstractBricklet(object):
         self.uid = uid        
         self._device = None
         self._data = data
-
+        self._identifier = None 
 
     def start_timer(self):
-        logging.debug("[" + self.__str__() + " | <data="+ str(self._data) +">]")
+        logging.debug(self.__str__())
                 
         
     def _try_catch(self, func):
@@ -40,7 +40,7 @@ class AbstractBricklet(object):
         return "ERROR[" + str(value) + "]: " + str(msg)
     
     def __str__(self):
-        return "Bricklet=" + str(type(self)) + " | <UID="+ self.uid +">"
+        return "[BRICKLET=" + str(type(self)) + " | <UID="+ str(self.uid) +"> | <IDENTIEFIER=" + str(self._identifier) + "> | <data="+ str(self._data) + ">]"
     
 ############################################################################################
 #Ambient Light
@@ -54,6 +54,7 @@ class AmbientLightBricklet(AbstractBricklet):
         self.uid = uid  
         self._device = AmbientLight(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = AmbientLight.DEVICE_IDENTIFIER      
 
 
     def start_timer(self):
@@ -67,12 +68,12 @@ class AmbientLightBricklet(AbstractBricklet):
 
     def _timer_analog_value(self):        
         value = self._try_catch(self._device.get_analog_value)
-        csv = CSVData(self.uid, AMBIENT_LIGHT, AMBIENT_LIGHT_ANALOG_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, AMBIENT_LIGHT_ANALOG_VALUE, value)
         DataLogger.add_to_queue(csv)
         
     def _timer_illuminance(self):
         value = self._try_catch(self._device.get_illuminance)
-        csv = CSVData(self.uid, AMBIENT_LIGHT, AMBIENT_LIGHT_ILLUMINANCE, value)
+        csv = CSVData(self.uid, self._identifier, AMBIENT_LIGHT_ILLUMINANCE, value)
         DataLogger.add_to_queue(csv)  
 
 ############################################################################################
@@ -88,6 +89,7 @@ class AnalogInBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = AnalogIn(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = AnalogIn.DEVICE_IDENTIFIER  
 
 
     def start_timer(self):  
@@ -101,12 +103,12 @@ class AnalogInBricklet(AbstractBricklet):
 
     def _timer_analog_value(self):
         value = self._try_catch(self._device.get_analog_value)
-        csv = CSVData(self.uid, ANALOG_IN, ANALOG_IN_ANALOG_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, ANALOG_IN_ANALOG_VALUE, value)
         DataLogger.add_to_queue(csv)
         
     def _timer_voltage(self):
         value = self._try_catch(self._device.get_voltage)
-        csv = CSVData(self.uid, ANALOG_IN, ANALOG_IN_VOLTAGE, value)
+        csv = CSVData(self.uid, self._identifier, ANALOG_IN_VOLTAGE, value)
         DataLogger.add_to_queue(csv)  
 
 ############################################################################################
@@ -121,6 +123,7 @@ class AnalogOutBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = AnalogOut(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = AnalogOut.DEVICE_IDENTIFIER  
 
 
     def start_timer(self):   
@@ -132,7 +135,7 @@ class AnalogOutBricklet(AbstractBricklet):
 
     def _timer_voltage(self):
         value = self._try_catch(self._device.get_voltage)
-        csv = CSVData(self.uid, ANALOG_OUT, ANALOG_OUT_VOLTAGE, value)
+        csv = CSVData(self.uid, self._identifier, ANALOG_OUT_VOLTAGE, value)
         DataLogger.add_to_queue(csv)
 
 ############################################################################################
@@ -148,6 +151,7 @@ class BarometerBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = Barometer(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = Barometer.DEVICE_IDENTIFIER  
 
 
     def start_timer(self):        
@@ -163,17 +167,17 @@ class BarometerBricklet(AbstractBricklet):
 
     def _timer_air_pressure(self):
         value = self._try_catch(self._device.get_air_pressure)
-        csv = CSVData(self.uid, BAROMETER, BAROMETER_AIR_PRESSURE, value)
+        csv = CSVData(self.uid, self._identifier, BAROMETER_AIR_PRESSURE, value)
         DataLogger.add_to_queue(csv)
         
     def _timer_altitude(self):
         value = self._try_catch(self._device.get_altitude)
-        csv = CSVData(self.uid, BAROMETER, BAROMETER_ALTITUDE, value)
+        csv = CSVData(self.uid, self._identifier, BAROMETER_ALTITUDE, value)
         DataLogger.add_to_queue(csv)  
          
     def _timer_chip_temperature(self):
         value = self._try_catch(self._device.get_chip_temperature)
-        csv = CSVData(self.uid, BAROMETER, BAROMETER_CHIP_TEMPERATURE, value)
+        csv = CSVData(self.uid, self._identifier, BAROMETER_CHIP_TEMPERATURE, value)
         DataLogger.add_to_queue(csv)         
 
 ############################################################################################
@@ -194,6 +198,7 @@ class ColorBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = Color(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = Color.DEVICE_IDENTIFIER  
 
 
     def start_timer(self):     
@@ -211,24 +216,24 @@ class ColorBricklet(AbstractBricklet):
         try:
             r, g, b, c = self.__TEMP_get_color()#self._device.get_color()
             if DataLogger.parse_to_bool(self._data[COLOR_RED]):
-                DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_RED, r))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, COLOR_RED, r))
             if DataLogger.parse_to_bool(self._data[COLOR_GREEN]):
-                DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_GREEN, g))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, COLOR_GREEN, g))
             if DataLogger.parse_to_bool(self._data[COLOR_BLUE]):
-                DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_BLUE, b))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, COLOR_BLUE, b))
             if DataLogger.parse_to_bool(self._data[COLOR_CLEAR]): 
-                DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_CLEAR, c))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, COLOR_CLEAR, c))
         except Exception as e:
-            DataLogger.add_to_queue(CSVData(self.uid, COLOR, COLOR_COLOR, self._exception_msg(e.value, e.description)))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, COLOR_COLOR, self._exception_msg(e.value, e.description)))
         
     def _timer_illuminance(self):
         value = self._try_catch(self._device.get_illuminance)
-        csv = CSVData(self.uid, COLOR, COLOR_ILLUMINANCE, value)
+        csv = CSVData(self.uid, self._identifier, COLOR_ILLUMINANCE, value)
         DataLogger.add_to_queue(csv)  
         
     def _timer_color_temperature(self):
         value = self._try_catch(self._device.get_color_temperature)
-        csv = CSVData(self.uid, COLOR, COLOR_ILLUMINANCE, value)
+        csv = CSVData(self.uid, self._identifier, COLOR_ILLUMINANCE, value)
         DataLogger.add_to_queue(csv) 
         
     def __TEMP_get_color(self):
@@ -246,6 +251,7 @@ class Current12Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = Current12(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = Current12.DEVICE_IDENTIFIER  
 
 
     def start_timer(self):
@@ -259,12 +265,12 @@ class Current12Bricklet(AbstractBricklet):
     
     def _timer_analog_value(self):
         value = self._try_catch(self._device.get_analog_value)
-        csv = CSVData(self.uid, CURRENT_12, CURRENT_12_ANALOG_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, CURRENT_12_ANALOG_VALUE, value)
         DataLogger.add_to_queue(csv) 
     
     def _timer_current(self):
         value = self._try_catch(self._device.get_current)
-        csv = CSVData(self.uid, CURRENT_12, CURRENT_12_CURRENT, value)
+        csv = CSVData(self.uid, self._identifier, CURRENT_12_CURRENT, value)
         DataLogger.add_to_queue(csv)         
 
 ############################################################################################
@@ -279,6 +285,7 @@ class Current25Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = Current25(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = Current25.DEVICE_IDENTIFIER 
 
 
     def start_timer(self):
@@ -292,12 +299,12 @@ class Current25Bricklet(AbstractBricklet):
     
     def _timer_analog_value(self):
         value = self._try_catch(self._device.get_analog_value)
-        csv = CSVData(self.uid, CURRENT_25, CURRENT_25_ANALOG_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, CURRENT_25_ANALOG_VALUE, value)
         DataLogger.add_to_queue(csv) 
         
     def _timer_current(self):
         value = self._try_catch(self._device.get_current)
-        csv = CSVData(self.uid, CURRENT_25, CURRENT_25_CURRENT, value)
+        csv = CSVData(self.uid, self._identifier, CURRENT_25_CURRENT, value)
         DataLogger.add_to_queue(csv) 
 
 ############################################################################################
@@ -312,6 +319,7 @@ class DistanceIRBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = DistanceIR(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = DistanceIR.DEVICE_IDENTIFIER 
 
 
     def start_timer(self):
@@ -325,12 +333,12 @@ class DistanceIRBricklet(AbstractBricklet):
     
     def _timer_analog_value(self):
         value = self._try_catch(self._device.get_analog_value)
-        csv = CSVData(self.uid, DISTANCE_IR, DISTANCE_IR_ANALOG_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, DISTANCE_IR_ANALOG_VALUE, value)
         DataLogger.add_to_queue(csv) 
         
     def _timer_distance(self):
         value = self._try_catch(self._device.get_analog_value)
-        csv = CSVData(self.uid, DISTANCE_IR, DISTANCE_IR_DISTANCE, value)
+        csv = CSVData(self.uid, self._identifier, DISTANCE_IR_DISTANCE, value)
         DataLogger.add_to_queue(csv)
 
 ############################################################################################
@@ -344,6 +352,7 @@ class DistanceUSBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = DistanceUS(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = DistanceUS.DEVICE_IDENTIFIER 
 
 
     def start_timer(self):
@@ -355,7 +364,7 @@ class DistanceUSBricklet(AbstractBricklet):
     
     def _timer_distance(self):
         value = self._try_catch(self._device.get_distance_value)
-        csv = CSVData(self.uid, DISTANCE_US, DISTANCE_US_DISTANCE, value)
+        csv = CSVData(self.uid, self._identifier, DISTANCE_US_DISTANCE, value)
         DataLogger.add_to_queue(csv) 
         
 ############################################################################################
@@ -375,6 +384,7 @@ class DualButtonBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = DualButton(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = DualButton.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -390,21 +400,21 @@ class DualButtonBricklet(AbstractBricklet):
         try:
             button_l, button_r = self._device.get_button_state()
             if DataLogger.parse_to_bool(self._data[DUAL_BUTTON_BUTTON_L]):
-                DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_BUTTON_L, button_l))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_BUTTON_BUTTON_L, button_l))
             if DataLogger.parse_to_bool(self._data[DUAL_BUTTON_BUTTON_R]):
-                DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_BUTTON_R, button_r))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_BUTTON_BUTTON_R, button_r))
         except Exception as e:
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_BUTTONS, self._exception_msg(e.value, e.description)))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_BUTTON_BUTTONS, self._exception_msg(e.value, e.description)))
 
     def _timer_leds(self):
         try:
             led_l, led_r = self._device.get_led_state()
             if DataLogger.parse_to_bool(self._data[DUAL_BUTTON_LED_L]):
-                DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_LED_L, led_l))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_BUTTON_LED_L, led_l))
             if DataLogger.parse_to_bool(self._data[DUAL_BUTTON_LED_R]):
-                DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_LED_R, led_r))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_BUTTON_LED_R, led_r))
         except Exception as e:
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_BUTTON, DUAL_BUTTON_LEDS, self._exception_msg(e.value, e.description)))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_BUTTON_LEDS, self._exception_msg(e.value, e.description)))
 
 ############################################################################################
 #TODO: Test with real bricklet  Dual Relay
@@ -420,6 +430,7 @@ class DualRelayBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = DualRelay(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = DualRelay.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -433,11 +444,11 @@ class DualRelayBricklet(AbstractBricklet):
         try:
             r1, r2 = self._device.get_state()
             if DataLogger.parse_to_bool(self._data[DUAL_RELAY_1]):
-                DataLogger.add_to_queue(CSVData(self.uid, DUAL_RELAY, DUAL_RELAY_1, r1))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_RELAY_1, r1))
             if DataLogger.parse_to_bool(self._data[DUAL_RELAY_2]):
-                DataLogger.add_to_queue(CSVData(self.uid, DUAL_RELAY, DUAL_RELAY_2, r2))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_RELAY_2, r2))
         except Exception as e:
-            DataLogger.add_to_queue(CSVData(self.uid, DUAL_RELAY, DUAL_RELAY_STATE, self._exception_msg(e.value, e.description)))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, DUAL_RELAY_STATE, self._exception_msg(e.value, e.description)))
 
 ############################################################################################
 #TODO: Test with real bricklet  GPS
@@ -471,6 +482,7 @@ class GPSBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = GPS(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = GPS.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -492,29 +504,29 @@ class GPSBricklet(AbstractBricklet):
             fix = self._get_fix_status()
                           
             if fix == GPS.FIX_NO_FIX:
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_COORDINATES, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was 1, but needs to be 2 or 3 for valid Coordinates.")))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_COORDINATES, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was 1, but needs to be 2 or 3 for valid Coordinates.")))
                 return
 
             latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self._device.get_coordinates()     
             #latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.__TMP_get_coordinates()  #TODO: TMP ONLY       
             if DataLogger.parse_to_bool(self._data[GPS_LATITUDE]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_LATITUDE, latitude))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_LATITUDE, latitude))
             if DataLogger.parse_to_bool(self._data[GPS_NS]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_NS, ns))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_NS, ns))
             if DataLogger.parse_to_bool(self._data[GPS_LONGITUDE]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_LONGITUDE, longitude))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_LONGITUDE, longitude))
             if DataLogger.parse_to_bool(self._data[GPS_EW]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_EW, ew))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_EW, ew))
             if DataLogger.parse_to_bool(self._data[GPS_PDOP]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_PDOP, pdop))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_PDOP, pdop))
             if DataLogger.parse_to_bool(self._data[GPS_HDOP]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_HDOP, hdop))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_HDOP, hdop))
             if DataLogger.parse_to_bool(self._data[GPS_VDOP]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_VDOP, vdop))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_VDOP, vdop))
             if DataLogger.parse_to_bool(self._data[GPS_EPE]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_EPE, epe))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_EPE, epe))
         except Exception as e:
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_COORDINATES, self._exception_msg(e.value, e.description)))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_COORDINATES, self._exception_msg(e.value, e.description)))
 
     def _timer_altitude(self):
         try:
@@ -522,16 +534,16 @@ class GPSBricklet(AbstractBricklet):
             fix = self._get_fix_status()
               
             if fix != GPS.FIX_3D_FIX:
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_ALTITUDE, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 3 for valid Altitude Values.")))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_ALTITUDE, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 3 for valid Altitude Values.")))
                 return
 
             altitude, geoidal_separation = self._device.get_altitude()            
             if DataLogger.parse_to_bool(self._data[GPS_ALTITUDE_VALUE]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_ALTITUDE, GPS_ALTITUDE_VALUE, altitude))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_ALTITUDE_VALUE, altitude))
             if DataLogger.parse_to_bool(self._data[GPS_GEOIDAL_SEPERATION]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_ALTITUDE, GPS_GEOIDAL_SEPERATION, geoidal_separation))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_GEOIDAL_SEPERATION, geoidal_separation))
         except Exception as e:
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_ALTITUDE, self._exception_msg(e.value, e.description)))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_ALTITUDE, self._exception_msg(e.value, e.description)))
 
     def _timer_motion(self):
         try:
@@ -539,37 +551,37 @@ class GPSBricklet(AbstractBricklet):
             fix = self._get_fix_status()
               
             if fix == GPS.FIX_NO_FIX:
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_MOTION, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 2 or 3 for valid Altitude Values.")))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_MOTION, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 2 or 3 for valid Altitude Values.")))
                 return
 
             course, speed = self._device.get_motion()
             if DataLogger.parse_to_bool(self._data[GPS_COURSE]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_COURSE, course))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_COURSE, course))
             if DataLogger.parse_to_bool(self._data[GPS_SPEED]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SPEED, speed))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_SPEED, speed))
         except Exception as e:
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_MOTION, self._exception_msg(e.value, e.description)))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_MOTION, self._exception_msg(e.value, e.description)))
 
     def _timer_date_time(self):
         try:
             date, time = self._device.get_date_time()
             if DataLogger.parse_to_bool(self._data[GPS_DATE]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_DATE, date))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_DATE, date))
             if DataLogger.parse_to_bool(self._data[GPS_TIME]):
-                DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_TIME, time))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_TIME, time))
         except Exception as e:
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_DATE_TIME, self._exception_msg(e.value, e.description)))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_DATE_TIME, self._exception_msg(e.value, e.description)))
 
     def _get_fix_status(self):
         fix, satellites_view, satellites_used = self._device.get_status()
         #fix, satellites_view, satellites_used = self.__TMP_get_status()#TODO: TMP ONLY
         
         if DataLogger.parse_to_bool(self._data[GPS_FIX_STATUS]):
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_FIX_STATUS, fix))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_FIX_STATUS, fix))
         if DataLogger.parse_to_bool(self._data[GPS_SATELLITES_VIEW]):
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_VIEW, satellites_view))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_SATELLITES_VIEW, satellites_view))
         if DataLogger.parse_to_bool(self._data[GPS_SATELLITES_USED]):
-            DataLogger.add_to_queue(CSVData(self.uid, GPS_BRICKLET, GPS_SATELLITES_USED, satellites_used))
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, GPS_SATELLITES_USED, satellites_used))
         return fix
     
     #TODO: delete Dummys
@@ -593,6 +605,7 @@ class HallEffectBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = HallEffect(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = HallEffect.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -604,7 +617,7 @@ class HallEffectBricklet(AbstractBricklet):
     
     def _timer_value(self):
         value = self._try_catch(self._device.get_value)
-        csv = CSVData(self.uid, HALL_EFFECT, HALL_EFFECT_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, HALL_EFFECT_VALUE, value)
         DataLogger.add_to_queue(csv)         
 
 ############################################################################################
@@ -619,6 +632,7 @@ class HumidityBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = Humidity(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = Humidity.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -632,12 +646,12 @@ class HumidityBricklet(AbstractBricklet):
 
     def _timer_analog_value(self):
         value = self._try_catch(self._device.get_analog_value)
-        csv = CSVData(self.uid, HUMIDITY, HUMIDITY_ANALOG_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, HUMIDITY_ANALOG_VALUE, value)
         DataLogger.add_to_queue(csv)
         
     def _timer_humidity(self):
         value = self._try_catch(self._device.get_humidity)
-        csv = CSVData(self.uid, HUMIDITY, HUMIDITY_HUMIDITY, value)
+        csv = CSVData(self.uid, self._identifier, HUMIDITY_HUMIDITY, value)
         DataLogger.add_to_queue(csv)   
 
 ############################################################################################
@@ -651,6 +665,7 @@ class IndustrialDigitalIn4Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = IndustrialDigitalIn4(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = IndustrialDigitalIn4.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -668,6 +683,7 @@ class IndustrialDigitalOut4Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = IndustrialDigitalOut4(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = IndustrialDigitalOut4.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -687,6 +703,7 @@ class IndustrialDual020mABricklet(AbstractBricklet):
         self.uid = uid        
         self._device = IndustrialDual020mA(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = IndustrialDual020mA.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -702,12 +719,12 @@ class IndustrialDual020mABricklet(AbstractBricklet):
             sensor_1 = self._device.get_current(1)
             
             if DataLogger.parse_to_bool(self._data[INDUSTRIAL_DUAL_0_20_MA_SENSOR_0]):
-                DataLogger.add_to_queue(CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, INDUSTRIAL_DUAL_0_20_MA_SENSOR_0, sensor_0))            
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, INDUSTRIAL_DUAL_0_20_MA_SENSOR_0, sensor_0))            
             if DataLogger.parse_to_bool(self._data[INDUSTRIAL_DUAL_0_20_MA_SENSOR_1]):
-                DataLogger.add_to_queue(CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, INDUSTRIAL_DUAL_0_20_MA_SENSOR_1, sensor_1))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, INDUSTRIAL_DUAL_0_20_MA_SENSOR_1, sensor_1))
 
         except Exception as e:
-            csv = CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, INDUSTRIAL_DUAL_0_20_MA_CURRENT, self._exception_msg(e.value, e.description))
+            csv = CSVData(self.uid, INDUSTRIAL_DUAL_0_20_MA, self._identifier, self._exception_msg(e.value, e.description))
             DataLogger.add_to_queue(csv)
 
 ############################################################################################
@@ -721,6 +738,7 @@ class IndustrialQuadRelayBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = IndustrialQuadRelay(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = IndustrialQuadRelay.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -741,7 +759,7 @@ class IO16Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = IO16(self.uid, DataLogger.ipcon)
         self._data = data
-        
+        self._identifier = IO16.DEVICE_IDENTIFIER 
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
@@ -756,12 +774,12 @@ class IO16Bricklet(AbstractBricklet):
             port_b = self._device.get_port('b')
             
             if DataLogger.parse_to_bool(self._data[IO_16_PORT_A]):
-                DataLogger.add_to_queue(CSVData(self.uid, IO_16, IO_16_PORT_A, port_a))           
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, IO_16_PORT_A, port_a))           
             if DataLogger.parse_to_bool(self._data[IO_16_PORT_B]):
-                DataLogger.add_to_queue(CSVData(self.uid, IO_16, IO_16_PORT_B, port_b))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, IO_16_PORT_B, port_b))
 
         except Exception as e:
-            csv = CSVData(self.uid, IO_16, IO_16_PORTS, self._exception_msg(e.value, e.description))
+            csv = CSVData(self.uid, self._identifier, IO_16_PORTS, self._exception_msg(e.value, e.description))
             DataLogger.add_to_queue(csv)
 
 ############################################################################################
@@ -776,6 +794,7 @@ class IO4Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = IO4(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = IO4.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -787,7 +806,7 @@ class IO4Bricklet(AbstractBricklet):
 
     def _timer_value(self):
         value = self._try_catch(self._device.get_value)
-        csv = CSVData(self.uid, IO_4, IO_4_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, IO_4_VALUE, value)
         DataLogger.add_to_queue(csv)
 
 ############################################################################################
@@ -805,6 +824,7 @@ class JoystickBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = Joystick(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = Joystick.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -823,22 +843,22 @@ class JoystickBricklet(AbstractBricklet):
             x, y = self._device.get_position()
 
             if DataLogger.parse_to_bool(self._data[JOYSTICK_POSITION_X]):
-                DataLogger.add_to_queue(CSVData(self.uid, JOYSTICK, JOYSTICK_POSITION_X, x))       
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, JOYSTICK_POSITION_X, x))       
             if DataLogger.parse_to_bool(self._data[JOYSTICK_POSITION_Y]):
-                DataLogger.add_to_queue(CSVData(self.uid, JOYSTICK, JOYSTICK_POSITION_Y, y))
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, JOYSTICK_POSITION_Y, y))
 
         except Exception as e:
-            csv = CSVData(self.uid, JOYSTICK, JOYSTICK_POSITION, self._exception_msg(e.value, e.description))
+            csv = CSVData(self.uid, self._identifier, JOYSTICK_POSITION, self._exception_msg(e.value, e.description))
             DataLogger.add_to_queue(csv)
         
     def _timer_analog_value(self):
         value = self._try_catch(self._device.get_analog_value)
-        csv = CSVData(self.uid, JOYSTICK, JOYSTICK_ANALOG_VALUE, value)
+        csv = CSVData(self.uid, self._identifier, JOYSTICK_ANALOG_VALUE, value)
         DataLogger.add_to_queue(csv)
     
     def _timer_is_pressed(self):
         value = self._try_catch(self._device.is_pressed)
-        csv = CSVData(self.uid, JOYSTICK, JOYSTICK_PRESSED, value)
+        csv = CSVData(self.uid, self._identifier, JOYSTICK_PRESSED, value)
         DataLogger.add_to_queue(csv)
 
 ############################################################################################
@@ -852,6 +872,7 @@ class LCD16x2Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = LCD16x2(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = LCD16x2.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -869,6 +890,7 @@ class LCD20x4Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = LCD20x4(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = LCD20x4.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -888,6 +910,7 @@ class LEDStripBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = LEDStrip(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = LEDStrip.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -904,6 +927,7 @@ class LineBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletLine(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletLine.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -921,6 +945,7 @@ class LinearPotiBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletLinearPoti(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletLinearPoti.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -937,6 +962,7 @@ class MoistureBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = Moisture(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = Moisture.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -953,6 +979,7 @@ class MotionDetectorBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = MotionDetector(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = MotionDetector.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -969,6 +996,7 @@ class MultiTouchBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = MultiTouch(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = MultiTouch.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -986,6 +1014,7 @@ class NFCRFIDBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletNFCRFID(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletNFCRFID.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1002,6 +1031,7 @@ class PiezoBuzzerBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletPiezoBuzzer(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletPiezoBuzzer.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1018,6 +1048,7 @@ class PiezoSpeakerBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = PiezoSpeaker(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = PiezoSpeaker.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1035,6 +1066,7 @@ class PTCBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = PTC(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = PTC.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1051,6 +1083,7 @@ class RemoteSwitchBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = RemoteSwitch(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = RemoteSwitch.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1067,6 +1100,7 @@ class RotaryEncoderBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = RotaryEncoder(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = RotaryEncoder.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1084,6 +1118,7 @@ class RotaryPotiBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = RotaryPoti(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = RotaryPoti.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1101,6 +1136,7 @@ class SegmentDisplay4x7Bricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletSegmentDisplay4x7(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletSegmentDisplay4x7.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1118,6 +1154,7 @@ class SolidStateRelayBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletSolidStateRelay(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletSolidStateRelay.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1134,6 +1171,7 @@ class SoundIntensityBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletSoundIntensity(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletSoundIntensity.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1150,6 +1188,7 @@ class TemperatureBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletTemperature(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletTemperature.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1167,6 +1206,7 @@ class TemperatureIRBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletTemperatureIR(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletTemperatureIR.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1183,6 +1223,7 @@ class TiltBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletTilt(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletTilt.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1200,6 +1241,7 @@ class VoltageBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletVoltage(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletVoltage.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
@@ -1218,6 +1260,7 @@ class VoltageCurrentBricklet(AbstractBricklet):
         self.uid = uid        
         self._device = BrickletVoltageCurrent(self.uid, DataLogger.ipcon)
         self._data = data
+        self._identifier = BrickletVoltageCurrent.DEVICE_IDENTIFIER 
         
 
     def start_timer(self):
