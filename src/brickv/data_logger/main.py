@@ -14,8 +14,8 @@ import argparse                             # command line argument parser
 """
 ###switch###
 def general_switch(data):           
-    DataLogger.LOG_TO_FILE = DataLogger.parse_to_bool(data.get(GENERAL_LOG_TO_FILE))
-    DataLogger.DEFAULT_FILE_PATH = data.get(GENERAL_PATH_TO_FILE)
+    DataLogger.LOG_TO_FILE = DataLogger.parse_to_bool(data.get(DataLogger.GENERAL_LOG_TO_FILE))
+    DataLogger.DEFAULT_FILE_PATH = data.get(DataLogger.GENERAL_PATH_TO_FILE)
 
 def xively_switch(data):
     #TODO: write code for xively handling

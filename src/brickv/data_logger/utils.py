@@ -28,6 +28,19 @@ import Queue, threading, time, logging                               #Writer Thr
 
 class DataLogger():
     
+    ###Sections##############################################################
+    GENERAL_SECTION = "GENERAL"
+    GENERAL_LOG_TO_FILE = "log_to_file"
+    GENERAL_PATH_TO_FILE = "path_to_file"
+
+    XIVELY_SECTION = "XIVELY"
+    XIVELY_ACTIVE = "active"
+    XIVELY_AGENT_DESCRIPTION = "agent_description"
+    XIVELY_FEED = "feed"
+    XIVELY_API_KEY = "api_key"
+    XIVELY_UPDATE_RATE = "update_rate"
+    ###Bricklets and Variables###
+
     #Logger
     FILE_EVENT_LOGGING = False                              #for event logging in to a file
     EVENT_LOGGING_FILE_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
@@ -319,19 +332,6 @@ class LoggerTimer(object):
 import codecs # DataLoggerConfig to read the file in correct encoding
 from ConfigParser import SafeConfigParser # DataLoggerConfig parser class
 
-###Sections##############################################################
-GENERAL_SECTION = "GENERAL"
-GENERAL_LOG_TO_FILE = "log_to_file"
-GENERAL_PATH_TO_FILE = "path_to_file"
-
-XIVELY_SECTION = "XIVELY"
-XIVELY_ACTIVE = "active"
-XIVELY_AGENT_DESCRIPTION = "agent_description"
-XIVELY_FEED = "feed"
-XIVELY_API_KEY = "api_key"
-XIVELY_UPDATE_RATE = "update_rate"
-###Bricklets and Variables###
-
 class DataLoggerConfig(object):
     '''
     This class provides the read-in functionality for the Data Logger configuration file
@@ -380,11 +380,11 @@ class DataLoggerConfig(object):
             parser.readfp(f)
         # TODO: Use the variables out of bricklets
         for section_name in parser.sections():
-            if (section_name == GENERAL_SECTION):
+            if (section_name == DataLogger.GENERAL_SECTION):
                 # Get GENERAL section
                 self._general =self._get_section_as_hashmap(section_name,parser)
 
-            elif (section_name == XIVELY_SECTION):
+            elif (section_name == DataLogger.XIVELY_SECTION):
                 # Get XIVELY section
                 self._xively = self._get_section_as_hashmap(section_name,parser)
 
