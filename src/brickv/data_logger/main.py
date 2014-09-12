@@ -35,93 +35,93 @@ def bricklet_switch(data):
         bricklet_variables = current_bricklet.variables
         
         if (bricklet_name == AMBIENT_LIGHT ):
-            AmbientLightBricklet(bricklet_uid).start_timer(bricklet_variables)
+            AmbientLightBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == ANALOG_IN):
-            AnalogInBricklet(bricklet_uid).start_timer(bricklet_variables)
+            AnalogInBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == ANALOG_OUT):
-            AnalogOutBricklet(bricklet_uid).start_timer(bricklet_variables)              
+            AnalogOutBricklet(bricklet_uid,bricklet_variables).start_timer()              
         elif(bricklet_name == BAROMETER):
-            BarometerBricklet(bricklet_uid).start_timer(bricklet_variables)
+            BarometerBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == COLOR):
-            ColorBricklet(bricklet_uid).start_timer(bricklet_variables)
+            ColorBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == CURRENT_12):
-            Current12Bricklet(bricklet_uid).start_timer(bricklet_variables)
+            Current12Bricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == CURRENT_25):
-            Current25Bricklet(bricklet_uid).start_timer(bricklet_variables)    
+            Current25Bricklet(bricklet_uid,bricklet_variables).start_timer()    
         elif(bricklet_name == DISTANCE_IR):
-            DistanceIRBricklet(bricklet_uid).start_timer(bricklet_variables)
+            DistanceIRBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == DISTANCE_US):
-            DistanceUSBricklet(bricklet_uid).start_timer(bricklet_variables)
+            DistanceUSBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == DUAL_BUTTON ):
-            DualButtonBricklet(bricklet_uid).start_timer(bricklet_variables)
+            DualButtonBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == DUAL_RELAY):
-            DualRelayBricklet(bricklet_uid).start_timer(bricklet_variables)
+            DualRelayBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == GPS_BRICKLET):
-            GPSBricklet(bricklet_uid).start_timer(bricklet_variables)
+            GPSBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == HALL_EFFECT):
-            HallEffectBricklet(bricklet_uid).start_timer(bricklet_variables)
+            HallEffectBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == HUMIDITY ):
-            HumidityBricklet(bricklet_uid).start_timer(bricklet_variables)
+            HumidityBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == INDUSTRIAL_DIGITAL_IN_4 ):
-            IndustrialDigitalIn4Bricklet(bricklet_uid).start_timer(bricklet_variables)      
+            IndustrialDigitalIn4Bricklet(bricklet_uid,bricklet_variables).start_timer()      
         elif(bricklet_name == INDUSTRIAL_DIGITAL_OUT_4):
-            IndustrialDigitalOut4Bricklet(bricklet_uid).start_timer(bricklet_variables)
+            IndustrialDigitalOut4Bricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == INDUSTRIAL_DUAL_0_20_MA):
-            IndustrialDual020mABricklet(bricklet_uid).start_timer(bricklet_variables)
+            IndustrialDual020mABricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == INDUSTRIAL_QUAD_RELAY ):
-            IndustrialQuadRelayBricklet(bricklet_uid).start_timer(bricklet_variables)
+            IndustrialQuadRelayBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == IO_16):
-            IO16Bricklet(bricklet_uid).start_timer(bricklet_variables) 
+            IO16Bricklet(bricklet_uid,bricklet_variables).start_timer() 
         elif(bricklet_name == IO_4):
-            IO4Bricklet(bricklet_uid).start_timer(bricklet_variables) 
+            IO4Bricklet(bricklet_uid,bricklet_variables).start_timer() 
         elif(bricklet_name == JOYSTICK ):
-            JoystickBricklet(bricklet_uid).start_timer(bricklet_variables) 
+            JoystickBricklet(bricklet_uid,bricklet_variables).start_timer() 
         elif(bricklet_name == LCD_16x2 ):
-            LCD16x2Bricklet(bricklet_uid).start_timer(bricklet_variables) 
+            LCD16x2Bricklet(bricklet_uid,bricklet_variables).start_timer() 
         elif(bricklet_name == LCD_20x4 ):
-            LCD20x4Bricklet(bricklet_uid).start_timer(bricklet_variables) 
+            LCD20x4Bricklet(bricklet_uid,bricklet_variables).start_timer() 
         elif(bricklet_name == LED_STRIP ):
-            LEDStripBricklet(bricklet_uid).start_timer(bricklet_variables)
+            LEDStripBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == LINE):
-            LineBricklet(bricklet_uid).start_timer(bricklet_variables)
+            LineBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == LINEAR_POTI ):
-            LinearPotiBricklet(bricklet_uid).start_timer(bricklet_variables)
+            LinearPotiBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == MOISTURE ):
-            MoistureBricklet(bricklet_uid).start_timer(bricklet_variables)
+            MoistureBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == MOTION_DETECTOR ):
-            MotionDetectorBricklet(bricklet_uid).start_timer(bricklet_variables)
+            MotionDetectorBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == MULTI_TOUCH ):
-            MultiTouchBricklet(bricklet_uid).start_timer(bricklet_variables)
+            MultiTouchBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == NFC_RFID):
-            NFCRFIDBricklet(bricklet_uid).start_timer(bricklet_variables)
+            NFCRFIDBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == PIEZO_BUZZER ):
-            PiezoBuzzerBricklet(bricklet_uid).start_timer(bricklet_variables)
+            PiezoBuzzerBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == PIEZO_SPEAKER ):
-            PiezoSpeakerBricklet(bricklet_uid).start_timer(bricklet_variables)
+            PiezoSpeakerBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == PTC_BRICKLET):
-            PTCBricklet(bricklet_uid).start_timer(bricklet_variables)
+            PTCBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == REMOTE_SWITCH ):
-            RemoteSwitchBricklet(bricklet_uid).start_timer(bricklet_variables)
+            RemoteSwitchBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == ROTARY_ENCODER ):
-            RotaryEncoderBricklet(bricklet_uid).start_timer(bricklet_variables)  
+            RotaryEncoderBricklet(bricklet_uid,bricklet_variables).start_timer()  
         elif(bricklet_name == ROTARY_POTI ):
-            RotaryPotiBricklet(bricklet_uid).start_timer(bricklet_variables)
+            RotaryPotiBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == SEGMENT_DISPLAY_4x7 ):
-            SegmentDisplay4x7Bricklet(bricklet_uid).start_timer(bricklet_variables)  
+            SegmentDisplay4x7Bricklet(bricklet_uid,bricklet_variables).start_timer()  
         elif(bricklet_name == SOLID_STATE_RELAY ):
-            SolidStateRelayBricklet(bricklet_uid).start_timer(bricklet_variables)
+            SolidStateRelayBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == SOUND_INTENSITY ):
-            SoundIntensityBricklet(bricklet_uid).start_timer(bricklet_variables)
+            SoundIntensityBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == TEMPERATURE ):
-            TemperatureBricklet(bricklet_uid).start_timer(bricklet_variables)
+            TemperatureBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == TEMPERATURE_IR ):
-            TemperatureIRBricklet(bricklet_uid).start_timer(bricklet_variables)
+            TemperatureIRBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == TILT ):
-            TiltBricklet(bricklet_uid).start_timer(bricklet_variables)
+            TiltBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == VOLTAGE ):
-            VoltageBricklet(bricklet_uid).start_timer(bricklet_variables)
+            VoltageBricklet(bricklet_uid,bricklet_variables).start_timer()
         elif(bricklet_name == VOLTAGE_CURRENT ):
-            VoltageCurrentBricklet(bricklet_uid).start_timer(bricklet_variables)
+            VoltageCurrentBricklet(bricklet_uid,bricklet_variables).start_timer()
         else:
             logging.warning("The bricklet [" +bricklet_name+ "] is not yet supported")                     
 
