@@ -95,7 +95,7 @@ class DataLogger():
         Returns a 'True', if the string is equals to 'true' or 'True'.
         Otherwise it'll return a False
         '''
-        if (bool_string == "true" or bool_string == "Ture"):
+        if (bool_string == "true" or bool_string == "True" or bool_string == "TRUE"):
             return True
         else:
             return False
