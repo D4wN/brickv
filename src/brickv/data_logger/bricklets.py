@@ -3,14 +3,6 @@ from brickv.data_logger.utils import DataLogger    #gloabl thread/job queue -> b
 from brickv.data_logger.utils import CSVData       #bricklets
 
 import logging
-
-#TODO: DBG ONLY!
-class TEMP_EXCEPTION(Exception):
-    
-    def __init__(self, value, desc):
-        self.value = value
-        self.description = desc
-
 ###Bricklets and Variables###
 
 #ALL BRICKLETS + FUNCTIONS##################################################################
