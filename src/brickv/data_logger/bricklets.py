@@ -3,14 +3,6 @@ from brickv.data_logger.utils import DataLogger    #gloabl thread/job queue -> b
 from brickv.data_logger.utils import CSVData       #bricklets
 
 import logging
-
-#TODO: DBG ONLY!
-class TEMP_EXCEPTION(Exception):
-    
-    def __init__(self, value, desc):
-        self.value = value
-        self.description = desc
-
 ###Bricklets and Variables###
 
 #ALL BRICKLETS + FUNCTIONS##################################################################
@@ -901,9 +893,7 @@ class LCD20x4Bricklet(AbstractBricklet):
 #TODO: Test with real bricklet  LED Strip
 from tinkerforge.bricklet_led_strip import LEDStrip
 LED_STRIP = "LED Strip"
-LED_STRIP_FRAME_DURATION = "Frame Duration"
 LED_STRIP_SUPPLY_VOLTAGE = "Supply Voltage"
-LED_STRIP_CLOCK_FEQUENCY = "Clock Frequency"
 class LEDStripBricklet(AbstractBricklet):
     
     def __init__(self, uid, data):
@@ -915,7 +905,15 @@ class LEDStripBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[LED_STRIP_SUPPLY_VOLTAGE])   
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_supply_voltage)) 
 
+    def _timer_supply_voltage(self):
+        value = self._try_catch(self._device.get_supply_voltage)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, LED_STRIP_SUPPLY_VOLTAGE, value))
+        
 ############################################################################################
 #TODO: Test with real bricklet  Line
 from tinkerforge.bricklet_line import BrickletLine
@@ -931,8 +929,16 @@ class LineBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractBricklet.start_timer(self)
+        
+        value1 = DataLogger.parse_to_int(self._data[LINE_REFLECTIVITY])   
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_refelctivity)) 
 
+    def _timer_refelctivity(self):
+        value = self._try_catch(self._device.get_reflectivity)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, LINE_REFLECTIVITY, value))
+        
 ############################################################################################
 #TODO: Test with real bricklet  Linear Poti
 from tinkerforge.bricklet_linear_poti import BrickletLinearPoti
@@ -950,6 +956,20 @@ class LinearPotiBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[LINEAR_POTI_POSITION])   
+        value2 = DataLogger.parse_to_int(self._data[LINEAR_POTI_ANALOG_VALUE]) 
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_position)) 
+        LoggerTimer.Timers.append(LoggerTimer(value2, self._timer_analog_value)) 
+
+    def _timer_position(self):
+        value = self._try_catch(self._device.get_position)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, LINEAR_POTI_POSITION, value))
+
+    def _timer_analog_value(self):
+        value = self._try_catch(self._device.get_analog_value)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, LINEAR_POTI_ANALOG_VALUE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Moisture
@@ -967,12 +987,21 @@ class MoistureBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[MOISTURE_MOISTURE_VALUE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_moisture_value)) 
+
+    def _timer_moisture_value(self):
+        value = self._try_catch(self._device.get_moisture_value)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, MOISTURE_MOISTURE_VALUE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Motion Detector
 #TODO: Motion Detector variables
 from tinkerforge.bricklet_motion_detector import MotionDetector
 MOTION_DETECTOR = "Motion Detector"
+MOTION_DETECTOR_MOTION_DETECTED = "Motion Detected"
 class MotionDetectorBricklet(AbstractBricklet):
     
     def __init__(self, uid, data):
@@ -983,7 +1012,15 @@ class MotionDetectorBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractBricklet.start_timer(self)
+        
+        value1 = DataLogger.parse_to_int(self._data[MOTION_DETECTOR_MOTION_DETECTED])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_motion_detected)) 
+
+    def _timer_motion_detected(self):
+        value = self._try_catch(self._device.get_motion_detected)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, MOTION_DETECTOR_MOTION_DETECTED, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Multi Touch
@@ -1001,13 +1038,21 @@ class MultiTouchBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[MULTI_TOUCH_TOUCH_STATE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_touch_state)) 
+
+    def _timer_touch_state(self):
+        value = self._try_catch(self._device.get_touch_state)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, MULTI_TOUCH_TOUCH_STATE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  NFC/RFID
-#TODO: LCD NFC/RFID variables
+#TODO: LCD NFC/RFID - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_nfc_rfid import BrickletNFCRFID
 NFC_RFID = "NFC RFID"
-NFC_RFID_STATE = "State"
+#NFC_RFID_STATE = "State"
 class NFCRFIDBricklet(AbstractBricklet):
     
     def __init__(self, uid, data):
@@ -1019,10 +1064,11 @@ class NFCRFIDBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        logging.warning("The NFCRFIDBricklet is not supported for Logging actions!")
 
 ############################################################################################
 #TODO: Test with real bricklet  Piezo Buzzer
-#TODO: Piezo Buzzer variables
+#TODO: Piezo Buzzer - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_piezo_buzzer import BrickletPiezoBuzzer
 PIEZO_BUZZER = "Pirezo Buzzer"
 class PiezoBuzzerBricklet(AbstractBricklet):
@@ -1036,10 +1082,11 @@ class PiezoBuzzerBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        logging.warning("The PiezoBuzzerBricklet is not supported for Logging actions!")
 
 ############################################################################################
 #TODO: Test with real bricklet  Piezo Speaker
-#TODO: Piezo Speaker variables
+#TODO: Piezo Speaker - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_piezo_speaker import PiezoSpeaker
 PIEZO_SPEAKER = "Piezo Speaker"
 class PiezoSpeakerBricklet(AbstractBricklet):
@@ -1053,6 +1100,7 @@ class PiezoSpeakerBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        logging.warning("The PiezoSpeakerBricklet is not supported for Logging actions!")        
 
 ############################################################################################
 #TODO: Test with real bricklet  PTC
@@ -1071,10 +1119,24 @@ class PTCBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+         
+        value1 = DataLogger.parse_to_int(self._data[PTC_BRICKLET_TEMPERATURE])  
+        value2 = DataLogger.parse_to_int(self._data[PTC_BRICKLET_RESISTANCE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_temeperature)) 
+        LoggerTimer.Timers.append(LoggerTimer(value2, self._timer_resistance)) 
+
+    def _timer_temeperature(self):
+        value = self._try_catch(self._device.get_temperature)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, PTC_BRICKLET_TEMPERATURE, value))
+        
+    def _timer_resistance(self):
+        value = self._try_catch(self._device.get_resistance)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, PTC_BRICKLET_RESISTANCE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Remote Switch
-#TODO: Remote Switch variables
+#TODO: Remote Switch - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_remote_switch import RemoteSwitch
 REMOTE_SWITCH = "Remote Switch"
 class RemoteSwitchBricklet(AbstractBricklet):
@@ -1088,12 +1150,14 @@ class RemoteSwitchBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        logging.warning("The RemoteSwitchBricklet is not supported for Logging actions!")  
 
 ############################################################################################
 #TODO: Test with real bricklet  Rotary Encoder
 from tinkerforge.bricklet_rotary_encoder import RotaryEncoder
 ROTARY_ENCODER = "Rotary Encoder"
 ROTARY_ENCODER_COUNT = "Count"
+ROTARY_ENCODER_PRESSED = "Pressed"
 class RotaryEncoderBricklet(AbstractBricklet):
     
     def __init__(self, uid, data):
@@ -1104,7 +1168,24 @@ class RotaryEncoderBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractBricklet.start_timer(self) #get_count(false)
+        
+        value1 = DataLogger.parse_to_int(self._data[ROTARY_ENCODER_COUNT])  
+        value2 = DataLogger.parse_to_int(self._data[ROTARY_ENCODER_PRESSED])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_count)) 
+        LoggerTimer.Timers.append(LoggerTimer(value2, self._timer_pressed)) 
+
+    def _timer_count(self):
+        try:
+            value = self._device.get_count(False)
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, ROTARY_ENCODER_COUNT, value))
+        except Exception as e:
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, ROTARY_ENCODER_COUNT, self._exception_msg(e.value, e.description)))
+
+    def _timer_pressed(self):
+        value = self._try_catch(self._device.is_pressed)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, ROTARY_ENCODER_PRESSED, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Rotary Poti
@@ -1123,12 +1204,32 @@ class RotaryPotiBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[ROTARY_POTI_POSITION])  
+        value2 = DataLogger.parse_to_int(self._data[ROTARY_POTI_ANALOG_VALUE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_position)) 
+        LoggerTimer.Timers.append(LoggerTimer(value2, self._timer_analog_value)) 
+        
+    def _timer_position(self):
+        value = self._try_catch(self._device.get_position)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, ROTARY_POTI_POSITION, value))
+    
+    def _timer_analog_value(self):
+        value = self._try_catch(self._device.get_analog_value)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, ROTARY_POTI_ANALOG_VALUE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Segment Display 4x7
 from tinkerforge.bricklet_segment_display_4x7 import BrickletSegmentDisplay4x7 
 SEGMENT_DISPLAY_4x7 = "Segment Display 4x7"
 SEGMENT_DISPLAY_4x7_SEGMENTS = "Segments"
+SEGMENT_DISPLAY_4x7_SEGMENT_1 = "Segment 1"
+SEGMENT_DISPLAY_4x7_SEGMENT_2 = "Segment 2"
+SEGMENT_DISPLAY_4x7_SEGMENT_3 = "Segment 3"
+SEGMENT_DISPLAY_4x7_SEGMENT_4 = "Segment 4"
+SEGMENT_DISPLAY_4x7_BRIGTHNESS = "Brightness"
+SEGMENT_DISPLAY_4x7_COLON = "Colon"
 SEGMENT_DISPLAY_4x7_COUNTER_VALUE = "Counter Value"
 class SegmentDisplay4x7Bricklet(AbstractBricklet):
     
@@ -1141,13 +1242,46 @@ class SegmentDisplay4x7Bricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[SEGMENT_DISPLAY_4x7_SEGMENTS])  
+        value2 = DataLogger.parse_to_int(self._data[SEGMENT_DISPLAY_4x7_COUNTER_VALUE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_segments)) 
+        LoggerTimer.Timers.append(LoggerTimer(value2, self._timer_counter_value)) 
+
+    def _timer_segments(self):
+        try:
+            segment, brightness, colon = self._device.get_segments()
+            #segment, brightness, colon = self.__TEMP_GET_SEGMENTS()#TODO: debug only
+            if DataLogger.parse_to_bool(self._data[SEGMENT_DISPLAY_4x7_SEGMENT_1]):
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SEGMENT_DISPLAY_4x7_SEGMENT_1, segment[0]))
+            if DataLogger.parse_to_bool(self._data[SEGMENT_DISPLAY_4x7_SEGMENT_2]):
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SEGMENT_DISPLAY_4x7_SEGMENT_2, segment[1]))
+            if DataLogger.parse_to_bool(self._data[SEGMENT_DISPLAY_4x7_SEGMENT_3]):
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SEGMENT_DISPLAY_4x7_SEGMENT_3, segment[2]))
+            if DataLogger.parse_to_bool(self._data[SEGMENT_DISPLAY_4x7_SEGMENT_4]):
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SEGMENT_DISPLAY_4x7_SEGMENT_4, segment[3]))
+            if DataLogger.parse_to_bool(self._data[SEGMENT_DISPLAY_4x7_BRIGTHNESS]):
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SEGMENT_DISPLAY_4x7_BRIGTHNESS, brightness))
+            if DataLogger.parse_to_bool(self._data[SEGMENT_DISPLAY_4x7_COLON]):
+                DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SEGMENT_DISPLAY_4x7_COLON, colon))        
+        except Exception as e:
+            DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(e.value, e.description)))
+
+    def _timer_counter_value(self):
+        value = self._try_catch(self._device.get_counter_value)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SEGMENT_DISPLAY_4x7_COUNTER_VALUE, value))
+
+    def __TEMP_GET_SEGMENTS(self):
+        #([int, int, int, int], int, bool)
+        #segments, brightness und colon.
+        return ([1,2,3,4], 50, False)
 
 ############################################################################################
 #TODO: Test with real bricklet  Solid State Relay
 from tinkerforge.bricklet_solid_state_relay import BrickletSolidStateRelay
 SOLID_STATE_RELAY = "Solid State Relay"
 SOLID_STATE_RELAY_STATE = "State"
-SOLID_STATE_RELAY_MONOFLOP = "Monoflop"
 class SolidStateRelayBricklet(AbstractBricklet):
     
     def __init__(self, uid, data):
@@ -1159,6 +1293,14 @@ class SolidStateRelayBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+
+        value1 = DataLogger.parse_to_int(self._data[SOLID_STATE_RELAY_STATE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_state)) 
+        
+    def _timer_state(self):
+        value = self._try_catch(self._device.get_state)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SOLID_STATE_RELAY_STATE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Sound Intensity
@@ -1174,8 +1316,16 @@ class SoundIntensityBricklet(AbstractBricklet):
         self._identifier = BrickletSoundIntensity.DEVICE_IDENTIFIER 
         
 
-    def start_timer(self):
+    def start_timer(self):#get_intensity
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[SOUND_INTENSITY_INTENSITY])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_intensity)) 
+        
+    def _timer_intensity(self):
+        value = self._try_catch(self._device.get_intensity)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, SOUND_INTENSITY_INTENSITY, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Temperature

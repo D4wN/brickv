@@ -101,7 +101,26 @@ class DataLogger():
             return False
             
     parse_to_bool = staticmethod(parse_to_bool) 
-            
+ 
+'''
+/*---------------------------------------------------------------------------
+                                DataLoggerException
+ ---------------------------------------------------------------------------*/
+ ''' 
+    
+class DataLoggerException(Exception):
+    
+    #Error Codes
+    DL_MISSING_ARGUMENT = -1           #Missing Arguments in Config File
+    #TODO: More specific error codes from our DataLogger
+    
+    def __init__(self, err_code, desc):
+        self.value = err_code
+        self.description = desc
+    
+    
+    def __str__(self):
+        return repr("ERROR[DL"+str(self.value)+"]: "+str(self.description))
 
 '''
 /*---------------------------------------------------------------------------

@@ -171,109 +171,101 @@ LCD 20x4
 		- TODO timeout
 LED Strip
 	Vars:
-		<---------
+		- Supply Voltage
 		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Line
 	Vars:
-		
+		- Reflectivity
 		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Linear Poti
 	Vars:
-		
-		
+		- Position
+		- Analog Value
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Moisture
 	Vars:
-		
-		
+		- Moisture Value		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Motion Detector
 	Vars:
-		
-		
+		- Motion Detected		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Multi Touch
 	Vars:
-		
-		
+		- Touch State		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 NFC/RFID
 	Vars:
-		
-		
+		- TODO		
 	Tests:
 		- TODO real_values
 		- TODO timeout
 Piezo Buzzer
 	Vars:
-		
-		
+		- TODO		
 	Tests:
 		- TODO real_values
 		- TODO timeout
 Piezo Speaker
 	Vars:
-		
-		
+		- TODO		
 	Tests:
 		- TODO real_values
 		- TODO timeout
 PTC
 	Vars:
-		
-		
+		- Temeperature
+		- Resistance
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Remote Switch
 	Vars:
-		
-		
+		- TODO		
 	Tests:
 		- TODO real_values
 		- TODO timeout
 Rotary Encoder
 	Vars:
-		
-		
+		- Count
+		- Pressed
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Rotary Poti
 	Vars:
-		
-		
+		- Position
+		- Analog Value			
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Segment Display 4x7
 	Vars:
-		
-		
+		- Segments
+		- Counter Value
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Solid State Relay
 	Vars:
-		
-		
+		- State		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Sound Intensity
 	Vars:
 		
