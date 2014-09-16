@@ -20,7 +20,8 @@ def general_switch(data):
 def xively_switch(data):
     #TODO: write code for xively handling
     
-    # = data.get(XIVELY_ACTIVE)
+    DataLogger.LOG_TO_XIVELY =  DataLogger.parse_to_bool(data.get(DataLogger.XIVELY_ACTIVE))
+
     # = data.get(XIVELY_AGENT_DESCRIPTION)
     # = data.get(XIVELY_FEED)
     # = data.get(XIVELY_API_KEY)
@@ -28,8 +29,6 @@ def xively_switch(data):
     pass
 
 def bricklet_switch(data):
-    
-    
     for current_bricklet in data:
         try:
             bricklet_name = current_bricklet.name
@@ -168,8 +167,10 @@ def __cleanup_and_shutdown(error_code):
         th.join()    
     logging.debug("Work Threads stopped.")
     
-    DataLogger.ipcon.disconnect()
-    logging.info("Connection closed successfully.")
+    if ((DataLogger.ipcon != None) and (DataLogger.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_CONNECTED)):
+        DataLogger.ipcon.disconnect()
+        logging.info("Connection closed successfully.")
+
     sys.exit(error_code)
             
 def main(ini_file_path):
@@ -181,19 +182,23 @@ def main(ini_file_path):
     logging.debug("data_logger.main main->ini_file_path: "+ ini_file_path)
     # exit if the path to the configuration file is invalid
     if (ini_file_path == "None"):
-        logging.critical("No config.ini file found!")
-        sys.exit(-1) 
+        logging.critical("No configuration file found!")
+        __cleanup_and_shutdown(DataLoggerException.DL_CRITICAL_ERROR)
         
     '''Parse configuration file'''
     configFile = DataLoggerConfig(ini_file_path); 
-    configFile.read_config_file()
-    
+    try:
+        configFile.read_config_file()
+    except IOError as io_err:
+        logging.critical("The parsing of the configuration file failed :" + str(io_err) )
+        __cleanup_and_shutdown(DataLoggerException.DL_CRITICAL_ERROR)
+        
     """CREATE-CONNECTION-TO-BRICKD"""
     #open IPConnection    
     DataLogger.ipcon = IPConnection()
   
     DataLogger.ipcon.connect(DataLogger.host, DataLogger.port)  # Connect to brickd
-	# Don't use device before ipcon is connected
+    # Don't use device before ipcon is connected
     logging.info("Connection to " + DataLogger.host + ":" + str(DataLogger.port) + " established.")
     DataLogger.ipcon.set_timeout(1) #TODO: Timeout number 
     logging.debug("Set ipcon.time_out to 1.")
