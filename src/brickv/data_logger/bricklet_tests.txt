@@ -1,6 +1,10 @@
 Bricklet
-	- TODO real values			#handling of real values from brickd
-	- timeout					#exceeption handling of the _timer_xxxxx() functions
+	Vars:
+		- All Intervall Vars
+		- NO PARAMETER VARS(true,false)
+	Tests:
+		- TODO real values			#handling of real values from brickd
+		- timeout					#exceeption handling of the _timer_xxxxx() functions
 
 TODO means  that this need to be tested
 No TODO means it was tested
@@ -268,43 +272,41 @@ Solid State Relay
 		- timeout
 Sound Intensity
 	Vars:
-		
-		
+		- Intensity		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Temperature
 	Vars:
-		
-		
+		- Temperature		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Temperature IR
 	Vars:
-		
-		
+		- Ambient Temperature
+		- Object Temperature
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Tilt
 	Vars:
-		
-		
+		- State		
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Voltage
 	Vars:
-		
-		
+		- Voltage
+		- Analog Value
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout
 Voltage/Current
 	Vars:
-		
-		
+		- Current
+		- Voltage
+		- Power
 	Tests:
 		- TODO real_values
-		- TODO timeout
+		- timeout

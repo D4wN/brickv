@@ -1343,6 +1343,14 @@ class TemperatureBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[TEMPERATURE_TEMPERATURE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_temperature)) 
+        
+    def _timer_temperature(self):
+        value = self._try_catch(self._device.get_temperature)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, TEMPERATURE_TEMPERATURE, value))
 
 ############################################################################################
 #TODO: Temperature IR
@@ -1361,6 +1369,20 @@ class TemperatureIRBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[TEMPERATURE_IR_AMBIENT_TEMPERATURE])  
+        value2 = DataLogger.parse_to_int(self._data[TEMPERATURE_IR_OBJECT_TEMPERATURE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_ambient_temperature)) 
+        LoggerTimer.Timers.append(LoggerTimer(value2, self._timer_object_temperature))
+        
+    def _timer_ambient_temperature(self):
+        value = self._try_catch(self._device.get_ambient_temperature)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, TEMPERATURE_IR_AMBIENT_TEMPERATURE, value))
+        
+    def _timer_object_temperature(self):
+        value = self._try_catch(self._device.get_object_temperature)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, TEMPERATURE_IR_OBJECT_TEMPERATURE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Tilt
@@ -1378,6 +1400,14 @@ class TiltBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[TILT_STATE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_state))
+        
+    def _timer_state(self):
+        value = self._try_catch(self._device.get_tilt_state)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, TILT_STATE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Voltage
@@ -1396,6 +1426,20 @@ class VoltageBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[VOLTAGE_VOLTAGE])  
+        value2 = DataLogger.parse_to_int(self._data[VOLTAGE_ANALOG_VALUE])  
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_voltage)) 
+        LoggerTimer.Timers.append(LoggerTimer(value2, self._timer_analog_value))
+        
+    def _timer_voltage(self):
+        value = self._try_catch(self._device.get_voltage)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, VOLTAGE_VOLTAGE, value))
+        
+    def _timer_analog_value(self):
+        value = self._try_catch(self._device.get_analog_value)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, VOLTAGE_ANALOG_VALUE, value))
 
 ############################################################################################
 #TODO: Test with real bricklet  Voltage/Current
@@ -1415,3 +1459,23 @@ class VoltageCurrentBricklet(AbstractBricklet):
 
     def start_timer(self):
         AbstractBricklet.start_timer(self) 
+        
+        value1 = DataLogger.parse_to_int(self._data[VOLTAGE_CURRENT_CURRENT])  
+        value2 = DataLogger.parse_to_int(self._data[VOLTAGE_CURRENT_VOLTAGE])  
+        value3 = DataLogger.parse_to_int(self._data[VOLTAGE_CURRENT_POWER])
+        
+        LoggerTimer.Timers.append(LoggerTimer(value1, self._timer_current)) 
+        LoggerTimer.Timers.append(LoggerTimer(value2, self._timer_voltage))
+        LoggerTimer.Timers.append(LoggerTimer(value3, self._timer_power))
+        
+    def _timer_current(self):
+        value = self._try_catch(self._device.get_current)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, VOLTAGE_CURRENT_CURRENT, value))
+        
+    def _timer_voltage(self):
+        value = self._try_catch(self._device.get_voltage)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, VOLTAGE_CURRENT_VOLTAGE, value))
+        
+    def _timer_power(self):
+        value = self._try_catch(self._device.get_power)
+        DataLogger.add_to_queue(CSVData(self.uid, self._identifier, VOLTAGE_CURRENT_POWER, value))
