@@ -128,11 +128,13 @@ def bricklet_switch(data):
                 logging.warning("The bricklet [" +bricklet_name+ "] is not yet supported")   
                               
         except KeyError as key_error:
-            logging.critical( bricklet_name +"["+bricklet_uid+"] has no key [" + str(key_error) + "]. Please review the configuration file.")
-            raise
+            msg = bricklet_name +"["+bricklet_uid+"] has no key [" + str(key_error) + "]. Please review the configuration file."
+            logging.critical(msg)
+            __cleanup_and_shutdown(DataLoggerException.DL_MISSING_ARGUMENT)
         except Exception as exc: # FIXME: Catch-All just for debugging purpose 
-            logging.critical( "An critical error occurs " + str(exc))
-            raise
+            msg = "A critical error occur " + str(exc)
+            logging.critical( msg)
+            __cleanup_and_shutdown(DataLoggerException.DL_CRITICAL_ERROR)
         
 def __exit_condition():
     '''
@@ -145,7 +147,31 @@ def __exit_condition():
         if((input_option == "quit") or (input_option == "exit") ):
             break
 
-              
+def __cleanup_and_shutdown(error_code):
+    '''
+    Provides a clean shutdown process for the data logger
+    '''
+    logging.info("Closing Timers and Threads...")    
+
+    """CLEANUP_AFTER_STOP """
+    #set EXIT_FLAG for Get-Timers
+    LoggerTimer.EXIT_FLAG = True
+    #check if all timers stopped
+    for t in LoggerTimer.Timers:
+        t.join()    
+    logging.debug("Get-Timers stopped.")
+    
+    #set THREAD_EXIT_FLAG for all work threads
+    DataLogger.THREAD_EXIT_FLAG = True
+    #wait for all threads to stop
+    for th in  DataLogger.Threads:
+        th.join()    
+    logging.debug("Work Threads stopped.")
+    
+    DataLogger.ipcon.disconnect()
+    logging.info("Connection closed successfully.")
+    sys.exit(error_code)
+            
 def main(ini_file_path):
     if DataLogger.FILE_EVENT_LOGGING:
         logging.basicConfig(filename=DataLogger.EVENT_LOGGING_FILE_PATH,format='%(asctime)s - %(levelname)8s - %(message)s',level=DataLogger.LOGGING_EVENT_LEVEL)  
@@ -197,26 +223,8 @@ def main(ini_file_path):
     """END_CONDITIONS"""
     logging.info("DataLogger is runninng...")
     __exit_condition()
-    logging.info("Closing Timers and Threads...")    
-
-    """CLEANUP_AFTER_STOP """
-    #set EXIT_FLAG for Get-Timers
-    LoggerTimer.EXIT_FLAG = True
-    #check if all timers stopped
-    for t in LoggerTimer.Timers:
-        t.join()    
-    logging.debug("Get-Timers stopped.")
+    __cleanup_and_shutdown()
     
-    #set THREAD_EXIT_FLAG for all work threads
-    DataLogger.THREAD_EXIT_FLAG = True
-    #wait for all threads to stop
-    for th in  DataLogger.Threads:
-        th.join()    
-    logging.debug("Work Threads stopped.")
-    
-    DataLogger.ipcon.disconnect()
-    logging.info("Connection closed successfully.")
-
 def command_line_start(argv,program_name):
     cl_parser = argparse.ArgumentParser(description=' -c <config-file>')
     
