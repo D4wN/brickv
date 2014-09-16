@@ -228,7 +228,7 @@ def main(ini_file_path):
     """END_CONDITIONS"""
     logging.info("DataLogger is runninng...")
     __exit_condition()
-    __cleanup_and_shutdown()
+    __cleanup_and_shutdown(0)
     
 def command_line_start(argv,program_name):
     cl_parser = argparse.ArgumentParser(description=' -c <config-file>')
