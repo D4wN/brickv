@@ -95,7 +95,7 @@ class DataLogger():
         Returns a 'True', if the string is equals to 'true' or 'True'.
         Otherwise it'll return a False
         '''
-        if (bool_string == "true" or bool_string == "True" or bool_string == "TRUE"):
+        if bool_string == "true" or bool_string == "True" or bool_string == "TRUE":
             return True
         else:
             return False
@@ -393,7 +393,6 @@ class DataLoggerConfig(object):
             hashMap[section_key] =  parser.get(section_name, section_key)
         return hashMap
     
-
     def __parse_first(self):
         '''
         Checks if the configuration file is already parsed. If not it'll
@@ -415,11 +414,11 @@ class DataLoggerConfig(object):
             parser.readfp(f)
         # TODO: Use the variables out of bricklets
         for section_name in parser.sections():
-            if (section_name == DataLogger.GENERAL_SECTION):
+            if section_name == DataLogger.GENERAL_SECTION:
                 # Get GENERAL section
                 self._general =self._get_section_as_hashmap(section_name,parser)
 
-            elif (section_name == DataLogger.XIVELY_SECTION):
+            elif section_name == DataLogger.XIVELY_SECTION:
                 # Get XIVELY section
                 self._xively = self._get_section_as_hashmap(section_name,parser)
 
@@ -430,7 +429,7 @@ class DataLoggerConfig(object):
                 
                 tmp_bricklet = BrickletInfo(bricklet_name,bricklet_uid)
                 for section_key in parser.options(section_name):
-                    if (section_key != self.__NAME_KEY and section_key != self.__UID_KEY):
+                    if section_key != self.__NAME_KEY and section_key != self.__UID_KEY:
                         # All variables (key and value) are of type string                     
                         tmp_bricklet.add_key_value_pair(str(section_key).title(),str(parser.get(section_name, section_key)).title() )
 
@@ -512,7 +511,7 @@ def writer_thread():
             csv_data = DataLogger.Q.get()
             logging.debug(thread_name + " -> " + str(csv_data.raw_data))
             if not csv_writer.write_data_row(csv_data):
-                print logging.warning(thread_name + " could not write csv row!")
+                logging.warning(thread_name + " could not write csv row!")
                                       
         if not DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
             #TODO: qucik testing fix logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
