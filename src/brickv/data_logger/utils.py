@@ -38,7 +38,7 @@ class DataLogger():
     XIVELY_AGENT_DESCRIPTION = "agent_description"
     XIVELY_FEED = "feed"
     XIVELY_API_KEY = "api_key"
-    XIVELY_UPDATE_RATE = "update_rate"
+    XIVELY_UPLOAD_RATE = "upload_rate"
     
     #Logger
     FILE_EVENT_LOGGING = False                              #for event logging in to a file
@@ -49,13 +49,16 @@ class DataLogger():
     DEFAULT_FILE_PATH = "logged_data.csv"
     LOG_TO_FILE = True
     LOG_TO_XIVELY = False
+    
     ipcon = None
     host = "localhost"
     port = 4223  
     
+    #Xivley Var
+    xively = None                                           #xively object; xively queue
+    
     #Queues
     Q = Queue.Queue()                                       #gloabl queue for write jobs
-    XQ = Queue.Queue()                                      #Xively Queue
     
     #Thread things
     Threads = []                                            #gloabl thread array for all running threads/jobs
@@ -69,7 +72,7 @@ class DataLogger():
             DataLogger.Q.put(csv)
         
         if DataLogger.LOG_TO_XIVELY:
-            #DataLogger.XQ.put(csv)
+            #DataLogger.xively.put(csv)
             logging.warning("Xively is not supported!")
     
     add_to_queue = staticmethod(add_to_queue)
@@ -208,9 +211,9 @@ class CSVWriter(object):
 
         #newline problem solved + import sys
         if sys.version_info >= (3, 0, 0):
-            self._raw_file = open(self._file_path, 'w', newline='')  #TODO: test fix change w into a
+            self._raw_file = open(self._file_path, 'a', newline='')
         else:
-            self._raw_file = open(self._file_path, 'wb')#TODO: test fix change w into a
+            self._raw_file = open(self._file_path, 'ab')
         
         self._csv_file = csv.writer(self._raw_file, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
         
@@ -510,9 +513,9 @@ def writer_thread():
     while (True):
         if not DataLogger.Q.empty():
             csv_data = DataLogger.Q.get()
-            logging.debug(thread_name + " -> " + str(csv_data.raw_data))
+            logging.debug(thread_name + " -> " + str(csv_data.name)+"-"+ csv_data.var_name +":" +str(csv_data.raw_data))
             if not csv_writer.write_data_row(csv_data):
-                print logging.warning(thread_name + " could not write csv row!")
+                logging.warning(thread_name + " could not write csv row!")
                                       
         if not DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
             #TODO: qucik testing fix logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
@@ -527,7 +530,3 @@ def writer_thread():
                 logging.debug(thread_name + " could NOT close his csv_writer! EXIT_FLAG=" + str(exit))
             logging.debug(thread_name + " finished his work.")
             break
-
-def xively_thread():
-    thread_name = "Work Thread(" + threading.current_thread().name + ")"
-    logging.warning(thread_name + " is not yet supported!")
