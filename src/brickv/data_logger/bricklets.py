@@ -361,7 +361,6 @@ class DistanceUSBricklet(AbstractDevice):
         
 ############################################################################################
 #TODO: Test with real bricklet  Dual Button
-#TODO: Dual Button variables
 from tinkerforge.bricklet_dual_button import DualButton
 DUAL_BUTTON = "Dual Button"
 DUAL_BUTTON_BUTTONS = "Buttons"
@@ -410,7 +409,6 @@ class DualButtonBricklet(AbstractDevice):
 
 ############################################################################################
 #TODO: Test with real bricklet  Dual Relay
-#TODO: Dual Relay variables
 from tinkerforge.bricklet_dual_relay import DualRelay
 DUAL_RELAY = "Dual Relay"
 DUAL_RELAY_STATE = "State"
@@ -444,7 +442,6 @@ class DualRelayBricklet(AbstractDevice):
 
 ############################################################################################
 #TODO: Test with real bricklet  GPS
-#TODO: GPS variables
 from tinkerforge.bricklet_gps import GPS
 GPS_BRICKLET = "GPS"
 GPS_FIX_STATUS = "Fix Status"
@@ -739,7 +736,6 @@ class IndustrialQuadRelayBricklet(AbstractDevice):
 
 ############################################################################################
 #TODO: Test with real bricklet  IO-16
-#TODO: IO-16 variables
 from tinkerforge.bricklet_io16 import IO16
 IO_16 = "IO-16"
 IO_16_PORTS = "Ports"
@@ -776,7 +772,6 @@ class IO16Bricklet(AbstractDevice):
 
 ############################################################################################
 #TODO: Test with real bricklet  IO-4
-#TODO: IO-4 variables
 from tinkerforge.bricklet_io4 import IO4
 IO_4 = "IO-4"
 IO_4_VALUE = "Value"
@@ -998,7 +993,6 @@ class MoistureBricklet(AbstractDevice):
 
 ############################################################################################
 #TODO: Test with real bricklet  Motion Detector
-#TODO: Motion Detector variables
 from tinkerforge.bricklet_motion_detector import MotionDetector
 MOTION_DETECTOR = "Motion Detector"
 MOTION_DETECTOR_MOTION_DETECTED = "Motion Detected"
