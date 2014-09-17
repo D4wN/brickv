@@ -6,7 +6,7 @@ import logging
 ###Bricklets and Variables###
 
 #ALL BRICKLETS + FUNCTIONS##################################################################
-class AbstractBricklet(object):
+class AbstractDevice(object):
     """DEBUG and Inheritance only class"""
     def __init__(self, uid, data):
         self.uid = uid        
@@ -40,7 +40,7 @@ from tinkerforge.bricklet_ambient_light import AmbientLight
 AMBIENT_LIGHT = "Ambient Light"
 AMBIENT_LIGHT_ILLUMINANCE = "Illuminance"
 AMBIENT_LIGHT_ANALOG_VALUE = "Analog Value"
-class AmbientLightBricklet(AbstractBricklet):
+class AmbientLightBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid  
@@ -50,7 +50,7 @@ class AmbientLightBricklet(AbstractBricklet):
 
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)
+        AbstractDevice.start_timer(self)
                 
         value1 = DataLogger.parse_to_int(self._data[AMBIENT_LIGHT_ANALOG_VALUE])
         value2 = DataLogger.parse_to_int(self._data[AMBIENT_LIGHT_ILLUMINANCE])     
@@ -75,7 +75,7 @@ from tinkerforge.bricklet_analog_in import AnalogIn
 ANALOG_IN = "Analog In"
 ANALOG_IN_VOLTAGE = "Voltage"
 ANALOG_IN_ANALOG_VALUE = "Analog Value"
-class AnalogInBricklet(AbstractBricklet):
+class AnalogInBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -85,7 +85,7 @@ class AnalogInBricklet(AbstractBricklet):
 
 
     def start_timer(self):  
-        AbstractBricklet.start_timer(self)
+        AbstractDevice.start_timer(self)
               
         value1 = DataLogger.parse_to_int(self._data[ANALOG_IN_ANALOG_VALUE])
         value2 = DataLogger.parse_to_int(self._data[ANALOG_IN_VOLTAGE])
@@ -109,7 +109,7 @@ class AnalogInBricklet(AbstractBricklet):
 from tinkerforge.bricklet_analog_out import AnalogOut
 ANALOG_OUT = "Analog Out"
 ANALOG_OUT_VOLTAGE = "Voltage"
-class AnalogOutBricklet(AbstractBricklet):
+class AnalogOutBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -119,7 +119,7 @@ class AnalogOutBricklet(AbstractBricklet):
 
 
     def start_timer(self):   
-        AbstractBricklet.start_timer(self)
+        AbstractDevice.start_timer(self)
              
         value1 = DataLogger.parse_to_int(self._data[ANALOG_OUT_VOLTAGE]) 
         
@@ -137,7 +137,7 @@ BAROMETER = "Barometer"
 BAROMETER_AIR_PRESSURE = "Air Pressure"
 BAROMETER_ALTITUDE = "Altitude"
 BAROMETER_CHIP_TEMPERATURE = "Chip Temperature"
-class BarometerBricklet(AbstractBricklet):
+class BarometerBricklet(AbstractDevice):
     #chip_temperature()
     def __init__(self, uid, data):
         self.uid = uid        
@@ -147,7 +147,7 @@ class BarometerBricklet(AbstractBricklet):
 
 
     def start_timer(self):        
-        AbstractBricklet.start_timer(self)
+        AbstractDevice.start_timer(self)
         
         value1 = DataLogger.parse_to_int(self._data[BAROMETER_AIR_PRESSURE])
         value2 = DataLogger.parse_to_int(self._data[BAROMETER_ALTITUDE])      
@@ -184,7 +184,7 @@ COLOR_CLEAR = "Clear"
 COLOR_COLOR = "Rgbc"
 COLOR_ILLUMINANCE = "Illuminance"
 COLOR_TEMPERATURE = "Color Temperature"
-class ColorBricklet(AbstractBricklet):
+class ColorBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -194,7 +194,7 @@ class ColorBricklet(AbstractBricklet):
 
 
     def start_timer(self):     
-        AbstractBricklet.start_timer(self)
+        AbstractDevice.start_timer(self)
         
         value1 = DataLogger.parse_to_int(self._data[COLOR_COLOR])
         value2 = DataLogger.parse_to_int(self._data[COLOR_ILLUMINANCE])
@@ -237,7 +237,7 @@ from tinkerforge.bricklet_current12 import Current12
 CURRENT_12 = "Current 12"
 CURRENT_12_CURRENT = "Current"
 CURRENT_12_ANALOG_VALUE = "Analog Value"
-class Current12Bricklet(AbstractBricklet):
+class Current12Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -247,7 +247,7 @@ class Current12Bricklet(AbstractBricklet):
 
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)  
+        AbstractDevice.start_timer(self)  
         
         value1 = DataLogger.parse_to_int(self._data[CURRENT_12_ANALOG_VALUE])
         value2 = DataLogger.parse_to_int(self._data[CURRENT_12_CURRENT])  
@@ -271,7 +271,7 @@ from tinkerforge.bricklet_current25 import Current25
 CURRENT_25 = "Current 25"
 CURRENT_25_CURRENT = "Current"
 CURRENT_25_ANALOG_VALUE = "Analog Value"
-class Current25Bricklet(AbstractBricklet):
+class Current25Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -281,7 +281,7 @@ class Current25Bricklet(AbstractBricklet):
 
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)   
+        AbstractDevice.start_timer(self)   
         
         value1 = DataLogger.parse_to_int(self._data[CURRENT_25_ANALOG_VALUE])
         value2 = DataLogger.parse_to_int(self._data[CURRENT_25_CURRENT])  
@@ -305,7 +305,7 @@ from tinkerforge.bricklet_distance_ir import DistanceIR
 DISTANCE_IR = "Distance IR"
 DISTANCE_IR_DISTANCE = "Distance"
 DISTANCE_IR_ANALOG_VALUE = "Analog Value"
-class DistanceIRBricklet(AbstractBricklet):
+class DistanceIRBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -315,7 +315,7 @@ class DistanceIRBricklet(AbstractBricklet):
 
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)   
+        AbstractDevice.start_timer(self)   
         
         value1 = DataLogger.parse_to_int(self._data[DISTANCE_IR_ANALOG_VALUE])
         value2 = DataLogger.parse_to_int(self._data[DISTANCE_IR_DISTANCE])  
@@ -338,7 +338,7 @@ class DistanceIRBricklet(AbstractBricklet):
 from tinkerforge.bricklet_distance_us import DistanceUS
 DISTANCE_US = "Distance US"
 DISTANCE_US_DISTANCE = "Distance"
-class DistanceUSBricklet(AbstractBricklet):
+class DistanceUSBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -348,7 +348,7 @@ class DistanceUSBricklet(AbstractBricklet):
 
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)   
+        AbstractDevice.start_timer(self)   
         
         value1 = DataLogger.parse_to_int(self._data[DISTANCE_US_DISTANCE])
         
@@ -369,7 +369,7 @@ DUAL_BUTTON_BUTTON_R = "button_r"
 DUAL_BUTTON_LEDS = "Leds"
 DUAL_BUTTON_LED_L = "led_l"
 DUAL_BUTTON_LED_R = "led_r"
-class DualButtonBricklet(AbstractBricklet):
+class DualButtonBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -379,7 +379,7 @@ class DualButtonBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[DUAL_BUTTON_BUTTONS])
         value2 = DataLogger.parse_to_int(self._data[DUAL_BUTTON_LEDS])
@@ -414,7 +414,7 @@ DUAL_RELAY = "Dual Relay"
 DUAL_RELAY_STATE = "State"
 DUAL_RELAY_1 = "relay1"
 DUAL_RELAY_2 = "relay2"
-class DualRelayBricklet(AbstractBricklet):
+class DualRelayBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -424,7 +424,7 @@ class DualRelayBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[DUAL_RELAY_STATE])
         
@@ -465,7 +465,7 @@ GPS_SPEED = "Speed"
 GPS_DATE_TIME = "Date Time"
 GPS_DATE= "Date"
 GPS_TIME = "Time"
-class GPSBricklet(AbstractBricklet):
+class GPSBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -475,7 +475,7 @@ class GPSBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[GPS_COORDINATES])
         value2 = DataLogger.parse_to_int(self._data[GPS_ALTITUDE])
@@ -588,7 +588,7 @@ class GPSBricklet(AbstractBricklet):
 from tinkerforge.bricklet_hall_effect import HallEffect
 HALL_EFFECT = "Hall Effect"
 HALL_EFFECT_VALUE = "Value"
-class HallEffectBricklet(AbstractBricklet):
+class HallEffectBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -598,7 +598,7 @@ class HallEffectBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[HALL_EFFECT_VALUE])
         
@@ -615,7 +615,7 @@ from tinkerforge.bricklet_humidity import Humidity
 HUMIDITY = "Humidity"
 HUMIDITY_HUMIDITY = "Humidity"
 HUMIDITY_ANALOG_VALUE = "Analog Value"
-class HumidityBricklet(AbstractBricklet):
+class HumidityBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -625,7 +625,7 @@ class HumidityBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
                 
         value1 = DataLogger.parse_to_int(self._data[HUMIDITY_ANALOG_VALUE])
         value2 = DataLogger.parse_to_int(self._data[HUMIDITY_HUMIDITY])       
@@ -648,7 +648,7 @@ class HumidityBricklet(AbstractBricklet):
 #TODO: Industrial Digital In 4  - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_industrial_digital_in_4 import IndustrialDigitalIn4
 INDUSTRIAL_DIGITAL_IN_4 = "Industrial Digital In 4"
-class IndustrialDigitalIn4Bricklet(AbstractBricklet):
+class IndustrialDigitalIn4Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -658,7 +658,7 @@ class IndustrialDigitalIn4Bricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         logging.warning("The IndustrialDigitalIn4Bricklet is not supported for Logging actions!")
 
 ############################################################################################
@@ -666,7 +666,7 @@ class IndustrialDigitalIn4Bricklet(AbstractBricklet):
 #TODO: Industrial Digital Out 4 - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_industrial_digital_out_4 import IndustrialDigitalOut4
 INDUSTRIAL_DIGITAL_OUT_4 = "Industrial Digital Out 4"
-class IndustrialDigitalOut4Bricklet(AbstractBricklet):
+class IndustrialDigitalOut4Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -676,7 +676,7 @@ class IndustrialDigitalOut4Bricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         logging.warning("The IndustrialDigitalOut4Bricklet is not supported for Logging actions!")
 
 ############################################################################################
@@ -686,7 +686,7 @@ INDUSTRIAL_DUAL_0_20_MA = "Industrial Dual 0 20 mA"
 INDUSTRIAL_DUAL_0_20_MA_CURRENT = "Current"
 INDUSTRIAL_DUAL_0_20_MA_SENSOR_0 = "Sensor 0"
 INDUSTRIAL_DUAL_0_20_MA_SENSOR_1 = "Sensor 1"
-class IndustrialDual020mABricklet(AbstractBricklet):
+class IndustrialDual020mABricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -696,7 +696,7 @@ class IndustrialDual020mABricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[INDUSTRIAL_DUAL_0_20_MA_CURRENT])      
         
@@ -721,7 +721,7 @@ class IndustrialDual020mABricklet(AbstractBricklet):
 #TODO: Industrial Industrial Quad Relay - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_industrial_quad_relay import IndustrialQuadRelay
 INDUSTRIAL_QUAD_RELAY = "Industrial Quad Relay"
-class IndustrialQuadRelayBricklet(AbstractBricklet):
+class IndustrialQuadRelayBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -731,7 +731,7 @@ class IndustrialQuadRelayBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         logging.warning("The IndustrialQuadRelayBricklet is not supported for Logging actions!")
 
 ############################################################################################
@@ -741,7 +741,7 @@ IO_16 = "IO-16"
 IO_16_PORTS = "Ports"
 IO_16_PORT_A = "Port A"
 IO_16_PORT_B = "Port B"
-class IO16Bricklet(AbstractBricklet):
+class IO16Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -750,7 +750,7 @@ class IO16Bricklet(AbstractBricklet):
         self._identifier = IO16.DEVICE_IDENTIFIER 
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[IO_16_PORTS])      
         
@@ -775,7 +775,7 @@ class IO16Bricklet(AbstractBricklet):
 from tinkerforge.bricklet_io4 import IO4
 IO_4 = "IO-4"
 IO_4_VALUE = "Value"
-class IO4Bricklet(AbstractBricklet):
+class IO4Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -785,7 +785,7 @@ class IO4Bricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[IO_4_VALUE])     
         
@@ -805,7 +805,7 @@ JOYSTICK_POSITION_X = "Position X"
 JOYSTICK_POSITION_Y = "Position Y"
 JOYSTICK_ANALOG_VALUE = "Analog Value"
 JOYSTICK_PRESSED = "Pressed"
-class JoystickBricklet(AbstractBricklet):
+class JoystickBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -815,7 +815,7 @@ class JoystickBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[JOYSTICK_POSITION])     
         value2 = DataLogger.parse_to_int(self._data[JOYSTICK_ANALOG_VALUE])    
@@ -853,7 +853,7 @@ class JoystickBricklet(AbstractBricklet):
 #TODO: LCD 16x2 - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_lcd_16x2 import LCD16x2
 LCD_16x2 = "LCD 16x2"
-class LCD16x2Bricklet(AbstractBricklet):
+class LCD16x2Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -863,7 +863,7 @@ class LCD16x2Bricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)         
+        AbstractDevice.start_timer(self)         
         logging.warning("The LCD16x2Bricklet is not supported for Logging actions!")
 
 ############################################################################################
@@ -871,7 +871,7 @@ class LCD16x2Bricklet(AbstractBricklet):
 #TODO: LCD 20x4 - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_lcd_20x4 import LCD20x4
 LCD_20x4 = "LCD 20x4"
-class LCD20x4Bricklet(AbstractBricklet):
+class LCD20x4Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -881,7 +881,7 @@ class LCD20x4Bricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)
+        AbstractDevice.start_timer(self)
         logging.warning("The LCD20x4Bricklet is not supported for Logging actions!")
 
 ############################################################################################
@@ -889,7 +889,7 @@ class LCD20x4Bricklet(AbstractBricklet):
 from tinkerforge.bricklet_led_strip import LEDStrip
 LED_STRIP = "LED Strip"
 LED_STRIP_SUPPLY_VOLTAGE = "Supply Voltage"
-class LEDStripBricklet(AbstractBricklet):
+class LEDStripBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -899,7 +899,7 @@ class LEDStripBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[LED_STRIP_SUPPLY_VOLTAGE])   
         
@@ -914,7 +914,7 @@ class LEDStripBricklet(AbstractBricklet):
 from tinkerforge.bricklet_line import BrickletLine
 LINE = "line"
 LINE_REFLECTIVITY = "Reflectivity"
-class LineBricklet(AbstractBricklet):
+class LineBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -924,7 +924,7 @@ class LineBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)
+        AbstractDevice.start_timer(self)
         
         value1 = DataLogger.parse_to_int(self._data[LINE_REFLECTIVITY])   
         
@@ -940,7 +940,7 @@ from tinkerforge.bricklet_linear_poti import BrickletLinearPoti
 LINEAR_POTI = "Linear Poti"
 LINEAR_POTI_POSITION = "Position"
 LINEAR_POTI_ANALOG_VALUE = "Analog Value"
-class LinearPotiBricklet(AbstractBricklet):
+class LinearPotiBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -950,7 +950,7 @@ class LinearPotiBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[LINEAR_POTI_POSITION])   
         value2 = DataLogger.parse_to_int(self._data[LINEAR_POTI_ANALOG_VALUE]) 
@@ -971,7 +971,7 @@ class LinearPotiBricklet(AbstractBricklet):
 from tinkerforge.bricklet_moisture import Moisture
 MOISTURE = "Moisture"
 MOISTURE_MOISTURE_VALUE = "Moisture Value"
-class MoistureBricklet(AbstractBricklet):
+class MoistureBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -981,7 +981,7 @@ class MoistureBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[MOISTURE_MOISTURE_VALUE])  
         
@@ -996,7 +996,7 @@ class MoistureBricklet(AbstractBricklet):
 from tinkerforge.bricklet_motion_detector import MotionDetector
 MOTION_DETECTOR = "Motion Detector"
 MOTION_DETECTOR_MOTION_DETECTED = "Motion Detected"
-class MotionDetectorBricklet(AbstractBricklet):
+class MotionDetectorBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1006,7 +1006,7 @@ class MotionDetectorBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self)
+        AbstractDevice.start_timer(self)
         
         value1 = DataLogger.parse_to_int(self._data[MOTION_DETECTOR_MOTION_DETECTED])  
         
@@ -1021,7 +1021,7 @@ class MotionDetectorBricklet(AbstractBricklet):
 from tinkerforge.bricklet_multi_touch import MultiTouch
 MULTI_TOUCH = "Multi Touch"
 MULTI_TOUCH_TOUCH_STATE = "Touch State"
-class MultiTouchBricklet(AbstractBricklet):
+class MultiTouchBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1031,7 +1031,7 @@ class MultiTouchBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[MULTI_TOUCH_TOUCH_STATE])  
         
@@ -1047,7 +1047,7 @@ class MultiTouchBricklet(AbstractBricklet):
 from tinkerforge.bricklet_nfc_rfid import BrickletNFCRFID
 NFC_RFID = "NFC RFID"
 #NFC_RFID_STATE = "State"
-class NFCRFIDBricklet(AbstractBricklet):
+class NFCRFIDBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1057,7 +1057,7 @@ class NFCRFIDBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         logging.warning("The NFCRFIDBricklet is not supported for Logging actions!")
 
 ############################################################################################
@@ -1065,7 +1065,7 @@ class NFCRFIDBricklet(AbstractBricklet):
 #TODO: Piezo Buzzer - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_piezo_buzzer import BrickletPiezoBuzzer
 PIEZO_BUZZER = "Pirezo Buzzer"
-class PiezoBuzzerBricklet(AbstractBricklet):
+class PiezoBuzzerBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1075,7 +1075,7 @@ class PiezoBuzzerBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         logging.warning("The PiezoBuzzerBricklet is not supported for Logging actions!")
 
 ############################################################################################
@@ -1083,7 +1083,7 @@ class PiezoBuzzerBricklet(AbstractBricklet):
 #TODO: Piezo Speaker - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_piezo_speaker import PiezoSpeaker
 PIEZO_SPEAKER = "Piezo Speaker"
-class PiezoSpeakerBricklet(AbstractBricklet):
+class PiezoSpeakerBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1093,7 +1093,7 @@ class PiezoSpeakerBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         logging.warning("The PiezoSpeakerBricklet is not supported for Logging actions!")        
 
 ############################################################################################
@@ -1102,7 +1102,7 @@ from tinkerforge.bricklet_ptc import PTC
 PTC_BRICKLET = "PTC"
 PTC_BRICKLET_TEMPERATURE = "Temperature"
 PTC_BRICKLET_RESISTANCE = "Resistance"
-class PTCBricklet(AbstractBricklet):
+class PTCBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1112,7 +1112,7 @@ class PTCBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
          
         value1 = DataLogger.parse_to_int(self._data[PTC_BRICKLET_TEMPERATURE])  
         value2 = DataLogger.parse_to_int(self._data[PTC_BRICKLET_RESISTANCE])  
@@ -1133,7 +1133,7 @@ class PTCBricklet(AbstractBricklet):
 #TODO: Remote Switch - variables? Dont know how to log this bricklet!
 from tinkerforge.bricklet_remote_switch import RemoteSwitch
 REMOTE_SWITCH = "Remote Switch"
-class RemoteSwitchBricklet(AbstractBricklet):
+class RemoteSwitchBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1143,7 +1143,7 @@ class RemoteSwitchBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         logging.warning("The RemoteSwitchBricklet is not supported for Logging actions!")  
 
 ############################################################################################
@@ -1152,7 +1152,7 @@ from tinkerforge.bricklet_rotary_encoder import RotaryEncoder
 ROTARY_ENCODER = "Rotary Encoder"
 ROTARY_ENCODER_COUNT = "Count"
 ROTARY_ENCODER_PRESSED = "Pressed"
-class RotaryEncoderBricklet(AbstractBricklet):
+class RotaryEncoderBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1162,7 +1162,7 @@ class RotaryEncoderBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) #get_count(false)
+        AbstractDevice.start_timer(self) #get_count(false)
         
         value1 = DataLogger.parse_to_int(self._data[ROTARY_ENCODER_COUNT])  
         value2 = DataLogger.parse_to_int(self._data[ROTARY_ENCODER_PRESSED])  
@@ -1187,7 +1187,7 @@ from tinkerforge.bricklet_rotary_poti import RotaryPoti
 ROTARY_POTI = "Rotary Poti"
 ROTARY_POTI_POSITION = "Position"
 ROTARY_POTI_ANALOG_VALUE = "Analog Value"
-class RotaryPotiBricklet(AbstractBricklet):
+class RotaryPotiBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1197,7 +1197,7 @@ class RotaryPotiBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[ROTARY_POTI_POSITION])  
         value2 = DataLogger.parse_to_int(self._data[ROTARY_POTI_ANALOG_VALUE])  
@@ -1225,7 +1225,7 @@ SEGMENT_DISPLAY_4x7_SEGMENT_4 = "Segment 4"
 SEGMENT_DISPLAY_4x7_BRIGTHNESS = "Brightness"
 SEGMENT_DISPLAY_4x7_COLON = "Colon"
 SEGMENT_DISPLAY_4x7_COUNTER_VALUE = "Counter Value"
-class SegmentDisplay4x7Bricklet(AbstractBricklet):
+class SegmentDisplay4x7Bricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1235,7 +1235,7 @@ class SegmentDisplay4x7Bricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[SEGMENT_DISPLAY_4x7_SEGMENTS])  
         value2 = DataLogger.parse_to_int(self._data[SEGMENT_DISPLAY_4x7_COUNTER_VALUE])  
@@ -1276,7 +1276,7 @@ class SegmentDisplay4x7Bricklet(AbstractBricklet):
 from tinkerforge.bricklet_solid_state_relay import BrickletSolidStateRelay
 SOLID_STATE_RELAY = "Solid State Relay"
 SOLID_STATE_RELAY_STATE = "State"
-class SolidStateRelayBricklet(AbstractBricklet):
+class SolidStateRelayBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1286,7 +1286,7 @@ class SolidStateRelayBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
 
         value1 = DataLogger.parse_to_int(self._data[SOLID_STATE_RELAY_STATE])  
         
@@ -1301,7 +1301,7 @@ class SolidStateRelayBricklet(AbstractBricklet):
 from tinkerforge.bricklet_sound_intensity import BrickletSoundIntensity
 SOUND_INTENSITY = "Sound Intensity"
 SOUND_INTENSITY_INTENSITY = "Intensity"
-class SoundIntensityBricklet(AbstractBricklet):
+class SoundIntensityBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1311,7 +1311,7 @@ class SoundIntensityBricklet(AbstractBricklet):
         
 
     def start_timer(self):#get_intensity
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[SOUND_INTENSITY_INTENSITY])  
         
@@ -1326,7 +1326,7 @@ class SoundIntensityBricklet(AbstractBricklet):
 from tinkerforge.bricklet_temperature import BrickletTemperature
 TEMPERATURE = "Temperature"
 TEMPERATURE_TEMPERATURE = "Temperature"
-class TemperatureBricklet(AbstractBricklet):
+class TemperatureBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1336,7 +1336,7 @@ class TemperatureBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[TEMPERATURE_TEMPERATURE])  
         
@@ -1352,7 +1352,7 @@ from tinkerforge.bricklet_temperature_ir import BrickletTemperatureIR
 TEMPERATURE_IR = "Temperature IR"
 TEMPERATURE_IR_AMBIENT_TEMPERATURE = "Ambient Temperature"
 TEMPERATURE_IR_OBJECT_TEMPERATURE ="Object Temperature"
-class TemperatureIRBricklet(AbstractBricklet):
+class TemperatureIRBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1362,7 +1362,7 @@ class TemperatureIRBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[TEMPERATURE_IR_AMBIENT_TEMPERATURE])  
         value2 = DataLogger.parse_to_int(self._data[TEMPERATURE_IR_OBJECT_TEMPERATURE])  
@@ -1383,7 +1383,7 @@ class TemperatureIRBricklet(AbstractBricklet):
 from tinkerforge.bricklet_tilt import BrickletTilt
 TILT = "Tilt"
 TILT_STATE = "State"
-class TiltBricklet(AbstractBricklet):
+class TiltBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1393,7 +1393,7 @@ class TiltBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[TILT_STATE])  
         
@@ -1409,7 +1409,7 @@ from tinkerforge.bricklet_voltage import BrickletVoltage
 VOLTAGE = "Voltage"
 VOLTAGE_VOLTAGE = "Voltage"
 VOLTAGE_ANALOG_VALUE = "Analog Value"
-class VoltageBricklet(AbstractBricklet):
+class VoltageBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1419,7 +1419,7 @@ class VoltageBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[VOLTAGE_VOLTAGE])  
         value2 = DataLogger.parse_to_int(self._data[VOLTAGE_ANALOG_VALUE])  
@@ -1442,7 +1442,7 @@ VOLTAGE_CURRENT = "Voltage Current"
 VOLTAGE_CURRENT_CURRENT = "Current"
 VOLTAGE_CURRENT_VOLTAGE = "Voltage"
 VOLTAGE_CURRENT_POWER = "Power"
-class VoltageCurrentBricklet(AbstractBricklet):
+class VoltageCurrentBricklet(AbstractDevice):
     
     def __init__(self, uid, data):
         self.uid = uid        
@@ -1452,7 +1452,7 @@ class VoltageCurrentBricklet(AbstractBricklet):
         
 
     def start_timer(self):
-        AbstractBricklet.start_timer(self) 
+        AbstractDevice.start_timer(self) 
         
         value1 = DataLogger.parse_to_int(self._data[VOLTAGE_CURRENT_CURRENT])  
         value2 = DataLogger.parse_to_int(self._data[VOLTAGE_CURRENT_VOLTAGE])  

@@ -2,6 +2,8 @@
 from brickv.data_logger.bricklets import *
 from brickv.data_logger.utils import * 
 
+from brickv.data_logger.xively import Xively
+
 import argparse                             # command line argument parser
 import sys
 #import logging                              #static logging system
@@ -26,6 +28,8 @@ def xively_switch(data):
     # = data.get(XIVELY_FEED)
     # = data.get(XIVELY_API_KEY)
     # = DataLogger.parse_to_int(data.get(XIVELY_UPDATE_RATE))
+#     if DataLogger.LOG_TO_XIVELY:
+#         DataLogger.xively = Xively("agent", "fedd", "api_key", "upload_rate")
     pass
 
 def bricklet_switch(data):
@@ -212,9 +216,12 @@ def main(ini_file_path):
     #create write thread
     #look which thread should be working
     if DataLogger.LOG_TO_FILE:
-        DataLogger.Threads.append(threading.Thread(name="CSV Writer Thread", target=writer_thread))
-    if DataLogger.LOG_TO_XIVELY:
-        DataLogger.Threads.append(threading.Thread(name="Xively Writer Thread", target=xively_thread))
+        DataLogger.Threads.append(threading.Thread(name="CSV Writer", target=writer_thread))
+    if DataLogger.LOG_TO_XIVELY: # done in xively_switch
+        #tmp = threading.Thread(name="Xively Writer", target=DataLogger.xively.upload)
+        #tmp.daemon = True
+        #DataLogger.Threads.append(tmp)#only if he is no daemon!
+        logging.warning("Xively is not supported!")
         
     for t in DataLogger.Threads:
         t.start()
