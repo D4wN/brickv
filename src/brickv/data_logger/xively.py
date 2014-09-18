@@ -1,4 +1,5 @@
-from brickv.data_logger.utils import DataLogger, CSVData
+from brickv.data_logger.utils import CSVData
+from brickv.data_logger.data_logger import DataLogger
 
 import threading, time, logging
 import json, httplib

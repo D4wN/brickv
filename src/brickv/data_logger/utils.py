@@ -24,87 +24,9 @@ Boston, MA 02111-1307, USA.
 
 """GLOBAL-VARIABLES"""
 
-import Queue, threading, time, logging                               #Writer Thread
+import threading, time, logging                               #Writer Thread
 
-class DataLogger():
-    
-    #Section Identifier
-    GENERAL_SECTION = "GENERAL"
-    GENERAL_LOG_TO_FILE = "log_to_file"
-    GENERAL_PATH_TO_FILE = "path_to_file"
 
-    XIVELY_SECTION = "XIVELY"
-    XIVELY_ACTIVE = "active"
-    XIVELY_AGENT_DESCRIPTION = "agent_description"
-    XIVELY_FEED = "feed"
-    XIVELY_API_KEY = "api_key"
-    XIVELY_UPLOAD_RATE = "upload_rate"
-    
-    #Logger
-    FILE_EVENT_LOGGING = False                              #for event logging in to a file
-    EVENT_LOGGING_FILE_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
-    LOGGING_EVENT_LEVEL = logging.DEBUG
-    
-    #General
-    DEFAULT_FILE_PATH = "logged_data.csv"
-    LOG_TO_FILE = True
-    LOG_TO_XIVELY = False
-    
-    ipcon = None
-    host = "localhost"
-    port = 4223  
-    
-    #Xivley Var
-    xively = None                                           #xively object; xively queue
-    
-    #Queues
-    Q = Queue.Queue()                                       #gloabl queue for write jobs
-    
-    #Thread things
-    Threads = []                                            #gloabl thread array for all running threads/jobs
-    THREAD_EXIT_FLAG = False                                #flag for stopping the thread   
-    THREAD_SLEEP = 1#TODO: qucik testing fix                                        #in seconds!; fail state = -1 TODO: Enahncement -> use condition objects
-    
-    #Functions
-    def add_to_queue(csv):
-        #Look which queues are logging
-        if DataLogger.LOG_TO_FILE:
-            DataLogger.Q.put(csv)
-        
-        if DataLogger.LOG_TO_XIVELY:
-            #DataLogger.xively.put(csv)
-            logging.warning("Xively is not supported!")
-    
-    add_to_queue = staticmethod(add_to_queue)
-    
-    def parse_to_int(string):
-        '''
-        Returns an integer out of a string.
-        0(Zero) -- if string is negative or an exception raised during the converting process.
-        '''
-        try:
-            ret = int(float(string))
-            if ret < 0:
-                ret = 0
-            return ret
-        except ValueError:
-            logging.debug("DataLogger.parse_to_int("+ string +") could not be parsed! Return 0 for the Timer.")
-            return 0
-    
-    parse_to_int = staticmethod(parse_to_int) 
-    
-    def parse_to_bool(bool_string):
-        '''
-        Returns a 'True', if the string is equals to 'true' or 'True'.
-        Otherwise it'll return a False
-        '''
-        if bool_string == "true" or bool_string == "True" or bool_string == "TRUE":
-            return True
-        else:
-            return False
-            
-    parse_to_bool = staticmethod(parse_to_bool) 
- 
 '''
 /*---------------------------------------------------------------------------
                                 DataLoggerException
@@ -374,16 +296,27 @@ class DataLoggerConfig(object):
     '''
     This class provides the read-in functionality for the Data Logger configuration file
     '''   
+    GENERAL_SECTION = "GENERAL"
+    GENERAL_LOG_TO_FILE = "log_to_file"
+    GENERAL_PATH_TO_FILE = "path_to_file"
+
+    XIVELY_SECTION = "XIVELY"
+    XIVELY_ACTIVE = "active"
+    XIVELY_AGENT_DESCRIPTION = "agent_description"
+    XIVELY_FEED = "feed"
+    XIVELY_API_KEY = "api_key"
+    XIVELY_UPLOAD_RATE = "upload_rate"
+    
     __NAME_KEY = "name"
     __UID_KEY = "uid"
 
     def __init__(self,name):
-        self._is_parsed = False
+        # TODO: Check the configuration file name
         self.filenName = name
-        self._general = {}
-        self._xively = {}
-        self._bricklets = []
-                
+        self._configuration = Configuration()
+        
+        self._read_config_file()   
+           
         
     def _get_section_as_hashmap(self,section_name ,parser ):
         '''
@@ -395,16 +328,8 @@ class DataLoggerConfig(object):
         for section_key in parser.options(section_name):
             hashMap[section_key] =  parser.get(section_name, section_key)
         return hashMap
-    
-    def __parse_first(self):
-        '''
-        Checks if the configuration file is already parsed. If not it'll
-        call the <read_config_file()> function
-        '''   
-        if(not self._is_parsed):
-            self.read_config_file()
-            
-    def read_config_file(self):
+                
+    def _read_config_file(self):
         '''
         reads the entries out of the configuration file and 
         saves them into a <BrickletInfo> structure.
@@ -417,13 +342,13 @@ class DataLoggerConfig(object):
             parser.readfp(f)
         # TODO: Use the variables out of bricklets
         for section_name in parser.sections():
-            if section_name == DataLogger.GENERAL_SECTION:
+            if section_name == DataLoggerConfig.GENERAL_SECTION:
                 # Get GENERAL section
-                self._general =self._get_section_as_hashmap(section_name,parser)
+                self._configuration._general =self._get_section_as_hashmap(section_name,parser)
 
-            elif section_name == DataLogger.XIVELY_SECTION:
+            elif section_name == DataLoggerConfig.XIVELY_SECTION:
                 # Get XIVELY section
-                self._xively = self._get_section_as_hashmap(section_name,parser)
+                self._configuration._xively = self._get_section_as_hashmap(section_name,parser)
 
             else:
                 # Get all other variables  
@@ -436,44 +361,34 @@ class DataLoggerConfig(object):
                         # All variables (key and value) are of type string                     
                         tmp_bricklet.add_key_value_pair(str(section_key).title(),str(parser.get(section_name, section_key)).title() )
 
-                self._bricklets.append(tmp_bricklet)
+                self._configuration._bricklets.append(tmp_bricklet)
                 
-        # configuration file is parsed an ready to use     
-        self._is_parsed = True
-        
         # TODO: define error number for this exception
-        if(len(self._bricklets) == 0):
+        if len(self._configuration.get_bricklets()) == 0:
             logging.error("There are no bricklets configured in the configuration file!")
-            sys.exit(-1)  
+            sys.exit(-1)
+    
+    def get_configuration(self):
+        return self._configuration
+
+class Configuration():
+    '''
+    '''
+    def __init__(self):
+        self._general = {}
+        self._xively = {}
+        self._bricklets = []
         
     def get_general_section(self):
-        '''
-        Returns the variables out of the "GENERAL" section in the configuration file if it
-        was already parsed otherwise it call the <read_config_file()> function first
-        '''
-        self.__parse_first()
-           
         return self._general
 
-    def get_xively_section(self):
-        '''
-        Returns the variables out of the "XIVELY" section in the configuration file if it
-        was already parsed otherwise it call the <read_config_file()> function first
-        '''
-        self.__parse_first()
-           
+    def get_xively_section(self):    
         return self._xively
         
     def get_bricklets(self):
-        '''
-        Returns an array of bricklets out of the configuration file if it
-        was already parsed. Otherwise it call the <read_config_file()> function first
-        '''
-        self.__parse_first()
-           
         return self._bricklets
-
-
+        
+  
 """"
 /*---------------------------------------------------------------------------
                                 BrickletInfo
@@ -496,31 +411,66 @@ class BrickletInfo(object):
         '''
         self.variables[key] = value
     
+    
+""""
+/*---------------------------------------------------------------------------
+                                Utilities
+ ---------------------------------------------------------------------------*/
+"""
+class Utilities(object):
+    
+    def parse_to_int(string):
+        '''
+        Returns an integer out of a string.
+        0(Zero) -- if string is negative or an exception raised during the converting process.
+        '''
+        try:
+            ret = int(float(string))
+            if ret < 0:
+                ret = 0
+            return ret
+        except ValueError:
+            logging.debug("DataLogger.parse_to_int("+ string +") could not be parsed! Return 0 for the Timer.")
+            return 0
+    
+    parse_to_int = staticmethod(parse_to_int) 
+
+    def parse_to_bool(bool_string):
+        '''
+        Returns a 'True', if the string is equals to 'true' or 'True'.
+        Otherwise it'll return a False
+        '''
+        if bool_string == "true" or bool_string == "True" or bool_string == "TRUE":
+            return True
+        else:
+            return False
+            
+    parse_to_bool = staticmethod(parse_to_bool) 
+    
 
 """"
 /*---------------------------------------------------------------------------
                                 WriterThread
  ---------------------------------------------------------------------------*/
 """
-
-
+import data_logger
 def writer_thread():
     thread_name = "Work Thread(" + threading.current_thread().name + ")"
     logging.debug(thread_name + " started.")
-    csv_writer = CSVWriter(DataLogger.DEFAULT_FILE_PATH)
+    csv_writer = CSVWriter(data_logger.DataLogger.DEFAULT_FILE_PATH)
     
     while (True):
-        if not DataLogger.Q.empty():
-            csv_data = DataLogger.Q.get()
+        if not data_logger.DataLogger.Q.empty():
+            csv_data = data_logger.DataLogger.Q.get()
             logging.debug(thread_name + " -> " + str(csv_data.name)+"-"+ csv_data.var_name +":" +str(csv_data.raw_data))
             if not csv_writer.write_data_row(csv_data):
                 logging.warning(thread_name + " could not write csv row!")
                                       
-        if not DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
+        if not data_logger.DataLogger.THREAD_EXIT_FLAG and data_logger.DataLogger.Q.empty(): 
             #TODO: qucik testing fix logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
-            time.sleep(DataLogger.THREAD_SLEEP)
+            time.sleep(data_logger.DataLogger.THREAD_SLEEP)
         
-        if DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
+        if data_logger.DataLogger.THREAD_EXIT_FLAG and data_logger.DataLogger.Q.empty(): 
             
             exit_flag = csv_writer.close_file()
             if exit_flag:
@@ -529,3 +479,6 @@ def writer_thread():
                 logging.debug(thread_name + " could NOT close his csv_writer! EXIT_FLAG=" + str(exit))
             logging.debug(thread_name + " finished his work.")
             break
+        
+def xively_thread():
+    pass
