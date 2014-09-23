@@ -26,7 +26,7 @@ def __exit_condition(data_logger):
         input_option = raw_input("Type 'quit' or 'exit' to stop logging and close the program\n")  # Use input() in Python 3
         if input_option == "quit" or input_option == "exit":
             break
-    data_logger.stopp(0)
+    data_logger.stop(0)
           
 def main(ini_file_path):
     configuration = None

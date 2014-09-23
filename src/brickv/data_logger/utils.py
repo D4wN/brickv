@@ -161,6 +161,7 @@ class CSVWriter(object):
     def _write_header(self):
         """Writes a csv header into the file"""
         if(not self._file_is_empty()):
+            logging.debug("File is not empty")
             return
     
         logging.debug("CSVWriter._write_header() - done")
@@ -237,15 +238,13 @@ from threading import Timer
 
 class LoggerTimer(object):
     '''This class provides a timer with a repeat functionality based on a interval'''
-    
-    Timers = [] # global array for all running timers
-    EXIT_FLAG = False
-    
+        
     def __init__(self, interval, func):
         ''' 
         interval -- the repeat interval in ms
         func -- the function which will be called
         '''
+        self.exit_flag = False
         interval /= 1000 #for ms
         if interval < 0:
             interval = 0
@@ -259,8 +258,7 @@ class LoggerTimer(object):
         '''Runs the <self._func> function every <self._interval> seconds'''
         self._func()
         self.cancel()
-        if LoggerTimer.EXIT_FLAG:
-            self._t.cancel()
+        if self.exit_flag:
             return
         self._t = Timer(self._interval, self._loop)
         self.start()
@@ -274,6 +272,9 @@ class LoggerTimer(object):
             return     
  
         self._t.start()
+    
+    def stop(self):
+        self.exit_flag = True
     
     def cancel(self):
         self._t.cancel()
@@ -454,24 +455,23 @@ class Utilities(object):
  ---------------------------------------------------------------------------*/
 """
 import data_logger
-def writer_thread():
+def writer_thread(datalogger):
     thread_name = "Work Thread(" + threading.current_thread().name + ")"
     logging.debug(thread_name + " started.")
-    csv_writer = CSVWriter(data_logger.DataLogger.DEFAULT_FILE_PATH)
-    
+    csv_writer = CSVWriter(datalogger.default_file_path)
+                           
     while (True):
-        if not data_logger.DataLogger.Q.empty():
-            csv_data = data_logger.DataLogger.Q.get()
+        if not datalogger.data_queue.empty():
+            csv_data = datalogger.data_queue.get()
             logging.debug(thread_name + " -> " + str(csv_data.name)+"-"+ csv_data.var_name +":" +str(csv_data.raw_data))
             if not csv_writer.write_data_row(csv_data):
                 logging.warning(thread_name + " could not write csv row!")
                                       
-        if not data_logger.DataLogger.THREAD_EXIT_FLAG and data_logger.DataLogger.Q.empty(): 
+        if not datalogger.thread_exit_flag and datalogger.data_queue.empty(): 
             #TODO: qucik testing fix logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
-            time.sleep(data_logger.DataLogger.THREAD_SLEEP)
+            time.sleep(datalogger.thread_sleep)
         
-        if data_logger.DataLogger.THREAD_EXIT_FLAG and data_logger.DataLogger.Q.empty(): 
-            
+        if datalogger.thread_exit_flag and datalogger.data_queue.empty(): 
             exit_flag = csv_writer.close_file()
             if exit_flag:
                 logging.debug(thread_name + " closed his csv_writer.")

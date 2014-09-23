@@ -1,4 +1,4 @@
-from brickv.data_logger.utils import CSVData
+from brickv.data_logger.utils import CSVData, Utilities
 from brickv.data_logger.data_logger import DataLogger
 
 import threading, time, logging
@@ -20,7 +20,7 @@ class Xively:
         self._agent = agent
         self._feed = feed
         self._api_key = api_key
-        self._upload_rate = DataLogger.parse_to_int(upload_rate)
+        self._upload_rate = Utilities.parse_to_int(upload_rate)
         if self._upload_rate < Xively.MIN_UPLOAD_RATE:
             self._upload_rate = Xively.MIN_UPLOAD_RATE
         
