@@ -1,7 +1,6 @@
 #MAIN DATA_LOGGER PROGRAMM
 from brickv.data_logger.bricklets import *
 
-from brickv.data_logger.xively import Xively
 from brickv.data_logger.utils import DataLoggerConfig, DataLoggerException
 from brickv.data_logger.data_logger import DataLogger
 
