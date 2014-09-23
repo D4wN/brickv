@@ -239,7 +239,7 @@ from threading import Timer
 class LoggerTimer(object):
     '''This class provides a timer with a repeat functionality based on a interval'''
         
-    def __init__(self, interval, func):
+    def __init__(self, interval, func_name, var_name, device):
         ''' 
         interval -- the repeat interval in ms
         func -- the function which will be called
@@ -250,13 +250,15 @@ class LoggerTimer(object):
             interval = 0
         
         self._interval = interval
-        self._func = func      
+        self._func_name = func_name     
+        self._var_name = var_name 
+        self._device = device
         self._t = Timer(self._interval, self._loop)
    
     
     def _loop(self):
-        '''Runs the <self._func> function every <self._interval> seconds'''
-        self._func()
+        '''Runs the <self._func_name> function every <self._interval> seconds'''
+        getattr(self._device, self._func_name)(self._var_name)
         self.cancel()
         if self.exit_flag:
             return
@@ -446,8 +448,8 @@ class Utilities(object):
         else:
             return False
             
-    parse_to_bool = staticmethod(parse_to_bool) 
-    
+    parse_to_bool = staticmethod(parse_to_bool)
+
 
 """"
 /*---------------------------------------------------------------------------
