@@ -95,112 +95,48 @@ class DataLogger():
         pass
 
     def bricklet_switch(self,data):
-        for current_bricklet in data:
-            try:
-                bricklet_name = current_bricklet.name
-                bricklet_uid = current_bricklet.uid
-                bricklet_variables = current_bricklet.variables
-        
-                if bricklet_name == bricklets.AMBIENT_LIGHT:
-                    bricklets.AmbientLightBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.ANALOG_IN:
-                    bricklets.AnalogInBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.ANALOG_OUT:
-                    bricklets.AnalogOutBricklet(bricklet_uid,bricklet_variables,self).start_timer()              
-                elif bricklet_name == bricklets.BAROMETER:
-                    bricklets.BarometerBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.COLOR:
-                    bricklets.ColorBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.CURRENT_12:
-                    bricklets.Current12Bricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.CURRENT_25:
-                    bricklets.Current25Bricklet(bricklet_uid,bricklet_variables,self).start_timer()    
-                elif bricklet_name == bricklets.DISTANCE_IR:
-                    bricklets.DistanceIRBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.DISTANCE_US:
-                    bricklets.DistanceUSBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.DUAL_BUTTON:
-                    bricklets.DualButtonBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.DUAL_RELAY:
-                    bricklets.DualRelayBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.GPS_BRICKLET:
-                    bricklets.GPSBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.HALL_EFFECT:
-                    bricklets.HallEffectBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.HUMIDITY:
-                    bricklets.HumidityBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.INDUSTRIAL_DIGITAL_IN_4:
-                    bricklets.IndustrialDigitalIn4Bricklet(bricklet_uid,bricklet_variables,self).start_timer()      
-                elif bricklet_name == bricklets.INDUSTRIAL_DIGITAL_OUT_4:
-                    bricklets.IndustrialDigitalOut4Bricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.INDUSTRIAL_DUAL_0_20_MA:
-                    bricklets.IndustrialDual020mABricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.INDUSTRIAL_QUAD_RELAY:
-                    bricklets.IndustrialQuadRelayBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.IO_16:
-                    bricklets.IO16Bricklet(bricklet_uid,bricklet_variables,self).start_timer() 
-                elif bricklet_name == bricklets.IO_4:
-                    bricklets.IO4Bricklet(bricklet_uid,bricklet_variables,self).start_timer() 
-                elif bricklet_name == bricklets.JOYSTICK:
-                    bricklets.JoystickBricklet(bricklet_uid,bricklet_variables,self).start_timer() 
-                elif bricklet_name == bricklets.LCD_16x2:
-                    bricklets.LCD16x2Bricklet(bricklet_uid,bricklet_variables,self).start_timer() 
-                elif bricklet_name == bricklets.LCD_20x4:
-                    bricklets.LCD20x4Bricklet(bricklet_uid,bricklet_variables,self).start_timer() 
-                elif bricklet_name == bricklets.LED_STRIP:
-                    bricklets.LEDStripBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.LINE:
-                    bricklets.LineBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.LINEAR_POTI:
-                    bricklets.LinearPotiBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.MOISTURE:
-                    bricklets.MoistureBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.MOTION_DETECTOR:
-                    bricklets.MotionDetectorBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.MULTI_TOUCH:
-                    bricklets.MultiTouchBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.NFC_RFID:
-                    bricklets.NFCRFIDBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.PIEZO_BUZZER:
-                    bricklets.PiezoBuzzerBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.PIEZO_SPEAKER:
-                    bricklets.PiezoSpeakerBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.PTC_BRICKLET:
-                    bricklets.PTCBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.REMOTE_SWITCH:
-                    bricklets.RemoteSwitchBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.ROTARY_ENCODER:
-                    bricklets.RotaryEncoderBricklet(bricklet_uid,bricklet_variables,self).start_timer()  
-                elif bricklet_name == bricklets.ROTARY_POTI:
-                    bricklets.RotaryPotiBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.SEGMENT_DISPLAY_4x7:
-                    bricklets.SegmentDisplay4x7Bricklet(bricklet_uid,bricklet_variables,self).start_timer()  
-                elif bricklet_name == bricklets.SOLID_STATE_RELAY:
-                    bricklets.SolidStateRelayBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.SOUND_INTENSITY:
-                    bricklets.SoundIntensityBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.TEMPERATURE:
-                    bricklets.TemperatureBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.TEMPERATURE_IR:
-                    bricklets.TemperatureIRBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.TILT:
-                    bricklets.TiltBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.VOLTAGE:
-                    bricklets.VoltageBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                elif bricklet_name == bricklets.VOLTAGE_CURRENT:
-                    bricklets.VoltageCurrentBricklet(bricklet_uid,bricklet_variables,self).start_timer()
-                else:
-                    logging.warning("The bricklet [" +bricklet_name+ "] is not yet supported")   
-                              
-            except KeyError as key_error:
-                msg = bricklet_name +"["+bricklet_uid+"] has no key [" + str(key_error) + "]. Please review the configuration file."
-                logging.critical(msg)
-                self.stop(utils.DataLoggerException.DL_MISSING_ARGUMENT)
+        simple_devices = []
+        #T1
+        simple_devices.append({})
+        #T2
+        simple_devices[0][bricklets.DEVICE_CLASS] = bricklets.string_to_class("Barometer")
+        simple_devices[0][bricklets.DEVICE_UID] = "fVP"
+        simple_devices[0][bricklets.DEVICE_VALUES] = {}
+        #T3
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_AIR_PRESSURE] = {}
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_ALTITUDE] = {}
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_CHIP_TEMPERATURE] = {}
+        #T4
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_AIR_PRESSURE][bricklets.DEVICE_VALUES_NAME] = "get_air_pressure"
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_AIR_PRESSURE][bricklets.DEVICE_VALUES_ARGS] = None
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_AIR_PRESSURE][bricklets.DEVICE_VALUES_INTERVAL] = 1000
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_ALTITUDE][bricklets.DEVICE_VALUES_NAME] = "get_altitude"
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_ALTITUDE][bricklets.DEVICE_VALUES_ARGS] = None
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_ALTITUDE][bricklets.DEVICE_VALUES_INTERVAL] = 1000
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_CHIP_TEMPERATURE][bricklets.DEVICE_VALUES_NAME] = "get_chip_temperature"
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_CHIP_TEMPERATURE][bricklets.DEVICE_VALUES_ARGS] = None
+        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_CHIP_TEMPERATURE][bricklets.DEVICE_VALUES_INTERVAL] = 1000
+#         for current_bricklet in data:
+#             try:
+#                 bricklet_name = current_bricklet.name
+#                 bricklet_uid = current_bricklet.uid
+#                 bricklet_variables = current_bricklet.variables
+#         
+#                 #do something
+#                               
+#             except KeyError as key_error:
+#                 msg = bricklet_name +"["+bricklet_uid+"] has no key [" + str(key_error) + "]. Please review the configuration file."
+#                 logging.critical(msg)
+#                 self.stop(utils.DataLoggerException.DL_MISSING_ARGUMENT)
+# 
+#             except Exception as exc: # FIXME: Catch-All just for debugging purpose 
+#                 msg = "A critical error occur " + str(exc)
+#                 logging.critical( msg)
+#                 self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
 
-            except Exception as exc: # FIXME: Catch-All just for debugging purpose 
-                msg = "A critical error occur " + str(exc)
-                logging.critical( msg)
-                self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
+        for i in range(0, len(simple_devices)):
+            bricklets.SimpleDevice(simple_devices[i], self).start_timer()
+    
                 
     def run(self):
         '''
