@@ -310,3 +310,54 @@ Voltage/Current
 	Tests:
 		- TODO real_values
 		- timeout
+--------------------------------------------------------------------------------
+Brick Tests
+--------------------------------------------------------------------------------
+Dc
+	Vars:
+		- Current Velocity
+		- Is Enabled
+		- Stack Input Voltage
+		- External Input Voltage
+		- Current Consumption
+	Tests:
+		- TODO real_values
+		- timeout
+Imu
+	Vars:
+		- get_orientation
+		- get_quaternion
+		- are_leds_on
+		- get_acceleration
+		- get_magnetic_field
+		- get_angular_velocity
+		- get_imu_temperature
+		- is_orientation_calculation_on
+		- get_chip_temperature
+	Tests:
+		- TODO real_values
+		- TODO timeout
+DC Brick
+	Vars:
+		- get_current_velocity
+	Tests:
+		- TODO real_values
+		- TODO timeout
+DC Brick
+	Vars:
+		- get_current_velocity
+	Tests:
+		- TODO real_values
+		- TODO timeout
+DC Brick
+	Vars:
+		- get_current_velocity
+	Tests:
+		- TODO real_values
+		- TODO timeout
+DC Brick
+	Vars:
+		- get_current_velocity
+	Tests:
+		- TODO real_values
+		- TODO timeout	

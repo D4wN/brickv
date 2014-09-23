@@ -127,6 +127,8 @@ def bricklet_switch(data):
                 VoltageBricklet(bricklet_uid,bricklet_variables).start_timer()
             elif bricklet_name == VOLTAGE_CURRENT:
                 VoltageCurrentBricklet(bricklet_uid,bricklet_variables).start_timer()
+            elif bricklet_name == DC_BRICK:
+                DCBrick(bricklet_uid,bricklet_variables).start_timer()
             else:
                 logging.warning("The bricklet [" +bricklet_name+ "] is not yet supported")   
                               
