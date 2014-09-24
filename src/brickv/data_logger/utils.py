@@ -302,6 +302,8 @@ class DataLoggerConfig(object):
     GENERAL_SECTION = "GENERAL"
     GENERAL_LOG_TO_FILE = "log_to_file"
     GENERAL_PATH_TO_FILE = "path_to_file"
+    GENERAL_HOST = "host"
+    GENERAL_PORT = "port"
 
     XIVELY_SECTION = "XIVELY"
     XIVELY_ACTIVE = "active"
