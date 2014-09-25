@@ -100,35 +100,10 @@ class DataLogger():
         #  = DataLogger.parse_to_int(data.get(XIVELY_UPDATE_RATE))
 
     def bricklet_switch(self,data):
-        simple_devices = []
-        #T1
-        simple_devices.append({})
-        #T2
-        simple_devices[0][bricklets.DEVICE_CLASS] = bricklets.string_to_class("Barometer")
-        simple_devices[0][bricklets.DEVICE_UID] = "fVP"
-        simple_devices[0][bricklets.DEVICE_VALUES] = {}
-        #T3
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_AIR_PRESSURE] = {}
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_ALTITUDE] = {}
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_CHIP_TEMPERATURE] = {}
-        #T4
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_AIR_PRESSURE][bricklets.DEVICE_VALUES_NAME] = "get_air_pressure"
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_AIR_PRESSURE][bricklets.DEVICE_VALUES_ARGS] = None
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_AIR_PRESSURE][bricklets.DEVICE_VALUES_INTERVAL] = 1000
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_ALTITUDE][bricklets.DEVICE_VALUES_NAME] = "get_altitude"
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_ALTITUDE][bricklets.DEVICE_VALUES_ARGS] = None
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_ALTITUDE][bricklets.DEVICE_VALUES_INTERVAL] = 1000
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_CHIP_TEMPERATURE][bricklets.DEVICE_VALUES_NAME] = "get_chip_temperature"
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_CHIP_TEMPERATURE][bricklets.DEVICE_VALUES_ARGS] = None
-        simple_devices[0][bricklets.DEVICE_VALUES][bricklets.BAROMETER_CHIP_TEMPERATURE][bricklets.DEVICE_VALUES_INTERVAL] = 1000
+ 
 #         for current_bricklet in data:
 #             try:
-#                 bricklet_name = current_bricklet.name
-#                 bricklet_uid = current_bricklet.uid
-#                 bricklet_variables = current_bricklet.variables
-#         
-#                 #do something
-#                               
+#                 #do something           
 #             except KeyError as key_error:
 #                 msg = bricklet_name +"["+bricklet_uid+"] has no key [" + str(key_error) + "]. Please review the configuration file."
 #                 logging.critical(msg)
@@ -138,10 +113,24 @@ class DataLogger():
 #                 msg = "A critical error occur " + str(exc)
 #                 logging.critical( msg)
 #                 self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
+        simple_devices = self._configuration._simple_devices
+        complex_devices = self._configuration._complex_devices
+        special_devices = self._configuration._special_devices
+        #start the timers
+        try:
+            for i in range(0, len(simple_devices)):
+                bricklets.SimpleDevice(simple_devices[i], self).start_timer()            
+             
+            for i in range(0, len(complex_devices)):
+                bricklets.ComplexDevice(complex_devices[i], self).start_timer()
+         
+            for i in range(0, len(special_devices)):
+                (special_devices[i][bricklets.DEVICE_CLASS](special_devices[i], self)).start_timer()
 
-        for i in range(0, len(simple_devices)):
-            bricklets.SimpleDevice(simple_devices[i], self).start_timer()
-    
+        except Exception as exc: # FIXME: Catch-All just for debugging purpose 
+            msg = "A critical error occur: " + str(exc)
+            logging.critical( msg)
+            self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
                 
     def run(self):
         '''
