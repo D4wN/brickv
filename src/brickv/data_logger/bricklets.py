@@ -1,7 +1,7 @@
 from brickv.data_logger.utils import LoggerTimer   #Timer for getVariable
 from brickv.data_logger.utils import CSVData       #bricklets
-from brickv.data_logger.utils import Utilities
 from brickv.data_logger.data_logger import DataLogger #gloabl thread/job queue -> brickelts callbacks/timer
+import tinkerforge
 
 import logging, sys
 
@@ -12,6 +12,7 @@ def string_to_class(string):
 SIMPLE_DEVICE = "SimpleDevice"
 SPECIAL_DEVICE = "SpecialDevice"
 COMPLEX_DEVICE = "ComplexDevice"
+
 DEVICE_NAME = "name"
 DEVICE_CLASS = "class"
 DEVICE_UID = "uid"
@@ -23,18 +24,22 @@ DEVICE_VALUES_INTERVAL = "interval"
 COMPLEX_DEVICE_VARIABLES = "variables"
 COMPLEX_DEVICE_VARIABLES_NAME = "var_name"
 COMPLEX_DEVICE_VARIABLES_BOOL = "var_bool"
+
+SPECIAL_DEVICE_VALUE = "special_values"
+SPECIAL_DEVICE_BOOL = "special_bool"
+
 class AbstractDevice(object):
     """DEBUG and Inheritance only class"""
-    def __init__(self, data, datalogger):
-        print str(data)               
+    def __init__(self, data, datalogger):             
         self.datalogger = datalogger
         self.data = data
         self.uid = self.data[DEVICE_UID] 
         self.identifier = None 
         self.device = None
         
+        self.__name__ = "AbstractDevice"
         
-
+        
     def start_timer(self):
         logging.debug(self.__str__())
                 
@@ -53,7 +58,8 @@ class AbstractDevice(object):
         return "ERROR[" + str(value) + "]: " + str(msg)
     
     def __str__(self):
-        return "[BRICKLET=" + str(self.data[DEVICE_CLASS]) + " | <UID="+ str(self.uid) +"> | <IDENTIEFIER=" + str(self.identifier) + "> | <data="+ str(self.data) + ">]"
+        return "["+self.__name__+"=" + str(self.data[DEVICE_CLASS]) + " | <UID="+ str(self.uid) +"> | <IDENTIEFIER=" + str(self.identifier) + "> | <data="+ str(self.data) + ">]"
+
 
 class SimpleDevice(AbstractDevice):
     
@@ -83,14 +89,68 @@ class SimpleDevice(AbstractDevice):
                 value = getattr(self.device, getter_name)(*getter_args)
             else:
                 value = getattr(self.device, getter_name)()
-        except Exception as e:
-            try:
-                value = self._exception_msg(e.value, e.description)
-            except Exception as ex:
-                value = self._exception_msg(str(self.identifier)+"-"+str(var_name), ex)
+        except tinkerforge.ip_connection.Error as e:
+            value = self._exception_msg(e.value, e.description)
+        except Exception as ex:
+            value = self._exception_msg(str(self.identifier)+"-"+str(var_name), ex)    
         
-        logging.debug(var_name+": "+str(value))                 
+        self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, var_name, value))
 
+
+class ComplexDevice(AbstractDevice):
+    
+    def __init__(self, data, datalogger):
+        AbstractDevice.__init__(self, data, datalogger)     
+        self.device = self.data[DEVICE_CLASS](self.uid, self.datalogger.ipcon)
+        self.identifier = self.data[DEVICE_CLASS].DEVICE_IDENTIFIER  
+        
+        self.__name__ = COMPLEX_DEVICE
+
+    def start_timer(self):  
+        AbstractDevice.start_timer(self)
+             
+        #start for each variable a timer         
+        for value in self.data[DEVICE_VALUES]:
+            interval = self.data[DEVICE_VALUES][value][DEVICE_VALUES_INTERVAL]
+            func_name = "_timer"
+            var_name = value
+            self.datalogger.timers.append(LoggerTimer(interval, func_name, var_name, self)) 
+
+    def _timer(self, var_name):        
+        values = None
+        try:
+            getter_name = self.data[DEVICE_VALUES][var_name][DEVICE_VALUES_NAME]
+            getter_args = self.data[DEVICE_VALUES][var_name][DEVICE_VALUES_ARGS]
+        
+            #start functions to get values
+            if getter_args:
+                values = getattr(self.device, getter_name)(*getter_args)
+            else:
+                values = getattr(self.device, getter_name)()
+             
+            #check for tuples
+            if type(values) is tuple:
+                l = list(values)
+            else:
+                l = []
+                l.append(values)
+
+            #get bool and variable to check, which data should be logged
+            bools = self.data[DEVICE_VALUES][var_name][COMPLEX_DEVICE_VARIABLES_BOOL]
+            names = self.data[DEVICE_VALUES][var_name][COMPLEX_DEVICE_VARIABLES_NAME]
+        
+            #if variable bool is not True, dont log the data
+            for i in range(0, len(l)):
+                if bools[i]:
+                    self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, names[i], l[i]))
+            
+        except tinkerforge.ip_connection.Error as e:
+            values = self._exception_msg(e.value, e.description)
+            self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, var_name, values))
+        except Exception as ex:
+            values = self._exception_msg(str(self.identifier)+"-"+str(var_name), ex)    
+            self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, var_name, values))        
+              
 
 ############################################################################################
 #DEVICE#####################################################################################
@@ -416,27 +476,28 @@ GPS_DATE= "Date"
 GPS_TIME = "Time"
 class GPSBricklet(AbstractDevice):
     
-    def __init__(self, uid, data, datalogger):
-        AbstractDevice.__init__(self, uid, data, datalogger)
+    def __init__(self, data, datalogger):
+        AbstractDevice.__init__(self, data, datalogger)
       
         self.device = GPS(self.uid, datalogger.ipcon)
         self.identifier = GPS.DEVICE_IDENTIFIER 
         
+        self.__name__ = SPECIAL_DEVICE
 
     def start_timer(self):
         AbstractDevice.start_timer(self) 
         
-        value1 = Utilities.parse_to_int(self.data[GPS_COORDINATES])
-        value2 = Utilities.parse_to_int(self.data[GPS_ALTITUDE])
-        value3 = Utilities.parse_to_int(self.data[GPS_MOTION])
-        value4 = Utilities.parse_to_int(self.data[GPS_DATE_TIME])
-        
-        self.datalogger.timers.append(LoggerTimer(value1, self._timer_coordinates))  
-        self.datalogger.timers.append(LoggerTimer(value2, self._timer_altitude)) 
-        self.datalogger.timers.append(LoggerTimer(value3, self._timer_motion)) 
-        self.datalogger.timers.append(LoggerTimer(value4, self._timer_date_time)) 
+        value1 = self.data[SPECIAL_DEVICE_VALUE][GPS_COORDINATES]
+        value2 = self.data[SPECIAL_DEVICE_VALUE][GPS_ALTITUDE]
+        value3 = self.data[SPECIAL_DEVICE_VALUE][GPS_MOTION]
+        value4 = self.data[SPECIAL_DEVICE_VALUE][GPS_DATE_TIME]
+     
+        self.datalogger.timers.append(LoggerTimer(value1, self._timer_coordinates.__name__, GPS_COORDINATES, self))  
+        self.datalogger.timers.append(LoggerTimer(value2, self._timer_altitude.__name__, GPS_ALTITUDE, self)) 
+        self.datalogger.timers.append(LoggerTimer(value3, self._timer_motion.__name__, GPS_MOTION, self)) 
+        self.datalogger.timers.append(LoggerTimer(value4, self._timer_date_time.__name__, GPS_DATE_TIME, self)) 
     
-    def _timer_coordinates(self):
+    def _timer_coordinates(self, var_name):
         try:
             #check for the FIX Value of get_status()
             fix = self._get_fix_status()
@@ -447,65 +508,71 @@ class GPSBricklet(AbstractDevice):
 
             latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.device.get_coordinates()     
             #latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.__TMP_get_coordinates()  #TODO: TMP ONLY       
-            if Utilities.parse_to_bool(self.data[GPS_LATITUDE]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_LATITUDE]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_LATITUDE, latitude))
-            if Utilities.parse_to_bool(self.data[GPS_NS]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_NS]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_NS, ns))
-            if Utilities.parse_to_bool(self.data[GPS_LONGITUDE]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_LONGITUDE]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_LONGITUDE, longitude))
-            if Utilities.parse_to_bool(self.data[GPS_EW]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_EW]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_EW, ew))
-            if Utilities.parse_to_bool(self.data[GPS_PDOP]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_PDOP]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_PDOP, pdop))
-            if Utilities.parse_to_bool(self.data[GPS_HDOP]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_HDOP]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_HDOP, hdop))
-            if Utilities.parse_to_bool(self.data[GPS_VDOP]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_VDOP]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_VDOP, vdop))
-            if Utilities.parse_to_bool(self.data[GPS_EPE]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_EPE]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_EPE, epe))
-        except Exception as e:
+        except tinkerforge.ip_connection.Error as e:
             self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_COORDINATES, self._exception_msg(e.value, e.description)))
+        except Exception as ex:
+            self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_COORDINATES, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
 
-    def _timer_altitude(self):
+    def _timer_altitude(self, var_name):
         try:
             #check for the FIX Value of get_status()
             fix = self._get_fix_status()
-              
+               
             if fix != GPS.FIX_3D_FIX:
-                self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_ALTITUDE, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 3 for valid Altitude Values.")))
+                self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_ALTITUDE, self._exception_msg("Fix-Status="+str(fix), "GPS Fix-Status was " + str(fix) + ", but needs to be 3 for valid Altitude Values.")))
                 return
-
+ 
             altitude, geoidal_separation = self.device.get_altitude()            
-            if Utilities.parse_to_bool(self.data[GPS_ALTITUDE_VALUE]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_ALTITUDE_VALUE]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_ALTITUDE_VALUE, altitude))
-            if Utilities.parse_to_bool(self.data[GPS_GEOIDAL_SEPERATION]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_GEOIDAL_SEPERATION]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_GEOIDAL_SEPERATION, geoidal_separation))
-        except Exception as e:
+        except tinkerforge.ip_connection.Error as e:
             self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_ALTITUDE, self._exception_msg(e.value, e.description)))
+        except Exception as ex:
+            self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_ALTITUDE, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
 
-    def _timer_motion(self):
+    def _timer_motion(self, var_name):
         try:
             #check for the FIX Value of get_status()
             fix = self._get_fix_status()
-              
+               
             if fix == GPS.FIX_NO_FIX:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_MOTION, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 2 or 3 for valid Altitude Values.")))
                 return
-
+ 
             course, speed = self.device.get_motion()
-            if Utilities.parse_to_bool(self.data[GPS_COURSE]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_COURSE]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_COURSE, course))
-            if Utilities.parse_to_bool(self.data[GPS_SPEED]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_SPEED]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_SPEED, speed))
-        except Exception as e:
+        except tinkerforge.ip_connection.Error as e:
             self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_MOTION, self._exception_msg(e.value, e.description)))
+        except Exception as ex:
+            self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_MOTION, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
 
-    def _timer_date_time(self):
+    def _timer_date_time(self, var_name):
         try:
             date, time = self.device.get_date_time()
-            if Utilities.parse_to_bool(self.data[GPS_DATE]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_DATE]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_DATE, date))
-            if Utilities.parse_to_bool(self.data[GPS_TIME]):
+            if self.data[SPECIAL_DEVICE_BOOL][GPS_TIME]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_TIME, time))
         except Exception as e:
             self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_DATE_TIME, self._exception_msg(e.value, e.description)))
@@ -513,12 +580,12 @@ class GPSBricklet(AbstractDevice):
     def _get_fix_status(self):
         fix, satellites_view, satellites_used = self.device.get_status()
         #fix, satellites_view, satellites_used = self.__TMP_get_status()#TODO: TMP ONLY
-        
-        if Utilities.parse_to_bool(self.data[GPS_FIX_STATUS]):
+         
+        if self.data[SPECIAL_DEVICE_BOOL][GPS_FIX_STATUS]:
             self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_FIX_STATUS, fix))
-        if Utilities.parse_to_bool(self.data[GPS_SATELLITES_VIEW]):
+        if self.data[SPECIAL_DEVICE_BOOL][GPS_SATELLITES_VIEW]:
             self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_SATELLITES_VIEW, satellites_view))
-        if Utilities.parse_to_bool(self.data[GPS_SATELLITES_USED]):
+        if self.data[SPECIAL_DEVICE_BOOL][GPS_SATELLITES_USED]:
             self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, GPS_SATELLITES_USED, satellites_used))
         return fix
     
@@ -531,7 +598,7 @@ class GPSBricklet(AbstractDevice):
         #latitude, ns, longitude, ew, pdop, hdop, vdop, epe
         #int, chr, int, chr, int, int, int, int)
         return (57123468, 'N', 46012357, 'E', 1, 2, 3, 42)
-
+    
 ############################################################################################
 #TODO: Test with real bricklet  Segment Display 4x7
 from tinkerforge.bricklet_segment_display_4x7 import BrickletSegmentDisplay4x7 
@@ -546,46 +613,50 @@ SEGMENT_DISPLAY_4x7_COLON = "Colon"
 SEGMENT_DISPLAY_4x7_COUNTER_VALUE = "Counter Value"
 class SegmentDisplay4x7Bricklet(AbstractDevice):
     
-    def __init__(self, uid, data, datalogger):
-        AbstractDevice.__init__(self, uid, data, datalogger)
+    def __init__(self, data, datalogger):
+        AbstractDevice.__init__(self, data, datalogger)
     
         self.device = BrickletSegmentDisplay4x7(self.uid, datalogger.ipcon)
         self.identifier = BrickletSegmentDisplay4x7.DEVICE_IDENTIFIER 
+        
+        self.__name__ = SPECIAL_DEVICE
         
 
     def start_timer(self):
         AbstractDevice.start_timer(self) 
         
-        value1 = Utilities.parse_to_int(self.data[SEGMENT_DISPLAY_4x7_SEGMENTS])  
-        value2 = Utilities.parse_to_int(self.data[SEGMENT_DISPLAY_4x7_COUNTER_VALUE])  
+        value1 = self.data[SPECIAL_DEVICE_VALUE][SEGMENT_DISPLAY_4x7_SEGMENTS]
+        value2 = self.data[SPECIAL_DEVICE_VALUE][SEGMENT_DISPLAY_4x7_COUNTER_VALUE]
         
-        self.datalogger.timers.append(LoggerTimer(value1, self._timer_segments)) 
-        self.datalogger.timers.append(LoggerTimer(value2, self._timer_counter_value)) 
+        self.datalogger.timers.append(LoggerTimer(value1, self._timer_segments.__name__, SEGMENT_DISPLAY_4x7_SEGMENTS, self)) 
+        self.datalogger.timers.append(LoggerTimer(value2, self._timer_counter_value.__name__, SEGMENT_DISPLAY_4x7_COUNTER_VALUE, self)) 
 
-    def _timer_segments(self):
+    def _timer_segments(self, var_name):
         try:
             segment, brightness, colon = self.device.get_segments()
-            #segment, brightness, colon = self.__TEMP_GET_SEGMENTS()#TODO: debug only
-            if Utilities.parse_to_bool(self.data[SEGMENT_DISPLAY_4x7_SEGMENT_1]):
+            #segment, brightness, colon = self.__TMP_GET_SEGMENTS()#TODO: debug only
+            if self.data[SPECIAL_DEVICE_BOOL][SEGMENT_DISPLAY_4x7_SEGMENT_1]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_SEGMENT_1, segment[0]))
-            if Utilities.parse_to_bool(self.data[SEGMENT_DISPLAY_4x7_SEGMENT_2]):
+            if self.data[SPECIAL_DEVICE_BOOL][SEGMENT_DISPLAY_4x7_SEGMENT_2]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_SEGMENT_2, segment[1]))
-            if Utilities.parse_to_bool(self.data[SEGMENT_DISPLAY_4x7_SEGMENT_3]):
+            if self.data[SPECIAL_DEVICE_BOOL][SEGMENT_DISPLAY_4x7_SEGMENT_3]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_SEGMENT_3, segment[2]))
-            if Utilities.parse_to_bool(self.data[SEGMENT_DISPLAY_4x7_SEGMENT_4]):
+            if self.data[SPECIAL_DEVICE_BOOL][SEGMENT_DISPLAY_4x7_SEGMENT_4]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_SEGMENT_4, segment[3]))
-            if Utilities.parse_to_bool(self.data[SEGMENT_DISPLAY_4x7_BRIGTHNESS]):
+            if self.data[SPECIAL_DEVICE_BOOL][SEGMENT_DISPLAY_4x7_BRIGTHNESS]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_BRIGTHNESS, brightness))
-            if Utilities.parse_to_bool(self.data[SEGMENT_DISPLAY_4x7_COLON]):
+            if self.data[SPECIAL_DEVICE_BOOL][SEGMENT_DISPLAY_4x7_COLON]:
                 self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_COLON, colon))        
-        except Exception as e:
+        except tinkerforge.ip_connection.Error as e:
             self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(e.value, e.description)))
+        except Exception as ex:
+            self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
 
-    def _timer_counter_value(self):
+    def _timer_counter_value(self, var_name):
         value = self._try_catch(self.device.get_counter_value)
         self.datalogger.add_to_queue(CSVData(self.uid, self.identifier, SEGMENT_DISPLAY_4x7_COUNTER_VALUE, value))
 
-    def __TEMP_GET_SEGMENTS(self):
+    def __TMP_GET_SEGMENTS(self):
         #([int, int, int, int], int, bool)
         #segments, brightness und colon.
         return ([1,2,3,4], 50, False)
