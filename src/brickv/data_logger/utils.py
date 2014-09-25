@@ -21,7 +21,6 @@ License along with this program; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
-
 """GLOBAL-VARIABLES"""
 
 import threading, time, logging                               #Writer Thread
@@ -294,6 +293,8 @@ class LoggerTimer(object):
  '''
 import codecs # DataLoggerConfig to read the file in correct encoding
 from ConfigParser import SafeConfigParser # DataLoggerConfig parser class
+import json
+import bricklets
 
 class DataLoggerConfig(object):
     '''
@@ -320,103 +321,69 @@ class DataLoggerConfig(object):
         self.filenName = name
         self._configuration = Configuration()
         
-        self._read_config_file()   
+        self._read_json_config_file()   
            
         
-    def _get_section_as_hashmap(self,section_name ,parser ):
-        '''
-        saves variables out of an (configuration file) section to a hashmap.
-        key -- variable name
-        value -- variable value
-        '''
-        hashMap = {}
-        for section_key in parser.options(section_name):
-            hashMap[section_key] =  parser.get(section_name, section_key)
-        return hashMap
-                
-    def _read_config_file(self):
-        '''
-        reads the entries out of the configuration file and 
-        saves them into a <BrickletInfo> structure.
-        
-        Call sys.exit() if there are no bricklets configured            
-        '''
-        parser = SafeConfigParser()
-        # Open the file with the correct encoding
-        with codecs.open(self.filenName, 'r', encoding='utf-8') as f:
-            parser.readfp(f)
-        # TODO: Use the variables out of bricklets
-        for section_name in parser.sections():
-            if section_name == DataLoggerConfig.GENERAL_SECTION:
-                # Get GENERAL section
-                self._configuration._general =self._get_section_as_hashmap(section_name,parser)
-
-            elif section_name == DataLoggerConfig.XIVELY_SECTION:
-                # Get XIVELY section
-                self._configuration._xively = self._get_section_as_hashmap(section_name,parser)
-
-            else:
-                # Get all other variables  
-                bricklet_name = parser.get(section_name, self.__NAME_KEY)
-                bricklet_uid =  parser.get(section_name, self.__UID_KEY)
-                
-                tmp_bricklet = BrickletInfo(bricklet_name,bricklet_uid)
-                for section_key in parser.options(section_name):
-                    if section_key != self.__NAME_KEY and section_key != self.__UID_KEY:
-                        # All variables (key and value) are of type string                     
-                        tmp_bricklet.add_key_value_pair(str(section_key).title(),str(parser.get(section_name, section_key)).title() )
-
-                self._configuration._bricklets.append(tmp_bricklet)
-                
-        # TODO: define error number for this exception
-        if len(self._configuration.get_bricklets()) == 0:
-            logging.error("There are no bricklets configured in the configuration file!")
-            sys.exit(-1)
+    def _read_json_config_file(self):
+        with open(self.filenName, 'r') as content_file:       
+            json_structure = json.load(content_file)
     
-    def get_configuration(self):
-        return self._configuration
+        # Load sections out of the json structure 
+        self._configuration._general = json_structure[DataLoggerConfig.GENERAL_SECTION]
+        self._configuration._xively = json_structure[DataLoggerConfig.XIVELY_SECTION]
+         
+        self._configuration._simple_devices = json_structure[bricklets.SIMPLE_DEVICE]
+        self._configuration._special_devices = json_structure[bricklets.SPECIAL_DEVICE]
+        self._configuration._complex_devices = json_structure[bricklets.COMPLEX_DEVICE]
+                
+        validator = DataLoggerConfigValidator(self._configuration)
+        validator.validate()
+                
 
+""""
+/*---------------------------------------------------------------------------
+                                DataLoggerConfigValidator
+ ---------------------------------------------------------------------------*/
+"""
+class DataLoggerConfigValidator(object):
+    '''
+    '''
+    def __init__(self,config_file):
+        self.json_config = config_file
+    
+    
+    def validate(self):
+        # TODO: validation general and xively
+        self.validate_simple_devices(self.json_config._simple_devices)
+        self.validate_special_devices(self.json_config._special_devices)
+        self.validate_complex_devices(self.json_config._complex_devices)
+    
+    def validate_simple_devices(self,devices):
+        pass
+    
+    def validate_special_devices(self,devices):
+        pass
+    
+    def validate_complex_devices(self,devices):
+        pass
+    
+""""
+/*---------------------------------------------------------------------------
+                                Configuration
+ ---------------------------------------------------------------------------*/
+"""
 class Configuration():
     '''
     '''
     def __init__(self):
         self._general = {}
         self._xively = {}
-        self._bricklets = []
         
-    def get_general_section(self):
-        return self._general
-
-    def get_xively_section(self):    
-        return self._xively
+        self._simple_devices = []
+        self._complex_devices = []
+        self._special_devices = []
         
-    def get_bricklets(self):
-        return self._bricklets
-        
-  
-""""
-/*---------------------------------------------------------------------------
-                                BrickletInfo
- ---------------------------------------------------------------------------*/
-"""
-class BrickletInfo(object):
-    '''
-    This class holds the information about an entry out of the configuration file
-    '''
-    
-    def __init__(self, name, uid):
-        self.name = name
-        self.uid = uid
-        self.variables = { }
-   
-        
-    def add_key_value_pair(self, key, value):
-        '''
-        adds a key-value pair to the bricklet dictionary
-        '''
-        self.variables[key] = value
-    
-    
+     
 """"
 /*---------------------------------------------------------------------------
                                 Utilities

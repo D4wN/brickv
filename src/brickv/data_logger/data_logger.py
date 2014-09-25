@@ -26,6 +26,7 @@ from tinkerforge.ip_connection import IPConnection
 import Queue, logging, threading, sys
 import bricklets
 import utils
+from brickv.data_logger.utils import DataLoggerConfig
 
 
 class DataLogger():
@@ -54,8 +55,8 @@ class DataLogger():
         self.xively = None              # xively object; xively data_queue
           
         # IPConenction configuration
-        self.host = config.get_general_section().get("host")
-        self.port = utils.Utilities.parse_to_int(config.get_general_section().get("port")) 
+        self.host = config._general[DataLoggerConfig.GENERAL_HOST]
+        self.port = utils.Utilities.parse_to_int(config._general[DataLoggerConfig.GENERAL_PORT]) 
             
         self.ipcon = IPConnection()  
         #open IPConnection    
@@ -73,26 +74,30 @@ class DataLogger():
         self.log_to_xively = False
    
     
-    def general_switch(self,data):
+    def process_general_section(self,data):
         '''
         Information out of the general section will be consumed here
         '''         
-        self.log_to_file = utils.Utilities.parse_to_bool(data.get(utils.DataLoggerConfig.GENERAL_LOG_TO_FILE))
-        self.default_file_path = data.get(utils.DataLoggerConfig.GENERAL_PATH_TO_FILE)
+        self.log_to_file = data[utils.DataLoggerConfig.GENERAL_LOG_TO_FILE]
+        self.default_file_path = data[utils.DataLoggerConfig.GENERAL_PATH_TO_FILE]
         
-    def xively_switch(self,data):
+        logging.debug("Logging output to file: " + str(self.log_to_file)) 
+        logging.debug("Output file path: " + str(self.default_file_path)) 
+          
+    def process_xively_section(self,data):
         '''
         Information out of the xively section will be consumed here
         '''
         #TODO: write code for xively handling
+        if len(data) == 0:
+            return
     
-        self.LOG_TO_XIVELY =  utils.Utilities.parse_to_bool(data.get(utils.DataLoggerConfig.XIVELY_ACTIVE))
-
+        self.LOG_TO_XIVELY =  data.get(utils.DataLoggerConfig.XIVELY_ACTIVE)
+        logging.debug("Logging output to Xively: " +  str(self.LOG_TO_XIVELY))
         # = data.get(XIVELY_AGENT_DESCRIPTION)
         # = data.get(XIVELY_FEED)
         # = data.get(XIVELY_API_KEY)
         #  = DataLogger.parse_to_int(data.get(XIVELY_UPDATE_RATE))
-        pass
 
     def bricklet_switch(self,data):
         simple_devices = []
@@ -141,9 +146,10 @@ class DataLogger():
     def run(self):
         '''
         '''    
-        self.general_switch(self._configuration.get_general_section())
-        self.xively_switch(self._configuration.get_xively_section())
-        self.bricklet_switch(self._configuration.get_bricklets())
+        self.process_general_section(self._configuration._general)
+        self.process_xively_section(self._configuration._xively)
+
+        self.bricklet_switch(self._configuration)
         
         """START-WRITE-THREAD"""       
         #create write thread

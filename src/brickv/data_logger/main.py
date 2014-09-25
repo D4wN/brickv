@@ -30,12 +30,12 @@ def __exit_condition(data_logger):
 def main(ini_file_path):
     configuration = None
     try:
-        configuration = DataLoggerConfig(ini_file_path); 
+        configuration = DataLoggerConfig(ini_file_path)
     except IOError as io_err:
         logging.critical("The parsing of the configuration file failed :" + str(io_err) )
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
 
-    data_logger = DataLogger(configuration.get_configuration())
+    data_logger = DataLogger(configuration._configuration)
     data_logger.run()
     
     __exit_condition(data_logger)
