@@ -29,13 +29,13 @@
         },
         "Rgbc": {
           "args": null,
-          "interval": 0,
+          "interval": 1000,
           "name": "get_color",
           "var_bool": [
             true,
             true,
             true,
-            true
+            false
           ],
           "var_name": [
             "Red",
@@ -163,7 +163,7 @@
         },
         "Illuminance": {
           "args": null,
-          "interval": 0,
+          "interval": 1000,
           "name": "get_illuminance"
         }
       }
@@ -655,36 +655,53 @@
     }
   ],
   "SpecialDevice": [
-    {
-      "class": "GPSBricklet",
-      "name": "GPS",
-      "special_bool": {
-        "Altitude Value": true,
-        "Course": true,
-        "Date": true,
-        "Epe": true,
-        "Ew": true,
-        "Fix Status": true,
-        "Geoidal Seperation": true,
-        "Hdop": true,
-        "Latitude": true,
-        "Longitude": true,
-        "Ns": true,
-        "Pdop": true,
-        "Satellites Used": true,
-        "Satellites View": true,
-        "Speed": true,
-        "Time": true,
-        "Vdop": true
-      },
-      "special_values": {
-        "Altitude": 1000,
-        "Coordinates": 0,
-        "Date Time": 1000,
-        "Motion": 1000
-      },
-      "uid": "XXX"
-    }
-  ],
+  {
+    "class": "GPSBricklet",
+    "name": "GPS",
+    "special_bool": {
+      "Altitude Value": true,
+      "Course": true,
+      "Date": true,
+      "Epe": true,
+      "Ew": true,
+      "Fix Status": true,
+      "Geoidal Seperation": true,
+      "Hdop": true,
+      "Latitude": true,
+      "Longitude": true,
+      "Ns": true,
+      "Pdop": true,
+      "Satellites Used": true,
+      "Satellites View": true,
+      "Speed": true,
+      "Time": true,
+      "Vdop": true
+    },
+    "special_values": {
+      "Altitude": 0,
+      "Coordinates": 0,
+      "Date Time": 0,
+      "Motion": 0
+    },
+    "uid": "AAA"
+  },
+  {
+    "class": "SegmentDisplay4x7Bricklet",
+    "name": "Segment Display 4x7",
+    "special_bool": {
+      "Brightness": false,
+      "Colon": false,
+      "Segment 1": true,
+      "Segment 2": false,
+      "Segment 3": false,
+      "Segment 4": true
+    },
+    "special_values": {
+      "Counter Value": 0,
+      "Segments": 1000
+    },
+    "uid": "AAA"
+  }
+],
   "XIVELY": {}
 }
