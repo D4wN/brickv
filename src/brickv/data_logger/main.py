@@ -1,7 +1,7 @@
 #MAIN DATA_LOGGER PROGRAMM
 from brickv.data_logger.bricklets import *
 
-from brickv.data_logger.utils import DataLoggerConfig, DataLoggerException
+from brickv.data_logger.utils import ConfigurationReader, DataLoggerException
 from brickv.data_logger.data_logger import DataLogger
 
 import argparse                             # command line argument parser
@@ -30,7 +30,7 @@ def __exit_condition(data_logger):
 def main(ini_file_path):
     configuration = None
     try:
-        configuration = DataLoggerConfig(ini_file_path)
+        configuration = ConfigurationReader(ini_file_path)
     except IOError as io_err:
         logging.critical("The parsing of the configuration file failed :" + str(io_err) )
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)

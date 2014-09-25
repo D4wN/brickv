@@ -21,6 +21,8 @@ License along with this program; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
+from lib2to3.fixer_util import String
+from array import array
 """GLOBAL-VARIABLES"""
 
 import threading, time, logging                               #Writer Thread
@@ -288,15 +290,15 @@ class LoggerTimer(object):
 
 '''
 /*---------------------------------------------------------------------------
-                                DataLoggerConfig
+                                ConfigurationReader
  ---------------------------------------------------------------------------*/
  '''
-import codecs # DataLoggerConfig to read the file in correct encoding
-from ConfigParser import SafeConfigParser # DataLoggerConfig parser class
+import codecs # ConfigurationReader to read the file in correct encoding
+from ConfigParser import SafeConfigParser # ConfigurationReader parser class
 import json
 import bricklets
 
-class DataLoggerConfig(object):
+class ConfigurationReader(object):
     '''
     This class provides the read-in functionality for the Data Logger configuration file
     '''   
@@ -329,25 +331,26 @@ class DataLoggerConfig(object):
             json_structure = json.load(content_file)
     
         # Load sections out of the json structure 
-        self._configuration._general = json_structure[DataLoggerConfig.GENERAL_SECTION]
-        self._configuration._xively = json_structure[DataLoggerConfig.XIVELY_SECTION]
+        self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
+        self._configuration._xively = json_structure[ConfigurationReader.XIVELY_SECTION]
          
         self._configuration._simple_devices = json_structure[bricklets.SIMPLE_DEVICE]
         self._configuration._special_devices = json_structure[bricklets.SPECIAL_DEVICE]
         self._configuration._complex_devices = json_structure[bricklets.COMPLEX_DEVICE]
                 
-        validator = DataLoggerConfigValidator(self._configuration)
+        validator = ConfigurationValidator(self._configuration)
         validator.validate()
                 
 
 """"
 /*---------------------------------------------------------------------------
-                                DataLoggerConfigValidator
+                                ConfigurationValidator
  ---------------------------------------------------------------------------*/
 """
-class DataLoggerConfigValidator(object):
+class ConfigurationValidator(object):
     '''
     '''
+    
     def __init__(self,config_file):
         self.json_config = config_file
     
@@ -359,13 +362,76 @@ class DataLoggerConfigValidator(object):
         self.validate_complex_devices(self.json_config._complex_devices)
     
     def validate_simple_devices(self,devices):
-        pass
-    
+        self.__replace_str_with_class(devices)
+        
+        for i in range(len(devices)):
+            device = devices[i]
+            self.__check_basic_data(device)
+            
+            values = device[bricklets.DEVICE_VALUES]
+            for value in values:
+                # arguments should be be either none or a list with len > 0
+                if not self.__is_valid_arguments(values[value][bricklets.DEVICE_VALUES_ARGS]):
+                    print "arguments should be be either none or a list with len > 0 " \
+                    + str(values[value][bricklets.DEVICE_VALUES_ARGS]) + " " + str(type(values[value][bricklets.DEVICE_VALUES_ARGS]))
+                # interval should be an integer and >= 0
+                if not self.__is_valid_interval(values[value][bricklets.DEVICE_VALUES_INTERVAL]):
+                    print "function name should be a string and > 1"
+                # function name should be a string and > 1
+                if not self.__is_valid_string(values[value][bricklets.DEVICE_VALUES_NAME], 1):
+                    print "function name should be a string and > 1"
+
     def validate_special_devices(self,devices):
-        pass
+        self.__replace_str_with_class(devices)
+        
+        for i in range(len(devices)):
+            device = devices[i]
+            self.__check_basic_data(device)
+            
     
     def validate_complex_devices(self,devices):
-        pass
+        self.__replace_str_with_class(devices)
+        
+        for i in range(len(devices)):
+            device = devices[i]
+            self.__check_basic_data(device)
+    
+    
+    def __replace_str_with_class(self,devices):
+        for i in range(len(devices)):
+            class_str = devices[i][bricklets.DEVICE_CLASS]
+            devices[i][bricklets.DEVICE_CLASS] = bricklets.string_to_class(class_str)  
+    
+    def __check_basic_data(self,device):
+        # TODO: Send error msg to user
+        
+        # should be a class not a string
+        if isinstance(device[bricklets.DEVICE_CLASS],basestring):
+            print "Error \"class\" is a string"
+        # should be a string with length > 0
+        if not self.__is_valid_string(device[bricklets.DEVICE_NAME]):
+            print "Error \"name\" is not a string or too short"
+        # should be a string with length >= 3
+        if not self.__is_valid_string(device[bricklets.DEVICE_UID]):
+            print "Error \"uid\" is not a string or too short"
+        
+    def __is_valid_string(self,string_value,min_length=0):
+        if not isinstance(string_value, basestring) or len(string_value) < min_length :
+            return False
+        return True
+    
+    def __is_valid_interval(self,integer_value):
+        if not isinstance(integer_value, int) or integer_value < 0:
+            return False
+        return True
+    
+    def __is_valid_arguments(self,arg_value):
+        if arg_value == None:
+            return True
+        elif isinstance(arg_value, list) and len(arg_value) > 0:
+            return True
+        
+        return False
     
 """"
 /*---------------------------------------------------------------------------
@@ -417,7 +483,7 @@ class Utilities(object):
         else:
             return False
             
-    parse_to_bool = staticmethod(parse_to_bool)
+    parse_to_bool = staticmethod(parse_to_bool)       
 
 
 """"

@@ -26,7 +26,7 @@ from tinkerforge.ip_connection import IPConnection
 import Queue, logging, threading, sys
 import bricklets
 import utils
-from brickv.data_logger.utils import DataLoggerConfig
+from brickv.data_logger.utils import ConfigurationReader
 
 
 class DataLogger():
@@ -55,8 +55,8 @@ class DataLogger():
         self.xively = None              # xively object; xively data_queue
           
         # IPConenction configuration
-        self.host = config._general[DataLoggerConfig.GENERAL_HOST]
-        self.port = utils.Utilities.parse_to_int(config._general[DataLoggerConfig.GENERAL_PORT]) 
+        self.host = config._general[ConfigurationReader.GENERAL_HOST]
+        self.port = utils.Utilities.parse_to_int(config._general[ConfigurationReader.GENERAL_PORT]) 
             
         self.ipcon = IPConnection()  
         #open IPConnection    
@@ -78,8 +78,8 @@ class DataLogger():
         '''
         Information out of the general section will be consumed here
         '''         
-        self.log_to_file = data[utils.DataLoggerConfig.GENERAL_LOG_TO_FILE]
-        self.default_file_path = data[utils.DataLoggerConfig.GENERAL_PATH_TO_FILE]
+        self.log_to_file = data[utils.ConfigurationReader.GENERAL_LOG_TO_FILE]
+        self.default_file_path = data[utils.ConfigurationReader.GENERAL_PATH_TO_FILE]
         
         logging.debug("Logging output to file: " + str(self.log_to_file)) 
         logging.debug("Output file path: " + str(self.default_file_path)) 
@@ -92,7 +92,7 @@ class DataLogger():
         if len(data) == 0:
             return
     
-        self.LOG_TO_XIVELY =  data.get(utils.DataLoggerConfig.XIVELY_ACTIVE)
+        self.LOG_TO_XIVELY =  data.get(utils.ConfigurationReader.XIVELY_ACTIVE)
         logging.debug("Logging output to Xively: " +  str(self.LOG_TO_XIVELY))
         # = data.get(XIVELY_AGENT_DESCRIPTION)
         # = data.get(XIVELY_FEED)
