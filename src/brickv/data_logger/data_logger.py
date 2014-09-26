@@ -27,23 +27,16 @@ import Queue, logging, threading, sys
 import bricklets
 import utils
 from brickv.data_logger.utils import ConfigurationReader
-
+from brickv.data_logger.utils import EventLogger
 
 class DataLogger():
     '''
     DataLogger class
     '''   
-    #Logger
-    FILE_EVENT_LOGGING = False                              #for event logging in to a file
-    EVENT_LOGGING_FILE_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
-    LOGGING_EVENT_LEVEL = logging.DEBUG
+
             
     # constructor and other functions
     def __init__(self,config):
-        if DataLogger.FILE_EVENT_LOGGING:
-            logging.basicConfig(filename=DataLogger.EVENT_LOGGING_FILE_PATH,format='%(asctime)s - %(levelname)8s - %(message)s',level=DataLogger.LOGGING_EVENT_LEVEL)  
-        else:
-            logging.basicConfig(format="%(asctime)s - %(levelname)8s - %(message)s",level=DataLogger.LOGGING_EVENT_LEVEL) 
         
         # Thread configuration
         self.threads = []               # thread array for all running threads/jobs
@@ -62,9 +55,9 @@ class DataLogger():
         #open IPConnection    
         self.ipcon.connect(self.host, self.port)  # Connect to brickd
         # Don't use device before ipcon is connected
-        logging.info("Connection to " + self.host + ":" + str(self.port) + " established.")
+        EventLogger.info("Connection to " + self.host + ":" + str(self.port) + " established.")
         self.ipcon.set_timeout(1) #TODO: Timeout number 
-        logging.debug("Set ipcon.time_out to 1.")
+        EventLogger.debug("Set ipcon.time_out to 1.")
         
         # Configuration file processing   
         self._configuration = config
@@ -81,8 +74,8 @@ class DataLogger():
         self.log_to_file = data[utils.ConfigurationReader.GENERAL_LOG_TO_FILE]
         self.default_file_path = data[utils.ConfigurationReader.GENERAL_PATH_TO_FILE]
         
-        logging.debug("Logging output to file: " + str(self.log_to_file)) 
-        logging.debug("Output file path: " + str(self.default_file_path)) 
+        EventLogger.debug("Logging output to file: " + str(self.log_to_file)) 
+        EventLogger.debug("Output file path: " + str(self.default_file_path)) 
           
     def process_xively_section(self,data):
         '''
@@ -106,12 +99,12 @@ class DataLogger():
 #                 #do something           
 #             except KeyError as key_error:
 #                 msg = bricklet_name +"["+bricklet_uid+"] has no key [" + str(key_error) + "]. Please review the configuration file."
-#                 logging.critical(msg)
+#                 EventLogger.critical(msg)
 #                 self.stop(utils.DataLoggerException.DL_MISSING_ARGUMENT)
 # 
 #             except Exception as exc: # FIXME: Catch-All just for debugging purpose 
 #                 msg = "A critical error occur " + str(exc)
-#                 logging.critical( msg)
+#                 EventLogger.critical( msg)
 #                 self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
         simple_devices = self._configuration._simple_devices
         complex_devices = self._configuration._complex_devices
@@ -129,7 +122,7 @@ class DataLogger():
 
         except Exception as exc: # FIXME: Catch-All just for debugging purpose 
             msg = "A critical error occur: " + str(exc)
-            logging.critical( msg)
+            EventLogger.critical( msg)
             self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
                 
     def run(self):
@@ -150,21 +143,21 @@ class DataLogger():
         
         for t in self.threads:
             t.start()
-        logging.debug("Work Threads started.")    
+        EventLogger.debug("Work Threads started.")    
     
         """START-TIMERS"""
         for t in self.timers:
             t.start()
-        logging.debug("Get-Timers started.")  
+        EventLogger.debug("Get-Timers started.")  
       
         """END_CONDITIONS"""
-        logging.info("DataLogger is runninng...")
+        EventLogger.info("DataLogger is runninng...")
         # TODO Exit condition ?
     
     def stop(self,error_code):
         '''
         '''
-        logging.info("Closing Timers and Threads...")    
+        EventLogger.info("Closing Timers and Threads...")    
 
         """CLEANUP_AFTER_STOP """
         #check if all timers stopped
@@ -173,18 +166,18 @@ class DataLogger():
         
         for t in self.timers:
             t.join()    
-        logging.debug("Get-Timers stopped.")
+        EventLogger.debug("Get-Timers stopped.")
     
         #set THREAD_EXIT_FLAG for all work threads
         self.thread_exit_flag = True
         #wait for all threads to stop
         for th in  self.threads:
             th.join()    
-        logging.debug("Work Threads stopped.")
+        EventLogger.debug("Work Threads stopped.")
     
         if self.ipcon != None and self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_CONNECTED:
             self.ipcon.disconnect()
-        logging.info("Connection closed successfully.")
+        EventLogger.info("Connection closed successfully.")
        
     def add_to_queue(self,csv):
         '''
@@ -195,5 +188,5 @@ class DataLogger():
         
         if self.log_to_xively:
             #DataLogger.xively.put(csv)
-            logging.warning("Xively is not supported!")
+            EventLogger.warning("Xively is not supported!")
 

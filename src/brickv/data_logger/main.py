@@ -1,12 +1,11 @@
 #MAIN DATA_LOGGER PROGRAMM
 from brickv.data_logger.bricklets import *
 
-from brickv.data_logger.utils import ConfigurationReader, DataLoggerException
+from brickv.data_logger.utils import ConfigurationReader, DataLoggerException, EventLogger, ConsoleLogger, FileLogger, GUILogger
 from brickv.data_logger.data_logger import DataLogger
 
 import argparse                             # command line argument parser
 import sys
-#import logging                              #static logging system
 
 """ 
 - __main__
@@ -28,11 +27,19 @@ def __exit_condition(data_logger):
     data_logger.stop(0)
           
 def main(ini_file_path):
+    #initiate the EventLogger
+    EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
+    #TODO: renable with gui
+    #EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL))
+    if EventLogger.EVENT_FILE_LOGGING:
+        EventLogger.add_logger(FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
+    
+    
     configuration = None
     try:
         configuration = ConfigurationReader(ini_file_path)
     except IOError as io_err:
-        logging.critical("The parsing of the configuration file failed :" + str(io_err) )
+        EventLogger.critical("The parsing of the configuration file failed :" + str(io_err) )
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
 
     data_logger = DataLogger(configuration._configuration)
