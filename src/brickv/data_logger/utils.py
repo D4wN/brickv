@@ -334,22 +334,7 @@ class ConfigurationReader(object):
         self._configuration._simple_devices = json_structure[bricklets.SIMPLE_DEVICE]
         self._configuration._complex_devices = json_structure[bricklets.COMPLEX_DEVICE]
         self._configuration._special_devices = json_structure[bricklets.SPECIAL_DEVICE]
-        
-        
-        #pase classes
-        #TODO: Exception handling
-        for i in range(0, len(self._configuration._simple_devices)):
-            class_string = self._configuration._simple_devices[i][bricklets.DEVICE_CLASS]
-            self._configuration._simple_devices[i][bricklets.DEVICE_CLASS] = bricklets.string_to_class(class_string)      
-         
-        for i in range(0, len(self._configuration._complex_devices)):
-            class_string = self._configuration._complex_devices[i][bricklets.DEVICE_CLASS]
-            self._configuration._complex_devices[i][bricklets.DEVICE_CLASS] = bricklets.string_to_class(class_string) 
-     
-        for i in range(0, len(self._configuration._special_devices)):
-            class_string = self._configuration._special_devices[i][bricklets.DEVICE_CLASS]
-            self._configuration._special_devices[i][bricklets.DEVICE_CLASS] = bricklets.string_to_class(class_string) 
-                
+                     
         validator = ConfigurationValidator(self._configuration)
         validator.validate()
                 
@@ -359,8 +344,10 @@ class ConfigurationReader(object):
                                 ConfigurationValidator
  ---------------------------------------------------------------------------*/
 """
+
 class ConfigurationValidator(object):
     '''
+    This class validates the (json) configuration file
     '''
     # TODO: Send error msg to user
     def __init__(self,config_file):
@@ -386,7 +373,7 @@ class ConfigurationValidator(object):
                 # arguments should be be either none or a list with len > 0
                 if not self.__is_valid_arguments(values[value][bricklets.DEVICE_VALUES_ARGS]):
                     print current_device_info + "[" + str(value) + "]" + "[" + bricklets.DEVICE_VALUES_ARGS + "] - " + \
-                    "arguments should be either 'None' or a list with length > 0 "
+                    "arguments should be either 'None' or a list with length > 1 "
                 # interval should be an integer and >= 0
                 if not self.__is_valid_interval(values[value][bricklets.DEVICE_VALUES_INTERVAL]):
                     print current_device_info + "[" + str(value) + "][" + bricklets.DEVICE_VALUES_INTERVAL + "] - " + \
@@ -433,33 +420,33 @@ class ConfigurationValidator(object):
             for value in values:
                 # arguments should be be either none or a list with len > 0
                 if not self.__is_valid_arguments(values[value][bricklets.DEVICE_VALUES_ARGS]):
-                    print current_device_info + "[" + str(value) + "][" + bricklets.DEVICE_VALUES_ARGS + "] - " + \
+                    print current_device_info +"[" + value +"][" + str(value) + "][" + bricklets.DEVICE_VALUES_ARGS + "] - " + \
                     "arguments should be be either 'None' or a list with len > 0"
                 # interval should be an integer and >= 0
                 if not self.__is_valid_interval(values[value][bricklets.DEVICE_VALUES_INTERVAL]):
-                    print current_device_info + "[" + str(value) + "][" + bricklets.DEVICE_VALUES_INTERVAL + "] - " + \
+                    print current_device_info +"[" + value +"][" + str(value) + "][" + bricklets.DEVICE_VALUES_INTERVAL + "] - " + \
                     "interval should be an integer and >= 0"
                 # function name should be a string and > 1   
                 if not self.__is_valid_string(values[value][bricklets.DEVICE_VALUES_NAME], 1):
-                    print current_device_info + "[" + str(value) + "][" + bricklets.DEVICE_VALUES_NAME + "] - " + \
+                    print current_device_info +"[" + value +"][" + str(value) + "][" + bricklets.DEVICE_VALUES_NAME + "] - " + \
                     "function name should be a string and > 1"                
                 
                 # The two lists (var_bool, var_name) should have the same length   
-                if len(values[value][bricklets.COMPLEX_DEVICE_VARIABLES_BOOL]) != len(values[value][bricklets.COMPLEX_DEVICE_VARIABLES_NAME]):
-                    print current_device_info + "[" + bricklets.COMPLEX_DEVICE_VARIABLES_BOOL + "] and [" + bricklets.COMPLEX_DEVICE_VARIABLES_NAME + "] - " + \
+                if len(values[value][bricklets.COMPLEX_DEVICE_VALUES_BOOL]) != len(values[value][bricklets.COMPLEX_DEVICE_VALUES_NAME]):
+                    print current_device_info +"[" + value +"][" + bricklets.COMPLEX_DEVICE_VALUES_BOOL + "] and [" + bricklets.COMPLEX_DEVICE_VALUES_NAME + "] - " + \
                     "should have the same length"                
      
                 # check types of the entities in the lists  
-                bool_values = values[value][bricklets.COMPLEX_DEVICE_VARIABLES_BOOL]
+                bool_values = values[value][bricklets.COMPLEX_DEVICE_VALUES_BOOL]
                 for bool_value in bool_values:
                     if not isinstance(bool_value, bool):
-                        print current_device_info +"[" + bricklets.COMPLEX_DEVICE_VARIABLES_BOOL + "][" + str(bool_value) + "] - " + \
+                        print current_device_info +"[" + value +"][" + bricklets.COMPLEX_DEVICE_VALUES_BOOL + "][" + str(bool_value) + "] - " + \
                         "Should be a boolean"   
 
-                string_values = values[value][bricklets.COMPLEX_DEVICE_VARIABLES_NAME]
+                string_values = values[value][bricklets.COMPLEX_DEVICE_VALUES_NAME]
                 for string_value in string_values:
                     if not self.__is_valid_string(string_value, 1):
-                        print current_device_info ++"[" + bricklets.COMPLEX_DEVICE_VARIABLES_NAME + "][" + str(bool_value) + "] - " + \
+                        print current_device_info +"[" + value +"][" + bricklets.COMPLEX_DEVICE_VALUES_NAME + "][" + str(bool_value) + "] - " + \
                         "Should be a string"   
     
     
@@ -499,7 +486,7 @@ class ConfigurationValidator(object):
     def __is_valid_arguments(self,arg_value):
         if arg_value == None:
             return True
-        elif isinstance(arg_value, list) and len(arg_value) > 0:
+        elif isinstance(arg_value, list) and len(arg_value) >= 1:
             return True
         
         return False
@@ -507,8 +494,7 @@ class ConfigurationValidator(object):
     def __create_error_header(self,device):
         return "[UID=" + str(device[bricklets.DEVICE_UID]) + "]"
         
-    
-    
+     
 """"
 /*---------------------------------------------------------------------------
                                 Configuration
