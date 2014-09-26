@@ -83,7 +83,7 @@ class CSVData(object):
                     2014-09-10T14:12:05
         Python doees not support Timezones without extra libraries!
         """
-        t = datetime.datetime.now();
+        t = datetime.datetime.now()
         
         self.timestamp = '{:%Y-%m-%dT%H:%M:%S}'.format(t)
     
@@ -160,10 +160,10 @@ class CSVWriter(object):
     def _write_header(self):
         """Writes a csv header into the file"""
         if(not self._file_is_empty()):
-            logging.debug("File is not empty")
+            EventLogger.debug("File is not empty")
             return
     
-        logging.debug("CSVWriter._write_header() - done")
+        EventLogger.debug("CSVWriter._write_header() - done")
         self._csv_file.writerow(["UID"] + ["DEVICE_IDENTIFIER"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
         
     def write_data_row(self, csv_data):
@@ -333,8 +333,23 @@ class DataLoggerConfig(object):
         self._configuration._xively = json_structure[DataLoggerConfig.XIVELY_SECTION]
          
         self._configuration._simple_devices = json_structure[bricklets.SIMPLE_DEVICE]
-        self._configuration._special_devices = json_structure[bricklets.SPECIAL_DEVICE]
         self._configuration._complex_devices = json_structure[bricklets.COMPLEX_DEVICE]
+        self._configuration._special_devices = json_structure[bricklets.SPECIAL_DEVICE]
+        
+        
+        #pase classes
+        #TODO: Exception handling
+        for i in range(0, len(self._configuration._simple_devices)):
+            class_string = self._configuration._simple_devices[i][bricklets.DEVICE_CLASS]
+            self._configuration._simple_devices[i][bricklets.DEVICE_CLASS] = bricklets.string_to_class(class_string)      
+         
+        for i in range(0, len(self._configuration._complex_devices)):
+            class_string = self._configuration._complex_devices[i][bricklets.DEVICE_CLASS]
+            self._configuration._complex_devices[i][bricklets.DEVICE_CLASS] = bricklets.string_to_class(class_string) 
+     
+        for i in range(0, len(self._configuration._special_devices)):
+            class_string = self._configuration._special_devices[i][bricklets.DEVICE_CLASS]
+            self._configuration._special_devices[i][bricklets.DEVICE_CLASS] = bricklets.string_to_class(class_string) 
                 
         validator = DataLoggerConfigValidator(self._configuration)
         validator.validate()
@@ -382,9 +397,164 @@ class Configuration():
         self._simple_devices = []
         self._complex_devices = []
         self._special_devices = []
+       
         
-     
-""""
+"""
+/*---------------------------------------------------------------------------
+                                Event Logger
+ ---------------------------------------------------------------------------*/
+"""    
+class EventLogger():
+    
+    #Logger Options
+    EVENT_FILE_LOGGING = False                              #for event logging in to a file
+    EVENT_FILE_LOGGING_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
+    EVENT_LOG_LEVEL = logging.DEBUG
+    
+    format = "%(asctime)s - %(levelname)8s - %(message)s"
+    __loggers = {}
+    
+    def add_logger(logger):
+        if logger.name == None or logger.name == "":
+            raise Exception("Loggeer has no Attribute called 'name'!")
+
+        EventLogger.__loggers[logger.name] = logger
+    
+    def remove_logger(logger_name):
+        if EventLogger.__loggers.has_key(logger_name):
+            EventLogger.__loggers.pop(logger_name)
+            return True
+        
+        return False
+    
+    def debug(msg, logger_name=None):
+        level = logging.DEBUG
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def info(msg, logger_name=None):
+        level = logging.INFO
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def warn(msg, logger_name=None):
+        level = logging.WARN
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def warning(msg, logger_name=None):
+        level = logging.WARNING
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def error(msg, logger_name=None):
+        level = logging.ERROR
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def critical(msg, logger_name=None):
+        level = logging.CRITICAL
+        EventLogger._send_message(level, msg, logger_name)
+    
+    def log(level, msg, logger_name=None):
+        EventLogger._send_message(level, msg, logger_name)
+    
+    def _send_message(level, msg, logger_name):
+        if logger_name != None:
+            if EventLogger.__loggers.has_key(logger_name):
+                EventLogger.__loggers[logger_name].log(level, msg)
+        else:
+            for logger in EventLogger.__loggers.values():
+                logger.log(level, msg)
+    
+    
+    #static methods
+    add_logger = staticmethod(add_logger) 
+    remove_logger = staticmethod(remove_logger)
+    debug = staticmethod(debug) 
+    info = staticmethod(info) 
+    warn = staticmethod(warn) 
+    warning = staticmethod(warning) 
+    error = staticmethod(error) 
+    critical = staticmethod(critical) 
+    log = staticmethod(log) 
+    _send_message = staticmethod(_send_message)
+    
+class ConsoleLogger(logging.Logger):
+    
+    def __init__(self, name, log_level):
+        logging.Logger.__init__(self, name, log_level)
+        
+        #create console handler and set level
+        ch = logging.StreamHandler()
+        
+        ch.setLevel(log_level)
+        
+        # create formatter
+        formatter = logging.Formatter(EventLogger.format)
+        
+        # add formatter to ch
+        ch.setFormatter(formatter)
+        
+        # add ch to logger
+        self.addHandler(ch)
+
+class FileLogger(logging.Logger):
+    
+    def __init__(self, name, log_level, filename):        
+        logging.Logger.__init__(self, name, log_level)
+        
+        ch = logging.FileHandler(filename, mode="a")
+        
+        ch.setLevel(log_level)
+        
+        # create formatter
+        formatter = logging.Formatter(EventLogger.format)
+        
+        # add formatter to ch
+        ch.setFormatter(formatter)
+        
+        # add ch to logger
+        self.addHandler(ch)
+
+class GUILogger(logging.Logger):
+    
+    #for level as string
+    _convert_level = {}
+    _convert_level[logging.DEBUG] = "DEBUG"
+    _convert_level[logging.INFO] = "INFO"
+    _convert_level[logging.WARN] = "WARNING"
+    _convert_level[logging.WARNING] = "WARNING"
+    _convert_level[logging.CRITICAL] = "CRITIAL"
+    _convert_level[logging.ERROR] = "ERROR"
+    
+    _output_format = "{asctime} - {levelname:8} - {message}s"
+    
+    def __init(self, name, log_level):        
+        logging.Logger.__init__(self, name, log_level)
+        
+        
+    def debug(self, msg):   
+        self.log(logging.DEBUG, msg)
+    
+    def info(self, msg):              
+        self.log(logging.INFO, msg)
+        
+    def warn(self, msg):              
+        self.log(logging.WARN, msg)
+        
+    def warning(self, msg):              
+        self.log(logging.WARNING, msg)
+        
+    def critical(self, msg):              
+        self.log(logging.CRITICAL, msg)
+    
+    def error(self, msg):              
+        self.log(logging.ERROR, msg)
+            
+    def log(self, level, msg):
+        if level >= self.level:        
+            asctime = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
+            levelname = GUILogger._convert_level[level]
+            #TODO: log to textfield
+            print GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg)      
+
+"""
 /*---------------------------------------------------------------------------
                                 Utilities
  ---------------------------------------------------------------------------*/
@@ -402,7 +572,7 @@ class Utilities(object):
                 ret = 0
             return ret
         except ValueError:
-            logging.debug("DataLogger.parse_to_int("+ string +") could not be parsed! Return 0 for the Timer.")
+            EventLogger.debug("DataLogger.parse_to_int("+ string +") could not be parsed! Return 0 for the Timer.")
             return 0
     
     parse_to_int = staticmethod(parse_to_int) 
@@ -428,27 +598,27 @@ class Utilities(object):
 import data_logger
 def writer_thread(datalogger):
     thread_name = "Work Thread(" + threading.current_thread().name + ")"
-    logging.debug(thread_name + " started.")
+    EventLogger.debug(thread_name + " started.")
     csv_writer = CSVWriter(datalogger.default_file_path)
                            
     while (True):
         if not datalogger.data_queue.empty():
             csv_data = datalogger.data_queue.get()
-            logging.debug(thread_name + " -> " + str(csv_data.name)+"-"+ csv_data.var_name +":" +str(csv_data.raw_data))
+            EventLogger.debug(thread_name + " -> " + str(csv_data.name)+"-"+ csv_data.var_name +":" +str(csv_data.raw_data))
             if not csv_writer.write_data_row(csv_data):
-                logging.warning(thread_name + " could not write csv row!")
+                EventLogger.warning(thread_name + " could not write csv row!")
                                       
         if not datalogger.thread_exit_flag and datalogger.data_queue.empty(): 
-            #TODO: qucik testing fix logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
+            #TODO: qucik testing fix EventLogger.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
             time.sleep(datalogger.thread_sleep)
         
         if datalogger.thread_exit_flag and datalogger.data_queue.empty(): 
             exit_flag = csv_writer.close_file()
             if exit_flag:
-                logging.debug(thread_name + " closed his csv_writer.")
+                EventLogger.debug(thread_name + " closed his csv_writer.")
             else:
-                logging.debug(thread_name + " could NOT close his csv_writer! EXIT_FLAG=" + str(exit))
-            logging.debug(thread_name + " finished his work.")
+                EventLogger.debug(thread_name + " could NOT close his csv_writer! EXIT_FLAG=" + str(exit))
+            EventLogger.debug(thread_name + " finished his work.")
             break
         
 def xively_thread():
