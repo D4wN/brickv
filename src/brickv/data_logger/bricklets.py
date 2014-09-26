@@ -1,5 +1,6 @@
 from brickv.data_logger.utils import LoggerTimer   #Timer for getVariable
 from brickv.data_logger.utils import CSVData       #bricklets
+from brickv.data_logger.utils import EventLogger   #logging assistant
 from brickv.data_logger.data_logger import DataLogger #gloabl thread/job queue -> brickelts callbacks/timer
 import tinkerforge
 
@@ -21,9 +22,9 @@ DEVICE_VALUES_NAME = "name"
 DEVICE_VALUES_ARGS = "args"
 DEVICE_VALUES_INTERVAL = "interval"
 
-COMPLEX_DEVICE_VARIABLES = "variables"
-COMPLEX_DEVICE_VARIABLES_NAME = "var_name"
-COMPLEX_DEVICE_VARIABLES_BOOL = "var_bool"
+#COMPLEX_DEVICE_VARIABLES = "variables"
+COMPLEX_DEVICE_VALUES_NAME = "var_name"
+COMPLEX_DEVICE_VALUES_BOOL = "var_bool"
 
 SPECIAL_DEVICE_VALUE = "special_values"
 SPECIAL_DEVICE_BOOL = "special_bool"
@@ -41,7 +42,7 @@ class AbstractDevice(object):
         
         
     def start_timer(self):
-        logging.debug(self.__str__())
+        EventLogger.debug(self.__str__())
                 
         
     def _try_catch(self, func):
@@ -136,8 +137,8 @@ class ComplexDevice(AbstractDevice):
                 l.append(values)
 
             #get bool and variable to check, which data should be logged
-            bools = self.data[DEVICE_VALUES][var_name][COMPLEX_DEVICE_VARIABLES_BOOL]
-            names = self.data[DEVICE_VALUES][var_name][COMPLEX_DEVICE_VARIABLES_NAME]
+            bools = self.data[DEVICE_VALUES][var_name][COMPLEX_DEVICE_VALUES_BOOL]
+            names = self.data[DEVICE_VALUES][var_name][COMPLEX_DEVICE_VALUES_NAME]
         
             #if variable bool is not True, dont log the data
             for i in range(0, len(l)):
