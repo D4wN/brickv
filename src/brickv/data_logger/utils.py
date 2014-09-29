@@ -331,9 +331,9 @@ class ConfigurationReader(object):
         self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
         self._configuration._xively = json_structure[ConfigurationReader.XIVELY_SECTION]
          
-        self._configuration._simple_devices = json_structure[bricklets.SIMPLE_DEVICE]
-        self._configuration._complex_devices = json_structure[bricklets.COMPLEX_DEVICE]
-        self._configuration._special_devices = json_structure[bricklets.SPECIAL_DEVICE]
+        self._configuration._simple_devices = json_structure[bricklets.Identifier.SIMPLE_DEVICE]
+        self._configuration._complex_devices = json_structure[bricklets.Identifier.COMPLEX_DEVICE]
+        self._configuration._special_devices = json_structure[bricklets.Identifier.SPECIAL_DEVICE]
                      
         validator = ConfigurationValidator(self._configuration)
         validator.validate()
@@ -416,7 +416,7 @@ class ConfigurationValidator(object):
             device = devices[i]
             self.__check_basic_data(device)
             
-            values = device[bricklets.DEVICE_VALUES]
+            values = device[bricklets.Identifier.DEVICE_VALUES]
             for value in values:
                 # arguments should be be either none or a list with len > 0
                 if not self.__is_valid_arguments(values[value][bricklets.DEVICE_VALUES_ARGS]):
@@ -436,12 +436,12 @@ class ConfigurationValidator(object):
                
      
                 # check types of the entities in the lists  
-                bool_values = values[value][bricklets.COMPLEX_DEVICE_VALUES_BOOL]
+                bool_values = values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL]
                 for bool_value in bool_values:
                     if not isinstance(bool_value, bool):
                         print self.__generate_error_message(device,[value,bricklets.COMPLEX_DEVICE_VALUES_BOOL,str(bool_value)],"should be a boolean"   )
 
-                string_values = values[value][bricklets.COMPLEX_DEVICE_VALUES_NAME]
+                string_values = values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME]
                 for string_value in string_values:
                     if not self.__is_valid_string(string_value, 1):
                         print self.__generate_error_message(device,[value,bricklets.COMPLEX_DEVICE_VALUES_NAME,str(bool_value)],"should be a string"   )  
@@ -450,8 +450,8 @@ class ConfigurationValidator(object):
     def __replace_str_with_class(self,devices):
         # FIXME: Should the exception be catched
         for i in range(len(devices)):
-            class_str = devices[i][bricklets.DEVICE_CLASS]
-            devices[i][bricklets.DEVICE_CLASS] = bricklets.string_to_class(class_str)  
+            class_str = devices[i][bricklets.Identifier.DEVICE_CLASS]
+            devices[i][bricklets.Identifier.DEVICE_CLASS] = bricklets.string_to_class(class_str)  
     
     def __check_basic_data(self,device):                
         # should be a class not a string

@@ -118,7 +118,7 @@ class DataLogger():
                 bricklets.ComplexDevice(complex_devices[i], self).start_timer()
          
             for i in range(0, len(special_devices)):
-                (special_devices[i][bricklets.DEVICE_CLASS](special_devices[i], self)).start_timer()
+                (special_devices[i][bricklets.Identifier.DEVICE_CLASS](special_devices[i], self)).start_timer()
 
         except Exception as exc: # FIXME: Catch-All just for debugging purpose 
             msg = "A critical error occur: " + str(exc)
