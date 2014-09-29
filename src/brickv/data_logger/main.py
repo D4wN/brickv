@@ -7,13 +7,7 @@ from brickv.data_logger.data_logger import DataLogger
 import argparse                             # command line argument parser
 import sys
 
-""" 
-- __main__
-- brickv entry point
-- switch-cases
 
-"""
-###switch###       
 def __exit_condition(data_logger):
     '''
     Waits for an 'exit' or 'quit' to stop logging and close the program
@@ -27,6 +21,8 @@ def __exit_condition(data_logger):
     data_logger.stop(0)
           
 def main(ini_file_path):
+    '''
+    '''
     #initiate the EventLogger
     EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
     #TODO: renable with gui
