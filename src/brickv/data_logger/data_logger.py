@@ -28,6 +28,7 @@ import bricklets
 import utils
 from brickv.data_logger.utils import ConfigurationReader
 from brickv.data_logger.utils import EventLogger
+from brickv.data_logger.utils import CSVWriterJob, XivelyJob
 
 class DataLogger():
     '''
@@ -39,13 +40,12 @@ class DataLogger():
     def __init__(self,config):
         
         # Thread configuration
-        self.threads = []               # thread array for all running threads/jobs
-        self.thread_exit_flag = False   # flag for stopping the thread
-        self.thread_sleep = 1           # FIXME: quick testing fix (Enahncement -> use condition objects) 
+        self.jobs = []              # thread hashmap for all running threads/jobs
+        self.job_exit_flag = False   # flag for stopping the thread
+        self.job_sleep = 1           # FIXME: quick testing fix (Enahncement -> use condition objects) 
         self.timers = []
 
-        self.data_queue = Queue.Queue()
-        self.xively = None              # xively object; xively data_queue
+        self.data_queue = {} #universal data_queue hash map
           
         # IPConenction configuration
         self.host = config._general[ConfigurationReader.GENERAL_HOST]
@@ -134,16 +134,16 @@ class DataLogger():
         self.bricklet_switch(self._configuration)
         
         """START-WRITE-THREAD"""       
-        #create write thread
+        #create jobs
         #look which thread should be working
         if self.log_to_file:
-            self.threads.append(threading.Thread(name="CSV Writer Thread", target=utils.writer_thread, args=[self]))
+            self.jobs.append(CSVWriterJob(name="CSV-Writer", datalogger=self))
         if self.log_to_xively:
-            self.threads.append(threading.Thread(name="Xively Writer Thread", target=utils.xively_thread))
+            self.jobs.append(XivelyJob(name="Xively-Writer", datalogger=self))
         
-        for t in self.threads:
+        for t in self.jobs:
             t.start()
-        EventLogger.debug("Work Threads started.")    
+        EventLogger.debug("Jobs started.")    
     
         """START-TIMERS"""
         for t in self.timers:
@@ -162,18 +162,18 @@ class DataLogger():
         """CLEANUP_AFTER_STOP """
         #check if all timers stopped
         for t in self.timers:
-            t.stop()
-        
+            t.stop()        
         for t in self.timers:
             t.join()    
         EventLogger.debug("Get-Timers stopped.")
     
         #set THREAD_EXIT_FLAG for all work threads
-        self.thread_exit_flag = True
+        for job in self.jobs:
+            job.stop()
         #wait for all threads to stop
-        for th in  self.threads:
-            th.join()    
-        EventLogger.debug("Work Threads stopped.")
+        for job in  self.jobs:
+            job.join()    
+        EventLogger.debug("Jobs stopped.")
     
         if self.ipcon != None and self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_CONNECTED:
             self.ipcon.disconnect()
@@ -182,11 +182,6 @@ class DataLogger():
     def add_to_queue(self,csv):
         '''
         '''
-        #Look which queues are logging
-        if self.log_to_file:
-            self.data_queue.put(csv)
-        
-        if self.log_to_xively:
-            #DataLogger.xively.put(csv)
-            EventLogger.warning("Xively is not supported!")
-
+        for q in self.data_queue.values():
+            q.put(csv)
+            
