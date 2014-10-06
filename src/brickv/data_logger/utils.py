@@ -358,6 +358,7 @@ class ConfigurationReader(object):
                                 ConfigurationValidator
  ---------------------------------------------------------------------------*/
 """
+import re
 
 class ConfigurationValidator(object):
     '''
@@ -384,11 +385,21 @@ class ConfigurationValidator(object):
     
     def validate_general_section(self,global_section):
         # ConfigurationReader.GENERAL_HOST ip address
-        # TODO check for a valid ip-address
-        host = global_section[ConfigurationReader.GENERAL_HOST]
-        if not host.lower() == 'localhost':
+        def is_valid_ip_format(ip_str):
+            '''
+            This function validates an ip-address and returns true 
+            on an valid and false on an invalid address
+            '''
+            pattern = r"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
+            if re.match(pattern, ip_str):
+                return True
+            else:
+                return False
+            
+        host = global_section[ConfigurationReader.GENERAL_HOST] 
+        if not host.lower() == 'localhost' and not is_valid_ip_format(host):
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_HOST],\
-                                                msg ="host should be 'localhost' or an valid ip address"  ))
+                                                msg ="host should be 'localhost' or an valid ip-address"  ))
         
         # ConfigurationReader.GENERAL_PORT port number
         port = global_section[ConfigurationReader.GENERAL_PORT]
