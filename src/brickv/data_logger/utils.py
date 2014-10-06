@@ -359,6 +359,8 @@ class ConfigurationValidator(object):
         This function performs the validation of the various sections of the json
         configuration file
         '''
+        EventLogger.info("Start configuration file validation")
+        
         self.validate_general_section(self.json_config._general)
         self.validate_xively_section(self.json_config._xively)
         
@@ -371,27 +373,28 @@ class ConfigurationValidator(object):
         # TODO check for a valid ip-address
         host = global_section[ConfigurationReader.GENERAL_HOST]
         if not host.lower() == "localhost":
-            print self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_HOST],\
-                                                msg ="host should be 'localhost' or an valid ip address"  )
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_HOST],\
+                                                msg ="host should be 'localhost' or an valid ip address"  ))
         
         # ConfigurationReader.GENERAL_PORT port number
         port = global_section[ConfigurationReader.GENERAL_PORT]
         if not self._is_valid_string(port, 1) and  not(port > 0 and port <= 65535):
-            print self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_PORT],\
-                                                msg ="port should be an integer 0-65535" )
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_PORT],\
+                                                msg ="port should be an integer 0-65535" ))
         
         # ConfigurationReader.GENERAL_LOG_TO_FILE 
         if not type(global_section[ConfigurationReader.GENERAL_LOG_TO_FILE]) == bool:
-            print self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_LOG_TO_FILE],\
-                                                msg ="should be a boolean" )
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_LOG_TO_FILE],\
+                                                msg ="should be a boolean" ))
         
         # ConfigurationReader.GENERAL_PATH_TO_FILE 
         if not self._is_valid_string(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE], 1):
-            print self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_PATH_TO_FILE],\
-                                                msg ="should be a path to the file where the data will be saved" )
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_PATH_TO_FILE],\
+                                                msg ="should be a path to the file where the data will be saved" ))
   
     def validate_xively_section(self,xively_section):
         # TODO: implement xively section validation
+        EventLogger.info("Xively validation is not yet supported")
         pass
     
     def validate_simple_devices(self,devices):
@@ -404,22 +407,22 @@ class ConfigurationValidator(object):
             values = device[bricklets.Identifier.DEVICE_VALUES]
             for value in values:
                 # arguments should be be either none or a list with len > 0
-                if not self._is_valid_arguments(values[value][bricklets.Identifier.DEVICE_VALUES_ARGS]):                    
-                    print self._generate_error_message(device=device,\
+                if not self._is_valid_arguments(values[value][bricklets.Identifier.DEVICE_VALUES_ARGS]):  
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_ARGS ],\
-                                                        msg="arguments should be either 'None' or a list with length > 1 ")
-                
+                                                        msg="arguments should be either 'None' or a list with length > 1 "))                  
+
                 # interval should be an integer and >= 0
                 if not self._is_valid_interval(values[value][bricklets.Identifier.DEVICE_VALUES_INTERVAL]):
-                    print self._generate_error_message(device=device,\
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_INTERVAL],\
-                                                        msg="interval should be an integer and >= 0")
+                                                        msg="interval should be an integer and >= 0"))
 
                 # function name should be a string and > 1
                 if not self._is_valid_string(values[value][bricklets.Identifier.DEVICE_VALUES_NAME], 1):
-                    print self._generate_error_message(device=device,\
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_NAME],\
-                                                        msg="function name should be a string with a length > 1")
+                                                        msg="function name should be a string with a length > 1"))
 
     def validate_special_devices(self,devices):
         self._replace_str_with_class(devices)
@@ -430,22 +433,22 @@ class ConfigurationValidator(object):
             
             # the two lists (device values, device booleans) should have the same length
             if len(device[bricklets.Identifier.SPECIAL_DEVICE_VALUE]) != len(device[bricklets.Identifier.SPECIAL_DEVICE_VALUE]):
-                print self._generate_error_message(device=device,\
+                EventLogger.critical(self._generate_error_message(device=device,\
                                                     tier_array=[bricklets.Identifier.SPECIAL_DEVICE_VALUE,bricklets.Identifier.SPECIAL_DEVICE_VALUE ],\
-                                                    msg="should have the same length")
+                                                    msg="should have the same length"))
 
             # check types of the entities in the lists            
             for bool_value_key in device[bricklets.Identifier.SPECIAL_DEVICE_BOOL]:
                 if not isinstance(device[bricklets.Identifier.SPECIAL_DEVICE_BOOL][bool_value_key], bool):
-                    print self._generate_error_message(device=device,\
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[bricklets.Identifier.SPECIAL_DEVICE_BOOL,bool_value_key],\
-                                                        msg="is not a boolean" )
+                                                        msg="is not a boolean" ))
       
             for interval_value_key in device[bricklets.Identifier.SPECIAL_DEVICE_VALUE]:
                 if not self._is_valid_interval(device[bricklets.Identifier.SPECIAL_DEVICE_VALUE][interval_value_key]):
-                    print self._generate_error_message(device=device,\
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[bricklets.Identifier.SPECIAL_DEVICE_VALUE,interval_value_key],\
-                                                        msg="is not a valid interval"  )
+                                                        msg="is not a valid interval"  ))
           
     def validate_complex_devices(self,devices):
         self._replace_str_with_class(devices)
@@ -458,44 +461,42 @@ class ConfigurationValidator(object):
             for value in values:
                 # bricklets.Identifier.DEVICE_VALUES_ARGS
                 if not self._is_valid_arguments(values[value][bricklets.Identifier.DEVICE_VALUES_ARGS]):
-                    print self._generate_error_message(device=device,\
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[value,bricklets.Identifier.DEVICE_VALUES_ARGS],\
-                                                        msg="arguments should be be either 'None' or a list with len > 0"  )
+                                                        msg="arguments should be be either 'None' or a list with len > 0"  ))
 
                 # bricklets.Identifier.DEVICE_VALUES_INTERVAL
                 if not self._is_valid_interval(values[value][bricklets.Identifier.DEVICE_VALUES_INTERVAL]):
-                    print self._generate_error_message(device=device,\
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[value,bricklets.Identifier.DEVICE_VALUES_INTERVAL],\
-                                                        msg="interval should be an integer and >= 0"  )
+                                                        msg="interval should be an integer and >= 0"  ))
 
                 # bricklets.Identifier.DEVICE_VALUES_NAME  
                 if not self._is_valid_string(values[value][bricklets.Identifier.DEVICE_VALUES_NAME], 1):
-                    print self._generate_error_message(device=device,\
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[value,bricklets.Identifier.DEVICE_VALUES_NAME],\
-                                                        msg="function name should be a string and > 1"    )             
+                                                        msg="function name should be a string and > 1"    ))             
                 
-                # bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL
-                # bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME
                 if len(values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != len(values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
-                    print self._generate_error_message(device=device,\
+                    EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[value,bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL,bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME],\
-                                                        msg="should have the same length")
+                                                        msg="should have the same length"))
                
                 # bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL
                 bool_values = values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL]
                 for bool_value in bool_values:
                     if not isinstance(bool_value, bool):
-                        print self._generate_error_message(device=device,\
+                        EventLogger.critical(self._generate_error_message(device=device,\
                                                             tier_array=[value,bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL,str(bool_value)],\
-                                                            msg="should be a boolean"   )
+                                                            msg="should be a boolean"   ))
 
                 # bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME
                 string_values = values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME]
                 for string_value in string_values:
                     if not self._is_valid_string(string_value, 1):
-                        print self._generate_error_message(device=device,\
+                        EventLogger.critical(self._generate_error_message(device=device,\
                                                             tier_array=[value,bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME,str(bool_value)],\
-                                                            msg="should be a string"   )  
+                                                            msg="should be a string"   ))
     
     
     def _replace_str_with_class(self,devices):
@@ -507,21 +508,21 @@ class ConfigurationValidator(object):
     def _check_basic_data(self,device):                
         # should be a class not a string
         if isinstance(device[bricklets.Identifier.DEVICE_CLASS],basestring):
-            print self._generate_error_message(device=device,\
+            EventLogger.critical(self._generate_error_message(device=device,\
                                                 tier_array=[bricklets.Identifier.DEVICE_CLASS],\
-                                                msg="should be a class but is a string"  )
+                                                msg="should be a class but is a string"  ))
             
         # should be a string with length > 0
         if not self._is_valid_string(device[bricklets.Identifier.DEVICE_NAME]):
-            print self._generate_error_message(device=device,\
+            EventLogger.critical(self._generate_error_message(device=device,\
                                                 tier_array=[bricklets.Identifier.DEVICE_NAME],\
-                                                msg="should be a string with length > 0"  )
+                                                msg="should be a string with length > 0"  ))
             
         # should be a string with length >= 3
         if not self._is_valid_string(device[bricklets.Identifier.DEVICE_UID]):
-            print self._generate_error_message(device=device,\
+            EventLogger.critical(self._generate_error_message(device=device,\
                                                 tier_array=[bricklets.Identifier.DEVICE_UID],\
-                                                msg="should be a string with length > 0"  )
+                                                msg="should be a string with length > 0"  ))
 
     def _is_valid_string(self,string_value,min_length=0):
         if not isinstance(string_value, basestring) or len(string_value) < min_length :
