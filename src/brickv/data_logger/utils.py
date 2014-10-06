@@ -91,7 +91,7 @@ class CSVData(object):
         """
         Simple Debug function for easier display of the object.
         """
-        return "UID =" + str(self.uid) + "\nNAME=" + str(self.name) + "\nVAR =" + str(self.var_name) + "\nRAW =" + str(self.raw_data) + "\nTIME=" + str(self.timestamp) + "\n"
+        return "[UID=" + str(self.uid) + ";NAME=" + str(self.name) + ";VAR=" + str(self.var_name) + ";RAW=" + str(self.raw_data) + ";TIME=" + str(self.timestamp) + "]"
 
 
 '''
@@ -765,35 +765,105 @@ class Utilities(object):
 
 """"
 /*---------------------------------------------------------------------------
-                                WriterThread
+                                Jobs
  ---------------------------------------------------------------------------*/
 """
-import data_logger
-def writer_thread(datalogger):
-    thread_name = "Work Thread(" + threading.current_thread().name + ")"
-    EventLogger.debug(thread_name + " started.")
-    csv_writer = CSVWriter(datalogger.default_file_path)
-                           
-    while (True):
-        if not datalogger.data_queue.empty():
-            csv_data = datalogger.data_queue.get()
-            EventLogger.debug(thread_name + " -> " + str(csv_data.name)+"-"+ csv_data.var_name +":" +str(csv_data.raw_data))
-            if not csv_writer.write_data_row(csv_data):
-                EventLogger.warning(thread_name + " could not write csv row!")
-                                      
-        if not datalogger.thread_exit_flag and datalogger.data_queue.empty(): 
-            #TODO: qucik testing fix EventLogger.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
-            time.sleep(datalogger.thread_sleep)
+import Queue
+
+class AbstractJob(threading.Thread):
+    
+    def __init__(self, datalogger=None, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        threading.Thread.__init__(self, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+        self._exit_flag = False
+        self._datalogger = datalogger
+        self._job_name = "[Job:"+self.name+"]"
         
-        if datalogger.thread_exit_flag and datalogger.data_queue.empty(): 
-            exit_flag = csv_writer.close_file()
-            if exit_flag:
-                EventLogger.debug(thread_name + " closed his csv_writer.")
-            else:
-                EventLogger.debug(thread_name + " could NOT close his csv_writer! EXIT_FLAG=" + str(exit))
-            EventLogger.debug(thread_name + " finished his work.")
-            break
+        if self._datalogger != None:
+            self._datalogger.data_queue[self.name] = Queue.Queue()
+    
+    def stop(self):
+        self._exit_flag = True
+    
+    def _job(self):
+        #check for datalogger object
+        if self._datalogger == None:
+            EventLogger.warning(self.name+" started but did not get a DataLogger Object! No work could be done.")
+            return True
+        return False
+
+    def _get_data_from_queue(self):
+        if self._datalogger != None:
+            return self._datalogger.data_queue[self.name].get()
+        return None
+
+class CSVWriterJob(AbstractJob):
+    
+    def __init__(self, datalogger=None, group=None, name=None, args=(), kwargs=None, verbose=None):        
+        target = self._job        
+        AbstractJob.__init__(self, datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
         
-def xively_thread():
-    # TODO: Xively writer implementation goes here
-    pass
+    def _job(self):
+        try:
+            #check for datalogger object
+            if AbstractJob._job(self):
+                return
+    
+            EventLogger.debug(self._job_name + " Started")
+            csv_writer = CSVWriter(self._datalogger.default_file_path)
+                                   
+            while (True):
+                if not self._datalogger.data_queue[self.name].empty():
+                    csv_data = self._get_data_from_queue()
+                    EventLogger.debug(self._job_name + " -> " + str(csv_data))
+                    if not csv_writer.write_data_row(csv_data):
+                        EventLogger.warning(self._job_name + " Could not write csv row!")
+                                              
+                if not self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
+                    time.sleep(self._datalogger.job_sleep)
+                
+                if self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
+                    exit_return_Value = csv_writer.close_file()
+                    if exit_return_Value:
+                        EventLogger.debug(self._job_name + " Closed his csv_writer")
+                    else:
+                        EventLogger.debug(self._job_name + " Could NOT close his csv_writer! EXIT_RETURN_VALUE=" + str(exit))
+                    EventLogger.debug(self._job_name + " Finished")
+                    break
+        except Exception as e:
+            EventLogger.error(self._job_name + " " + e.value)
+            
+            
+class XivelyJob(AbstractJob):
+    
+    def __init__(self, datalogger=None, group=None, name=None, args=(), kwargs=None, verbose=None):        
+        target = self._job        
+        AbstractJob.__init__(self,datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+        #TODO: implement xively logger
+        EventLogger.warning(self._job_name+" Is not supported!")
+        
+    def _job(self):
+        #TODO: implement xively logger
+        EventLogger.warning(self._job_name+" Is not supported!")
+        try:
+            #check for datalogger object
+            if AbstractJob._job(self):
+                return
+    
+            EventLogger.debug(self._job_name + " Started")
+                                   
+            while (True):
+                if not self._datalogger.data_queue[self.name].empty():
+                    #write
+                    csv_data = self._get_data_from_queue()
+                    EventLogger.debug(self._job_name+" -> "+str(csv_data))
+                                              
+                if not self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
+                    time.sleep(self._datalogger.job_sleep)
+                
+                if self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
+                    #close job
+                    EventLogger.debug(self._job_name + " Finished")
+                    break
+        except Exception as e:
+            EventLogger.error(self._job_name + " " + e.value)
+            
