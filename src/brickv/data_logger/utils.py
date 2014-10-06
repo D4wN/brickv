@@ -328,13 +328,27 @@ class ConfigurationReader(object):
             json_structure = json.load(content_file)
     
         # Load sections out of the json structure 
+        # FIXME: is it ok to end with an exception if there's no such section in the config file ?
         self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
-        self._configuration._xively = json_structure[ConfigurationReader.XIVELY_SECTION]
-         
-        self._configuration._simple_devices = json_structure[bricklets.Identifier.SIMPLE_DEVICE]
-        self._configuration._complex_devices = json_structure[bricklets.Identifier.COMPLEX_DEVICE]
-        self._configuration._special_devices = json_structure[bricklets.Identifier.SPECIAL_DEVICE]
-                     
+        
+        def prevent_key_error(key):
+            '''
+            This function returns an empty array if there is no such  
+            section in the configuration file
+            key -- section key
+            '''
+            result = [] 
+            try:
+                result = json_structure[key]
+            except KeyError:
+                EventLogger.warning("json configuration file has no [" +key+"] section")
+            return result
+        
+        self._configuration._xively = prevent_key_error(ConfigurationReader.XIVELY_SECTION)
+        self._configuration._simple_devices = prevent_key_error(bricklets.Identifier.SIMPLE_DEVICE)
+        self._configuration._complex_devices = prevent_key_error(bricklets.Identifier.COMPLEX_DEVICE)
+        self._configuration._special_devices = prevent_key_error(bricklets.Identifier.SPECIAL_DEVICE)
+                            
         validator = ConfigurationValidator(self._configuration)
         validator.validate()
                 
@@ -372,7 +386,7 @@ class ConfigurationValidator(object):
         # ConfigurationReader.GENERAL_HOST ip address
         # TODO check for a valid ip-address
         host = global_section[ConfigurationReader.GENERAL_HOST]
-        if not host.lower() == "localhost":
+        if not host.lower() == 'localhost':
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_HOST],\
                                                 msg ="host should be 'localhost' or an valid ip address"  ))
         
