@@ -370,6 +370,7 @@ class ConfigurationValidator(object):
     '''
     def __init__(self,config_file):
         self.json_config = config_file
+        self._error_count = 0
     
     
     def validate(self):
@@ -377,7 +378,7 @@ class ConfigurationValidator(object):
         This function performs the validation of the various sections of the json
         configuration file
         '''
-        EventLogger.info("Start configuration file validation")
+        EventLogger.info("Started configuration file validation")
         
         self.validate_general_section(self.json_config._general)
         self.validate_xively_section(self.json_config._xively)
@@ -385,6 +386,8 @@ class ConfigurationValidator(object):
         self.validate_simple_devices(self.json_config._simple_devices)
         self.validate_special_devices(self.json_config._special_devices)
         self.validate_complex_devices(self.json_config._complex_devices)
+        
+        EventLogger.info("Validation ends with ["+str(self._error_count)+"] errors")
     
     def validate_general_section(self,global_section):
         # ConfigurationReader.GENERAL_HOST ip address
@@ -438,19 +441,19 @@ class ConfigurationValidator(object):
             
             values = device[bricklets.Identifier.DEVICE_VALUES]
             for value in values:
-                # arguments should be be either none or a list with len > 0
+                # bricklets.Identifier.DEVICE_VALUES_ARGS
                 if not self._is_valid_arguments(values[value][bricklets.Identifier.DEVICE_VALUES_ARGS]):  
                     EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_ARGS ],\
-                                                        msg="arguments should be either 'None' or a list with length > 1 "))                  
+                                                        msg="arguments should be either 'None' or a list with length >= 1 "))                  
 
-                # interval should be an integer and >= 0
+                # bricklets.Identifier.DEVICE_VALUES_INTERVAL
                 if not self._is_valid_interval(values[value][bricklets.Identifier.DEVICE_VALUES_INTERVAL]):
                     EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_INTERVAL],\
                                                         msg="interval should be an integer and >= 0"))
 
-                # function name should be a string and > 1
+                # bricklets.Identifier.DEVICE_VALUES_NAME
                 if not self._is_valid_string(values[value][bricklets.Identifier.DEVICE_VALUES_NAME], 1):
                     EventLogger.critical(self._generate_error_message(device=device,\
                                                         tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_NAME],\
@@ -533,8 +536,8 @@ class ConfigurationValidator(object):
     
     def _replace_str_with_class(self,devices):
         '''
-        This function replaces the string class name 'bricklets.Identifier.DEVICE_CLASS' entry
-        with the actual class object
+        This function replaces the entry 'bricklets.Identifier.DEVICE_CLASS' which contains 
+        the class name as a string with the actual class object
         '''
         for i in range(len(devices)):
             class_str = devices[i][bricklets.Identifier.DEVICE_CLASS]
@@ -588,6 +591,7 @@ class ConfigurationValidator(object):
         for tier in tier_array:
             err_msg += "["+tier+"]"
         
+        self._error_count += 1
         return err_msg + " - " + msg
         
           
