@@ -44,6 +44,15 @@ class Identifier(object):
     """
         This class is for all identification strings of the bricklets and bricks.
     """
+    
+    #creates a function name from device_name and var_name
+    def create_function_name(device_name, var_name):
+        if Identifier.FUNCTION_NAME.has_key(device_name+var_name):
+            return Identifier.FUNCTION_NAME[device_name+var_name]
+        return ("get_"+var_name).replace(" ", "_").lower()
+    
+    create_function_name = staticmethod(create_function_name)
+    
     ###Devices
     SIMPLE_DEVICE = "SimpleDevice"
     SPECIAL_DEVICE = "SpecialDevice"
@@ -62,6 +71,9 @@ class Identifier(object):
     
     SPECIAL_DEVICE_VALUE = "special_values"
     SPECIAL_DEVICE_BOOL = "special_bool"
+
+    ###Special Function Names
+    FUNCTION_NAME = {}
 
     ###Bricks
     #TODO: write bricks
@@ -88,6 +100,7 @@ class Identifier(object):
     COLOR_BLUE = "Blue"
     COLOR_CLEAR = "Clear"
     COLOR_COLOR = "Rgbc"
+    FUNCTION_NAME[COLOR+COLOR_COLOR] = "get_color"
     COLOR_ILLUMINANCE = "Illuminance"
     COLOR_TEMPERATURE = "Color Temperature"
     
@@ -105,12 +118,15 @@ class Identifier(object):
     
     DISTANCE_US = "Distance US"
     DISTANCE_US_DISTANCE = "Distance"
+    FUNCTION_NAME[DISTANCE_US+DISTANCE_US_DISTANCE] = "get_distance_value"
     
     DUAL_BUTTON = "Dual Button"
     DUAL_BUTTON_BUTTONS = "Buttons"
+    FUNCTION_NAME[DUAL_BUTTON+DUAL_BUTTON_BUTTONS] = "get_button_state"
     DUAL_BUTTON_BUTTON_L = "button_l"
     DUAL_BUTTON_BUTTON_R = "button_r"
     DUAL_BUTTON_LEDS = "Leds"
+    FUNCTION_NAME[DUAL_BUTTON+DUAL_BUTTON_LEDS] = "get_led_state"
     DUAL_BUTTON_LED_L = "led_l"
     DUAL_BUTTON_LED_R = "led_r"
     
@@ -129,12 +145,16 @@ class Identifier(object):
     INDUSTRIAL_DUAL_0_20_MA = "Industrial Dual 0 20 mA"
     INDUSTRIAL_DUAL_0_20_MA_CURRENT = "Current"
     INDUSTRIAL_DUAL_0_20_MA_SENSOR_0 = "Sensor 0"
+    FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = "get_current"
     INDUSTRIAL_DUAL_0_20_MA_SENSOR_1 = "Sensor 1"
+    FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = "get_current"
     
     IO_16 = "IO-16"
     IO_16_PORTS = "Ports"
     IO_16_PORT_A = "Port A"
+    FUNCTION_NAME[IO_16+IO_16_PORT_A] = "get_port"
     IO_16_PORT_B = "Port B"
+    FUNCTION_NAME[IO_16+IO_16_PORT_B] = "get_port"
     
     IO_4 = "IO-4"
     IO_4_VALUE = "Value"
@@ -145,6 +165,7 @@ class Identifier(object):
     JOYSTICK_POSITION_Y = "Position Y"
     JOYSTICK_ANALOG_VALUE = "Analog Value"
     JOYSTICK_PRESSED = "Pressed"
+    FUNCTION_NAME[JOYSTICK+JOYSTICK_PRESSED] = "is_pressed"
     
     LED_STRIP = "LED Strip"
     LED_STRIP_SUPPLY_VOLTAGE = "Supply Voltage"
@@ -168,6 +189,7 @@ class Identifier(object):
     ROTARY_ENCODER = "Rotary Encoder"
     ROTARY_ENCODER_COUNT = "Count"
     ROTARY_ENCODER_PRESSED = "Pressed"
+    FUNCTION_NAME[ROTARY_ENCODER+ROTARY_ENCODER_PRESSED] = "is_pressed"
     
     ROTARY_POTI = "Rotary Poti"
     ROTARY_POTI_POSITION = "Position"
@@ -188,6 +210,7 @@ class Identifier(object):
     
     TILT = "Tilt"
     TILT_STATE = "State"
+    FUNCTION_NAME[TILT+TILT_STATE] = "get_tilt_state"
     
     VOLTAGE = "Voltage"
     VOLTAGE_VOLTAGE = "Voltage"

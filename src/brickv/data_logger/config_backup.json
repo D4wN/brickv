@@ -7,7 +7,7 @@
       "values": {
         "Color Temperature": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_color_temperature",
           "var_bool": [
             true
@@ -18,7 +18,7 @@
         },
         "Illuminance": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_illuminance",
           "var_bool": [
             true
@@ -29,13 +29,13 @@
         },
         "Rgbc": {
           "args": null,
-          "interval": 5000,
+          "interval": 1000,
           "name": "get_color",
           "var_bool": [
             true,
             true,
             true,
-            true
+            false
           ],
           "var_name": [
             "Red",
@@ -53,7 +53,7 @@
       "values": {
         "Buttons": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_button_state",
           "var_bool": [
             true,
@@ -66,7 +66,7 @@
         },
         "Leds": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_led_state",
           "var_bool": [
             true,
@@ -86,7 +86,7 @@
       "values": {
         "State": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_state",
           "var_bool": [
             true,
@@ -106,7 +106,7 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value",
           "var_bool": [
             true,
@@ -119,7 +119,7 @@
         },
         "Position": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_position",
           "var_bool": [
             true,
@@ -132,7 +132,7 @@
         },
         "Pressed": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "is_pressed",
           "var_bool": [
             true
@@ -158,12 +158,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Illuminance": {
           "args": null,
-          "interval": 5000,
+          "interval": 1000,
           "name": "get_illuminance"
         }
       }
@@ -175,12 +175,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Illuminance": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_illuminance"
         }
       }
@@ -192,12 +192,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Voltage": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_voltage"
         }
       }
@@ -209,7 +209,7 @@
       "values": {
         "Voltage": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_voltage"
         }
       }
@@ -221,17 +221,17 @@
       "values": {
         "Air Pressure": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_air_pressure"
         },
         "Altitude": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_altitude"
         },
         "Chip Temperature": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_chip_temperature"
         }
       }
@@ -243,17 +243,17 @@
       "values": {
         "Air Pressure": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_air_pressure"
         },
         "Altitude": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_altitude"
         },
         "Chip Temperature": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_chip_temperature"
         }
       }
@@ -265,12 +265,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Current": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_current"
         }
       }
@@ -282,12 +282,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Current": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_current"
         }
       }
@@ -299,12 +299,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Distance": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_distance"
         }
       }
@@ -316,8 +316,8 @@
       "values": {
         "Distance": {
           "args": null,
-          "interval": 5000,
-          "name": "get_distance_value"
+          "interval": 0,
+          "name": "get_distance"
         }
       }
     },
@@ -328,7 +328,7 @@
       "values": {
         "Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_value"
         }
       }
@@ -340,12 +340,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Humidity": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_humidity"
         }
       }
@@ -357,12 +357,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Humidity": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_humidity"
         }
       }
@@ -374,7 +374,7 @@
       "values": {
         "Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_value"
         }
       }
@@ -386,7 +386,7 @@
       "values": {
         "Supply Voltage": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_supply_voltage"
         }
       }
@@ -398,7 +398,7 @@
       "values": {
         "Reflectivity": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_reflectivity"
         }
       }
@@ -410,12 +410,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Position": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_position"
         }
       }
@@ -427,7 +427,7 @@
       "values": {
         "Moisture Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_moisture_value"
         }
       }
@@ -439,7 +439,7 @@
       "values": {
         "Motion Detected": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_motion_detected"
         }
       }
@@ -451,7 +451,7 @@
       "values": {
         "Touch State": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_touch_state"
         }
       }
@@ -463,12 +463,12 @@
       "values": {
         "Resistance": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_resistance"
         },
         "Temperature": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_temperature"
         }
       }
@@ -479,16 +479,14 @@
       "uid": "o1M",
       "values": {
         "Count": {
-          "args": [
-            false
-          ],
-          "interval": 5000,
+          "args": null,
+          "interval": 0,
           "name": "get_count"
         },
         "Pressed": {
           "args": null,
-          "interval": 5000,
-          "name": "is_pressed"
+          "interval": 0,
+          "name": "get_pressed"
         }
       }
     },
@@ -499,12 +497,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Position": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_position"
         }
       }
@@ -516,7 +514,7 @@
       "values": {
         "State": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_state"
         }
       }
@@ -528,7 +526,7 @@
       "values": {
         "Intensity": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_intensity"
         }
       }
@@ -540,7 +538,7 @@
       "values": {
         "Temperature": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_temperature"
         }
       }
@@ -552,12 +550,12 @@
       "values": {
         "Ambient Temperature": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_ambient_temperature"
         },
         "Object Temperature": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_object_temperature"
         }
       }
@@ -569,8 +567,8 @@
       "values": {
         "State": {
           "args": null,
-          "interval": 5000,
-          "name": "get_tilt_state"
+          "interval": 0,
+          "name": "get_state"
         }
       }
     },
@@ -581,12 +579,12 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_analog_value"
         },
         "Voltage": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_voltage"
         }
       }
@@ -598,17 +596,17 @@
       "values": {
         "Current": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_current"
         },
         "Power": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_power"
         },
         "Voltage": {
           "args": null,
-          "interval": 5000,
+          "interval": 0,
           "name": "get_voltage"
         }
       }
@@ -622,14 +620,14 @@
           "args": [
             "a"
           ],
-          "interval": 5000,
+          "interval": 0,
           "name": "get_port"
         },
         "Port B": {
           "args": [
             "b"
           ],
-          "interval": 5000,
+          "interval": 0,
           "name": "get_port"
         }
       }
@@ -643,67 +641,67 @@
           "args": [
             0
           ],
-          "interval": 5000,
+          "interval": 0,
           "name": "get_current"
         },
         "Sensor 1": {
           "args": [
             1
           ],
-          "interval": 5000,
+          "interval": 0,
           "name": "get_current"
         }
       }
     }
   ],
   "SpecialDevice": [
-    {
-      "class": "GPSBricklet",
-      "name": "GPS",
-      "special_bool": {
-        "Altitude Value": true,
-        "Course": true,
-        "Date": true,
-        "Epe": true,
-        "Ew": true,
-        "Fix Status": true,
-        "Geoidal Seperation": true,
-        "Hdop": true,
-        "Latitude": true,
-        "Longitude": true,
-        "Ns": true,
-        "Pdop": true,
-        "Satellites Used": true,
-        "Satellites View": true,
-        "Speed": true,
-        "Time": true,
-        "Vdop": true
-      },
-      "special_values": {
-        "Altitude": 0,
-        "Coordinates": 0,
-        "Date Time": 0,
-        "Motion": 0
-      },
-      "uid": "XXX"
+  {
+    "class": "GPSBricklet",
+    "name": "GPS",
+    "special_bool": {
+      "Altitude Value": true,
+      "Course": true,
+      "Date": true,
+      "Epe": true,
+      "Ew": true,
+      "Fix Status": true,
+      "Geoidal Seperation": true,
+      "Hdop": true,
+      "Latitude": true,
+      "Longitude": true,
+      "Ns": true,
+      "Pdop": true,
+      "Satellites Used": true,
+      "Satellites View": true,
+      "Speed": true,
+      "Time": true,
+      "Vdop": true
     },
-    {
-      "class": "SegmentDisplay4x7Bricklet",
-      "name": "Segment Display 4x7",
-      "special_bool": {
-        "Brightness": true,
-        "Colon": true,
-        "Segment 1": true,
-        "Segment 2": true,
-        "Segment 3": true,
-        "Segment 4": true
-      },
-      "special_values": {
-        "Counter Value": 0,
-        "Segments": 0
-      },
-      "uid": "XXX"
-    }
-  ],
+    "special_values": {
+      "Altitude": 0,
+      "Coordinates": 0,
+      "Date Time": 0,
+      "Motion": 0
+    },
+    "uid": "AAA"
+  },
+  {
+    "class": "SegmentDisplay4x7Bricklet",
+    "name": "Segment Display 4x7",
+    "special_bool": {
+      "Brightness": false,
+      "Colon": false,
+      "Segment 1": true,
+      "Segment 2": false,
+      "Segment 3": false,
+      "Segment 4": true
+    },
+    "special_values": {
+      "Counter Value": 0,
+      "Segments": 1000
+    },
+    "uid": "AAA"
+  }
+],
   "XIVELY": {}
 }
