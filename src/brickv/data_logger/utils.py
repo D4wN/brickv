@@ -328,8 +328,12 @@ class ConfigurationReader(object):
             json_structure = json.load(content_file)
     
         # Load sections out of the json structure 
-        # FIXME: is it ok to end with an exception if there's no such section in the config file ?
-        self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
+        try:
+            self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
+        except KeyError:
+            EventLogger.warning("json configuration file has no [" +ConfigurationReader.GENERAL_SECTION+"] section")
+            # TODO: Should end the program due to missing the general section
+            
         
         def prevent_key_error(key):
             '''
@@ -364,7 +368,6 @@ class ConfigurationValidator(object):
     '''
     This class validates the (json) configuration file
     '''
-    # TODO: Send error msg to user (replace the print)
     def __init__(self,config_file):
         self.json_config = config_file
     
@@ -387,9 +390,13 @@ class ConfigurationValidator(object):
         # ConfigurationReader.GENERAL_HOST ip address
         def is_valid_ip_format(ip_str):
             '''
-            This function validates an ip-address and returns true 
-            on an valid and false on an invalid address
+            This function validates the format of an ip-address and returns true 
+            on an valid and false on an invalid format.
+            
+            This function does not check if the ip-address makes any sense
+            e.g '0.0.0.0' is a valid ip-address format
             '''
+            # FIXME: Add IP6 pattern
             pattern = r"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
             if re.match(pattern, ip_str):
                 return True
@@ -525,12 +532,18 @@ class ConfigurationValidator(object):
     
     
     def _replace_str_with_class(self,devices):
-        # FIXME: Should the exception be catched
+        '''
+        This function replaces the string class name 'bricklets.Identifier.DEVICE_CLASS' entry
+        with the actual class object
+        '''
         for i in range(len(devices)):
             class_str = devices[i][bricklets.Identifier.DEVICE_CLASS]
             devices[i][bricklets.Identifier.DEVICE_CLASS] = bricklets.string_to_class(class_str)  
     
-    def _check_basic_data(self,device):                
+    def _check_basic_data(self,device):
+        '''
+        This function validates entries which are present in every device type
+        '''               
         # should be a class not a string
         if isinstance(device[bricklets.Identifier.DEVICE_CLASS],basestring):
             EventLogger.critical(self._generate_error_message(device=device,\
