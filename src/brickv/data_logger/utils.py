@@ -869,8 +869,7 @@ class CSVWriterJob(AbstractJob):
                     break
         except Exception as e:
             EventLogger.error(self._job_name + " " + e.value)
-            
-            
+                      
 class XivelyJob(AbstractJob):
     
     def __init__(self, datalogger=None, group=None, name=None, args=(), kwargs=None, verbose=None):        
