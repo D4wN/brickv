@@ -312,6 +312,11 @@ class SimpleDevice(AbstractDevice):
             getter_args = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_ARGS]
         
             if getter_args:
+                #FIXME: find better solution for the unicode problem!
+                for i in range(len(getter_args)):
+                    if type(getter_args[i]) == unicode:
+                        getter_args[i] = str(getter_args[i])
+                
                 value = getattr(self.device, getter_name)(*getter_args)
             else:
                 value = getattr(self.device, getter_name)()
@@ -349,6 +354,11 @@ class ComplexDevice(AbstractDevice):
         
             #start functions to get values
             if getter_args:
+                #FIXME: find better solution for the unicode problem!
+                for i in range(len(getter_args)):
+                    if type(getter_args[i]) == unicode:
+                        getter_args[i] = str(getter_args[i])
+                
                 values = getattr(self.device, getter_name)(*getter_args)
             else:
                 values = getattr(self.device, getter_name)()
