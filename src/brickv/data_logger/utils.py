@@ -565,7 +565,7 @@ class ConfigurationValidator(object):
                 class_str = devices[i][bricklets.Identifier.DEVICE_CLASS]
                 devices[i][bricklets.Identifier.DEVICE_CLASS] = bricklets.string_to_class(class_str) 
                  
-            except KeyError:
+            except (KeyError, AttributeError):
                 self._error_count +=1
                 EventLogger.critical("Can not parse ["+class_str+"] to an actual class")
 
