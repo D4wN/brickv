@@ -1,6 +1,10 @@
 import sys, tinkerforge, utils, data_logger
 
 #import ALL supported bricklets and bricks
+from tinkerforge.brick_dc import DC
+from tinkerforge.brick_imu import IMU
+from tinkerforge.brick_stepper import Stepper
+
 from tinkerforge.bricklet_ambient_light import AmbientLight
 from tinkerforge.bricklet_analog_in import AnalogIn
 from tinkerforge.bricklet_analog_out import AnalogOut
@@ -51,18 +55,28 @@ class Identifier(object):
             return Identifier.FUNCTION_NAME[device_name+var_name]
         return ("get_"+var_name).replace(" ", "_").lower()
     
+    def create_class_name(device_name):
+        if Identifier.CLASS_NAME.has_key(device_name):
+            return Identifier.CLASS_NAME[device_name]
+        return (device_name).replace(" ", "")
+    
     create_function_name = staticmethod(create_function_name)
+    create_class_name = staticmethod(create_class_name)
     
     ###Devices
+    #one return value
     SIMPLE_DEVICE = "SimpleDevice"
-    SPECIAL_DEVICE = "SpecialDevice"
+    #tuple return value
     COMPLEX_DEVICE = "ComplexDevice"
+    #array/multiple return values in tuple (e.g. return ([1,2,3],"a","b","c"))
+    #or special rules, e.g. GPS which needs a special FIX value for some functions
+    SPECIAL_DEVICE = "SpecialDevice"
     
     DEVICE_NAME = "name"
     DEVICE_CLASS = "class"
     DEVICE_UID = "uid"
     DEVICE_VALUES = "values"
-    DEVICE_VALUES_NAME = "name"
+    DEVICE_VALUES_NAME = "func_name"
     DEVICE_VALUES_ARGS = "args"
     DEVICE_VALUES_INTERVAL = "interval"
     
@@ -72,11 +86,61 @@ class Identifier(object):
     SPECIAL_DEVICE_VALUE = "special_values"
     SPECIAL_DEVICE_BOOL = "special_bool"
 
-    ###Special Function Names
+    ###Special Identifiers
     FUNCTION_NAME = {}
+    CLASS_NAME = {}
 
     ###Bricks
-    #TODO: write bricks
+    DC_BRICK = "DC Brick"
+    CLASS_NAME[DC_BRICK] = "DC"
+    DC_BRICK_VELOCITY = "Velocity"
+    DC_BRICK_CURRENT_VELOCITY = "Current Velocity"
+    DC_BRICK_ACCELERATION = "Acceleration"
+    DC_BRICK_STACK_INPUT_VOLTAGE = "Stack Input Voltage"
+    DC_BRICK_EXTERNAL_INTPU_VOLTAGE = "External Input Voltage"
+    DC_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
+    DC_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
+    
+    IMU_BRICK = "IMU Brick"
+    CLASS_NAME[IMU_BRICK] = "IMU"
+    IMU_BRICK_ORIENTATION = "Orientation"
+    IMU_BRICK_ORIENTATION_ROLL = "Roll"
+    IMU_BRICK_ORIENTATION_YAW = "Yaw"
+    IMU_BRICK_ORIENTATION_PITCH = "Pitch"
+    IMU_BRICK_QUATERNION = "Quaternion"
+    IMU_BRICK_QUATERNION_X = "X"
+    IMU_BRICK_QUATERNION_Y = "Y"
+    IMU_BRICK_QUATERNION_Z = "Z"
+    IMU_BRICK_QUATERNION_W = "W"   
+    IMU_BRICK_ACCELERATION = "Acceleration"
+    IMU_BRICK_ACCELERATION_X = "X"
+    IMU_BRICK_ACCELERATION_Y = "Y"
+    IMU_BRICK_ACCELERATION_Z = "Z"
+    IMU_BRICK_MAGNETIC_FIELD = "Magnetic Field"
+    IMU_BRICK_MAGNETIC_FIELD_X = "X"
+    IMU_BRICK_MAGNETIC_FIELD_Y = "Y"
+    IMU_BRICK_MAGNETIC_FIELD_Z = "Z"
+    IMU_BRICK_ANGULAR_VELOCITY = "Angular Velocity"
+    IMU_BRICK_ANGULAR_VELOCITY_X = "X"
+    IMU_BRICK_ANGULAR_VELOCITY_Y = "Y"
+    IMU_BRICK_ANGULAR_VELOCITY_Z = "Z"
+    IMU_BRICK_IMU_TEMPERATURE = "IMU Temperature"
+    IMU_BRICK_LEDS = "Leds"
+    FUNCTION_NAME[IMU_BRICK+IMU_BRICK_LEDS] = "are_leds_on"
+    IMU_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
+    
+    STEPPER_BRICK = "Stepper Brick"
+    CLASS_NAME[STEPPER_BRICK] = "Stepper"
+    STEPPER_BRICK_CURRENT_VELOCITY = "Current Velocity"
+    STEPPER_BRICK_STEPS = "Steps"
+    STEPPER_BRICK_REMAINING_STEPS = "Remaining Steps"
+    STEPPER_BRICK_CURRENT_POSITION = "Current Position"
+    STEPPER_BRICK_STACK_INPUT_VOLTAGE = "Stack Input Voltage"
+    STEPPER_BRICK_EXTERNAL_INPUT_VOLTAGE = "External Input Voltage"
+    STEPPER_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
+    STEPPER_BRICK_SNYC_RECT = "Sync Rect"
+    FUNCTION_NAME[STEPPER_BRICK+STEPPER_BRICK_SNYC_RECT] = "is_sync_rect"
+
     ###Bricklets
     AMBIENT_LIGHT = "Ambient Light"
     AMBIENT_LIGHT_ILLUMINANCE = "Illuminance"
@@ -150,6 +214,7 @@ class Identifier(object):
     FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = "get_current"
     
     IO_16 = "IO-16"
+    CLASS_NAME[IO_16] = "IO16"
     IO_16_PORTS = "Ports"
     IO_16_PORT_A = "Port A"
     FUNCTION_NAME[IO_16+IO_16_PORT_A] = "get_port"
@@ -157,6 +222,7 @@ class Identifier(object):
     FUNCTION_NAME[IO_16+IO_16_PORT_B] = "get_port"
     
     IO_4 = "IO-4"
+    CLASS_NAME[IO_4] = "IO4"
     IO_4_VALUE = "Value"
     
     JOYSTICK = "Joystick"
@@ -170,10 +236,12 @@ class Identifier(object):
     LED_STRIP = "LED Strip"
     LED_STRIP_SUPPLY_VOLTAGE = "Supply Voltage"
     
-    LINE = "line"
+    LINE = "Line"
+    CLASS_NAME[LINE] = "BrickletLine"
     LINE_REFLECTIVITY = "Reflectivity"
     
     LINEAR_POTI = "Linear Poti"
+    CLASS_NAME[LINEAR_POTI] = "BrickletLinearPoti"
     LINEAR_POTI_POSITION = "Position"
     LINEAR_POTI_ANALOG_VALUE = "Analog Value"
     
@@ -186,6 +254,10 @@ class Identifier(object):
     MULTI_TOUCH = "Multi Touch"
     MULTI_TOUCH_TOUCH_STATE = "Touch State"
     
+    PTC_BRICKLET = "PTC"
+    PTC_BRICKLET_RESISTANCE = "Resistance"
+    PTC_BRICKLET_TEMPERATURE = "Temperature"
+    
     ROTARY_ENCODER = "Rotary Encoder"
     ROTARY_ENCODER_COUNT = "Count"
     ROTARY_ENCODER_PRESSED = "Pressed"
@@ -196,32 +268,40 @@ class Identifier(object):
     ROTARY_POTI_ANALOG_VALUE = "Analog Value"
     
     SOLID_STATE_RELAY = "Solid State Relay"
+    CLASS_NAME[SOLID_STATE_RELAY] = "BrickletSolidStateRelay"
     SOLID_STATE_RELAY_STATE = "State"
     
     SOUND_INTENSITY = "Sound Intensity"
+    CLASS_NAME[SOUND_INTENSITY] = "BrickletSoundIntensity"
     SOUND_INTENSITY_INTENSITY = "Intensity"
     
     TEMPERATURE = "Temperature"
+    CLASS_NAME[TEMPERATURE] = "BrickletTemperature"
     TEMPERATURE_TEMPERATURE = "Temperature"
     
     TEMPERATURE_IR = "Temperature IR"
+    CLASS_NAME[TEMPERATURE_IR] = "BrickletTemperatureIR"
     TEMPERATURE_IR_AMBIENT_TEMPERATURE = "Ambient Temperature"
     TEMPERATURE_IR_OBJECT_TEMPERATURE ="Object Temperature"
     
     TILT = "Tilt"
+    CLASS_NAME[TILT] = "BrickletTilt"
     TILT_STATE = "State"
     FUNCTION_NAME[TILT+TILT_STATE] = "get_tilt_state"
     
     VOLTAGE = "Voltage"
+    CLASS_NAME[VOLTAGE] = "BrickletVoltage"
     VOLTAGE_VOLTAGE = "Voltage"
     VOLTAGE_ANALOG_VALUE = "Analog Value"
     
     VOLTAGE_CURRENT = "Voltage Current"
+    CLASS_NAME[VOLTAGE_CURRENT] = "BrickletVoltageCurrent"
     VOLTAGE_CURRENT_CURRENT = "Current"
     VOLTAGE_CURRENT_VOLTAGE = "Voltage"
     VOLTAGE_CURRENT_POWER = "Power"
 
     GPS_BRICKLET = "GPS"
+    CLASS_NAME[GPS_BRICKLET] = "GPSBricklet"
     GPS_FIX_STATUS = "Fix Status"
     GPS_SATELLITES_VIEW = "Satellites View"
     GPS_SATELLITES_USED = "Satellites Used"
@@ -245,6 +325,7 @@ class Identifier(object):
     GPS_TIME = "Time"
     
     SEGMENT_DISPLAY_4x7 = "Segment Display 4x7"
+    CLASS_NAME[SEGMENT_DISPLAY_4x7] = "SegmentDisplay4x7Bricklet"
     SEGMENT_DISPLAY_4x7_SEGMENTS = "Segments"
     SEGMENT_DISPLAY_4x7_SEGMENT_1 = "Segment 1"
     SEGMENT_DISPLAY_4x7_SEGMENT_2 = "Segment 2"

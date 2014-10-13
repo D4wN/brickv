@@ -7,8 +7,8 @@
       "values": {
         "Color Temperature": {
           "args": null,
-          "interval": 5000,
-          "name": "get_color_temperature",
+          "func_name": "get_color_temperature",
+          "interval": 0,
           "var_bool": [
             true
           ],
@@ -18,8 +18,8 @@
         },
         "Illuminance": {
           "args": null,
-          "interval": 5000,
-          "name": "get_illuminance",
+          "func_name": "get_illuminance",
+          "interval": 0,
           "var_bool": [
             true
           ],
@@ -29,8 +29,8 @@
         },
         "Rgbc": {
           "args": null,
-          "interval": 5000,
-          "name": "get_color",
+          "func_name": "get_color",
+          "interval": 0,
           "var_bool": [
             true,
             true,
@@ -53,8 +53,8 @@
       "values": {
         "Buttons": {
           "args": null,
-          "interval": 5000,
-          "name": "get_button_state",
+          "func_name": "get_button_state",
+          "interval": 0,
           "var_bool": [
             true,
             true
@@ -66,8 +66,8 @@
         },
         "Leds": {
           "args": null,
-          "interval": 5000,
-          "name": "get_led_state",
+          "func_name": "get_led_state",
+          "interval": 0,
           "var_bool": [
             true,
             true
@@ -86,8 +86,8 @@
       "values": {
         "State": {
           "args": null,
-          "interval": 5000,
-          "name": "get_state",
+          "func_name": "get_state",
+          "interval": 0,
           "var_bool": [
             true,
             true
@@ -106,8 +106,8 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value",
+          "func_name": "get_analog_value",
+          "interval": 0,
           "var_bool": [
             true,
             true
@@ -119,8 +119,8 @@
         },
         "Position": {
           "args": null,
-          "interval": 5000,
-          "name": "get_position",
+          "func_name": "get_position",
+          "interval": 0,
           "var_bool": [
             true,
             true
@@ -132,13 +132,130 @@
         },
         "Pressed": {
           "args": null,
-          "interval": 5000,
-          "name": "is_pressed",
+          "func_name": "is_pressed",
+          "interval": 0,
           "var_bool": [
             true
           ],
           "var_name": [
             "Pressed"
+          ]
+        }
+      }
+    },
+    {
+      "class": "IMU",
+      "name": "IMU Brick",
+      "uid": "AAA",
+      "values": {
+        "Acceleration": {
+          "args": null,
+          "func_name": "get_acceleration",
+          "interval": 0,
+          "var_bool": [
+            true,
+            true,
+            true
+          ],
+          "var_name": [
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        "Angular Velocity": {
+          "args": null,
+          "func_name": "get_angular_velocity",
+          "interval": 0,
+          "var_bool": [
+            true,
+            true,
+            true
+          ],
+          "var_name": [
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        "Chip Temperature": {
+          "args": null,
+          "func_name": "get_chip_temperature",
+          "interval": 0,
+          "var_bool": [
+            true
+          ],
+          "var_name": [
+            "Chip Temperature"
+          ]
+        },
+        "IMU Temperature": {
+          "args": null,
+          "func_name": "get_imu_temperature",
+          "interval": 0,
+          "var_bool": [
+            true
+          ],
+          "var_name": [
+            "IMU Temperature"
+          ]
+        },
+        "Leds": {
+          "args": null,
+          "func_name": "are_leds_on",
+          "interval": 0,
+          "var_bool": [
+            true
+          ],
+          "var_name": [
+            "Leds"
+          ]
+        },
+        "Magnetic Field": {
+          "args": null,
+          "func_name": "get_magnetic_field",
+          "interval": 0,
+          "var_bool": [
+            true,
+            true,
+            true
+          ],
+          "var_name": [
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        "Orientation": {
+          "args": null,
+          "func_name": "get_orientation",
+          "interval": 0,
+          "var_bool": [
+            true,
+            true,
+            true
+          ],
+          "var_name": [
+            "Roll",
+            "Yaw",
+            "Pitch"
+          ]
+        },
+        "Quaternion": {
+          "args": null,
+          "func_name": "get_quaternion",
+          "interval": 0,
+          "var_bool": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "var_name": [
+            "X",
+            "Y",
+            "Z",
+            "W"
           ]
         }
       }
@@ -158,13 +275,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Illuminance": {
           "args": null,
-          "interval": 5000,
-          "name": "get_illuminance"
+          "func_name": "get_illuminance",
+          "interval": 0
         }
       }
     },
@@ -175,13 +292,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Illuminance": {
           "args": null,
-          "interval": 5000,
-          "name": "get_illuminance"
+          "func_name": "get_illuminance",
+          "interval": 0
         }
       }
     },
@@ -192,13 +309,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Voltage": {
           "args": null,
-          "interval": 5000,
-          "name": "get_voltage"
+          "func_name": "get_voltage",
+          "interval": 0
         }
       }
     },
@@ -209,8 +326,8 @@
       "values": {
         "Voltage": {
           "args": null,
-          "interval": 5000,
-          "name": "get_voltage"
+          "func_name": "get_voltage",
+          "interval": 0
         }
       }
     },
@@ -221,18 +338,18 @@
       "values": {
         "Air Pressure": {
           "args": null,
-          "interval": 5000,
-          "name": "get_air_pressure"
+          "func_name": "get_air_pressure",
+          "interval": 0
         },
         "Altitude": {
           "args": null,
-          "interval": 5000,
-          "name": "get_altitude"
+          "func_name": "get_altitude",
+          "interval": 0
         },
         "Chip Temperature": {
           "args": null,
-          "interval": 5000,
-          "name": "get_chip_temperature"
+          "func_name": "get_chip_temperature",
+          "interval": 0
         }
       }
     },
@@ -243,18 +360,18 @@
       "values": {
         "Air Pressure": {
           "args": null,
-          "interval": 5000,
-          "name": "get_air_pressure"
+          "func_name": "get_air_pressure",
+          "interval": 0
         },
         "Altitude": {
           "args": null,
-          "interval": 5000,
-          "name": "get_altitude"
+          "func_name": "get_altitude",
+          "interval": 0
         },
         "Chip Temperature": {
           "args": null,
-          "interval": 5000,
-          "name": "get_chip_temperature"
+          "func_name": "get_chip_temperature",
+          "interval": 0
         }
       }
     },
@@ -265,13 +382,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Current": {
           "args": null,
-          "interval": 5000,
-          "name": "get_current"
+          "func_name": "get_current",
+          "interval": 0
         }
       }
     },
@@ -282,13 +399,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Current": {
           "args": null,
-          "interval": 5000,
-          "name": "get_current"
+          "func_name": "get_current",
+          "interval": 0
         }
       }
     },
@@ -299,13 +416,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Distance": {
           "args": null,
-          "interval": 5000,
-          "name": "get_distance"
+          "func_name": "get_distance",
+          "interval": 0
         }
       }
     },
@@ -316,8 +433,8 @@
       "values": {
         "Distance": {
           "args": null,
-          "interval": 5000,
-          "name": "get_distance_value"
+          "func_name": "get_distance_value",
+          "interval": 0
         }
       }
     },
@@ -328,8 +445,8 @@
       "values": {
         "Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_value"
+          "func_name": "get_value",
+          "interval": 0
         }
       }
     },
@@ -340,13 +457,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Humidity": {
           "args": null,
-          "interval": 5000,
-          "name": "get_humidity"
+          "func_name": "get_humidity",
+          "interval": 0
         }
       }
     },
@@ -357,13 +474,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Humidity": {
           "args": null,
-          "interval": 5000,
-          "name": "get_humidity"
+          "func_name": "get_humidity",
+          "interval": 0
         }
       }
     },
@@ -374,8 +491,8 @@
       "values": {
         "Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_value"
+          "func_name": "get_value",
+          "interval": 0
         }
       }
     },
@@ -386,8 +503,8 @@
       "values": {
         "Supply Voltage": {
           "args": null,
-          "interval": 5000,
-          "name": "get_supply_voltage"
+          "func_name": "get_supply_voltage",
+          "interval": 0
         }
       }
     },
@@ -398,8 +515,8 @@
       "values": {
         "Reflectivity": {
           "args": null,
-          "interval": 5000,
-          "name": "get_reflectivity"
+          "func_name": "get_reflectivity",
+          "interval": 0
         }
       }
     },
@@ -410,13 +527,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Position": {
           "args": null,
-          "interval": 5000,
-          "name": "get_position"
+          "func_name": "get_position",
+          "interval": 0
         }
       }
     },
@@ -427,8 +544,8 @@
       "values": {
         "Moisture Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_moisture_value"
+          "func_name": "get_moisture_value",
+          "interval": 0
         }
       }
     },
@@ -439,8 +556,8 @@
       "values": {
         "Motion Detected": {
           "args": null,
-          "interval": 5000,
-          "name": "get_motion_detected"
+          "func_name": "get_motion_detected",
+          "interval": 0
         }
       }
     },
@@ -451,8 +568,8 @@
       "values": {
         "Touch State": {
           "args": null,
-          "interval": 5000,
-          "name": "get_touch_state"
+          "func_name": "get_touch_state",
+          "interval": 0
         }
       }
     },
@@ -463,13 +580,13 @@
       "values": {
         "Resistance": {
           "args": null,
-          "interval": 5000,
-          "name": "get_resistance"
+          "func_name": "get_resistance",
+          "interval": 0
         },
         "Temperature": {
           "args": null,
-          "interval": 5000,
-          "name": "get_temperature"
+          "func_name": "get_temperature",
+          "interval": 0
         }
       }
     },
@@ -482,13 +599,13 @@
           "args": [
             false
           ],
-          "interval": 5000,
-          "name": "get_count"
+          "func_name": "get_count",
+          "interval": 0
         },
         "Pressed": {
           "args": null,
-          "interval": 5000,
-          "name": "is_pressed"
+          "func_name": "is_pressed",
+          "interval": 0
         }
       }
     },
@@ -499,13 +616,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Position": {
           "args": null,
-          "interval": 5000,
-          "name": "get_position"
+          "func_name": "get_position",
+          "interval": 0
         }
       }
     },
@@ -516,8 +633,8 @@
       "values": {
         "State": {
           "args": null,
-          "interval": 5000,
-          "name": "get_state"
+          "func_name": "get_state",
+          "interval": 0
         }
       }
     },
@@ -528,8 +645,8 @@
       "values": {
         "Intensity": {
           "args": null,
-          "interval": 5000,
-          "name": "get_intensity"
+          "func_name": "get_intensity",
+          "interval": 0
         }
       }
     },
@@ -540,8 +657,8 @@
       "values": {
         "Temperature": {
           "args": null,
-          "interval": 5000,
-          "name": "get_temperature"
+          "func_name": "get_temperature",
+          "interval": 0
         }
       }
     },
@@ -552,13 +669,13 @@
       "values": {
         "Ambient Temperature": {
           "args": null,
-          "interval": 5000,
-          "name": "get_ambient_temperature"
+          "func_name": "get_ambient_temperature",
+          "interval": 0
         },
         "Object Temperature": {
           "args": null,
-          "interval": 5000,
-          "name": "get_object_temperature"
+          "func_name": "get_object_temperature",
+          "interval": 0
         }
       }
     },
@@ -569,8 +686,8 @@
       "values": {
         "State": {
           "args": null,
-          "interval": 5000,
-          "name": "get_tilt_state"
+          "func_name": "get_tilt_state",
+          "interval": 0
         }
       }
     },
@@ -581,13 +698,13 @@
       "values": {
         "Analog Value": {
           "args": null,
-          "interval": 5000,
-          "name": "get_analog_value"
+          "func_name": "get_analog_value",
+          "interval": 0
         },
         "Voltage": {
           "args": null,
-          "interval": 5000,
-          "name": "get_voltage"
+          "func_name": "get_voltage",
+          "interval": 0
         }
       }
     },
@@ -598,18 +715,18 @@
       "values": {
         "Current": {
           "args": null,
-          "interval": 5000,
-          "name": "get_current"
+          "func_name": "get_current",
+          "interval": 0
         },
         "Power": {
           "args": null,
-          "interval": 5000,
-          "name": "get_power"
+          "func_name": "get_power",
+          "interval": 0
         },
         "Voltage": {
           "args": null,
-          "interval": 5000,
-          "name": "get_voltage"
+          "func_name": "get_voltage",
+          "interval": 0
         }
       }
     },
@@ -622,15 +739,15 @@
           "args": [
             "a"
           ],
-          "interval": 5000,
-          "name": "get_port"
+          "func_name": "get_port",
+          "interval": 0
         },
         "Port B": {
           "args": [
             "b"
           ],
-          "interval": 5000,
-          "name": "get_port"
+          "func_name": "get_port",
+          "interval": 0
         }
       }
     },
@@ -643,15 +760,104 @@
           "args": [
             0
           ],
-          "interval": 5000,
-          "name": "get_current"
+          "func_name": "get_current",
+          "interval": 0
         },
         "Sensor 1": {
           "args": [
             1
           ],
-          "interval": 5000,
-          "name": "get_current"
+          "func_name": "get_current",
+          "interval": 0
+        }
+      }
+    },
+    {
+      "class": "DC",
+      "name": "DC Brick",
+      "uid": "AAA",
+      "values": {
+        "Acceleration": {
+          "args": null,
+          "func_name": "get_acceleration",
+          "interval": 0
+        },
+        "Chip Temperature": {
+          "args": null,
+          "func_name": "get_chip_temperature",
+          "interval": 0
+        },
+        "Current Consumption": {
+          "args": null,
+          "func_name": "get_current_consumption",
+          "interval": 0
+        },
+        "Current Velocity": {
+          "args": null,
+          "func_name": "get_current_velocity",
+          "interval": 0
+        },
+        "External Input Voltage": {
+          "args": null,
+          "func_name": "get_external_input_voltage",
+          "interval": 0
+        },
+        "Stack Input Voltage": {
+          "args": null,
+          "func_name": "get_stack_input_voltage",
+          "interval": 0
+        },
+        "Velocity": {
+          "args": null,
+          "func_name": "get_velocity",
+          "interval": 0
+        }
+      }
+    },
+    {
+      "class": "Stepper",
+      "name": "Stepper Brick",
+      "uid": "AAA",
+      "values": {
+        "Current Consumption": {
+          "args": null,
+          "func_name": "get_current_consumption",
+          "interval": 5000
+        },
+        "Current Position": {
+          "args": null,
+          "func_name": "get_current_position",
+          "interval": 5000
+        },
+        "Current Velocity": {
+          "args": null,
+          "func_name": "get_current_velocity",
+          "interval": 5000
+        },
+        "External Input Voltage": {
+          "args": null,
+          "func_name": "get_external_input_voltage",
+          "interval": 5000
+        },
+        "Remaining Steps": {
+          "args": null,
+          "func_name": "get_remaining_steps",
+          "interval": 5000
+        },
+        "Stack Input Voltage": {
+          "args": null,
+          "func_name": "get_stack_input_voltage",
+          "interval": 5000
+        },
+        "Steps": {
+          "args": null,
+          "func_name": "get_steps",
+          "interval": 5000
+        },
+        "Sync Rect": {
+          "args": null,
+          "func_name": "is_sync_rect",
+          "interval": 5000
         }
       }
     }
