@@ -32,10 +32,10 @@ from brickv.data_logger.utils import CSVWriterJob, XivelyJob
 
 class DataLogger():
     '''
-    DataLogger class
+    This class represents the data logger and an object of this class is
+    the actual instance of a logging process
     '''   
-
-            
+       
     # constructor and other functions
     def __init__(self,config):
         
@@ -92,23 +92,14 @@ class DataLogger():
         # = data.get(XIVELY_API_KEY)
         #  = DataLogger.parse_to_int(data.get(XIVELY_UPDATE_RATE))
 
-    def bricklet_switch(self,data):
- 
-#         for current_bricklet in data:
-#             try:
-#                 #do something           
-#             except KeyError as key_error:
-#                 msg = bricklet_name +"["+bricklet_uid+"] has no key [" + str(key_error) + "]. Please review the configuration file."
-#                 EventLogger.critical(msg)
-#                 self.stop(utils.DataLoggerException.DL_MISSING_ARGUMENT)
-# 
-#             except Exception as exc: # FIXME: Catch-All just for debugging purpose 
-#                 msg = "A critical error occur " + str(exc)
-#                 EventLogger.critical( msg)
-#                 self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
+    def initialize_bricklets(self,data):
+        '''
+        This function creates actual objects for each device out of the configuration
+        '''
         simple_devices = self._configuration._simple_devices
         complex_devices = self._configuration._complex_devices
         special_devices = self._configuration._special_devices
+        
         #start the timers
         try:
             for i in range(0, len(simple_devices)):
@@ -127,11 +118,12 @@ class DataLogger():
                 
     def run(self):
         '''
+        This function starts the logging process
         '''    
         self.process_general_section(self._configuration._general)
         self.process_xively_section(self._configuration._xively)
 
-        self.bricklet_switch(self._configuration)
+        self.initialize_bricklets(self._configuration)
         
         """START-WRITE-THREAD"""       
         #create jobs
@@ -156,6 +148,7 @@ class DataLogger():
     
     def stop(self,error_code):
         '''
+        This function ends the logging process
         '''
         EventLogger.info("Closing Timers and Threads...")    
 
