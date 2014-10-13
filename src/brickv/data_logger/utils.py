@@ -447,23 +447,7 @@ class ConfigurationValidator(object):
             try:
                 values = device[bricklets.Identifier.DEVICE_VALUES]
                 for value in values:
-                    # bricklets.Identifier.DEVICE_VALUES_ARGS
-                    if not self._is_valid_arguments(values[value][bricklets.Identifier.DEVICE_VALUES_ARGS]):  
-                        EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_ARGS ],\
-                                                            msg="arguments should be either 'None' or a list with length >= 1 "))                  
-    
-                    # bricklets.Identifier.DEVICE_VALUES_INTERVAL
-                    if not self._is_valid_interval(values[value][bricklets.Identifier.DEVICE_VALUES_INTERVAL]):
-                        EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_INTERVAL],\
-                                                            msg="interval should be an integer and >= 0"))
-    
-                    # bricklets.Identifier.DEVICE_VALUES_NAME
-                    if not self._is_valid_string(values[value][bricklets.Identifier.DEVICE_VALUES_NAME], 1):
-                        EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_NAME],\
-                                                            msg="function name should be a string with a length > 1"))
+                    self._check_basic_variables(device,values, value)
                         
             except KeyError as k:
                 EventLogger.critical(self._generate_error_message(device=device,\
@@ -511,25 +495,10 @@ class ConfigurationValidator(object):
             try:
                 values = device[bricklets.Identifier.DEVICE_VALUES]
                 for value in values:
-                    # bricklets.Identifier.DEVICE_VALUES_ARGS
-                    if not self._is_valid_arguments(values[value][bricklets.Identifier.DEVICE_VALUES_ARGS]):
-                        EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=["values",value,bricklets.Identifier.DEVICE_VALUES_ARGS],\
-                                                            msg="arguments should be be either 'None' or a list with len > 0"  ))
-    
-                    # bricklets.Identifier.DEVICE_VALUES_INTERVAL
-                    if not self._is_valid_interval(values[value][bricklets.Identifier.DEVICE_VALUES_INTERVAL]):
-                        EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=["values",value,bricklets.Identifier.DEVICE_VALUES_INTERVAL],\
-                                                            msg="interval should be an integer and >= 0"  ))
-    
-                    # bricklets.Identifier.DEVICE_VALUES_NAME  
-                    if not self._is_valid_string(values[value][bricklets.Identifier.DEVICE_VALUES_NAME], 1):
-                        EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=["values",value,bricklets.Identifier.DEVICE_VALUES_NAME],\
-                                                            msg="function name should be a string and > 1"    ))             
+                    self._check_basic_variables(device, values, value)           
                     
-                    if len(values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != len(values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
+                    if len(values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != \
+                    len(values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
                         EventLogger.critical(self._generate_error_message(device=device,\
                                                             tier_array=["values",value,bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL,bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME],\
                                                             msg="should have the same length"))
@@ -596,7 +565,29 @@ class ConfigurationValidator(object):
             EventLogger.critical(self._generate_error_message(device=device,\
                                                               tier_array=[""],\
                                                               msg="device has no key " + str(k) ))
-            
+       
+    def _check_basic_variables(self,device,values,value):
+        '''
+        This function checks entries which are present in the simple- and complex devices
+        '''
+        # bricklets.Identifier.DEVICE_VALUES_ARGS
+        if not self._is_valid_arguments(values[value][bricklets.Identifier.DEVICE_VALUES_ARGS]):  
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                            tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_ARGS ],\
+                                                            msg="arguments should be either 'None' or a list with length >= 1 "))
+        # bricklets.Identifier.DEVICE_VALUES_INTERVAL
+        if not self._is_valid_interval(values[value][bricklets.Identifier.DEVICE_VALUES_INTERVAL]):
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                            tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_INTERVAL],\
+                                                            msg="interval should be an integer and >= 0"))
+        # bricklets.Identifier.DEVICE_VALUES_NAME                        
+        func_name = values[value][bricklets.Identifier.DEVICE_VALUES_NAME]
+        class_object = device[bricklets.Identifier.DEVICE_CLASS]
+        if not self._is_valid_function(class_object, func_name):
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                                          tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_NAME],\
+                                                                          msg="["+class_object.__name__+"] has no function \"" + func_name + "\""))
+                        
     def _is_valid_string(self,string_value,min_length=0):
         if not isinstance(string_value, basestring) or len(string_value) < min_length :
             return False
@@ -614,7 +605,10 @@ class ConfigurationValidator(object):
             return True
         
         return False
-        
+     
+    def _is_valid_function(self,class_obj,func_name):
+        return hasattr(class_obj, func_name)  
+ 
     def _generate_error_message(self,tier_array,msg,device=None):
         err_msg = ""
         if device != None:
