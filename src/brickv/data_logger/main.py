@@ -10,6 +10,7 @@ import sys
 # HashMap keywords to store results of the command line arguments 
 CONSOLE_CONFIG_FILE = "config_file"
 CONSOLE_VALIDATE_ONLY ="validate"
+CONSOLE_START = False
 
 def __exit_condition(data_logger):
     '''
@@ -28,7 +29,7 @@ def main(arguments_map):
     '''
     #initiate the EventLogger
     EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
-    #TODO: renable with gui
+    #TODO: re-enable with gui
     #EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL))
     if EventLogger.EVENT_FILE_LOGGING:
         EventLogger.add_logger(FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
@@ -39,6 +40,7 @@ def main(arguments_map):
         configuration = ConfigurationReader(arguments_map[CONSOLE_CONFIG_FILE])
         if arguments_map[CONSOLE_VALIDATE_ONLY]:
             return
+        
     except IOError as io_err:
         EventLogger.critical("The parsing of the configuration file failed :" + str(io_err) )
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
@@ -52,6 +54,7 @@ def command_line_start(argv,program_name):
     '''
     This function processes the command line arguments, if it was started via the console.
     '''
+    main.CONSOLE_START = True
     cl_parser = argparse.ArgumentParser(description=' -c <config-file> -v ')
     
     cl_parser.add_argument('-c', action="store", dest="config_file", default="None", help="Path to the configuration file")
