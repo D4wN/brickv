@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.
 
 from tinkerforge.ip_connection import IPConnection
 import Queue, logging, threading, sys
-import bricklets
+import loggable_devices
 import utils
 from brickv.data_logger.utils import ConfigurationReader
 from brickv.data_logger.utils import EventLogger
@@ -92,7 +92,7 @@ class DataLogger():
         # = data.get(XIVELY_API_KEY)
         #  = DataLogger.parse_to_int(data.get(XIVELY_UPDATE_RATE))
 
-    def initialize_bricklets(self,data):
+    def initialize_loggable_devices(self,data):
         '''
         This function creates actual objects for each device out of the configuration
         '''
@@ -103,13 +103,13 @@ class DataLogger():
         #start the timers
         try:
             for i in range(0, len(simple_devices)):
-                bricklets.SimpleDevice(simple_devices[i], self).start_timer()            
+                loggable_devices.SimpleDevice(simple_devices[i], self).start_timer()            
              
             for i in range(0, len(complex_devices)):
-                bricklets.ComplexDevice(complex_devices[i], self).start_timer()
+                loggable_devices.ComplexDevice(complex_devices[i], self).start_timer()
          
             for i in range(0, len(special_devices)):
-                (special_devices[i][bricklets.Identifier.DEVICE_CLASS](special_devices[i], self)).start_timer()
+                (special_devices[i][loggable_devices.Identifier.DEVICE_CLASS](special_devices[i], self)).start_timer()
 
         except Exception as exc: # FIXME: Catch-All just for debugging purpose 
             msg = "A critical error occur: " + str(exc)
@@ -123,7 +123,7 @@ class DataLogger():
         self.process_general_section(self._configuration._general)
         self.process_xively_section(self._configuration._xively)
 
-        self.initialize_bricklets(self._configuration)
+        self.initialize_loggable_devices(self._configuration)
         
         """START-WRITE-THREAD"""       
         #create jobs

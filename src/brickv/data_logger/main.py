@@ -1,5 +1,5 @@
 #MAIN DATA_LOGGER PROGRAMM
-from brickv.data_logger.bricklets import *
+from brickv.data_logger.loggable_devices import *
 
 from brickv.data_logger.utils import ConfigurationReader, DataLoggerException, EventLogger, ConsoleLogger, FileLogger, GUILogger
 from brickv.data_logger.data_logger import DataLogger

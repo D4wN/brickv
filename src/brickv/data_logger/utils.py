@@ -21,7 +21,6 @@ License along with this program; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
-from lib2to3.fixer_util import String
 from array import array
 import threading, time, logging                               #Writer Thread
 from brickv.bindings.brick_servo import BrickServo
@@ -294,7 +293,7 @@ class LoggerTimer(object):
 import codecs # ConfigurationReader to read the file in correct encoding
 from ConfigParser import SafeConfigParser # ConfigurationReader parser class
 import json
-import bricklets
+import loggable_devices
 
 class ConfigurationReader(object):
     '''
@@ -349,9 +348,9 @@ class ConfigurationReader(object):
             return result
         
         self._configuration._xively = prevent_key_error(ConfigurationReader.XIVELY_SECTION)
-        self._configuration._simple_devices = prevent_key_error(bricklets.Identifier.SIMPLE_DEVICE)
-        self._configuration._complex_devices = prevent_key_error(bricklets.Identifier.COMPLEX_DEVICE)
-        self._configuration._special_devices = prevent_key_error(bricklets.Identifier.SPECIAL_DEVICE)
+        self._configuration._simple_devices = prevent_key_error(loggable_devices.Identifier.SIMPLE_DEVICE)
+        self._configuration._complex_devices = prevent_key_error(loggable_devices.Identifier.COMPLEX_DEVICE)
+        self._configuration._special_devices = prevent_key_error(loggable_devices.Identifier.SPECIAL_DEVICE)
                             
         validator = ConfigurationValidator(self._configuration)
         validator.validate()
@@ -445,7 +444,7 @@ class ConfigurationValidator(object):
             self._check_basic_data(device)
             
             try:
-                values = device[bricklets.Identifier.DEVICE_VALUES]
+                values = device[loggable_devices.Identifier.DEVICE_VALUES]
                 for value in values:
                     self._check_basic_variables(device,values, value)
                         
@@ -463,22 +462,22 @@ class ConfigurationValidator(object):
             
             try:
                 # the two lists (device values, device booleans) should have the same length
-                if len(device[bricklets.Identifier.SPECIAL_DEVICE_VALUE]) != len(device[bricklets.Identifier.SPECIAL_DEVICE_VALUE]):
+                if len(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]) != len(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]):
                     EventLogger.critical(self._generate_error_message(device=device,\
-                                                        tier_array=[bricklets.Identifier.SPECIAL_DEVICE_VALUE,bricklets.Identifier.SPECIAL_DEVICE_VALUE ],\
+                                                        tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE,loggable_devices.Identifier.SPECIAL_DEVICE_VALUE ],\
                                                         msg="should have the same length"))
     
                 # check types of the entities in the lists            
-                for bool_value_key in device[bricklets.Identifier.SPECIAL_DEVICE_BOOL]:
-                    if not isinstance(device[bricklets.Identifier.SPECIAL_DEVICE_BOOL][bool_value_key], bool):
+                for bool_value_key in device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL]:
+                    if not isinstance(device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL][bool_value_key], bool):
                         EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=[bricklets.Identifier.SPECIAL_DEVICE_BOOL,bool_value_key],\
+                                                            tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL,bool_value_key],\
                                                             msg="is not a boolean" ))
           
-                for interval_value_key in device[bricklets.Identifier.SPECIAL_DEVICE_VALUE]:
-                    if not self._is_valid_interval(device[bricklets.Identifier.SPECIAL_DEVICE_VALUE][interval_value_key]):
+                for interval_value_key in device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]:
+                    if not self._is_valid_interval(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE][interval_value_key]):
                         EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=[bricklets.Identifier.SPECIAL_DEVICE_VALUE,interval_value_key],\
+                                                            tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE,interval_value_key],\
                                                             msg="is not a valid interval"  ))
             except KeyError as k:
                 EventLogger.critical(self._generate_error_message(device=device,\
@@ -493,30 +492,30 @@ class ConfigurationValidator(object):
             self._check_basic_data(device)
             
             try:
-                values = device[bricklets.Identifier.DEVICE_VALUES]
+                values = device[loggable_devices.Identifier.DEVICE_VALUES]
                 for value in values:
                     self._check_basic_variables(device, values, value)           
                     
-                    if len(values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != \
-                    len(values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
+                    if len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != \
+                    len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
                         EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=["values",value,bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL,bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME],\
+                                                            tier_array=["values",value,loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL,loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME],\
                                                             msg="should have the same length"))
                    
-                    # bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL
-                    bool_values = values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL]
+                    # loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL
+                    bool_values = values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]
                     for bool_value in bool_values:
                         if not isinstance(bool_value, bool):
                             EventLogger.critical(self._generate_error_message(device=device,\
-                                                                tier_array=["values",value,bricklets.Identifier.COMPLEX_DEVICE_VALUES_BOOL,str(bool_value)],\
+                                                                tier_array=["values",value,loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL,str(bool_value)],\
                                                                 msg="should be a boolean"   ))
     
-                    # bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME
-                    string_values = values[value][bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME]
+                    # loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME
+                    string_values = values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]
                     for string_value in string_values:
                         if not self._is_valid_string(string_value, 1):
                             EventLogger.critical(self._generate_error_message(device=device,\
-                                                                tier_array=["values",value,bricklets.Identifier.COMPLEX_DEVICE_VALUES_NAME,str(bool_value)],\
+                                                                tier_array=["values",value,loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME,str(bool_value)],\
                                                                 msg="should be a string"   ))
             except KeyError as k:
                 EventLogger.critical(self._generate_error_message(device=device,\
@@ -526,13 +525,14 @@ class ConfigurationValidator(object):
     
     def _replace_str_with_class(self,devices):
         '''
-        This function replaces the entry 'bricklets.Identifier.DEVICE_CLASS' which contains 
+        This function replaces the entry 'loggable_devices.Identifier.DEVICE_CLASS' which contains 
         the class name as a string with the actual class object
         '''
+        class_str = ""
         for i in range(len(devices)):
             try:
-                class_str = devices[i][bricklets.Identifier.DEVICE_CLASS]
-                devices[i][bricklets.Identifier.DEVICE_CLASS] = bricklets.string_to_class(class_str) 
+                class_str = devices[i][loggable_devices.Identifier.DEVICE_CLASS]
+                devices[i][loggable_devices.Identifier.DEVICE_CLASS] = loggable_devices.string_to_class(class_str) 
                  
             except (KeyError, AttributeError):
                 self._error_count +=1
@@ -544,21 +544,21 @@ class ConfigurationValidator(object):
         '''           
         try:    
             # should be a class not a string
-            if isinstance(device[bricklets.Identifier.DEVICE_CLASS],basestring):
+            if isinstance(device[loggable_devices.Identifier.DEVICE_CLASS],basestring):
                 EventLogger.critical(self._generate_error_message(device=device,\
-                                                    tier_array=[bricklets.Identifier.DEVICE_CLASS],\
+                                                    tier_array=[loggable_devices.Identifier.DEVICE_CLASS],\
                                                     msg="should be a class but is a string"  ))
                 
             # should be a string with length > 0
-            if not self._is_valid_string(device[bricklets.Identifier.DEVICE_NAME]):
+            if not self._is_valid_string(device[loggable_devices.Identifier.DEVICE_NAME]):
                 EventLogger.critical(self._generate_error_message(device=device,\
-                                                    tier_array=[bricklets.Identifier.DEVICE_NAME],\
+                                                    tier_array=[loggable_devices.Identifier.DEVICE_NAME],\
                                                     msg="should be a string with length > 0"  ))
                 
             # should be a string with length >= 3
-            if not self._is_valid_string(device[bricklets.Identifier.DEVICE_UID]):
+            if not self._is_valid_string(device[loggable_devices.Identifier.DEVICE_UID]):
                 EventLogger.critical(self._generate_error_message(device=device,\
-                                                    tier_array=[bricklets.Identifier.DEVICE_UID],\
+                                                    tier_array=[loggable_devices.Identifier.DEVICE_UID],\
                                                     msg="should be a string with length > 0"  ))
                 
         except KeyError as k:
@@ -570,22 +570,22 @@ class ConfigurationValidator(object):
         '''
         This function checks entries which are present in the simple- and complex devices
         '''
-        # bricklets.Identifier.DEVICE_VALUES_ARGS
-        if not self._is_valid_arguments(values[value][bricklets.Identifier.DEVICE_VALUES_ARGS]):  
+        # loggable_devices.Identifier.DEVICE_VALUES_ARGS
+        if not self._is_valid_arguments(values[value][loggable_devices.Identifier.DEVICE_VALUES_ARGS]):  
                         EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_ARGS ],\
+                                                            tier_array=[str(value),loggable_devices.Identifier.DEVICE_VALUES_ARGS ],\
                                                             msg="arguments should be either 'None' or a list with length >= 1 "))
-        # bricklets.Identifier.DEVICE_VALUES_INTERVAL
-        if not self._is_valid_interval(values[value][bricklets.Identifier.DEVICE_VALUES_INTERVAL]):
+        # loggable_devices.Identifier.DEVICE_VALUES_INTERVAL
+        if not self._is_valid_interval(values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]):
                         EventLogger.critical(self._generate_error_message(device=device,\
-                                                            tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_INTERVAL],\
+                                                            tier_array=[str(value),loggable_devices.Identifier.DEVICE_VALUES_INTERVAL],\
                                                             msg="interval should be an integer and >= 0"))
-        # bricklets.Identifier.DEVICE_VALUES_NAME                        
-        func_name = values[value][bricklets.Identifier.DEVICE_VALUES_NAME]
-        class_object = device[bricklets.Identifier.DEVICE_CLASS]
+        # loggable_devices.Identifier.DEVICE_VALUES_NAME                        
+        func_name = values[value][loggable_devices.Identifier.DEVICE_VALUES_NAME]
+        class_object = device[loggable_devices.Identifier.DEVICE_CLASS]
         if not self._is_valid_function(class_object, func_name):
                         EventLogger.critical(self._generate_error_message(device=device,\
-                                                                          tier_array=[str(value),bricklets.Identifier.DEVICE_VALUES_NAME],\
+                                                                          tier_array=[str(value),loggable_devices.Identifier.DEVICE_VALUES_NAME],\
                                                                           msg="["+class_object.__name__+"] has no function \"" + func_name + "\""))
                         
     def _is_valid_string(self,string_value,min_length=0):
@@ -612,7 +612,7 @@ class ConfigurationValidator(object):
     def _generate_error_message(self,tier_array,msg,device=None):
         err_msg = ""
         if device != None:
-            err_msg = "[UID=" + str(device[bricklets.Identifier.DEVICE_UID]) + "]"
+            err_msg = "[UID=" + str(device[loggable_devices.Identifier.DEVICE_UID]) + "]"
             
         for tier in tier_array:
             err_msg += "["+tier+"]"
