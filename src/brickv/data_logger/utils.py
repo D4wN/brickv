@@ -21,96 +21,15 @@ License along with this program; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
+from array import array
+import threading, time, logging                               #Writer Thread
+from brickv.bindings.brick_servo import BrickServo
 
-"""GLOBAL-VARIABLES"""
-
-import Queue, threading, time, logging                               #Writer Thread
-
-class DataLogger():
-    
-    #Section Identifier
-    GENERAL_SECTION = "GENERAL"
-    GENERAL_LOG_TO_FILE = "log_to_file"
-    GENERAL_PATH_TO_FILE = "path_to_file"
-
-    XIVELY_SECTION = "XIVELY"
-    XIVELY_ACTIVE = "active"
-    XIVELY_AGENT_DESCRIPTION = "agent_description"
-    XIVELY_FEED = "feed"
-    XIVELY_API_KEY = "api_key"
-    XIVELY_UPLOAD_RATE = "upload_rate"
-    
-    #Logger
-    FILE_EVENT_LOGGING = False                              #for event logging in to a file
-    EVENT_LOGGING_FILE_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
-    LOGGING_EVENT_LEVEL = logging.DEBUG
-    
-    #General
-    DEFAULT_FILE_PATH = "logged_data.csv"
-    LOG_TO_FILE = True
-    LOG_TO_XIVELY = False
-    
-    ipcon = None
-    host = "localhost"
-    port = 4223  
-    
-    #Xivley Var
-    xively = None                                           #xively object; xively queue
-    
-    #Queues
-    Q = Queue.Queue()                                       #gloabl queue for write jobs
-    
-    #Thread things
-    Threads = []                                            #gloabl thread array for all running threads/jobs
-    THREAD_EXIT_FLAG = False                                #flag for stopping the thread   
-    THREAD_SLEEP = 1#TODO: qucik testing fix                                        #in seconds!; fail state = -1 TODO: Enahncement -> use condition objects
-    
-    #Functions
-    def add_to_queue(csv):
-        #Look which queues are logging
-        if DataLogger.LOG_TO_FILE:
-            DataLogger.Q.put(csv)
-        
-        if DataLogger.LOG_TO_XIVELY:
-            #DataLogger.xively.put(csv)
-            logging.warning("Xively is not supported!")
-    
-    add_to_queue = staticmethod(add_to_queue)
-    
-    def parse_to_int(string):
-        '''
-        Returns an integer out of a string.
-        0(Zero) -- if string is negative or an exception raised during the converting process.
-        '''
-        try:
-            ret = int(float(string))
-            if ret < 0:
-                ret = 0
-            return ret
-        except ValueError:
-            logging.debug("DataLogger.parse_to_int("+ string +") could not be parsed! Return 0 for the Timer.")
-            return 0
-    
-    parse_to_int = staticmethod(parse_to_int) 
-    
-    def parse_to_bool(bool_string):
-        '''
-        Returns a 'True', if the string is equals to 'true' or 'True'.
-        Otherwise it'll return a False
-        '''
-        if bool_string == "true" or bool_string == "True" or bool_string == "TRUE":
-            return True
-        else:
-            return False
-            
-    parse_to_bool = staticmethod(parse_to_bool) 
- 
 '''
 /*---------------------------------------------------------------------------
                                 DataLoggerException
  ---------------------------------------------------------------------------*/
- ''' 
-    
+ '''     
 class DataLoggerException(Exception):
     
     #Error Codes
@@ -162,7 +81,7 @@ class CSVData(object):
                     2014-09-10T14:12:05
         Python doees not support Timezones without extra libraries!
         """
-        t = datetime.datetime.now();
+        t = datetime.datetime.now()
         
         self.timestamp = '{:%Y-%m-%dT%H:%M:%S}'.format(t)
     
@@ -170,7 +89,650 @@ class CSVData(object):
         """
         Simple Debug function for easier display of the object.
         """
-        return "UID =" + str(self.uid) + "\nNAME=" + str(self.name) + "\nVAR =" + str(self.var_name) + "\nRAW =" + str(self.raw_data) + "\nTIME=" + str(self.timestamp) + "\n"
+        return "[UID=" + str(self.uid) + ";NAME=" + str(self.name) + ";VAR=" + str(self.var_name) + ";RAW=" + str(self.raw_data) + ";TIME=" + str(self.timestamp) + "]"
+
+
+'''
+/*---------------------------------------------------------------------------
+                                LoggerTimer
+ ---------------------------------------------------------------------------*/
+ '''
+from threading import Timer
+
+class LoggerTimer(object):
+    '''This class provides a timer with a repeat functionality based on a interval'''
+        
+    def __init__(self, interval, func_name, var_name, device):
+        ''' 
+        interval -- the repeat interval in ms
+        func -- the function which will be called
+        '''
+        self.exit_flag = False
+        interval /= 1000 #for ms
+        if interval < 0:
+            interval = 0
+        
+        self._interval = interval
+        self._func_name = func_name     
+        self._var_name = var_name 
+        self._device = device
+        self._t = Timer(self._interval, self._loop)
+   
+    
+    def _loop(self):
+        '''Runs the <self._func_name> function every <self._interval> seconds'''
+        getattr(self._device, self._func_name)(self._var_name)
+        self.cancel()
+        if self.exit_flag:
+            return
+        self._t = Timer(self._interval, self._loop)
+        self.start()
+           
+    def start(self):
+        '''Starts the timer if <self._interval> is not 0 otherwise the 
+           timer will be canceled 
+        '''
+        if self._interval == 0:
+            self.cancel()
+            return     
+ 
+        self._t.start()
+    
+    def stop(self):
+        self.exit_flag = True
+    
+    def cancel(self):
+        self._t.cancel()
+        
+    def join(self):
+        if self._interval == 0: #quick fix for no timer.start()
+            return
+        self._t.join();
+
+
+'''
+/*---------------------------------------------------------------------------
+                                ConfigurationReader
+ ---------------------------------------------------------------------------*/
+ '''
+import codecs # ConfigurationReader to read the file in correct encoding
+from ConfigParser import SafeConfigParser # ConfigurationReader parser class
+import json
+import loggable_devices
+
+class ConfigurationReader(object):
+    '''
+    This class provides the read-in functionality for the Data Logger configuration file
+    '''   
+    GENERAL_SECTION = "GENERAL"
+    GENERAL_LOG_TO_FILE = "log_to_file"
+    GENERAL_PATH_TO_FILE = "path_to_file"
+    GENERAL_HOST = "host"
+    GENERAL_PORT = "port"
+
+    XIVELY_SECTION = "XIVELY"
+    XIVELY_ACTIVE = "active"
+    XIVELY_AGENT_DESCRIPTION = "agent_description"
+    XIVELY_FEED = "feed"
+    XIVELY_API_KEY = "api_key"
+    XIVELY_UPLOAD_RATE = "upload_rate"
+    
+    __NAME_KEY = "name"
+    __UID_KEY = "uid"
+
+    def __init__(self,name):
+        self.filenName = name
+        self._configuration = Configuration()
+        
+        self._read_json_config_file()   
+           
+        
+    def _read_json_config_file(self):
+        with codecs.open(self.filenName, 'r', 'UTF-8') as content_file:       
+            json_structure = json.load(content_file)
+    
+        # Load sections out of the json structure 
+        try:
+            self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
+        except KeyError:
+            EventLogger.warning("json configuration file has no [" +ConfigurationReader.GENERAL_SECTION+"] section")
+            # TODO: Should end the program due to missing the general section
+            
+        
+        def prevent_key_error(key):
+            '''
+            This function returns an empty array if there is no such  
+            section in the configuration file
+            key -- section key
+            '''
+            result = [] 
+            try:
+                result = json_structure[key]
+            except KeyError:
+                EventLogger.warning("json configuration file has no [" +key+"] section")
+            return result
+        
+        self._configuration._xively = prevent_key_error(ConfigurationReader.XIVELY_SECTION)
+        self._configuration._simple_devices = prevent_key_error(loggable_devices.Identifier.SIMPLE_DEVICE)
+        self._configuration._complex_devices = prevent_key_error(loggable_devices.Identifier.COMPLEX_DEVICE)
+        self._configuration._special_devices = prevent_key_error(loggable_devices.Identifier.SPECIAL_DEVICE)
+                            
+        validator = ConfigurationValidator(self._configuration)
+        validator.validate()
+                
+
+""""
+/*---------------------------------------------------------------------------
+                                ConfigurationValidator
+ ---------------------------------------------------------------------------*/
+"""
+import re
+
+class ConfigurationValidator(object):
+    '''
+    This class validates the (json) configuration file
+    '''
+    def __init__(self,config_file):
+        self.json_config = config_file
+        self._error_count = 0
+    
+    
+    def validate(self):
+        '''
+        This function performs the validation of the various sections of the json
+        configuration file
+        '''
+        EventLogger.info("Started configuration file validation")
+        
+        self.validate_general_section(self.json_config._general)
+        self.validate_xively_section(self.json_config._xively)
+        
+        self.validate_simple_devices(self.json_config._simple_devices)
+        self.validate_special_devices(self.json_config._special_devices)
+        self.validate_complex_devices(self.json_config._complex_devices)
+        
+        EventLogger.info("Validation ends with ["+str(self._error_count)+"] errors")
+        
+        if self._error_count != 0:
+            # TODO: shutdown logger due to errors in the configuration file
+            pass
+    
+    def validate_general_section(self,global_section):
+        
+        def is_valid_ip_format(ip_str):
+            '''
+            This function validates the format of an ip-address and returns true 
+            on an valid and false on an invalid format.
+            
+            This function does not check if the ip-address makes any sense
+            e.g '0.0.0.0' is a valid ip-address format
+            '''
+            # FIXME: Add IP6 pattern
+            pattern = r"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
+            if re.match(pattern, ip_str):
+                return True
+            else:
+                return False
+        
+        # ConfigurationReader.GENERAL_HOST ip address
+        host = global_section[ConfigurationReader.GENERAL_HOST] 
+        if not host.lower() == 'localhost' and not is_valid_ip_format(host):
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_HOST],\
+                                                msg ="host should be 'localhost' or an valid ip-address"  ))
+        
+        # ConfigurationReader.GENERAL_PORT port number
+        port = global_section[ConfigurationReader.GENERAL_PORT]
+        if not self._is_valid_string(port, 1) and  not(port > 0 and port <= 65535):
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_PORT],\
+                                                msg ="port should be an integer 0-65535" ))
+        
+        # ConfigurationReader.GENERAL_LOG_TO_FILE 
+        if not type(global_section[ConfigurationReader.GENERAL_LOG_TO_FILE]) == bool:
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_LOG_TO_FILE],\
+                                                msg ="should be a boolean" ))
+        
+        # ConfigurationReader.GENERAL_PATH_TO_FILE 
+        if not self._is_valid_string(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE], 1):
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_PATH_TO_FILE],\
+                                                msg ="should be a path to the file where the data will be saved" ))
+  
+    def validate_xively_section(self,xively_section):
+        # TODO: implement xively section validation
+        EventLogger.info("Xively validation is not yet supported")
+        pass
+    
+    def validate_simple_devices(self,devices):
+        '''
+        This function validates all devices from the configuration file which are of type 'SimpleDevice'
+        '''
+        self._replace_str_with_class(devices)
+        
+        for i in range(len(devices)):
+            device = devices[i]
+            self._check_basic_data(device)
+            
+            try:
+                values = device[loggable_devices.Identifier.DEVICE_VALUES]
+                for value in values:
+                    self._check_basic_variables(device,values, value)
+                        
+            except KeyError as k:
+                EventLogger.critical(self._generate_error_message(device=device,\
+                                                                  tier_array=["values",value],\
+                                                                  msg="device has no key " + str(k) ))
+                
+    def validate_special_devices(self,devices):
+        '''
+        This function validates all devices from the configuration file which are of type 'SpecialDevices'.
+        Every special device has its own implementation without an super class.
+        '''
+        self._replace_str_with_class(devices)
+        
+        for i in range(len(devices)):
+            device = devices[i]
+            self._check_basic_data(device)
+            
+            try:
+                # the two lists (device values, device booleans) should have the same length
+                if len(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]) != len(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]):
+                    EventLogger.critical(self._generate_error_message(device=device,\
+                                                        tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE,loggable_devices.Identifier.SPECIAL_DEVICE_VALUE ],\
+                                                        msg="should have the same length"))
+    
+                # check types of the entities in the lists            
+                for bool_value_key in device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL]:
+                    if not isinstance(device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL][bool_value_key], bool):
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                            tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL,bool_value_key],\
+                                                            msg="is not a boolean" ))
+          
+                for interval_value_key in device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]:
+                    if not self._is_valid_interval(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE][interval_value_key]):
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                            tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE,interval_value_key],\
+                                                            msg="is not a valid interval"  ))
+            except KeyError as k:
+                EventLogger.critical(self._generate_error_message(device=device,\
+                                                                  tier_array=[""],\
+                                                                  msg="device has no key " + str(k) ))
+          
+    def validate_complex_devices(self,devices):
+        '''
+        This function validates all devices from the configuration file which are of type 'ComplexDevice'.
+        '''
+        self._replace_str_with_class(devices)
+        
+        for i in range(len(devices)):
+            device = devices[i]
+            self._check_basic_data(device)
+            
+            try:
+                values = device[loggable_devices.Identifier.DEVICE_VALUES]
+                for value in values:
+                    self._check_basic_variables(device, values, value)           
+                    
+                    if len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != \
+                    len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                            tier_array=["values",value,loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL,loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME],\
+                                                            msg="should have the same length"))
+                   
+                    # loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL
+                    bool_values = values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]
+                    for bool_value in bool_values:
+                        if not isinstance(bool_value, bool):
+                            EventLogger.critical(self._generate_error_message(device=device,\
+                                                                tier_array=["values",value,loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL,str(bool_value)],\
+                                                                msg="should be a boolean"   ))
+    
+                    # loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME
+                    string_values = values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]
+                    for string_value in string_values:
+                        if not self._is_valid_string(string_value, 1):
+                            EventLogger.critical(self._generate_error_message(device=device,\
+                                                                tier_array=["values",value,loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME,str(bool_value)],\
+                                                                msg="should be a string"   ))
+            except KeyError as k:
+                EventLogger.critical(self._generate_error_message(device=device,\
+                                                                  tier_array=["values",value],\
+                                                                  msg="device has no key " + str(k) ))
+    
+    
+    def _replace_str_with_class(self,devices):
+        '''
+        This function replaces the entry 'loggable_devices.Identifier.DEVICE_CLASS' which contains 
+        the class name as a string with the actual class object
+        '''
+        class_str = ""
+        for i in range(len(devices)):
+            try:
+                class_str = devices[i][loggable_devices.Identifier.DEVICE_CLASS]
+                devices[i][loggable_devices.Identifier.DEVICE_CLASS] = loggable_devices.string_to_class(class_str) 
+                 
+            except (KeyError, AttributeError):
+                self._error_count +=1
+                EventLogger.critical("Can not parse ["+class_str+"] to an actual class")
+
+    def _check_basic_data(self,device):
+        '''
+        This function validates entries which are present in every device type
+        '''           
+        try:    
+            # should be a class not a string
+            if isinstance(device[loggable_devices.Identifier.DEVICE_CLASS],basestring):
+                EventLogger.critical(self._generate_error_message(device=device,\
+                                                    tier_array=[loggable_devices.Identifier.DEVICE_CLASS],\
+                                                    msg="should be a class but is a string"  ))
+                
+            # should be a string with length > 0
+            if not self._is_valid_string(device[loggable_devices.Identifier.DEVICE_NAME]):
+                EventLogger.critical(self._generate_error_message(device=device,\
+                                                    tier_array=[loggable_devices.Identifier.DEVICE_NAME],\
+                                                    msg="should be a string with length > 0"  ))
+                
+            # should be a string with length >= 3
+            if not self._is_valid_string(device[loggable_devices.Identifier.DEVICE_UID]):
+                EventLogger.critical(self._generate_error_message(device=device,\
+                                                    tier_array=[loggable_devices.Identifier.DEVICE_UID],\
+                                                    msg="should be a string with length > 0"  ))
+                
+        except KeyError as k:
+            EventLogger.critical(self._generate_error_message(device=device,\
+                                                              tier_array=[""],\
+                                                              msg="device has no key " + str(k) ))
+       
+    def _check_basic_variables(self,device,values,value):
+        '''
+        This function checks entries which are present in the simple- and complex devices
+        '''
+        # loggable_devices.Identifier.DEVICE_VALUES_ARGS
+        if not self._is_valid_arguments(values[value][loggable_devices.Identifier.DEVICE_VALUES_ARGS]):  
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                            tier_array=[str(value),loggable_devices.Identifier.DEVICE_VALUES_ARGS ],\
+                                                            msg="arguments should be either 'None' or a list with length >= 1 "))
+        # loggable_devices.Identifier.DEVICE_VALUES_INTERVAL
+        if not self._is_valid_interval(values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]):
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                            tier_array=[str(value),loggable_devices.Identifier.DEVICE_VALUES_INTERVAL],\
+                                                            msg="interval should be an integer and >= 0"))
+        # loggable_devices.Identifier.DEVICE_VALUES_NAME                        
+        func_name = values[value][loggable_devices.Identifier.DEVICE_VALUES_NAME]
+        class_object = device[loggable_devices.Identifier.DEVICE_CLASS]
+        if not self._is_valid_function(class_object, func_name):
+                        EventLogger.critical(self._generate_error_message(device=device,\
+                                                                          tier_array=[str(value),loggable_devices.Identifier.DEVICE_VALUES_NAME],\
+                                                                          msg="["+class_object.__name__+"] has no function \"" + func_name + "\""))
+                        
+    def _is_valid_string(self,string_value,min_length=0):
+        '''
+        Returns True if 'string_value' is of type basestring and has at least a size of
+        'min_length'
+        '''
+        if not isinstance(string_value, basestring) or len(string_value) < min_length :
+            return False
+        return True
+    
+    def _is_valid_interval(self,integer_value):
+        '''
+        Returns True if the 'integer_value' is of type integer and is not negative
+        '''
+        if not isinstance(integer_value, int) or integer_value < 0:
+            return False
+        return True
+    
+    def _is_valid_arguments(self,arg_value):
+        '''
+        Returns True if the 'arg_value' is 'None' or a list with at least one element
+        '''
+        if arg_value == None:
+            return True
+        elif isinstance(arg_value, list) and len(arg_value) >= 1:
+            return True
+        
+        return False
+     
+    def _is_valid_function(self,class_obj,func_name):
+        '''
+        Returns True if the class 'class_obj' has an function wit the name 'func_name'
+        '''
+        return hasattr(class_obj, func_name)  
+ 
+    def _generate_error_message(self,tier_array,msg,device=None):
+        '''
+        This function generates an error message which includes a error trace,
+        so that the error can be quickly found in the actual configuration file
+        '''
+        err_msg = ""
+        if device != None:
+            err_msg = "[UID=" + str(device[loggable_devices.Identifier.DEVICE_UID]) + "]"
+            
+        for tier in tier_array:
+            err_msg += "["+tier+"]"
+        
+        self._error_count += 1
+        return err_msg + " - " + msg
+        
+          
+""""
+/*---------------------------------------------------------------------------
+                                Configuration
+ ---------------------------------------------------------------------------*/
+"""
+class Configuration():
+    '''
+    This class contains the information out of the json configuration file split by the 
+    different categories/sections.
+    '''
+    def __init__(self):
+        self._general = {}
+        self._xively = {}
+        
+        self._simple_devices = []
+        self._complex_devices = []
+        self._special_devices = []      
+       
+        
+"""
+/*---------------------------------------------------------------------------
+                                Event Logger
+ ---------------------------------------------------------------------------*/
+"""    
+class EventLogger():
+    
+    #Logger Options
+    EVENT_FILE_LOGGING = False                              #for event logging in to a file
+    EVENT_FILE_LOGGING_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
+    EVENT_LOG_LEVEL = logging.DEBUG
+    
+    format = "%(asctime)s - %(levelname)8s - %(message)s"
+    __loggers = {}
+    
+    def add_logger(logger):
+        if logger.name == None or logger.name == "":
+            raise Exception("Loggeer has no Attribute called 'name'!")
+
+        EventLogger.__loggers[logger.name] = logger
+    
+    def remove_logger(logger_name):
+        if EventLogger.__loggers.has_key(logger_name):
+            EventLogger.__loggers.pop(logger_name)
+            return True
+        
+        return False
+    
+    def debug(msg, logger_name=None):
+        level = logging.DEBUG
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def info(msg, logger_name=None):
+        level = logging.INFO
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def warn(msg, logger_name=None):
+        level = logging.WARN
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def warning(msg, logger_name=None):
+        level = logging.WARNING
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def error(msg, logger_name=None):
+        level = logging.ERROR
+        EventLogger._send_message(level, msg, logger_name)
+        
+    def critical(msg, logger_name=None):
+        level = logging.CRITICAL
+        EventLogger._send_message(level, msg, logger_name)
+    
+    def log(level, msg, logger_name=None):
+        EventLogger._send_message(level, msg, logger_name)
+    
+    def _send_message(level, msg, logger_name):
+        if logger_name != None:
+            if EventLogger.__loggers.has_key(logger_name):
+                EventLogger.__loggers[logger_name].log(level, msg)
+        else:
+            for logger in EventLogger.__loggers.values():
+                logger.log(level, msg)
+    
+    
+    #static methods
+    add_logger = staticmethod(add_logger) 
+    remove_logger = staticmethod(remove_logger)
+    debug = staticmethod(debug) 
+    info = staticmethod(info) 
+    warn = staticmethod(warn) 
+    warning = staticmethod(warning) 
+    error = staticmethod(error) 
+    critical = staticmethod(critical) 
+    log = staticmethod(log) 
+    _send_message = staticmethod(_send_message)
+      
+class ConsoleLogger(logging.Logger):
+    '''
+    This class outputs the logged events to the console
+    '''
+    
+    def __init__(self, name, log_level):
+        logging.Logger.__init__(self, name, log_level)
+        
+        #create console handler and set level
+        ch = logging.StreamHandler()
+        
+        ch.setLevel(log_level)
+        
+        # create formatter
+        formatter = logging.Formatter(EventLogger.format)
+        
+        # add formatter to ch
+        ch.setFormatter(formatter)
+        
+        # add ch to logger
+        self.addHandler(ch)
+
+class FileLogger(logging.Logger):
+    '''
+    This class writes the logged events to an LOG file (EventLogger.EVENT_FILE_LOGGING_PATH)
+    '''
+    
+    def __init__(self, name, log_level, filename):        
+        logging.Logger.__init__(self, name, log_level)
+        
+        ch = logging.FileHandler(filename, mode="a")
+        
+        ch.setLevel(log_level)
+        
+        # create formatter
+        formatter = logging.Formatter(EventLogger.format)
+        
+        # add formatter to ch
+        ch.setFormatter(formatter)
+        
+        # add ch to logger
+        self.addHandler(ch)
+
+class GUILogger(logging.Logger):
+    '''
+    This class outputs the logged data to the brickv gui
+    '''
+    
+    #for level as string
+    _convert_level = {}
+    _convert_level[logging.DEBUG] = "DEBUG"
+    _convert_level[logging.INFO] = "INFO"
+    _convert_level[logging.WARN] = "WARNING"
+    _convert_level[logging.WARNING] = "WARNING"
+    _convert_level[logging.CRITICAL] = "CRITIAL"
+    _convert_level[logging.ERROR] = "ERROR"
+    
+    _output_format = "{asctime} - {levelname:8} - {message}s"
+    
+    def __init(self, name, log_level):        
+        logging.Logger.__init__(self, name, log_level)
+        
+        
+    def debug(self, msg):   
+        self.log(logging.DEBUG, msg)
+    
+    def info(self, msg):              
+        self.log(logging.INFO, msg)
+        
+    def warn(self, msg):              
+        self.log(logging.WARN, msg)
+        
+    def warning(self, msg):              
+        self.log(logging.WARNING, msg)
+        
+    def critical(self, msg):              
+        self.log(logging.CRITICAL, msg)
+    
+    def error(self, msg):              
+        self.log(logging.ERROR, msg)
+            
+    def log(self, level, msg):
+        if level >= self.level:        
+            asctime = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
+            levelname = GUILogger._convert_level[level]
+            #TODO: log to textfield
+            print GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg)      
+
+"""
+/*---------------------------------------------------------------------------
+                                Utilities
+ ---------------------------------------------------------------------------*/
+"""
+class Utilities(object):
+    '''
+    This class provides some utility functions for the data logger project
+    '''
+    
+    def parse_to_int(string):
+        '''
+        Returns an integer out of a string.
+        0(Zero) -- if string is negative or an exception raised during the converting process.
+        '''
+        try:
+            ret = int(float(string))
+            if ret < 0:
+                ret = 0
+            return ret
+        except ValueError:
+            EventLogger.debug("DataLogger.parse_to_int("+ string +") could not be parsed! Return 0 for the Timer.")
+            return 0
+    
+    parse_to_int = staticmethod(parse_to_int) 
+
+    def parse_to_bool(bool_string):
+        '''
+        Returns a 'True', if the string is equals to 'true' or 'True'.
+        Otherwise it'll return a False
+        '''
+        if bool_string == "true" or bool_string == "True" or bool_string == "TRUE":
+            return True
+        else:
+            return False
+            
+    parse_to_bool = staticmethod(parse_to_bool)       
 
 
 '''
@@ -184,7 +746,8 @@ import csv #CSV_Writer
 
 class CSVWriter(object):
     '''
-    This class is used for writing a csv file.
+    This class provides the actual open/write functions, which are used by the CSVWriterJob class to write logged data into 
+    a CSV formatted file.
     '''    
     
     def __init__(self, file_path):
@@ -195,16 +758,7 @@ class CSVWriter(object):
         self._raw_file = None
         self._csv_file = None
         
-        self._open_file_A()
-        """
-        1. Open File
-        2. Check if File is empty
-            2.a) If Empty, write the Header
-        3. File is ready to be used
-        4. Write Data Rows in File
-        5. Close File
-        """
-    
+        self._open_file_A()    
     
     def _open_file_A(self):
         """Opens a file in append mode."""
@@ -239,9 +793,10 @@ class CSVWriter(object):
     def _write_header(self):
         """Writes a csv header into the file"""
         if(not self._file_is_empty()):
+            EventLogger.debug("File is not empty")
             return
     
-        logging.debug("CSVWriter._write_header() - done")
+        EventLogger.debug("CSVWriter._write_header() - done")
         self._csv_file.writerow(["UID"] + ["DEVICE_IDENTIFIER"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
         
     def write_data_row(self, csv_data):
@@ -306,226 +861,111 @@ class CSVWriter(object):
             return False
 
 
-'''
-/*---------------------------------------------------------------------------
-                                LoggerTimer
- ---------------------------------------------------------------------------*/
- '''
-from threading import Timer
-
-class LoggerTimer(object):
-    '''This class provides a timer with a repeat functionality based on a interval'''
-    
-    Timers = [] # global array for all running timers
-    EXIT_FLAG = False
-    
-    def __init__(self, interval, func):
-        ''' 
-        interval -- the repeat interval in ms
-        func -- the function which will be called
-        '''
-        interval /= 1000 #for ms
-        if interval < 0:
-            interval = 0
-        
-        self._interval = interval
-        self._func = func      
-        self._t = Timer(self._interval, self._loop)
-   
-    
-    def _loop(self):
-        '''Runs the <self._func> function every <self._interval> seconds'''
-        self._func()
-        self.cancel()
-        if LoggerTimer.EXIT_FLAG:
-            self._t.cancel()
-            return
-        self._t = Timer(self._interval, self._loop)
-        self.start()
-           
-    def start(self):
-        '''Starts the timer if <self._interval> is not 0 otherwise the 
-           timer will be canceled 
-        '''
-        if self._interval == 0:
-            self.cancel()
-            return     
- 
-        self._t.start()
-    
-    def cancel(self):
-        self._t.cancel()
-        
-    def join(self):
-        if self._interval == 0: #quick fix for no timer.start()
-            return
-        self._t.join();
-
-
-'''
-/*---------------------------------------------------------------------------
-                                DataLoggerConfig
- ---------------------------------------------------------------------------*/
- '''
-import codecs # DataLoggerConfig to read the file in correct encoding
-from ConfigParser import SafeConfigParser # DataLoggerConfig parser class
-
-class DataLoggerConfig(object):
-    '''
-    This class provides the read-in functionality for the Data Logger configuration file
-    '''   
-    __NAME_KEY = "name"
-    __UID_KEY = "uid"
-
-    def __init__(self,name):
-        self._is_parsed = False
-        self.filenName = name
-        self._general = {}
-        self._xively = {}
-        self._bricklets = []
-                
-        
-    def _get_section_as_hashmap(self,section_name ,parser ):
-        '''
-        saves variables out of an (configuration file) section to a hashmap.
-        key -- variable name
-        value -- variable value
-        '''
-        hashMap = {}
-        for section_key in parser.options(section_name):
-            hashMap[section_key] =  parser.get(section_name, section_key)
-        return hashMap
-    
-    def __parse_first(self):
-        '''
-        Checks if the configuration file is already parsed. If not it'll
-        call the <read_config_file()> function
-        '''   
-        if(not self._is_parsed):
-            self.read_config_file()
-            
-    def read_config_file(self):
-        '''
-        reads the entries out of the configuration file and 
-        saves them into a <BrickletInfo> structure.
-        
-        Call sys.exit() if there are no bricklets configured            
-        '''
-        parser = SafeConfigParser()
-        # Open the file with the correct encoding
-        with codecs.open(self.filenName, 'r', encoding='utf-8') as f:
-            parser.readfp(f)
-        # TODO: Use the variables out of bricklets
-        for section_name in parser.sections():
-            if section_name == DataLogger.GENERAL_SECTION:
-                # Get GENERAL section
-                self._general =self._get_section_as_hashmap(section_name,parser)
-
-            elif section_name == DataLogger.XIVELY_SECTION:
-                # Get XIVELY section
-                self._xively = self._get_section_as_hashmap(section_name,parser)
-
-            else:
-                # Get all other variables  
-                bricklet_name = parser.get(section_name, self.__NAME_KEY)
-                bricklet_uid =  parser.get(section_name, self.__UID_KEY)
-                
-                tmp_bricklet = BrickletInfo(bricklet_name,bricklet_uid)
-                for section_key in parser.options(section_name):
-                    if section_key != self.__NAME_KEY and section_key != self.__UID_KEY:
-                        # All variables (key and value) are of type string                     
-                        tmp_bricklet.add_key_value_pair(str(section_key).title(),str(parser.get(section_name, section_key)).title() )
-
-                self._bricklets.append(tmp_bricklet)
-                
-        # configuration file is parsed an ready to use     
-        self._is_parsed = True
-        
-        # TODO: define error number for this exception
-        if(len(self._bricklets) == 0):
-            logging.error("There are no bricklets configured in the configuration file!")
-            sys.exit(-1)  
-        
-    def get_general_section(self):
-        '''
-        Returns the variables out of the "GENERAL" section in the configuration file if it
-        was already parsed otherwise it call the <read_config_file()> function first
-        '''
-        self.__parse_first()
-           
-        return self._general
-
-    def get_xively_section(self):
-        '''
-        Returns the variables out of the "XIVELY" section in the configuration file if it
-        was already parsed otherwise it call the <read_config_file()> function first
-        '''
-        self.__parse_first()
-           
-        return self._xively
-        
-    def get_bricklets(self):
-        '''
-        Returns an array of bricklets out of the configuration file if it
-        was already parsed. Otherwise it call the <read_config_file()> function first
-        '''
-        self.__parse_first()
-           
-        return self._bricklets
-
-
 """"
 /*---------------------------------------------------------------------------
-                                BrickletInfo
+                                Jobs
  ---------------------------------------------------------------------------*/
 """
-class BrickletInfo(object):
-    '''
-    This class holds the information about an entry out of the configuration file
-    '''
+import Queue
+
+class AbstractJob(threading.Thread):
     
-    def __init__(self, name, uid):
-        self.name = name
-        self.uid = uid
-        self.variables = { }
-   
+    def __init__(self, datalogger=None, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
+        threading.Thread.__init__(self, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+        self._exit_flag = False
+        self._datalogger = datalogger
+        self._job_name = "[Job:"+self.name+"]"
         
-    def add_key_value_pair(self, key, value):
-        '''
-        adds a key-value pair to the bricklet dictionary
-        '''
-        self.variables[key] = value
+        if self._datalogger != None:
+            self._datalogger.data_queue[self.name] = Queue.Queue()
     
-
-""""
-/*---------------------------------------------------------------------------
-                                WriterThread
- ---------------------------------------------------------------------------*/
-"""
-
-
-def writer_thread():
-    thread_name = "Work Thread(" + threading.current_thread().name + ")"
-    logging.debug(thread_name + " started.")
-    csv_writer = CSVWriter(DataLogger.DEFAULT_FILE_PATH)
+    def stop(self):
+        self._exit_flag = True
     
-    while (True):
-        if not DataLogger.Q.empty():
-            csv_data = DataLogger.Q.get()
-            logging.debug(thread_name + " -> " + str(csv_data.name)+"-"+ csv_data.var_name +":" +str(csv_data.raw_data))
-            if not csv_writer.write_data_row(csv_data):
-                logging.warning(thread_name + " could not write csv row!")
-                                      
-        if not DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
-            #TODO: qucik testing fix logging.debug(thread_name + " has no work to do. Sleeping for "+ str(DataLogger.THREAD_SLEEP) +" seconds.")
-            time.sleep(DataLogger.THREAD_SLEEP)
+    def _job(self):
+        #check for datalogger object
+        if self._datalogger == None:
+            EventLogger.warning(self.name+" started but did not get a DataLogger Object! No work could be done.")
+            return True
+        return False
+
+    def _get_data_from_queue(self):
+        if self._datalogger != None:
+            return self._datalogger.data_queue[self.name].get()
+        return None
+
+class CSVWriterJob(AbstractJob):
+    '''
+    This class enables the data logger to write logged data to an CSV formatted file 
+    '''    
+    def __init__(self, datalogger=None, group=None, name="CSVWriterJob", args=(), kwargs=None, verbose=None):        
+        target = self._job        
+        AbstractJob.__init__(self, datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
         
-        if DataLogger.THREAD_EXIT_FLAG and DataLogger.Q.empty(): 
+    def _job(self):
+        try:
+            #check for datalogger object
+            if AbstractJob._job(self):
+                return
+    
+            EventLogger.debug(self._job_name + " Started")
+            csv_writer = CSVWriter(self._datalogger.default_file_path)
+                                   
+            while (True):
+                if not self._datalogger.data_queue[self.name].empty():
+                    csv_data = self._get_data_from_queue()
+                    EventLogger.debug(self._job_name + " -> " + str(csv_data))
+                    if not csv_writer.write_data_row(csv_data):
+                        EventLogger.warning(self._job_name + " Could not write csv row!")
+                                              
+                if not self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
+                    time.sleep(self._datalogger.job_sleep)
+                
+                if self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
+                    exit_return_Value = csv_writer.close_file()
+                    if exit_return_Value:
+                        EventLogger.debug(self._job_name + " Closed his csv_writer")
+                    else:
+                        EventLogger.debug(self._job_name + " Could NOT close his csv_writer! EXIT_RETURN_VALUE=" + str(exit))
+                    EventLogger.debug(self._job_name + " Finished")
+                    break
+        except Exception as e:
+            EventLogger.error(self._job_name + " " + e.value)
+                      
+class XivelyJob(AbstractJob):
+    '''
+    This class enables the data logger to upload logged data to the Xively platform
+    '''
+    
+    def __init__(self, datalogger=None, group=None, name="XivelyJob", args=(), kwargs=None, verbose=None):        
+        target = self._job        
+        AbstractJob.__init__(self,datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+        #TODO: implement xively logger
+        EventLogger.warning(self._job_name+" Is not supported!")
+        
+    def _job(self):
+        #TODO: implement xively logger
+        EventLogger.warning(self._job_name+" Is not supported!")
+        try:
+            #check for datalogger object
+            if AbstractJob._job(self):
+                return
+    
+            EventLogger.debug(self._job_name + " Started")
+                                   
+            while (True):
+                if not self._datalogger.data_queue[self.name].empty():
+                    #write
+                    csv_data = self._get_data_from_queue()
+                    EventLogger.debug(self._job_name+" -> "+str(csv_data))
+                                              
+                if not self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
+                    time.sleep(self._datalogger.job_sleep)
+                
+                if self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
+                    #close job
+                    EventLogger.debug(self._job_name + " Finished")
+                    break
+        except Exception as e:
+            EventLogger.error(self._job_name + " " + e.value)
             
-            exit_flag = csv_writer.close_file()
-            if exit_flag:
-                logging.debug(thread_name + " closed his csv_writer.")
-            else:
-                logging.debug(thread_name + " could NOT close his csv_writer! EXIT_FLAG=" + str(exit))
-            logging.debug(thread_name + " finished his work.")
-            break
