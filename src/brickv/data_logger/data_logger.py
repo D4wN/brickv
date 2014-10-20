@@ -38,7 +38,6 @@ class DataLogger():
        
     # constructor and other functions
     def __init__(self,config):
-        
         # Thread configuration
         self.jobs = []              # thread hashmap for all running threads/jobs
         self.job_exit_flag = False   # flag for stopping the thread
@@ -118,7 +117,7 @@ class DataLogger():
                 
     def run(self):
         '''
-        This function starts the logging process
+        This function starts the actual logging process
         '''    
         self.process_general_section(self._configuration._general)
         self.process_xively_section(self._configuration._xively)
@@ -174,6 +173,7 @@ class DataLogger():
        
     def add_to_queue(self,csv):
         '''
+        Adds logged data to all queues which are registered in 'self.data_queue'
         '''
         for q in self.data_queue.values():
             q.put(csv)

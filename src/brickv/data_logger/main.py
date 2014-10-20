@@ -26,6 +26,7 @@ def __exit_condition(data_logger):
           
 def main(arguments_map):
     '''
+    This function initialize the data logger and starts the logging process
     '''
     #initiate the EventLogger
     EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))

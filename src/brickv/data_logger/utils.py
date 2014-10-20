@@ -94,131 +94,6 @@ class CSVData(object):
 
 '''
 /*---------------------------------------------------------------------------
-                                CSVWriter
- ---------------------------------------------------------------------------*/
- '''
-import os #CSV_Writer
-import sys #CSV_Writer
-import csv #CSV_Writer
-
-class CSVWriter(object):
-    '''
-    This class is used for writing a csv file.
-    '''    
-    
-    def __init__(self, file_path):
-        '''
-        file_path = Path to the csv file
-        ''' 
-        self._file_path = file_path
-        self._raw_file = None
-        self._csv_file = None
-        
-        self._open_file_A()    
-    
-    def _open_file_A(self):
-        """Opens a file in append mode."""
-
-        #newline problem solved + import sys
-        if sys.version_info >= (3, 0, 0):
-            self._raw_file = open(self._file_path, 'a', newline='')
-        else:
-            self._raw_file = open(self._file_path, 'ab')
-        
-        self._csv_file = csv.writer(self._raw_file, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        
-        #if the file is empty, create a csv header
-        if self._file_is_empty():
-            self._write_header()
-
-    def _file_is_empty(self):
-        """
-        Simple check if the file is empty.
-        Return:
-            True  - File is empty or missing
-            False - File is not empty
-        """
-        try:
-            if os.stat(self._file_path).st_size > 0:
-                return False
-            else:
-                return True
-        except OSError:
-            return True
-
-    def _write_header(self):
-        """Writes a csv header into the file"""
-        if(not self._file_is_empty()):
-            EventLogger.debug("File is not empty")
-            return
-    
-        EventLogger.debug("CSVWriter._write_header() - done")
-        self._csv_file.writerow(["UID"] + ["DEVICE_IDENTIFIER"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
-        
-    def write_data_row(self, csv_data):
-        """
-        Write a row into the csv file.
-        Return:
-            True  - Row was written into thee file
-            False - Row was not written into the File
-        """
-        if self._raw_file == None or self._csv_file == None:
-            return False
-        
-        self._csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [str(csv_data.raw_data)] + [csv_data.timestamp])        
-        return True
-    
-    def set_file_path(self, new_file_path):
-        """
-        Sets a new file path.
-        Return:
-            True  - File path was updated and successfully opened
-            False - File path could not be updated or opened
-        """
-        if self._file_path == new_file_path:
-            return True
-        
-        if not self.close_file():
-            return False
-        
-        self._file_path = new_file_path
-        self._open_file_A()
-        return True
-                          
-    def reopen_file(self):
-        """
-        Tries to reopen a file, if the file was manually closed.
-        Return:
-            True  - File could be reopened
-            False - File could not be reopened
-        """
-        if self._raw_file != None and self._csv_file != None:
-            return False
-        
-        self._open_file_A()        
-        return True
-    
-    def close_file(self):
-        """
-        Tries to close the current file.
-        Return:
-            True  - File was close
-            False - File could not be closed
-        """
-        if self._raw_file == None or self._csv_file == None:
-            return False
-        try:
-            self._raw_file.close()
-            self._csv_file = None
-            self._raw_file = None
-            return True
-        
-        except ValueError:
-            return False
-
-
-'''
-/*---------------------------------------------------------------------------
                                 LoggerTimer
  ---------------------------------------------------------------------------*/
  '''
@@ -427,6 +302,9 @@ class ConfigurationValidator(object):
         pass
     
     def validate_simple_devices(self,devices):
+        '''
+        This function validates all devices from the configuration file which are of type 'SimpleDevice'
+        '''
         self._replace_str_with_class(devices)
         
         for i in range(len(devices)):
@@ -444,6 +322,10 @@ class ConfigurationValidator(object):
                                                                   msg="device has no key " + str(k) ))
                 
     def validate_special_devices(self,devices):
+        '''
+        This function validates all devices from the configuration file which are of type 'SpecialDevices'.
+        Every special device has its own implementation without an super class.
+        '''
         self._replace_str_with_class(devices)
         
         for i in range(len(devices)):
@@ -475,6 +357,9 @@ class ConfigurationValidator(object):
                                                                   msg="device has no key " + str(k) ))
           
     def validate_complex_devices(self,devices):
+        '''
+        This function validates all devices from the configuration file which are of type 'ComplexDevice'.
+        '''
         self._replace_str_with_class(devices)
         
         for i in range(len(devices)):
@@ -579,16 +464,26 @@ class ConfigurationValidator(object):
                                                                           msg="["+class_object.__name__+"] has no function \"" + func_name + "\""))
                         
     def _is_valid_string(self,string_value,min_length=0):
+        '''
+        Returns True if 'string_value' is of type basestring and has at least a size of
+        'min_length'
+        '''
         if not isinstance(string_value, basestring) or len(string_value) < min_length :
             return False
         return True
     
     def _is_valid_interval(self,integer_value):
+        '''
+        Returns True if the 'integer_value' is of type integer and is not negative
+        '''
         if not isinstance(integer_value, int) or integer_value < 0:
             return False
         return True
     
     def _is_valid_arguments(self,arg_value):
+        '''
+        Returns True if the 'arg_value' is 'None' or a list with at least one element
+        '''
         if arg_value == None:
             return True
         elif isinstance(arg_value, list) and len(arg_value) >= 1:
@@ -597,9 +492,16 @@ class ConfigurationValidator(object):
         return False
      
     def _is_valid_function(self,class_obj,func_name):
+        '''
+        Returns True if the class 'class_obj' has an function wit the name 'func_name'
+        '''
         return hasattr(class_obj, func_name)  
  
     def _generate_error_message(self,tier_array,msg,device=None):
+        '''
+        This function generates an error message which includes a error trace,
+        so that the error can be quickly found in the actual configuration file
+        '''
         err_msg = ""
         if device != None:
             err_msg = "[UID=" + str(device[loggable_devices.Identifier.DEVICE_UID]) + "]"
@@ -705,8 +607,11 @@ class EventLogger():
     critical = staticmethod(critical) 
     log = staticmethod(log) 
     _send_message = staticmethod(_send_message)
-    
+      
 class ConsoleLogger(logging.Logger):
+    '''
+    This class outputs the logged events to the console
+    '''
     
     def __init__(self, name, log_level):
         logging.Logger.__init__(self, name, log_level)
@@ -726,6 +631,9 @@ class ConsoleLogger(logging.Logger):
         self.addHandler(ch)
 
 class FileLogger(logging.Logger):
+    '''
+    This class writes the logged events to an LOG file (EventLogger.EVENT_FILE_LOGGING_PATH)
+    '''
     
     def __init__(self, name, log_level, filename):        
         logging.Logger.__init__(self, name, log_level)
@@ -744,6 +652,9 @@ class FileLogger(logging.Logger):
         self.addHandler(ch)
 
 class GUILogger(logging.Logger):
+    '''
+    This class outputs the logged data to the brickv gui
+    '''
     
     #for level as string
     _convert_level = {}
@@ -791,6 +702,9 @@ class GUILogger(logging.Logger):
  ---------------------------------------------------------------------------*/
 """
 class Utilities(object):
+    '''
+    This class provides some utility functions for the data logger project
+    '''
     
     def parse_to_int(string):
         '''
@@ -819,6 +733,132 @@ class Utilities(object):
             return False
             
     parse_to_bool = staticmethod(parse_to_bool)       
+
+
+'''
+/*---------------------------------------------------------------------------
+                                CSVWriter
+ ---------------------------------------------------------------------------*/
+ '''
+import os #CSV_Writer
+import sys #CSV_Writer
+import csv #CSV_Writer
+
+class CSVWriter(object):
+    '''
+    This class provides the actual open/write functions, which are used by the CSVWriterJob class to write logged data into 
+    a CSV formatted file.
+    '''    
+    
+    def __init__(self, file_path):
+        '''
+        file_path = Path to the csv file
+        ''' 
+        self._file_path = file_path
+        self._raw_file = None
+        self._csv_file = None
+        
+        self._open_file_A()    
+    
+    def _open_file_A(self):
+        """Opens a file in append mode."""
+
+        #newline problem solved + import sys
+        if sys.version_info >= (3, 0, 0):
+            self._raw_file = open(self._file_path, 'a', newline='')
+        else:
+            self._raw_file = open(self._file_path, 'ab')
+        
+        self._csv_file = csv.writer(self._raw_file, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        
+        #if the file is empty, create a csv header
+        if self._file_is_empty():
+            self._write_header()
+
+    def _file_is_empty(self):
+        """
+        Simple check if the file is empty.
+        Return:
+            True  - File is empty or missing
+            False - File is not empty
+        """
+        try:
+            if os.stat(self._file_path).st_size > 0:
+                return False
+            else:
+                return True
+        except OSError:
+            return True
+
+    def _write_header(self):
+        """Writes a csv header into the file"""
+        if(not self._file_is_empty()):
+            EventLogger.debug("File is not empty")
+            return
+    
+        EventLogger.debug("CSVWriter._write_header() - done")
+        self._csv_file.writerow(["UID"] + ["DEVICE_IDENTIFIER"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
+        
+    def write_data_row(self, csv_data):
+        """
+        Write a row into the csv file.
+        Return:
+            True  - Row was written into thee file
+            False - Row was not written into the File
+        """
+        if self._raw_file == None or self._csv_file == None:
+            return False
+        
+        self._csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [str(csv_data.raw_data)] + [csv_data.timestamp])        
+        return True
+    
+    def set_file_path(self, new_file_path):
+        """
+        Sets a new file path.
+        Return:
+            True  - File path was updated and successfully opened
+            False - File path could not be updated or opened
+        """
+        if self._file_path == new_file_path:
+            return True
+        
+        if not self.close_file():
+            return False
+        
+        self._file_path = new_file_path
+        self._open_file_A()
+        return True
+                          
+    def reopen_file(self):
+        """
+        Tries to reopen a file, if the file was manually closed.
+        Return:
+            True  - File could be reopened
+            False - File could not be reopened
+        """
+        if self._raw_file != None and self._csv_file != None:
+            return False
+        
+        self._open_file_A()        
+        return True
+    
+    def close_file(self):
+        """
+        Tries to close the current file.
+        Return:
+            True  - File was close
+            False - File could not be closed
+        """
+        if self._raw_file == None or self._csv_file == None:
+            return False
+        try:
+            self._raw_file.close()
+            self._csv_file = None
+            self._raw_file = None
+            return True
+        
+        except ValueError:
+            return False
 
 
 """"
@@ -855,8 +895,10 @@ class AbstractJob(threading.Thread):
         return None
 
 class CSVWriterJob(AbstractJob):
-    
-    def __init__(self, datalogger=None, group=None, name=None, args=(), kwargs=None, verbose=None):        
+    '''
+    This class enables the data logger to write logged data to an CSV formatted file 
+    '''    
+    def __init__(self, datalogger=None, group=None, name="CSVWriterJob", args=(), kwargs=None, verbose=None):        
         target = self._job        
         AbstractJob.__init__(self, datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
         
@@ -891,8 +933,11 @@ class CSVWriterJob(AbstractJob):
             EventLogger.error(self._job_name + " " + e.value)
                       
 class XivelyJob(AbstractJob):
+    '''
+    This class enables the data logger to upload logged data to the Xively platform
+    '''
     
-    def __init__(self, datalogger=None, group=None, name=None, args=(), kwargs=None, verbose=None):        
+    def __init__(self, datalogger=None, group=None, name="XivelyJob", args=(), kwargs=None, verbose=None):        
         target = self._job        
         AbstractJob.__init__(self,datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
         #TODO: implement xively logger
