@@ -822,42 +822,42 @@
         "Current Consumption": {
           "args": null,
           "func_name": "get_current_consumption",
-          "interval": 5000
+          "interval": 0
         },
         "Current Position": {
           "args": null,
           "func_name": "get_current_position",
-          "interval": 5000
+          "interval": 0
         },
         "Current Velocity": {
           "args": null,
           "func_name": "get_current_velocity",
-          "interval": 5000
+          "interval": 0
         },
         "External Input Voltage": {
           "args": null,
           "func_name": "get_external_input_voltage",
-          "interval": 5000
+          "interval": 0
         },
         "Remaining Steps": {
           "args": null,
           "func_name": "get_remaining_steps",
-          "interval": 5000
+          "interval": 0
         },
         "Stack Input Voltage": {
           "args": null,
           "func_name": "get_stack_input_voltage",
-          "interval": 5000
+          "interval": 0
         },
         "Steps": {
           "args": null,
           "func_name": "get_steps",
-          "interval": 5000
+          "interval": 0
         },
         "Sync Rect": {
           "args": null,
           "func_name": "is_sync_rect",
-          "interval": 5000
+          "interval": 0
         }
       }
     }
