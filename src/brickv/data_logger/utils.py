@@ -29,8 +29,7 @@ from brickv.bindings.brick_servo import BrickServo
 /*---------------------------------------------------------------------------
                                 DataLoggerException
  ---------------------------------------------------------------------------*/
- ''' 
-    
+ '''     
 class DataLoggerException(Exception):
     
     #Error Codes
@@ -115,16 +114,7 @@ class CSVWriter(object):
         self._raw_file = None
         self._csv_file = None
         
-        self._open_file_A()
-        """
-        1. Open File
-        2. Check if File is empty
-            2.a) If Empty, write the Header
-        3. File is ready to be used
-        4. Write Data Rows in File
-        5. Close File
-        """
-    
+        self._open_file_A()    
     
     def _open_file_A(self):
         """Opens a file in append mode."""
