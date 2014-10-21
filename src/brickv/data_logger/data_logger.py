@@ -52,7 +52,14 @@ class DataLogger():
             
         self.ipcon = IPConnection()  
         #open IPConnection    
-        self.ipcon.connect(self.host, self.port)  # Connect to brickd
+        try:
+            self.ipcon.connect(self.host, self.port)  # Connect to brickd
+        except Exception as e:
+            EventLogger.critical("A critical error occur: " + str(e))
+            #self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
+            self.ipcon = None
+            return #None #TODO: better way for no connection return?
+        
         # Don't use device before ipcon is connected
         EventLogger.info("Connection to " + self.host + ":" + str(self.port) + " established.")
         self.ipcon.set_timeout(1) #TODO: Timeout number 
@@ -176,5 +183,6 @@ class DataLogger():
         Adds logged data to all queues which are registered in 'self.data_queue'
         '''
         for q in self.data_queue.values():
+            #print "PUT -> " + str(csv)
             q.put(csv)
             

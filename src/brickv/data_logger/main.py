@@ -47,9 +47,11 @@ def main(arguments_map):
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
 
     data_logger = DataLogger(configuration._configuration)
-    data_logger.run()
-    
-    __exit_condition(data_logger)
+    if data_logger.ipcon != None:
+            data_logger.run()   
+            __exit_condition(data_logger)
+    else:
+        EventLogger.error("DataLogger did not start logging process! Please check for errors.")
    
 def command_line_start(argv,program_name):
     '''
