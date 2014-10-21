@@ -881,6 +881,11 @@ class AbstractJob(threading.Thread):
     
     def stop(self):
         self._exit_flag = True
+        try:
+            self._datalogger.data_queue.pop(self.name)
+        except KeyError as key_err:
+            #TODO: key_err usen?
+            pass
     
     def _job(self):
         #check for datalogger object
@@ -930,7 +935,8 @@ class CSVWriterJob(AbstractJob):
                     EventLogger.debug(self._job_name + " Finished")
                     break
         except Exception as e:
-            EventLogger.error(self._job_name + " " + e.value)
+            EventLogger.critical(self._job_name + " " + str(e))
+            self.stop()
                       
 class XivelyJob(AbstractJob):
     '''
@@ -967,5 +973,6 @@ class XivelyJob(AbstractJob):
                     EventLogger.debug(self._job_name + " Finished")
                     break
         except Exception as e:
-            EventLogger.error(self._job_name + " " + e.value)
+            EventLogger.critical(self._job_name + " " + str(e))
+            self.stop()
             
