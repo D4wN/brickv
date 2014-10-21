@@ -540,7 +540,7 @@ class Configuration():
 class EventLogger():
     
     #Logger Options
-    EVENT_FILE_LOGGING = False                              #for event logging in to a file
+    EVENT_FILE_LOGGING = True                              #for event logging in to a file
     EVENT_FILE_LOGGING_PATH = "data_logger.log"             #default file path for logging events TODO: enahcnment select file over commandline?
     EVENT_LOG_LEVEL = logging.DEBUG
     
@@ -549,7 +549,7 @@ class EventLogger():
     
     def add_logger(logger):
         if logger.name == None or logger.name == "":
-            raise Exception("Loggeer has no Attribute called 'name'!")
+            raise Exception("Logger has no Attribute called 'name'!")
 
         EventLogger.__loggers[logger.name] = logger
     
@@ -650,6 +650,8 @@ class FileLogger(logging.Logger):
         
         # add ch to logger
         self.addHandler(ch)
+        
+        self.info("###### NEW LOGGING SESSION STARTED ######")
 
 class GUILogger(logging.Logger):
     '''
