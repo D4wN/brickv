@@ -77,13 +77,27 @@ class CSVData(object):
     def _set_timestamp(self):
         """
         Adds a timestamp in ISO 8601 standard, with ms
-        ISO 8061 =  YYYY-MM-DDThh:mm:ss
-                    2014-09-10T14:12:05
-        Python doees not support Timezones without extra libraries!
+        ISO 8061 =  YYYY-MM-DDThh:mm:ss+tz:tz
+                    2014-09-10T14:12:05+02:00
         """
         t = datetime.datetime.now()
-        
+        utc = self._time_utc_offset()
+        utc_string = ""
+        if utc < 0:
+            utc *= -1
+            utc_string = "-%02d:00" % (utc,)
+        else:
+            utc_string = "+%02d:00" % (utc,)
+            
         self.timestamp = '{:%Y-%m-%dT%H:%M:%S}'.format(t)
+        self.timestamp += utc_string
+        
+    
+    def _time_utc_offset(self):
+        if time.localtime(time.time()).tm_isdst and time.daylight:
+            return -time.altzone/(60*60)
+   
+        return -time.timezone/(60*60)
     
     def __str__(self):
         """
