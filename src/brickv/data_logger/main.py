@@ -58,9 +58,9 @@ def command_line_start(argv,program_name):
     This function processes the command line arguments, if it was started via the console.
     '''
     main.CONSOLE_START = True
-    cl_parser = argparse.ArgumentParser(description=' -c <config-file> -v ')
+    cl_parser = argparse.ArgumentParser(description='Tinkerforge Data Logger')
     
-    cl_parser.add_argument('-c', action="store", dest="config_file", default="None", help="Path to the configuration file")
+    cl_parser.add_argument('config_file', help="Path to the configuration file")
     cl_parser.add_argument('-v', action="store_true", dest="validate", help="Just process the validation of the configuration file")
     
     results = cl_parser.parse_args(argv)
