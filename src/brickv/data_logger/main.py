@@ -1,7 +1,7 @@
 #MAIN DATA_LOGGER PROGRAMM
 from brickv.data_logger.loggable_devices import *
 
-from brickv.data_logger.utils import ConfigurationReader, DataLoggerException, EventLogger, ConsoleLogger, FileLogger, GUILogger
+from brickv.data_logger.utils import ConfigurationReader, DataLoggerException, EventLogger, ConsoleLogger, FileLogger, GUILogger,ConfigurationValidator
 from brickv.data_logger.data_logger import DataLogger
 
 import argparse                             # command line argument parser
@@ -9,6 +9,7 @@ import sys
 
 # HashMap keywords to store results of the command line arguments 
 CONSOLE_CONFIG_FILE = "config_file"
+GUI_CONFIG = "configuration"
 CONSOLE_VALIDATE_ONLY ="validate"
 CONSOLE_START = False
 
@@ -38,13 +39,29 @@ def main(arguments_map):
     
     configuration = None
     try:
-        configuration = ConfigurationReader(arguments_map[CONSOLE_CONFIG_FILE])
+        if arguments_map.has_key(CONSOLE_CONFIG_FILE) and arguments_map[CONSOLE_CONFIG_FILE] != None:
+            # was started via console
+            configuration = ConfigurationReader(arguments_map[CONSOLE_CONFIG_FILE])
+            
+        elif arguments_map.has_key(GUI_CONFIG) and arguments_map[GUI_CONFIG] != None:
+            # was started via gui
+            configuration = arguments_map[GUI_CONFIG]
+            
+            validator = ConfigurationValidator(configuration)
+            validator.validate()
+        else:
+            # no configuration file was given
+            # FIXME: better description for the error message
+            EventLogger.critical("Can not run data logger without a configuration.")
+            return
+            
         if arguments_map[CONSOLE_VALIDATE_ONLY]:
             return
         
     except IOError as io_err:
         EventLogger.critical("The parsing of the configuration file failed :" + str(io_err) )
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
+
 
     data_logger = DataLogger(configuration._configuration)
     if data_logger.ipcon != None:
