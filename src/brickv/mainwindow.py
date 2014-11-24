@@ -27,7 +27,7 @@ from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, \
                         QPushButton, QWidget, QHBoxLayout, QVBoxLayout, \
                         QLabel, QFrame, QSpacerItem, QSizePolicy, \
                         QStandardItemModel, QStandardItem, QToolButton, \
-                        QLineEdit, QCursor, QIcon
+                        QLineEdit, QCursor, QIcon, QMenu, QToolButton
 from brickv.ui_mainwindow import Ui_MainWindow
 from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
@@ -439,8 +439,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         info_bar.addSpacerItem(QSpacerItem(1, 1, QSizePolicy.Expanding))
 
         # firmware version
-        info_bar.addWidget(QLabel('FW Version:'))
-        info_bar.addWidget(QLabel(infos.get_version_string(device_info.plugin.firmware_version)))
+        label_version_name = QLabel('Version:')
+        label_version = QLabel('...')
+        if not device_info.plugin.has_custom_version(label_version_name, label_version):
+            label_version_name.setText('FW Version:')
+            label_version.setText(infos.get_version_string(device_info.plugin.firmware_version))
+    
+        info_bar.addWidget(label_version_name)
+        info_bar.addWidget(label_version)
 
         info_bar.addSpacerItem(QSpacerItem(1, 1, QSizePolicy.Expanding))
 
@@ -457,7 +463,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if device_info.plugin.has_reset_device():
                 button.clicked.connect(device_info.plugin.reset_device)
             else:
-                button.setDisabled(True)
+                drop_down = device_info.plugin.has_drop_down()
+                if len(drop_down) > 1:
+                    button = QToolButton()
+                    button.setText(drop_down[0])
+                    button.setPopupMode(QToolButton.InstantPopup)
+                    button.setToolButtonStyle(Qt.ToolButtonTextOnly)
+                    button.setArrowType(Qt.DownArrow)
+                    button.setAutoRaise(True)
+                    button.triggered.connect(device_info.plugin.drop_down_triggered)
+                    menu = QMenu(drop_down[0])
+                    button.setMenu(menu)
+                    for action in drop_down[1:]:
+                        menu.addAction(action)
+                else:
+                    button.setDisabled(True)
 
             info_bar.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding))
             info_bar.addWidget(button)
@@ -512,7 +532,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tab_window = infos.infos[uid].tab_window
 
         if i > 0 and self.tab_widget.isTabEnabled(i):
-             self.tab_widget.setCurrentIndex(i)
+            self.tab_widget.setCurrentIndex(i)
 
         QApplication.setActiveWindow(tab_window)
 
@@ -523,6 +543,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def cb_enumerate(self, uid, connected_uid, position,
                      hardware_version, firmware_version,
                      device_identifier, enumeration_type):
+
         # because the enumerate callback is decoupled by a signal/slot, strings
         # arrive here as QStrings, convert them back to normal Python strings
         uid = str(uid)
