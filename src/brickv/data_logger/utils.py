@@ -909,6 +909,15 @@ class AbstractJob(threading.Thread):
         if self._datalogger != None:
             return self._datalogger.data_queue[self.name].get()
         return None
+    
+    #Needs to be called when you end the job!
+    def _remove_from_data_queue(self):
+        try:
+            self._datalogger.data_queue.pop(self.name)
+        except KeyError as key_err:
+        #TODO: key_err usen?
+            pass   
+    
 
 class CSVWriterJob(AbstractJob):
     '''
@@ -938,7 +947,6 @@ class CSVWriterJob(AbstractJob):
                     time.sleep(self._datalogger.job_sleep)
                 
                 if self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
-                    print "flag1"
                     exit_return_Value = csv_writer.close_file()
                     if exit_return_Value:
                         EventLogger.debug(self._job_name + " Closed his csv_writer")
@@ -946,11 +954,7 @@ class CSVWriterJob(AbstractJob):
                         EventLogger.debug(self._job_name + " Could NOT close his csv_writer! EXIT_RETURN_VALUE=" + str(exit))
                     EventLogger.debug(self._job_name + " Finished")
                     
-                    try:
-                        self._datalogger.data_queue.pop(self.name)
-                    except KeyError as key_err:
-                        # TODO: key_err usen?
-                        pass                    
+                    self._remove_from_data_queue()                    
                     break
                 
         except Exception as e:
@@ -990,7 +994,10 @@ class XivelyJob(AbstractJob):
                 if self._exit_flag and self._datalogger.data_queue[self.name].empty(): 
                     # close job
                     EventLogger.debug(self._job_name + " Finished")
+                    
+                    self._remove_from_data_queue()  
                     break
+                
         except Exception as e:
             EventLogger.critical(self._job_name + " " + str(e))
             self.stop()
