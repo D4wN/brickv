@@ -2,6 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2014 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
 
 config_parser.py: Parses key=value configs from RED Brick
 
@@ -53,12 +54,14 @@ class FakeSectionHeadAndFile(object):
 
 def parse(data):
     if isinstance(data, list):
-        string = str(bytearray(data))
+        string = bytearray(data).decode('utf-8')
     elif isinstance(data, str):
+        string = data
+    elif isinstance(data, unicode):
         string = data
     else:
         return None
-    
+
     config = ConfigParser.ConfigParser()
     config.readfp(FakeSectionHeadAndFile(string))
     try:
@@ -70,8 +73,10 @@ def parse(data):
 
 def parse_no_fake(data):
     if isinstance(data, list):
-        string = str(bytearray(data))
+        string = bytearray(data).decode('utf-8')
     elif isinstance(data, str):
+        string = data
+    elif isinstance(data, unicode):
         string = data
     else:
         return None
@@ -80,3 +85,19 @@ def parse_no_fake(data):
     config.readfp(StringIO(string))
 
     return config
+
+def to_string(data):
+    config = ConfigParser.ConfigParser()
+    config.add_section('fake_section')
+    for key, value in data.items():
+        config.set('fake_section', key, value)
+        
+    s = StringIO()
+    config.write(s)
+    return s.getvalue().replace('[fake_section]\n', '')
+    
+
+def to_string_no_fake(data):
+    s = StringIO()
+    data.write(s)
+    return s.getvalue()

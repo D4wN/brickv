@@ -27,10 +27,9 @@ import time
 
 from PyQt4 import QtCore, Qt, QtGui
 
-from brickv.program_path import get_program_path
+#from brickv.program_path import get_program_path
 from brickv.plugin_system.plugins.red.ui_red_tab_overview import Ui_REDTabOverview
 from brickv.plugin_system.plugins.red.api import *
-from brickv.plugin_system.plugins.red.script_manager import ScriptManager
 
 # constants
 REFRESH_TIME = 3000 # in milliseconds
@@ -40,18 +39,18 @@ DEFAULT_TVIEW_PROCESS_HEADER_WIDTH_FIRST = 210 # in pixels
 DEFAULT_TVIEW_PROCESS_HEADER_WIDTH_OTHER = 105 # in pixels
 
 class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
-    red = None
-    script_manager = None
-
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.setupUi(self)
+
+        self.session        = None # set from RED after construction
+        self.script_manager = None # set from RED after construction
 
         self.is_tab_on_focus = False
 
         self.setup_tview_nic()
         self.setup_tview_process()
-        
+
         self.refresh_timer = Qt.QTimer(self)
         self.refresh_counter = 0
         self.nic_time = 0
@@ -106,16 +105,40 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
         self.refresh_timer.start(REFRESH_TIMEOUT)
         if result == None:
             return
-        
+
         csv_tokens = result.stdout.split('\n')
         for i, t in enumerate(csv_tokens):
             if t == "" and i < len(csv_tokens) - 1:
                 return
 
         _uptime = csv_tokens[0]
-        hrs, hrs_remainder = divmod(int(_uptime), 60 * 60)
-        mins, _ = divmod(hrs_remainder, 60)
-        uptime = str(hrs) + " hour " + str(mins) + " minutes"
+        days, days_remainder = divmod(int(_uptime), 24 * 60 * 60)
+        hours, hours_remainder = divmod(days_remainder, 60 * 60)
+        minutes, _ = divmod(hours_remainder, 60)
+        uptime = ''
+
+        if days > 0:
+            uptime += str(days)
+
+            if days == 1:
+                uptime += ' day '
+            else:
+                uptime += ' days '
+
+        if hours > 0:
+            uptime += str(hours)
+
+            if hours == 1:
+                uptime += ' hour '
+            else:
+                uptime += ' hours '
+
+        uptime += str(minutes)
+
+        if minutes == 1:
+            uptime += ' minute'
+        else:
+            uptime += ' minutes'
 
         cpu_percent = csv_tokens[1]
         cpu_percent_v = int(csv_tokens[1].split('.')[0])
@@ -137,10 +160,10 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
 
         self.pbar_cpu.setFormat("{0}%".format(cpu_percent))
         self.pbar_cpu.setValue(cpu_percent_v)
-    
+
         self.pbar_memory.setFormat("{0}% [{1} of {2} MiB]".format(memory_percent, memory_used, memory_total))
         self.pbar_memory.setValue(memory_percent_v)
-    
+
         self.pbar_storage.setFormat("{0}% [{1} of {2} GiB]".format(storage_percent, storage_used, storage_total))
         self.pbar_storage.setValue(storage_percent_v)
 
@@ -195,19 +218,19 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
         processes_data_list_sorted = processes_data_list_sorted[:self.sbox_number_of_process.value()]
 
         for i, p in enumerate(processes_data_list_sorted):
-            _item_command = Qt.QStandardItem(str(processes_data_list_sorted[i]['command']))
+            _item_command = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['command']))
             self.process_item_model.setItem(i, 0,_item_command)
 
-            _item_pid = Qt.QStandardItem(str(processes_data_list_sorted[i]['pid']))
+            _item_pid = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['pid']))
             self.process_item_model.setItem(i, 1, _item_pid)
 
-            _item_user = Qt.QStandardItem(str(processes_data_list_sorted[i]['user']))
+            _item_user = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['user']))
             self.process_item_model.setItem(i, 2, _item_user)
 
-            _item_cpu = Qt.QStandardItem(str(processes_data_list_sorted[i]['cpu'])+'%')
+            _item_cpu = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['cpu'])+'%')
             self.process_item_model.setItem(i, 3, _item_cpu)
 
-            _item_memory = Qt.QStandardItem(str(processes_data_list_sorted[i]['memory'])+'%')
+            _item_memory = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['memory'])+'%')
             self.process_item_model.setItem(i, 4, _item_memory)
 
         self.tview_process.horizontalHeader().setSortIndicator(self.tview_process_previous_sort['column_index'],
@@ -215,7 +238,7 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
 
     def cb_tview_nic_sort_indicator_changed(self, column_index, order):
         self.tview_nic_previous_sort = {'column_index': column_index, 'order': order}
-        
+
     def cb_tview_process_sort_indicator_changed(self, column_index, order):
         self.tview_process_previous_sort = {'column_index': column_index, 'order': order}
 

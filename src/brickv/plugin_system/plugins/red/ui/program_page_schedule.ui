@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ProgramPageSchedule</class>
+ <widget class="QWidget" name="ProgramPageSchedule">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>570</width>
+    <height>505</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout_4">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Mode:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="combo_start_mode">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>Never</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Always</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Interval</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Cron</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Once After Upload</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="edit_start_fields">
+       <property name="text">
+        <string>* * * * *</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QSpinBox" name="spin_start_interval">
+       <property name="suffix">
+        <string> seconds</string>
+       </property>
+       <property name="maximum">
+        <number>2147483647</number>
+       </property>
+       <property name="value">
+        <number>60</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_start_interval">
+       <property name="text">
+        <string>Inverval:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_start_fields">
+       <property name="text">
+        <string>Fields:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLabel" name="label_start_mode_never_help">
+       <property name="text">
+        <string>The program will never be started automatically.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLabel" name="label_start_mode_interval_help">
+       <property name="text">
+        <string>The program will be started automatically every &lt;INTERVAL&gt; seconds, if it is not running already.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLabel" name="label_start_mode_cron_help">
+       <property name="text">
+        <string>The program will be started automatically if it is not running already and the current date and time on the RED Brick matches the specified cron fields.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLabel" name="label_start_mode_once_help">
+       <property name="text">
+        <string>The program will be started once directly after its upload finished.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLabel" name="label_start_mode_always_help">
+       <property name="text">
+        <string>The program will be started automatically every time it is not running already.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QLabel" name="label_continue_after_error_help">
+       <property name="text">
+        <string>If 'Continue After Error' is enabled then the scheduler ignores errors and continues to start the program automatically regardless of the result from the last program run. Otherwise the scheduler only starts the program automatically again if the last program run exited normally.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="QCheckBox" name="check_continue_after_error">
+       <property name="text">
+        <string>Continue After Error</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0" colspan="2">
+      <widget class="Line" name="line">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

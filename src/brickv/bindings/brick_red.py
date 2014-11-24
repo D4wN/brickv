@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2014-10-16.      #
+# This file was automatically generated on 2014-11-07.      #
 #                                                           #
 # Bindings Version 2.1.2                                    #
 #                                                           #
@@ -46,16 +46,16 @@ SpawnProcess = namedtuple('SpawnProcess', ['error_code', 'process_id'])
 GetProcessCommand = namedtuple('ProcessCommand', ['error_code', 'executable_string_id', 'arguments_list_id', 'environment_list_id', 'working_directory_string_id'])
 GetProcessIdentity = namedtuple('ProcessIdentity', ['error_code', 'pid', 'uid', 'gid'])
 GetProcessStdio = namedtuple('ProcessStdio', ['error_code', 'stdin_file_id', 'stdout_file_id', 'stderr_file_id'])
-GetProcessState = namedtuple('ProcessState', ['error_code', 'state', 'exit_code'])
-GetDefinedPrograms = namedtuple('DefinedPrograms', ['error_code', 'programs_list_id'])
+GetProcessState = namedtuple('ProcessState', ['error_code', 'state', 'timestamp', 'exit_code'])
+GetPrograms = namedtuple('Programs', ['error_code', 'programs_list_id'])
 DefineProgram = namedtuple('DefineProgram', ['error_code', 'program_id'])
 GetProgramIdentifier = namedtuple('ProgramIdentifier', ['error_code', 'identifier_string_id'])
 GetProgramRootDirectory = namedtuple('ProgramRootDirectory', ['error_code', 'root_directory_string_id'])
-GetProgramCommand = namedtuple('ProgramCommand', ['error_code', 'executable_string_id', 'arguments_list_id', 'environment_list_id'])
+GetProgramCommand = namedtuple('ProgramCommand', ['error_code', 'executable_string_id', 'arguments_list_id', 'environment_list_id', 'working_directory_string_id'])
 GetProgramStdioRedirection = namedtuple('ProgramStdioRedirection', ['error_code', 'stdin_redirection', 'stdin_file_name_string_id', 'stdout_redirection', 'stdout_file_name_string_id', 'stderr_redirection', 'stderr_file_name_string_id'])
-GetProgramSchedule = namedtuple('ProgramSchedule', ['error_code', 'start_condition', 'start_timestamp', 'start_delay', 'repeat_mode', 'repeat_interval', 'repeat_second_mask', 'repeat_minute_mask', 'repeat_hour_mask', 'repeat_day_mask', 'repeat_month_mask', 'repeat_weekday_mask'])
+GetProgramSchedule = namedtuple('ProgramSchedule', ['error_code', 'start_mode', 'continue_after_error', 'start_interval', 'start_fields_string_id'])
+GetProgramSchedulerState = namedtuple('ProgramSchedulerState', ['error_code', 'state', 'timestamp', 'message_string_id'])
 GetLastSpawnedProgramProcess = namedtuple('LastSpawnedProgramProcess', ['error_code', 'process_id', 'timestamp'])
-GetLastProgramSchedulerError = namedtuple('LastProgramSchedulerError', ['error_code', 'message_string_id', 'timestamp'])
 GetCustomProgramOptionNames = namedtuple('CustomProgramOptionNames', ['error_code', 'names_list_id'])
 GetCustomProgramOptionValue = namedtuple('CustomProgramOptionValue', ['error_code', 'value_string_id'])
 GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardware_version', 'firmware_version', 'device_identifier'])
@@ -70,8 +70,8 @@ class BrickRED(Device):
     CALLBACK_ASYNC_FILE_READ = 28
     CALLBACK_ASYNC_FILE_WRITE = 29
     CALLBACK_PROCESS_STATE_CHANGED = 44
-    CALLBACK_PROGRAM_PROCESS_SPAWNED = 62
-    CALLBACK_PROGRAM_SCHEDULER_ERROR_OCCURRED = 63
+    CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED = 64
+    CALLBACK_PROGRAM_PROCESS_SPAWNED = 65
 
     FUNCTION_CREATE_SESSION = 1
     FUNCTION_EXPIRE_SESSION = 2
@@ -114,9 +114,9 @@ class BrickRED(Device):
     FUNCTION_GET_PROCESS_IDENTITY = 41
     FUNCTION_GET_PROCESS_STDIO = 42
     FUNCTION_GET_PROCESS_STATE = 43
-    FUNCTION_GET_DEFINED_PROGRAMS = 45
+    FUNCTION_GET_PROGRAMS = 45
     FUNCTION_DEFINE_PROGRAM = 46
-    FUNCTION_UNDEFINE_PROGRAM = 47
+    FUNCTION_PURGE_PROGRAM = 47
     FUNCTION_GET_PROGRAM_IDENTIFIER = 48
     FUNCTION_GET_PROGRAM_ROOT_DIRECTORY = 49
     FUNCTION_SET_PROGRAM_COMMAND = 50
@@ -125,12 +125,14 @@ class BrickRED(Device):
     FUNCTION_GET_PROGRAM_STDIO_REDIRECTION = 53
     FUNCTION_SET_PROGRAM_SCHEDULE = 54
     FUNCTION_GET_PROGRAM_SCHEDULE = 55
-    FUNCTION_GET_LAST_SPAWNED_PROGRAM_PROCESS = 56
-    FUNCTION_GET_LAST_PROGRAM_SCHEDULER_ERROR = 57
-    FUNCTION_GET_CUSTOM_PROGRAM_OPTION_NAMES = 58
-    FUNCTION_SET_CUSTOM_PROGRAM_OPTION_VALUE = 59
-    FUNCTION_GET_CUSTOM_PROGRAM_OPTION_VALUE = 60
-    FUNCTION_REMOVE_CUSTOM_PROGRAM_OPTION = 61
+    FUNCTION_GET_PROGRAM_SCHEDULER_STATE = 56
+    FUNCTION_CONTINUE_PROGRAM_SCHEDULE = 57
+    FUNCTION_START_PROGRAM = 58
+    FUNCTION_GET_LAST_SPAWNED_PROGRAM_PROCESS = 59
+    FUNCTION_GET_CUSTOM_PROGRAM_OPTION_NAMES = 60
+    FUNCTION_SET_CUSTOM_PROGRAM_OPTION_VALUE = 61
+    FUNCTION_GET_CUSTOM_PROGRAM_OPTION_VALUE = 62
+    FUNCTION_REMOVE_CUSTOM_PROGRAM_OPTION = 63
     FUNCTION_GET_IDENTITY = 255
 
     OBJECT_TYPE_STRING = 0
@@ -202,15 +204,15 @@ class BrickRED(Device):
     PROGRAM_STDIO_REDIRECTION_DEV_NULL = 0
     PROGRAM_STDIO_REDIRECTION_PIPE = 1
     PROGRAM_STDIO_REDIRECTION_FILE = 2
-    PROGRAM_STDIO_REDIRECTION_STDOUT = 3
-    PROGRAM_STDIO_REDIRECTION_LOG = 4
-    PROGRAM_START_CONDITION_NEVER = 0
-    PROGRAM_START_CONDITION_NOW = 1
-    PROGRAM_START_CONDITION_REBOOT = 2
-    PROGRAM_START_CONDITION_TIMESTAMP = 3
-    PROGRAM_REPEAT_MODE_NEVER = 0
-    PROGRAM_REPEAT_MODE_INTERVAL = 1
-    PROGRAM_REPEAT_MODE_SELECTION = 2
+    PROGRAM_STDIO_REDIRECTION_INDIVIDUAL_LOG = 3
+    PROGRAM_STDIO_REDIRECTION_CONTINUOUS_LOG = 4
+    PROGRAM_STDIO_REDIRECTION_STDOUT = 5
+    PROGRAM_START_MODE_NEVER = 0
+    PROGRAM_START_MODE_ALWAYS = 1
+    PROGRAM_START_MODE_INTERVAL = 2
+    PROGRAM_START_MODE_CRON = 3
+    PROGRAM_SCHEDULER_STATE_STOPPED = 0
+    PROGRAM_SCHEDULER_STATE_RUNNING = 1
 
     def __init__(self, uid, ipcon):
         """
@@ -265,9 +267,9 @@ class BrickRED(Device):
         self.response_expected[BrickRED.FUNCTION_GET_PROCESS_STDIO] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_GET_PROCESS_STATE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.CALLBACK_PROCESS_STATE_CHANGED] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
-        self.response_expected[BrickRED.FUNCTION_GET_DEFINED_PROGRAMS] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_GET_PROGRAMS] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_DEFINE_PROGRAM] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
-        self.response_expected[BrickRED.FUNCTION_UNDEFINE_PROGRAM] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_PURGE_PROGRAM] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_GET_PROGRAM_IDENTIFIER] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_GET_PROGRAM_ROOT_DIRECTORY] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_SET_PROGRAM_COMMAND] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
@@ -276,21 +278,23 @@ class BrickRED(Device):
         self.response_expected[BrickRED.FUNCTION_GET_PROGRAM_STDIO_REDIRECTION] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_SET_PROGRAM_SCHEDULE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_GET_PROGRAM_SCHEDULE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_GET_PROGRAM_SCHEDULER_STATE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_CONTINUE_PROGRAM_SCHEDULE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_START_PROGRAM] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_GET_LAST_SPAWNED_PROGRAM_PROCESS] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
-        self.response_expected[BrickRED.FUNCTION_GET_LAST_PROGRAM_SCHEDULER_ERROR] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_GET_CUSTOM_PROGRAM_OPTION_NAMES] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_SET_CUSTOM_PROGRAM_OPTION_VALUE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_GET_CUSTOM_PROGRAM_OPTION_VALUE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_REMOVE_CUSTOM_PROGRAM_OPTION] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
         self.response_expected[BrickRED.CALLBACK_PROGRAM_PROCESS_SPAWNED] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
-        self.response_expected[BrickRED.CALLBACK_PROGRAM_SCHEDULER_ERROR_OCCURRED] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
         self.response_expected[BrickRED.FUNCTION_GET_IDENTITY] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
 
         self.callback_formats[BrickRED.CALLBACK_ASYNC_FILE_READ] = 'H B 60B B'
         self.callback_formats[BrickRED.CALLBACK_ASYNC_FILE_WRITE] = 'H B B'
-        self.callback_formats[BrickRED.CALLBACK_PROCESS_STATE_CHANGED] = 'H B B'
+        self.callback_formats[BrickRED.CALLBACK_PROCESS_STATE_CHANGED] = 'H B Q B'
+        self.callback_formats[BrickRED.CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED] = 'H'
         self.callback_formats[BrickRED.CALLBACK_PROGRAM_PROCESS_SPAWNED] = 'H'
-        self.callback_formats[BrickRED.CALLBACK_PROGRAM_SCHEDULER_ERROR_OCCURRED] = 'H'
 
     def create_session(self, lifetime):
         """
@@ -465,7 +469,7 @@ class BrickRED(Device):
         """
         return OpenFile(*self.ipcon.send_request(self, BrickRED.FUNCTION_OPEN_FILE, (name_string_id, flags, permissions, uid, gid, session_id), 'H H H I I H', 'B H'))
 
-    def create_pipe(self, flags, session_id):
+    def create_pipe(self, flags, length, session_id):
         """
         Creates a new pipe and allocates a new file object for it.
         
@@ -475,9 +479,12 @@ class BrickRED(Device):
         * NonBlockingRead = 0x0001
         * NonBlockingWrite = 0x0002
         
+        The length of the pipe buffer can be specified with the ``length`` parameter
+        in bytes. If length is set to zero, then the default pipe buffer length is used.
+        
         Returns the object ID of the new file object and the resulting error code.
         """
-        return CreatePipe(*self.ipcon.send_request(self, BrickRED.FUNCTION_CREATE_PIPE, (flags, session_id), 'H H', 'B H'))
+        return CreatePipe(*self.ipcon.send_request(self, BrickRED.FUNCTION_CREATE_PIPE, (flags, length, session_id), 'H Q H', 'B H'))
 
     def get_file_info(self, file_id, session_id):
         """
@@ -503,7 +510,7 @@ class BrickRED(Device):
         :func:`OpenFile` or :func:`CreatePipe`. See the respective function for a list
         of possible file and pipe flags.
         
-        FIXME: everything except flags is invalid if file type is *Pipe*
+        FIXME: everything except flags and length is invalid if file type is *Pipe*
         """
         return GetFileInfo(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_FILE_INFO, (file_id, session_id), 'H H', 'B B H H H I I Q Q Q Q'))
 
@@ -759,8 +766,8 @@ class BrickRED(Device):
 
     def get_process_state(self, process_id):
         """
-        Returns the current state and exit code of a process object, and the resulting
-        error code.
+        Returns the current state, timestamp and exit code of a process object, and
+        the resulting error code.
         
         Possible process states are:
         
@@ -770,6 +777,9 @@ class BrickRED(Device):
         * Exited = 3
         * Killed = 4
         * Stopped = 5
+        
+        The timestamp represents the UNIX time since when the process is in its current
+        state.
         
         The exit code is only valid if the state is *Error*, *Exited*, *Killed* or
         *Stopped* and has different meanings depending on the state:
@@ -788,13 +798,13 @@ class BrickRED(Device):
         The *CannotExecute* error can be caused by the executable being opened for
         writing.
         """
-        return GetProcessState(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROCESS_STATE, (process_id,), 'H', 'B B B'))
+        return GetProcessState(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROCESS_STATE, (process_id,), 'H', 'B B Q B'))
 
-    def get_defined_programs(self, session_id):
+    def get_programs(self, session_id):
         """
         
         """
-        return GetDefinedPrograms(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_DEFINED_PROGRAMS, (session_id,), 'H', 'B H'))
+        return GetPrograms(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAMS, (session_id,), 'H', 'B H'))
 
     def define_program(self, identifier_string_id, session_id):
         """
@@ -802,11 +812,11 @@ class BrickRED(Device):
         """
         return DefineProgram(*self.ipcon.send_request(self, BrickRED.FUNCTION_DEFINE_PROGRAM, (identifier_string_id, session_id), 'H H', 'B H'))
 
-    def undefine_program(self, program_id):
+    def purge_program(self, program_id, cookie):
         """
         
         """
-        return self.ipcon.send_request(self, BrickRED.FUNCTION_UNDEFINE_PROGRAM, (program_id,), 'H', 'B')
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_PURGE_PROGRAM, (program_id, cookie), 'H I', 'B')
 
     def get_program_identifier(self, program_id, session_id):
         """
@@ -816,57 +826,69 @@ class BrickRED(Device):
 
     def get_program_root_directory(self, program_id, session_id):
         """
-        
+        FIXME: root directory is absolute: <home>/programs/<identifier>
         """
         return GetProgramRootDirectory(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAM_ROOT_DIRECTORY, (program_id, session_id), 'H H', 'B H'))
 
-    def set_program_command(self, program_id, executable_string_id, arguments_list_id, environment_list_id):
+    def set_program_command(self, program_id, executable_string_id, arguments_list_id, environment_list_id, working_directory_string_id):
         """
-        
+        FIXME: working directory is relative to <home>/programs/<identifier>/bin
         """
-        return self.ipcon.send_request(self, BrickRED.FUNCTION_SET_PROGRAM_COMMAND, (program_id, executable_string_id, arguments_list_id, environment_list_id), 'H H H H', 'B')
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_SET_PROGRAM_COMMAND, (program_id, executable_string_id, arguments_list_id, environment_list_id, working_directory_string_id), 'H H H H H', 'B')
 
     def get_program_command(self, program_id, session_id):
         """
-        
+        FIXME: working directory is relative to <home>/programs/<identifier>/bin
         """
-        return GetProgramCommand(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAM_COMMAND, (program_id, session_id), 'H H', 'B H H H'))
+        return GetProgramCommand(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAM_COMMAND, (program_id, session_id), 'H H', 'B H H H H'))
 
     def set_program_stdio_redirection(self, program_id, stdin_redirection, stdin_file_name_string_id, stdout_redirection, stdout_file_name_string_id, stderr_redirection, stderr_file_name_string_id):
         """
-        
+        FIXME: stdio file names are relative to <home>/programs/<identifier>/bin
         """
         return self.ipcon.send_request(self, BrickRED.FUNCTION_SET_PROGRAM_STDIO_REDIRECTION, (program_id, stdin_redirection, stdin_file_name_string_id, stdout_redirection, stdout_file_name_string_id, stderr_redirection, stderr_file_name_string_id), 'H B H B H B H', 'B')
 
     def get_program_stdio_redirection(self, program_id, session_id):
         """
-        
+        FIXME: stdio file names are relative to <home>/programs/<identifier>/bin
         """
         return GetProgramStdioRedirection(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAM_STDIO_REDIRECTION, (program_id, session_id), 'H H', 'B B H B H B H'))
 
-    def set_program_schedule(self, program_id, start_condition, start_timestamp, start_delay, repeat_mode, repeat_interval, repeat_second_mask, repeat_minute_mask, repeat_hour_mask, repeat_day_mask, repeat_month_mask, repeat_weekday_mask):
+    def set_program_schedule(self, program_id, start_mode, continue_after_error, start_interval, start_fields_string_id):
         """
-        FIXME: week starts on monday
+        
         """
-        return self.ipcon.send_request(self, BrickRED.FUNCTION_SET_PROGRAM_SCHEDULE, (program_id, start_condition, start_timestamp, start_delay, repeat_mode, repeat_interval, repeat_second_mask, repeat_minute_mask, repeat_hour_mask, repeat_day_mask, repeat_month_mask, repeat_weekday_mask), 'H B Q I B I Q Q I I H B', 'B')
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_SET_PROGRAM_SCHEDULE, (program_id, start_mode, continue_after_error, start_interval, start_fields_string_id), 'H B ? I H', 'B')
 
-    def get_program_schedule(self, program_id):
+    def get_program_schedule(self, program_id, session_id):
         """
-        FIXME: week starts on monday
+        
         """
-        return GetProgramSchedule(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAM_SCHEDULE, (program_id,), 'H', 'B B Q I B I Q Q I I H B'))
+        return GetProgramSchedule(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAM_SCHEDULE, (program_id, session_id), 'H H', 'B B ? I H'))
+
+    def get_program_scheduler_state(self, program_id, session_id):
+        """
+        FIXME: message is currently vaild in error-occurred state only
+        """
+        return GetProgramSchedulerState(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAM_SCHEDULER_STATE, (program_id, session_id), 'H H', 'B B Q H'))
+
+    def continue_program_schedule(self, program_id):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_CONTINUE_PROGRAM_SCHEDULE, (program_id,), 'H', 'B')
+
+    def start_program(self, program_id):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_START_PROGRAM, (program_id,), 'H', 'B')
 
     def get_last_spawned_program_process(self, program_id, session_id):
         """
         
         """
         return GetLastSpawnedProgramProcess(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_LAST_SPAWNED_PROGRAM_PROCESS, (program_id, session_id), 'H H', 'B H Q'))
-
-    def get_last_program_scheduler_error(self, program_id, session_id):
-        """
-        
-        """
-        return GetLastProgramSchedulerError(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_LAST_PROGRAM_SCHEDULER_ERROR, (program_id, session_id), 'H H', 'B H Q'))
 
     def get_custom_program_option_names(self, program_id, session_id):
         """

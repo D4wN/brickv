@@ -35,16 +35,20 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
         QtGui.QWidget.__init__(self)
         self.setupUi(self)
 
+        self.session        = None # set from RED after construction
+        self.script_manager = None # set from RED after construction
+
         self.console = TerminalWidget()
         self.console_layout.insertWidget(1, self.console)
         
         self.connect_button.pressed.connect(self.connect_pressed)
         self.refresh_button.pressed.connect(self.update_ports)
+        self.copy_button.pressed.connect(self.console.copy_selection_to_clipboard)
         
         self.setFocusPolicy(QtCore.Qt.NoFocus)
         
         self.update_ports()
-        
+
     def update_ports(self):
         current_text = self.combo_serial_port.currentText()
         self.combo_serial_port.clear()
@@ -82,7 +86,7 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
             self.console.setDisabled(False)
             self.connect_button.setText("Disconnect")
             
-            text = str(self.combo_serial_port.currentText())
+            text = unicode(self.combo_serial_port.currentText())
             if self.console._session == None:
                 try:
                     self.console.execute(command=text)

@@ -897,11 +897,7 @@ class AbstractJob(threading.Thread):
     
     def stop(self):
         self._exit_flag = True
-        try:
-            self._datalogger.data_queue.pop(self.name)
-        except KeyError as key_err:
-            # TODO: key_err usen?
-            pass
+
     
     def _job(self):
         # check for datalogger object
@@ -949,7 +945,14 @@ class CSVWriterJob(AbstractJob):
                     else:
                         EventLogger.debug(self._job_name + " Could NOT close his csv_writer! EXIT_RETURN_VALUE=" + str(exit))
                     EventLogger.debug(self._job_name + " Finished")
+                    
+                    try:
+                        self._datalogger.data_queue.pop(self.name)
+                    except KeyError as key_err:
+                        # TODO: key_err usen?
+                        pass                    
                     break
+                
         except Exception as e:
             EventLogger.critical(self._job_name + " " + str(e))
             self.stop()
