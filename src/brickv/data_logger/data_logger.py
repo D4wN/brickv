@@ -22,10 +22,10 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from tinkerforge.ip_connection import IPConnection
 import Queue, logging, threading, sys
-import loggable_devices
-import utils
+from brickv.bindings.ip_connection import IPConnection
+import brickv.data_logger.loggable_devices as loggable_devices
+import brickv.data_logger.utils as utils
 from brickv.data_logger.utils import ConfigurationReader
 from brickv.data_logger.utils import EventLogger
 from brickv.data_logger.utils import CSVWriterJob, XivelyJob
@@ -185,4 +185,3 @@ class DataLogger():
         for q in self.data_queue.values():
             #print "PUT -> " + str(csv)
             q.put(csv)
-            

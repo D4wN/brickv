@@ -1,45 +1,47 @@
-import sys, tinkerforge, utils, data_logger
+import sys
+import brickv.data_logger.utils as utils
+import brickv.bindings.ip_connection as ip_connection
 
 #import ALL supported bricklets and bricks
-from tinkerforge.brick_dc import DC
-from tinkerforge.brick_imu import IMU
-from tinkerforge.brick_stepper import Stepper
+from brickv.bindings.brick_dc import DC
+from brickv.bindings.brick_imu import IMU
+from brickv.bindings.brick_stepper import Stepper
 
-from tinkerforge.bricklet_ambient_light import AmbientLight
-from tinkerforge.bricklet_analog_in import AnalogIn
-from tinkerforge.bricklet_analog_out import AnalogOut
-from tinkerforge.bricklet_barometer import Barometer
-from tinkerforge.bricklet_color import Color
-from tinkerforge.bricklet_current12 import Current12
-from tinkerforge.bricklet_current25 import Current25
-from tinkerforge.bricklet_distance_ir import DistanceIR
-from tinkerforge.bricklet_distance_us import DistanceUS
-from tinkerforge.bricklet_dual_button import DualButton
-from tinkerforge.bricklet_dual_relay import DualRelay
-from tinkerforge.bricklet_hall_effect import HallEffect
-from tinkerforge.bricklet_humidity import Humidity
-from tinkerforge.bricklet_industrial_dual_0_20ma import IndustrialDual020mA
-from tinkerforge.bricklet_io16 import IO16
-from tinkerforge.bricklet_io4 import IO4
-from tinkerforge.bricklet_joystick import Joystick
-from tinkerforge.bricklet_led_strip import LEDStrip
-from tinkerforge.bricklet_line import BrickletLine
-from tinkerforge.bricklet_linear_poti import BrickletLinearPoti
-from tinkerforge.bricklet_moisture import Moisture
-from tinkerforge.bricklet_motion_detector import MotionDetector
-from tinkerforge.bricklet_multi_touch import MultiTouch
-from tinkerforge.bricklet_ptc import PTC
-from tinkerforge.bricklet_rotary_encoder import RotaryEncoder
-from tinkerforge.bricklet_rotary_poti import RotaryPoti
-from tinkerforge.bricklet_solid_state_relay import BrickletSolidStateRelay
-from tinkerforge.bricklet_sound_intensity import BrickletSoundIntensity
-from tinkerforge.bricklet_temperature import BrickletTemperature
-from tinkerforge.bricklet_temperature_ir import BrickletTemperatureIR
-from tinkerforge.bricklet_tilt import BrickletTilt
-from tinkerforge.bricklet_voltage import BrickletVoltage
-from tinkerforge.bricklet_voltage_current import BrickletVoltageCurrent
-from tinkerforge.bricklet_gps import GPS
-from tinkerforge.bricklet_segment_display_4x7 import BrickletSegmentDisplay4x7 
+from brickv.bindings.bricklet_ambient_light import AmbientLight
+from brickv.bindings.bricklet_analog_in import AnalogIn
+from brickv.bindings.bricklet_analog_out import AnalogOut
+from brickv.bindings.bricklet_barometer import Barometer
+from brickv.bindings.bricklet_color import Color
+from brickv.bindings.bricklet_current12 import Current12
+from brickv.bindings.bricklet_current25 import Current25
+from brickv.bindings.bricklet_distance_ir import DistanceIR
+from brickv.bindings.bricklet_distance_us import DistanceUS
+from brickv.bindings.bricklet_dual_button import DualButton
+from brickv.bindings.bricklet_dual_relay import DualRelay
+from brickv.bindings.bricklet_hall_effect import HallEffect
+from brickv.bindings.bricklet_humidity import Humidity
+from brickv.bindings.bricklet_industrial_dual_0_20ma import IndustrialDual020mA
+from brickv.bindings.bricklet_io16 import IO16
+from brickv.bindings.bricklet_io4 import IO4
+from brickv.bindings.bricklet_joystick import Joystick
+from brickv.bindings.bricklet_led_strip import LEDStrip
+from brickv.bindings.bricklet_line import BrickletLine
+from brickv.bindings.bricklet_linear_poti import BrickletLinearPoti
+from brickv.bindings.bricklet_moisture import Moisture
+from brickv.bindings.bricklet_motion_detector import MotionDetector
+from brickv.bindings.bricklet_multi_touch import MultiTouch
+from brickv.bindings.bricklet_ptc import PTC
+from brickv.bindings.bricklet_rotary_encoder import RotaryEncoder
+from brickv.bindings.bricklet_rotary_poti import RotaryPoti
+from brickv.bindings.bricklet_solid_state_relay import BrickletSolidStateRelay
+from brickv.bindings.bricklet_sound_intensity import BrickletSoundIntensity
+from brickv.bindings.bricklet_temperature import BrickletTemperature
+from brickv.bindings.bricklet_temperature_ir import BrickletTemperatureIR
+from brickv.bindings.bricklet_tilt import BrickletTilt
+from brickv.bindings.bricklet_voltage import BrickletVoltage
+from brickv.bindings.bricklet_voltage_current import BrickletVoltageCurrent
+from brickv.bindings.bricklet_gps import GPS
+from brickv.bindings.bricklet_segment_display_4x7 import BrickletSegmentDisplay4x7
 
 def string_to_class(string):
     """
@@ -446,7 +448,7 @@ class SimpleDevice(AbstractDevice):
                 value = getattr(self.device, getter_name)(*getter_args)
             else:
                 value = getattr(self.device, getter_name)()
-        except tinkerforge.ip_connection.Error as e:
+        except ip_connection.Error as e:
             value = self._exception_msg(e.value, e.description)
         except Exception as ex:
             value = self._exception_msg(str(self.identifier)+"-"+str(var_name), ex)    
@@ -514,7 +516,7 @@ class ComplexDevice(AbstractDevice):
                 if bools[i]:
                     self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, names[i], l[i]))
             
-        except tinkerforge.ip_connection.Error as e:
+        except ip_connection.Error as e:
             values = self._exception_msg(e.value, e.description)
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, var_name, values))
         except Exception as ex:
@@ -587,7 +589,7 @@ class GPSBricklet(AbstractDevice):
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_VDOP, vdop))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_EPE]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_EPE, epe))
-        except tinkerforge.ip_connection.Error as e:
+        except ip_connection.Error as e:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg(e.value, e.description)))
         except Exception as ex:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
@@ -609,7 +611,7 @@ class GPSBricklet(AbstractDevice):
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE_VALUE, altitude))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_GEOIDAL_SEPERATION]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_GEOIDAL_SEPERATION, geoidal_separation))
-        except tinkerforge.ip_connection.Error as e:
+        except ip_connection.Error as e:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg(e.value, e.description)))
         except Exception as ex:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
@@ -631,7 +633,7 @@ class GPSBricklet(AbstractDevice):
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COURSE, course))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_SPEED]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_SPEED, speed))
-        except tinkerforge.ip_connection.Error as e:
+        except ip_connection.Error as e:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg(e.value, e.description)))
         except Exception as ex:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
@@ -715,7 +717,7 @@ class SegmentDisplay4x7Bricklet(AbstractDevice):
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_BRIGTHNESS, brightness))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_COLON]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_COLON, colon))        
-        except tinkerforge.ip_connection.Error as e:
+        except ip_connection.Error as e:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(e.value, e.description)))
         except Exception as ex:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
