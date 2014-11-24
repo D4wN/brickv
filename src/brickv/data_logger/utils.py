@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.
 """
 from array import array
 import threading, time, logging  # Writer Thread
-from brickv.bindings.brick_servo import BrickServo
+
 
 '''
 /*---------------------------------------------------------------------------
@@ -897,6 +897,7 @@ class AbstractJob(threading.Thread):
     
     def stop(self):
         self._exit_flag = True
+
     
     def _job(self):
         # check for datalogger object
