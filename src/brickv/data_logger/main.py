@@ -8,40 +8,38 @@ import argparse                             # command line argument parser
 import sys
 import signal
 
-
 # HashMap keywords to store results of the command line arguments 
 CONSOLE_CONFIG_FILE = "config_file"
 GUI_CONFIG = "configuration"
 CONSOLE_VALIDATE_ONLY ="validate"
 CONSOLE_START = False
-CONSOLE_EXIT = False
+CLOSE = False
 
 def __exit_condition(data_logger):
     '''
     Waits for an 'exit' or 'quit' to stop logging and close the program
     '''
     # TODO: Need another exit condition for the brickv GUI
-    input_option = ""
     try:
         while True:
-            input_option = raw_input("Type 'quit' or 'exit' to stop logging and close the program\n")  # Use input() in Python 3
-            if input_option == "quit" or input_option == "exit" or CONSOLE_EXIT:
-                break
+            # need nop operator but not 'pass'
+            raw_input("")
+            if CLOSE:
+                raise KeyboardInterrupt()
             
-    except KeyboardInterrupt:
-        pass
-    except EOFError:
-        # avoid the traceback of the raw_input on ctrl + c
-        pass
-    finally:     
+    except (KeyboardInterrupt,EOFError):
+        sys.stdin.close();
         data_logger.stop(0)
-  
-def handler(signum, frame):
+     
+def signal_handler(signum, frame):
     '''
-    Function to catch the Ctrl + C signal.
+    This function handles the ctrl + c exit condition
+    if it's raised through the console
     '''
-    CONSOLE_EXIT = True
-  
+    main.CLOSE = True
+
+signal.signal(signal.SIGINT, signal_handler)
+      
 def main(arguments_map):
     '''
     This function initialize the data logger and starts the logging process
@@ -79,14 +77,16 @@ def main(arguments_map):
         EventLogger.critical("The parsing of the configuration file failed :" + str(io_err) )
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
 
-
-    data_logger = DataLogger(configuration._configuration)
-    if data_logger.ipcon != None:
+    try:
+        data_logger = DataLogger(configuration._configuration)
+        if data_logger.ipcon != None:
             data_logger.run()   
             __exit_condition(data_logger)
-    else:
-        EventLogger.error("DataLogger did not start logging process! Please check for errors.")
-   
+        else:
+            EventLogger.error("DataLogger did not start logging process! Please check for errors.")
+    except Exception:
+        pass
+    
 def command_line_start(argv,program_name):
     '''
     This function processes the command line arguments, if it was started via the console.
@@ -111,5 +111,3 @@ from tinkerforge.ip_connection import IPConnection
 if __name__ == '__main__':      
     arguments_map = command_line_start(sys.argv[1:], sys.argv[0]) 
     main(arguments_map)
-    
-signal.signal(signal.SIGINT, handler)
