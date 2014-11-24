@@ -6,12 +6,15 @@ from brickv.data_logger.data_logger import DataLogger
 
 import argparse                             # command line argument parser
 import sys
+import signal
+
 
 # HashMap keywords to store results of the command line arguments 
 CONSOLE_CONFIG_FILE = "config_file"
 GUI_CONFIG = "configuration"
 CONSOLE_VALIDATE_ONLY ="validate"
 CONSOLE_START = False
+CONSOLE_EXIT = False
 
 def __exit_condition(data_logger):
     '''
@@ -19,12 +22,26 @@ def __exit_condition(data_logger):
     '''
     # TODO: Need another exit condition for the brickv GUI
     input_option = ""
-    while True:
-        input_option = raw_input("Type 'quit' or 'exit' to stop logging and close the program\n")  # Use input() in Python 3
-        if input_option == "quit" or input_option == "exit":
-            break
-    data_logger.stop(0)
-          
+    try:
+        while True:
+            input_option = raw_input("Type 'quit' or 'exit' to stop logging and close the program\n")  # Use input() in Python 3
+            if input_option == "quit" or input_option == "exit" or CONSOLE_EXIT:
+                break
+            
+    except KeyboardInterrupt:
+        pass
+    except EOFError:
+        # avoid the traceback of the raw_input on ctrl + c
+        pass
+    finally:     
+        data_logger.stop(0)
+  
+def handler(signum, frame):
+    '''
+    Function to catch the Ctrl + C signal.
+    '''
+    CONSOLE_EXIT = True
+  
 def main(arguments_map):
     '''
     This function initialize the data logger and starts the logging process
@@ -94,3 +111,5 @@ from tinkerforge.ip_connection import IPConnection
 if __name__ == '__main__':      
     arguments_map = command_line_start(sys.argv[1:], sys.argv[0]) 
     main(arguments_map)
+    
+signal.signal(signal.SIGINT, handler)
