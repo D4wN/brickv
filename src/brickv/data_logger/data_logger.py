@@ -26,9 +26,9 @@ import Queue, logging, threading, sys
 from brickv.bindings.ip_connection import IPConnection
 import brickv.data_logger.loggable_devices as loggable_devices
 import brickv.data_logger.utils as utils
-from brickv.data_logger.utils import ConfigurationReader
-from brickv.data_logger.utils import EventLogger
-from brickv.data_logger.utils import CSVWriterJob, XivelyJob
+from brickv.data_logger.configuration_validator import ConfigurationReader
+from brickv.data_logger.event_logger import EventLogger
+from brickv.data_logger.job import CSVWriterJob, XivelyJob
 
 class DataLogger():
     '''
@@ -77,8 +77,8 @@ class DataLogger():
         '''
         Information out of the general section will be consumed here
         '''         
-        self.log_to_file = data[utils.ConfigurationReader.GENERAL_LOG_TO_FILE]
-        self.default_file_path = data[utils.ConfigurationReader.GENERAL_PATH_TO_FILE]
+        self.log_to_file = data[ConfigurationReader.GENERAL_LOG_TO_FILE]
+        self.default_file_path = data[ConfigurationReader.GENERAL_PATH_TO_FILE]
         
         EventLogger.debug("Logging output to file: " + str(self.log_to_file)) 
         EventLogger.debug("Output file path: " + str(self.default_file_path)) 
@@ -91,7 +91,7 @@ class DataLogger():
         if len(data) == 0:
             return
     
-        self.LOG_TO_XIVELY =  data.get(utils.ConfigurationReader.XIVELY_ACTIVE)
+        self.LOG_TO_XIVELY =  data.get(ConfigurationReader.XIVELY_ACTIVE)
         logging.debug("Logging output to Xively: " +  str(self.LOG_TO_XIVELY))
         # = data.get(XIVELY_AGENT_DESCRIPTION)
         # = data.get(XIVELY_FEED)

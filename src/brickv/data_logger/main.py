@@ -1,7 +1,9 @@
 #MAIN DATA_LOGGER PROGRAMM
 from brickv.data_logger.loggable_devices import *
 
-from brickv.data_logger.utils import ConfigurationReader, DataLoggerException, EventLogger, ConsoleLogger, FileLogger, GUILogger,ConfigurationValidator
+from brickv.data_logger.utils import DataLoggerException
+from brickv.data_logger.configuration_validator import ConfigurationReader, ConfigurationValidator
+from brickv.data_logger.event_logger import  EventLogger, ConsoleLogger, FileLogger, GUILogger
 from brickv.data_logger.data_logger import DataLogger
 
 import argparse                             # command line argument parser
