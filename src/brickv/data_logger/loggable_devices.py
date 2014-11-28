@@ -1,6 +1,7 @@
 import sys
 import brickv.data_logger.utils as utils
 import brickv.bindings.ip_connection as ip_connection
+from brickv.data_logger.event_logger import EventLogger
 
 #import ALL supported bricklets and bricks
 from brickv.bindings.brick_dc import DC
@@ -375,7 +376,7 @@ class AbstractDevice(object):
         """
         Starts all timer for all loggable variables of the devices.
         """
-        utils.EventLogger.debug(self.__str__())
+        EventLogger.debug(self.__str__())
                 
         
     def _try_catch(self, func):
