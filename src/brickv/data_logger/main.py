@@ -22,8 +22,7 @@ def __exit_condition(data_logger):
     # TODO: Need another exit condition for the brickv GUI
     try:
         while True:
-            # need nop operator but not 'pass'
-            raw_input("")
+            raw_input("") # FIXME: is raw_input the right approach 
             if CLOSE:
                 raise KeyboardInterrupt()
             
