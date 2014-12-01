@@ -7,9 +7,11 @@
 import codecs  # ConfigurationReader to read the file in correct encoding
 import json
 import loggable_devices
+import os
 
 from ConfigParser import SafeConfigParser  # ConfigurationReader parser class
 from brickv.data_logger.event_logger import EventLogger
+from lib2to3.fixer_util import String
 
 class ConfigurationReader(object):
     '''
@@ -18,6 +20,7 @@ class ConfigurationReader(object):
     GENERAL_SECTION = "GENERAL"
     GENERAL_LOG_TO_FILE = "log_to_file"
     GENERAL_PATH_TO_FILE = "path_to_file"
+    GENERAL_LOG_COUNT = "log_Count"
     GENERAL_HOST = "host"
     GENERAL_PORT = "port"
 
@@ -78,6 +81,7 @@ class ConfigurationReader(object):
  ---------------------------------------------------------------------------*/
 """
 import re
+from  brickv.data_logger.utils import Utilities
 
 class ConfigurationValidator(object):
     '''
@@ -125,6 +129,25 @@ class ConfigurationValidator(object):
             else:
                 return False
         
+        def validate_logfiles(file_name,count):
+            '''
+            This function checks if already files with
+            special names exists
+            '''     
+            count = int(count) - 1
+            tmp_fileName = ""
+            for i in range(0,count):
+                if i != 0:
+                    tmp_fileName = Utilities.replace_right(file_name , "." ,str(i) + "." , 1)
+                else:
+                    tmp_fileName = file_name  
+                          
+                isAvailable =  os.path.isfile(tmp_fileName)
+                if isAvailable:
+                    EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_PATH_TO_FILE],
+                                                  msg=tmp_fileName + " already exists. Please delete or move it."))
+                          
+            
         # ConfigurationReader.GENERAL_HOST ip address
         host = global_section[ConfigurationReader.GENERAL_HOST] 
         if not host.lower() == 'localhost' and not is_valid_ip_format(host):
@@ -142,10 +165,16 @@ class ConfigurationValidator(object):
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_TO_FILE], \
                                                 msg="should be a boolean"))
         
+        
         # ConfigurationReader.GENERAL_PATH_TO_FILE 
         if not self._is_valid_string(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE], 1):
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PATH_TO_FILE], \
                                                 msg="should be a path to the file where the data will be saved"))
+        
+        # TODO: check if file name ends with .csv       
+        # Check if log files already exists
+        validate_logfiles(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE] ,
+                          global_section[ConfigurationReader.GENERAL_LOG_COUNT] )
   
     def validate_xively_section(self, xively_section):
         # TODO: implement xively section validation
@@ -247,8 +276,7 @@ class ConfigurationValidator(object):
                 EventLogger.critical(self._generate_error_message(device=device, \
                                                                   tier_array=["values", value], \
                                                                   msg="device has no key " + str(k)))
-    
-    
+        
     def _replace_str_with_class(self, devices):
         '''
         This function replaces the entry 'loggable_devices.Identifier.DEVICE_CLASS' which contains 
