@@ -223,13 +223,21 @@ class CSVWriter(object):
     a CSV formatted file.
     '''    
     
-    def __init__(self, file_path):
+    def __init__(self, file_path, max_file_size=0, max_file_count=1):
         '''
         file_path = Path to the csv file
         ''' 
         self._file_path = file_path
         self._raw_file = None
         self._csv_file = None
+        
+        if max_file_size < 0:
+            max_file_size = 0
+        self._file_size = max_file_size
+        if max_file_count < 1:
+            max_file_count = 1
+        self._file_count = max_file_count
+        self._file_current_counter = 0
         
         self._open_file_A()    
     
@@ -238,9 +246,9 @@ class CSVWriter(object):
 
         # newline problem solved + import sys
         if sys.version_info >= (3, 0, 0):
-            self._raw_file = open(self._file_path, 'a', newline='')
+            self._raw_file = open(self._file_path, 'w', newline='')  # FIXME append or write?!
         else:
-            self._raw_file = open(self._file_path, 'ab')
+            self._raw_file = open(self._file_path, 'wb')
         
         self._csv_file = csv.writer(self._raw_file, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
         
@@ -281,8 +289,12 @@ class CSVWriter(object):
         """
         if self._raw_file == None or self._csv_file == None:
             return False
-        
+
         self._csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [str(csv_data.raw_data)] + [csv_data.timestamp])        
+
+        if self._file_size > 0:
+            self._rolling_file()
+     
         return True
     
     def set_file_path(self, new_file_path):
@@ -292,8 +304,9 @@ class CSVWriter(object):
             True  - File path was updated and successfully opened
             False - File path could not be updated or opened
         """
-        if self._file_path == new_file_path:
-            return True
+        # FIXME: deleting file
+        # if self._file_path == new_file_path:
+        #    return True
         
         if not self.close_file():
             return False
@@ -332,3 +345,29 @@ class CSVWriter(object):
         
         except ValueError:
             return False
+
+    def _rolling_file(self):
+        f_size = os.path.getsize(self._file_path)
+        if f_size > self._file_size:
+            self.set_file_path(self._create_new_file_name(self._file_path))
+            EventLogger.info("Max Filesize(" + "%.3f" % (self._file_size/1024.0/1024.0) + " MB) reached! Writing in new File(" + self._file_path + ").")
+            
+    def _create_new_file_name(self, old_file_name):
+        new_file_name = ""
+        
+        if self._file_count == 1:
+            new_file_name = old_file_name;
+        
+        elif self._file_current_counter == 0:
+            self._file_current_counter += 1
+            new_file_name = Utilities.replace_right(old_file_name, ".", "(" + str(self._file_current_counter) + ").", 1)            
+        
+        elif self._file_current_counter >= self._file_count - 1:
+            new_file_name = Utilities.replace_right(old_file_name, "(" + str(self._file_current_counter) + ").", ".", 1)
+            self._file_current_counter = 0
+        
+        else:
+            self._file_current_counter += 1
+            new_file_name = Utilities.replace_right(old_file_name, "(" + str(self._file_current_counter - 1) + ").", "(" + str(self._file_current_counter) + ").", 1) 
+
+        return new_file_name
