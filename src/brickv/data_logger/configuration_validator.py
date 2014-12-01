@@ -134,8 +134,8 @@ class ConfigurationValidator(object):
             This function checks if already files with
             special names exists
             '''     
-            count = int(count) - 1
             tmp_fileName = ""
+            count = int(count)
             for i in range(0,count):
                 if i != 0:
                     tmp_fileName = Utilities.replace_right(file_name , "." ,str(i) + "." , 1)
