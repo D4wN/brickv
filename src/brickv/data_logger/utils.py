@@ -203,6 +203,10 @@ class Utilities(object):
             
     parse_to_bool = staticmethod(parse_to_bool)       
 
+    def replace_right(source, target, replacement, replacements=None):
+        return replacement.join(source.rsplit(target, replacements))
+    
+    replace_right = staticmethod(replace_right)
 
 '''
 /*---------------------------------------------------------------------------
