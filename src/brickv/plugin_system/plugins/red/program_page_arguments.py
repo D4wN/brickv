@@ -26,10 +26,11 @@ from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_arguments import Ui_ProgramPageArguments
+from brickv.utils import get_main_window
 
 class ProgramPageArguments(ProgramPage, Ui_ProgramPageArguments):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
@@ -73,9 +74,9 @@ class ProgramPageArguments(ProgramPage, Ui_ProgramPageArguments):
         self.environment_list_editor.reset()
 
         # if a program exists then this page is used in an edit wizard
-        if self.wizard().program != None:
-            program = self.wizard().program
+        program = self.wizard().program
 
+        if program != None:
             self.argument_list_editor.clear()
             editable_arguments_offset = max(program.cast_custom_option_value('editable_arguments_offset', int, 0), 0)
 
@@ -104,6 +105,7 @@ class ProgramPageArguments(ProgramPage, Ui_ProgramPageArguments):
     def isComplete(self):
         return self.environment_is_valid and ProgramPage.isComplete(self)
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         show_environment = self.check_show_environment.checkState() == Qt.Checked
 
@@ -158,7 +160,7 @@ class ProgramPageArguments(ProgramPage, Ui_ProgramPageArguments):
         try:
             program.set_command(executable, arguments, environment, working_directory) # FIXME: async_call
         except REDError as e:
-            QMessageBox.critical(self, 'Edit Error',
+            QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update arguments and environment of program [{0}]:\n\n{1}'
                                  .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
             return

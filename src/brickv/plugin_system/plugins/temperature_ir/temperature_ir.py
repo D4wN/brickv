@@ -68,13 +68,13 @@ class TemperatureIR(PluginBase):
         self.emissivity_layout.addWidget(self.emissivity_edit)
         self.emissivity_layout.addWidget(self.emissivity_button)
         
-        self.emissivity_button.pressed.connect(self.emissivity_pressed)
+        self.emissivity_button.clicked.connect(self.emissivity_clicked)
         
         self.current_ambient = None
         self.current_object = None
         
-        plot_list = [['amb', Qt.blue, self.get_current_ambient],
-                     ['obj', Qt.red, self.get_current_object]]
+        plot_list = [['Ambient', Qt.blue, self.get_current_ambient],
+                     ['Object', Qt.red, self.get_current_object]]
         
         self.plot_widget = PlotWidget('Temperature [%cC]' % 0xB0, plot_list)
         
@@ -137,7 +137,7 @@ class TemperatureIR(PluginBase):
     def cb_emissivity(self, emissivity):
         self.emissivity_edit.setText(str(emissivity))
         
-    def emissivity_pressed(self):
+    def emissivity_clicked(self):
         value = int(self.emissivity_edit.text())
         try:
             self.tem.set_emissivity(value)

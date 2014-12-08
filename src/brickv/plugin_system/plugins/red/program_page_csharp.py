@@ -2,8 +2,9 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
 
-program_page_csharp.py: Program Wizard CSharp Page
+program_page_csharp.py: Program Wizard C# Page
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -43,8 +44,8 @@ def get_mono_versions(script_manager, callback):
 
 
 class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
@@ -58,8 +59,9 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
         self.registerField('csharp.working_directory', self.combo_working_directory, 'currentText')
 
         self.combo_start_mode.currentIndexChanged.connect(self.update_ui_state)
-        self.combo_start_mode.currentIndexChanged.connect(lambda: self.completeChanged.emit())
+        self.combo_start_mode.currentIndexChanged.connect(self.completeChanged.emit)
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
+        self.label_spacer.setText('')
 
         self.combo_executable_selector        = MandatoryTypedFileSelector(self,
                                                                            self.label_executable,
@@ -68,8 +70,8 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
                                                                            self.combo_executable_type,
                                                                            self.label_executable_help)
         self.combo_working_directory_selector = MandatoryDirectorySelector(self,
-                                                                           self.combo_working_directory,
-                                                                           self.label_working_directory)
+                                                                           self.label_working_directory,
+                                                                           self.combo_working_directory)
         self.option_list_editor               = ListWidgetEditor(self.label_options,
                                                                  self.list_options,
                                                                  self.label_options_help,
@@ -92,9 +94,9 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
         self.option_list_editor.reset()
 
         # if a program exists then this page is used in an edit wizard
-        if self.wizard().program != None:
-            program = self.wizard().program
+        program = self.wizard().program
 
+        if program != None:
             # start mode
             start_mode_api_name = program.cast_custom_option_value('csharp.start_mode', unicode, '<unknown>')
             start_mode          = Constants.get_csharp_start_mode(start_mode_api_name)
@@ -129,6 +131,7 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
 
         return self.combo_working_directory_selector.complete and ProgramPage.isComplete(self)
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         start_mode            = self.get_field('csharp.start_mode').toInt()[0]
         start_mode_executable = start_mode == Constants.CSHARP_START_MODE_EXECUTABLE
@@ -141,11 +144,30 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
         self.label_executable_help.setVisible(start_mode_executable)
         self.combo_working_directory_selector.set_visible(show_advanced_options)
         self.option_list_editor.set_visible(show_advanced_options)
+        self.label_spacer.setVisible(not show_advanced_options)
 
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
         return unicode(self.combo_version.itemData(self.get_field('csharp.version').toInt()[0]).toString())
+
+    def get_html_summary(self):
+        version           = self.get_field('csharp.version').toInt()[0]
+        start_mode        = self.get_field('csharp.start_mode').toInt()[0]
+        executable        = self.get_field('csharp.executable').toString()
+        working_directory = self.get_field('csharp.working_directory').toString()
+        options           = ' '.join(self.option_list_editor.get_items())
+
+        html  = u'Mono Version: {0}<br/>'.format(Qt.escape(self.combo_version.itemText(version)))
+        html += u'Start Mode: {0}<br/>'.format(Qt.escape(Constants.csharp_start_mode_display_names[start_mode]))
+
+        if start_mode == Constants.CSHARP_START_MODE_EXECUTABLE:
+            html += u'Executable: {0}<br/>'.format(Qt.escape(executable))
+
+        html += u'Working Directory: {0}<br/>'.format(Qt.escape(working_directory))
+        html += u'Mono Options: {0}<br/>'.format(Qt.escape(options))
+
+        return html
 
     def get_custom_options(self):
         return {

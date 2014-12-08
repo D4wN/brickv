@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.
 from brickv.plugin_system.plugins.red.api import REDFile, REDPipe, REDProcess
 
 import traceback
-import os
+import posixpath
 from collections import namedtuple
 from PyQt4 import QtCore
 
@@ -36,30 +36,34 @@ SCRIPT_FOLDER = '/usr/local/scripts'
 script_data_set = set()
 
 class ScriptData(QtCore.QObject):
-    script_signal = QtCore.pyqtSignal(object)
+    qtcb_result = QtCore.pyqtSignal(object)
 
     def __init__(self):
         QtCore.QObject.__init__(self)
-        self.process = None
-        self.stdout = None
-        self.stderr = None
 
-        self.script_name = None
-        self.callback = None
-        self.params = None
-        self.max_len = None
-        self.script_instance = None
+        self.process                   = None
+        self.stdout                    = None
+        self.stderr                    = None
+        self.script_name               = None
+        self.result_callback           = None
+        self.params                    = None
+        self.max_length                = None
+        self.decode_output_as_utf8     = True
+        self.redirect_stderr_to_stdout = False
+        self.script_instance           = None
+        self.abort                     = False
+        self.execute_as_user           = False
 
 class ScriptManager:
-    ScriptResult = namedtuple('ScriptResult', 'stdout stderr')
+    ScriptResult = namedtuple('ScriptResult', 'stdout stderr exit_code')
 
     @staticmethod
     def _call(script, sd, data):
         if data == None:
             script.copied = False
 
-        sd.script_signal.emit(data)
-        sd.script_signal.disconnect(sd.callback)
+        sd.qtcb_result.emit(data)
+        sd.qtcb_result.disconnect(sd.result_callback)
 
     def __init__(self, session):
         self.session = session
@@ -81,36 +85,66 @@ class ScriptManager:
         self.scripts = {}
 
     # Call with a script name from the scripts/ folder.
-    # The stdout and stderr from the script will be given back to callback.
-    # If there is an error, callback will return None.
-    def execute_script(self, script_name, callback, params = [], max_len = 65536):
+    # The stdout and stderr from the script will be given back to result_callback.
+    # If there is an error, result_callback will report None.
+    def execute_script(self, script_name, result_callback, params=None, max_length=65536,
+                       decode_output_as_utf8=True, redirect_stderr_to_stdout=False,
+                       execute_as_user=False):
         if not script_name in self.scripts:
-            if callback is not None:
-                callback(None) # We are still in GUI thread, use callback instead of signal
+            if result_callback != None:
+                result_callback(None) # We are still in GUI thread, use result_callback instead of signal
                 return
 
-        sd = ScriptData()
-        script_data_set.add(sd)
-        sd.script_name = script_name
-        sd.callback = callback
-        sd.params = params
-        sd.max_len = max_len
+        if params == None:
+            params = []
 
-        if callback is not None:
-            sd.script_signal.connect(callback)
+        sd                           = ScriptData()
+        sd.script_name               = script_name
+        sd.result_callback           = result_callback
+        sd.params                    = params
+        sd.max_length                = max_length
+        sd.decode_output_as_utf8     = decode_output_as_utf8
+        sd.redirect_stderr_to_stdout = redirect_stderr_to_stdout
+        sd.execute_as_user           = execute_as_user
+
+        script_data_set.add(sd)
+
+        if sd.result_callback != None:
+            sd.qtcb_result.connect(sd.result_callback)
 
         # We just let all exceptions fall through to here and give up.
         # There is nothing we can do anyway.
         try:
             self._init_script(sd)
+            return sd
         except:
+            print 'ScriptManager.execute_script: _init_script failed'
             traceback.print_exc()
-            if sd.callback is not None:
-                sd.script_signal.disconnect(sd.callback)
+
+            if sd.result_callback != None:
+                sd.qtcb_result.disconnect(sd.result_callback)
+
             self.scripts[sd.script_name].copied = False
-            if sd.callback is not None:
-                sd.callback(None) # We are still in GUI thread, use callback instead of signal
+
+            if sd.result_callback != None:
+                sd.result_callback(None) # We are still in GUI thread, use result_callback instead of signal
+
             script_data_set.remove(sd)
+
+        return None
+
+    def abort_script(self, sd):
+        if sd.abort:
+            return
+
+        sd.abort = True
+
+        if sd.process != None:
+            try:
+                sd.process.kill(REDProcess.SIGNAL_KILL)
+            except:
+                print 'ScriptManager.abort_script: sd.process.kill failed'
+                traceback.print_exc()
 
     def _init_script(self, sd):
         if self.scripts[sd.script_name].copied:
@@ -131,11 +165,16 @@ class ScriptManager:
 
         try:
             script.file = create_object_in_qt_main_thread(REDFile, (self.session,))
-            script.file.open(os.path.join(SCRIPT_FOLDER, sd.script_name + script.file_ending),
+            script.file.open(posixpath.join(SCRIPT_FOLDER, sd.script_name + script.file_ending),
                              REDFile.FLAG_WRITE_ONLY | REDFile.FLAG_CREATE | REDFile.FLAG_NON_BLOCKING | REDFile.FLAG_TRUNCATE, 0755, 0, 0)
             script.file.write_async(script.script, lambda error: self._init_script_async_write_done(error, sd))
         except:
-            self.scripts[sd.script_name].copy_lock.release()
+            try:
+                self.scripts[sd.script_name].copy_lock.release()
+            except:
+                pass
+
+            print 'ScriptManager._init_script_async: copy_lock.release failed'
             traceback.print_exc()
             raise
 
@@ -161,72 +200,139 @@ class ScriptManager:
         ScriptManager._call(self.scripts[sd.script_name], sd, None)
         script_data_set.remove(sd)
 
-    def _execute_after_init(self, sd):
+    def _release_script_data(self, sd):
         try:
-            sd.stdout = REDPipe(self.session).create(REDPipe.FLAG_NON_BLOCKING_READ, 1024*1024)
-            sd.stderr = REDPipe(self.session).create(REDPipe.FLAG_NON_BLOCKING_READ, 1024*1024)
+            sd.process.release()
+            sd.stdout.release()
+
+            if not sd.redirect_stderr_to_stdout:
+                sd.stderr.release()
         except:
+            print 'ScriptManager._release_script_data: release failed'
             traceback.print_exc()
+
+        sd.process = None
+        sd.stdout  = None
+        sd.stderr  = None
+
+    def _execute_after_init(self, sd):
+        if sd.abort:
             ScriptManager._call(self.scripts[sd.script_name], sd, None)
             script_data_set.remove(sd)
             return
 
-        def state_changed(red_process, sd):
+        try:
+            sd.stdout = REDPipe(self.session).create(REDPipe.FLAG_NON_BLOCKING_READ, sd.max_length)
+
+            if sd.redirect_stderr_to_stdout:
+                sd.stderr = sd.stdout
+            else:
+                sd.stderr = REDPipe(self.session).create(REDPipe.FLAG_NON_BLOCKING_READ, sd.max_length)
+        except:
+            print 'ScriptManager._execute_after_init: REDPipe.create failed'
+            traceback.print_exc()
+
+            ScriptManager._call(self.scripts[sd.script_name], sd, None)
+            script_data_set.remove(sd)
+            return
+
+        # NOTE: this function will be called on the UI thread
+        def cb_process_state_changed(sd):
             # TODO: If we want to support returns > 1MB we need to do more work here,
             #       but it may not be necessary.
-            if red_process.state == REDProcess.STATE_ERROR:
-                ScriptManager._call(self.scripts[sd.script_name], sd, None)
-                try:
-                    sd.process.release()
-                    sd.stdout.release()
-                    sd.stderr.release()
-                except:
-                    traceback.print_exc()
-
-                script_data_set.remove(sd)
-            elif red_process.state == REDProcess.STATE_EXITED:
-                def cb_stdout_data(result, sd):
+            if not sd.abort and sd.process.state == REDProcess.STATE_EXITED:
+                def cb_stdout_read(result, sd):
                     if result.error != None:
+                        self._release_script_data(sd)
                         ScriptManager._call(self.scripts[sd.script_name], sd, None)
-
-                        try:
-                            sd.process.release()
-                            sd.stdout.release()
-                            sd.stderr.release()
-                        except:
-                            traceback.print_exc()
-
                         script_data_set.remove(sd)
+                        return
 
-                    out = result.data.decode('utf-8') # NOTE: assuming scripts return UTF-8
+                    if sd.decode_output_as_utf8:
+                        out = result.data.decode('utf-8') # NOTE: assuming scripts return UTF-8
+                    else:
+                        out = result.data
 
-                    def cb_stderr_data(result, sd):
-                        if result.error != None:
-                            ScriptManager._call(self.scripts[sd.script_name], sd, None)
+                    if sd.redirect_stderr_to_stdout:
+                        exit_code = sd.process.exit_code
 
-                        try:
-                            sd.process.release()
-                            sd.stdout.release()
-                            sd.stderr.release()
-                        except:
-                            traceback.print_exc()
-
-
-                        err = result.data.decode('utf-8') # NOTE: assuming scripts return UTF-8
-
-                        ScriptManager._call(self.scripts[sd.script_name], sd, self.ScriptResult(out, err))
+                        self._release_script_data(sd)
+                        ScriptManager._call(self.scripts[sd.script_name], sd, self.ScriptResult(out, None, exit_code))
                         script_data_set.remove(sd)
+                    else:
+                        def cb_stderr_read(result, sd):
+                            if result.error != None:
+                                self._release_script_data(sd)
+                                ScriptManager._call(self.scripts[sd.script_name], sd, None)
+                                script_data_set.remove(sd)
+                                return
 
-                    sd.stderr.read_async(sd.max_len, lambda result: cb_stderr_data(result, sd))
+                            if sd.decode_output_as_utf8:
+                                err = result.data.decode('utf-8') # NOTE: assuming scripts return UTF-8
+                            else:
+                                err = result.data
 
-                sd.stdout.read_async(sd.max_len, lambda result: cb_stdout_data(result, sd))
+                            exit_code = sd.process.exit_code
 
-        sd.process = REDProcess(self.session)
-        sd.process.state_changed_callback = lambda red_process: state_changed(red_process, sd)
+                            self._release_script_data(sd)
+                            ScriptManager._call(self.scripts[sd.script_name], sd, self.ScriptResult(out, err, exit_code))
+                            script_data_set.remove(sd)
+
+                        sd.stderr.read_async(sd.max_length, lambda result: cb_stderr_read(result, sd))
+
+                sd.stdout.read_async(sd.max_length, lambda result: cb_stdout_read(result, sd))
+            else:
+                self._release_script_data(sd)
+                ScriptManager._call(self.scripts[sd.script_name], sd, None)
+                script_data_set.remove(sd)
+
+        sd.process                        = REDProcess(self.session)
+        sd.process.state_changed_callback = lambda x: cb_process_state_changed(sd)
+
+        # FIXME: do incremental reads on the output
+        """
+        # NOTE: this function will be called on the UI thread
+        def cb_stdout_events_occurred(sd):
+            print 'cb_stdout_events_occurred', sd.script_name
+
+        # NOTE: this function will be called on the UI thread
+        def cb_stderr_events_occurred(sd):
+            print 'cb_stderr_events_occurred', sd.script_name
+
+        sd.stdout.events_occurred_callback = lambda x: cb_stdout_events_occurred(sd)
+        sd.stderr.events_occurred_callback = lambda x: cb_stderr_events_occurred(sd)
+
+        try:
+            sd.stdout.set_events(REDFile.EVENT_READABLE)
+        except:
+            print 'ScriptManager._execute_after_init: sd.stdout.set_events failed'
+            traceback.print_exc() # ignore error
+
+        try:
+            sd.stderr.set_events(REDFile.EVENT_READABLE)
+        except:
+            print 'ScriptManager._execute_after_init: sd.stderr.set_events failed'
+            traceback.print_exc() # ignore error
+        """
 
         # need to set LANG otherwise python will not correctly handle non-ASCII filenames
         env = ['LANG=en_US.UTF-8']
 
-        # FIXME: Do we need a timeout here in case that the state_changed callback never comes?
-        sd.process.spawn(os.path.join(SCRIPT_FOLDER, sd.script_name + self.scripts[sd.script_name].file_ending),
-                         sd.params, env, '/', 0, 0, self.devnull, sd.stdout, sd.stderr)
+        if sd.execute_as_user:
+            uid = 1000
+            gid = 1000
+        else:
+            uid = 0
+            gid = 0
+
+        try:
+            # FIXME: Do we need a timeout here in case that the state_changed callback never comes?
+            sd.process.spawn(posixpath.join(SCRIPT_FOLDER, sd.script_name + self.scripts[sd.script_name].file_ending),
+                             sd.params, env, '/', uid, gid, self.devnull, sd.stdout, sd.stderr)
+        except:
+            print 'ScriptManager._execute_after_init: sd.process.spawn failed'
+            traceback.print_exc()
+
+            self._release_script_data(sd)
+            ScriptManager._call(self.scripts[sd.script_name], sd, None)
+            script_data_set.remove(sd)

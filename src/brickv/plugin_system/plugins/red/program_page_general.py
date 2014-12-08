@@ -27,11 +27,12 @@ from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_general import Ui_ProgramPageGeneral
+from brickv.utils import get_main_window
 import re
 
 class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
@@ -42,6 +43,7 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
         self.setSubTitle('Specify name, identifier, programming language and description for the program.')
 
         self.edit_identifier.setValidator(QRegExpValidator(QRegExp('^[a-zA-Z0-9_][a-zA-Z0-9._-]{2,}$'), self))
+        self.combo_language.insertSeparator(Constants.LANGUAGE_SEPARATOR)
 
         self.registerField('name', self.edit_name)
         self.registerField('identifier', self.edit_identifier)
@@ -53,8 +55,8 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
         self.edit_identifier.textChanged.connect(self.check_identifier)
         self.combo_language.currentIndexChanged.connect(self.check_language)
 
-        self.edit_name_checker       = MandatoryLineEditChecker(self, self.edit_name, self.label_name)
-        self.edit_identifier_checker = MandatoryLineEditChecker(self, self.edit_identifier, self.label_identifier)
+        self.edit_name_checker       = MandatoryLineEditChecker(self, self.label_name, self.edit_name)
+        self.edit_identifier_checker = MandatoryLineEditChecker(self, self.label_identifier, self.edit_identifier)
 
         self.check_language(self.combo_language.currentIndex())
 
@@ -65,7 +67,7 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
 
         # if a program exists then this page is used in an edit wizard
         if self.wizard().program != None:
-            program = self.wizard().program
+            program        = self.wizard().program
             self.edit_mode = True
 
             self.setSubTitle('Specify name and description for the program.')
@@ -92,6 +94,7 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
                self.get_field('language').toInt()[0] != Constants.LANGUAGE_INVALID and \
                ProgramPage.isComplete(self)
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         auto_generate = self.check_auto_generate.checkState() == Qt.Checked
 
@@ -132,12 +135,12 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
         self.edit_identifier.setText(unique_identifier)
 
         if unique_identifier in self.wizard().identifiers:
-            QMessageBox.critical(self, 'Identifier Error',
+            QMessageBox.critical(get_main_window(), 'New Program Error',
                                  u'Could not auto-generate unique identifier from program name [{0}] because all tested ones are already in use.'
                                  .format(name))
 
     def check_identifier(self, identifier):
-        identifier = str(identifier) # convert QString to ASCII
+        identifier = unicode(identifier) # convert QString to Unicode
         identifier_was_unique = self.identifier_is_unique
 
         if identifier in self.wizard().identifiers:
@@ -169,7 +172,7 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
         try:
             program.set_custom_option_value('name', name) # FIXME: async_call
         except REDError as e:
-            QMessageBox.critical(self, 'Edit Error',
+            QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update name of program [{0}]:\n\n{1}'
                                  .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
             return
@@ -179,7 +182,7 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
         try:
             program.set_custom_option_value('description', description) # FIXME: async_call
         except REDError as e:
-            QMessageBox.critical(self, 'Edit Error',
+            QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update description of program [{0}]:\n\n{1}'
                                  .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
             return

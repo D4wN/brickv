@@ -42,6 +42,7 @@ from brickv.plugin_system.plugins.red.program_page_python import get_python_vers
 from brickv.plugin_system.plugins.red.program_page_ruby import get_ruby_versions
 from brickv.plugin_system.plugins.red.program_page_shell import get_shell_versions
 from brickv.async_call import async_call
+from brickv.utils import get_main_window
 
 class REDTabProgram(QWidget, Ui_REDTabProgram):
     def __init__(self):
@@ -65,6 +66,7 @@ class REDTabProgram(QWidget, Ui_REDTabProgram):
             'shell':  None
         }
         self.first_tab_on_focus  = True
+        self.tab_is_alive        = True
         self.refresh_in_progress = False
         self.new_program_wizard  = None
 
@@ -81,7 +83,9 @@ class REDTabProgram(QWidget, Ui_REDTabProgram):
         if self.image_version_ref[0] == '<unknown>':
             # FIXME: this is should actually be sync to ensure that the image version is known before it'll be used
             def read_image_version():
-                self.image_version_ref[0] = REDFile(self.session).open('/etc/tf_image_version', REDFile.FLAG_READ_ONLY | REDFile.FLAG_NON_BLOCKING, 0, 0, 0).read(256)
+                self.image_version_ref[0] = REDFile(self.session).open('/etc/tf_image_version',
+                                                                       REDFile.FLAG_READ_ONLY | REDFile.FLAG_NON_BLOCKING,
+                                                                       0, 0, 0).read(256)
 
             async_call(read_image_version, None, None, None)
 
@@ -92,6 +96,18 @@ class REDTabProgram(QWidget, Ui_REDTabProgram):
 
     def tab_off_focus(self):
         pass
+
+    def tab_destroy(self):
+        self.tab_is_alive = False
+
+        if self.new_program_wizard != None:
+            self.new_program_wizard.close()
+
+        for i in range(self.stacked_container.count()):
+            widget = self.stacked_container.widget(i)
+
+            if isinstance(widget, ProgramInfoMain):
+                widget.close_all_dialogs()
 
     def update_ui_state(self):
         if self.refresh_in_progress:
@@ -189,6 +205,14 @@ class REDTabProgram(QWidget, Ui_REDTabProgram):
     def show_new_program_wizard(self):
         self.button_new.setEnabled(False)
 
+        if self.stacked_container.count() > 1:
+            current_widget = self.stacked_container.currentWidget()
+        else:
+            current_widget = None
+
+        if current_widget != None:
+            current_widget.set_program_callbacks_enabled(False)
+
         identifiers = []
 
         for i in range(self.list_programs.count()):
@@ -196,18 +220,19 @@ class REDTabProgram(QWidget, Ui_REDTabProgram):
 
         context = ProgramWizardContext(self.session, identifiers, self.script_manager, self.image_version_ref, self.executable_versions)
 
-        self.new_program_wizard = ProgramWizardNew(context)
-        self.new_program_wizard.finished.connect(self.new_program_wizard_finished)
-        self.new_program_wizard.show()
+        self.new_program_wizard = ProgramWizardNew(self, context)
 
-    def new_program_wizard_finished(self, result):
-        self.new_program_wizard.finished.disconnect(self.new_program_wizard_finished)
-
-        if result == QDialog.Accepted:
+        if self.new_program_wizard.exec_() == QDialog.Accepted:
             self.add_program_to_list(self.new_program_wizard.program)
             self.list_programs.item(self.list_programs.count() - 1).setSelected(True)
 
-        self.button_new.setEnabled(True)
+        if self.tab_is_alive:
+            self.new_program_wizard = None
+
+            if current_widget != None:
+                current_widget.set_program_callbacks_enabled(True)
+
+            self.button_new.setEnabled(True)
 
     def purge_selected_program(self):
         selected_items = self.list_programs.selectedItems()
@@ -218,11 +243,11 @@ class REDTabProgram(QWidget, Ui_REDTabProgram):
         program_info = selected_items[0].data(Qt.UserRole).toPyObject()
         program      = program_info.program
         name         = program.cast_custom_option_value('name', unicode, '<unknown>')
-        button       = QMessageBox.question(self, 'Delete Program',
+        button       = QMessageBox.question(get_main_window(), 'Delete Program',
                                             u'Deleting program [{0}] is irreversible. All files of this program will be deleted.'.format(name),
                                             QMessageBox.Ok, QMessageBox.Cancel)
 
-        if button != QMessageBox.Ok:
+        if not self.tab_is_alive or button != QMessageBox.Ok:
             return
 
         program_info.name_changed.disconnect(self.refresh_program_names)
@@ -230,12 +255,9 @@ class REDTabProgram(QWidget, Ui_REDTabProgram):
         try:
             program.purge() # FIXME: async_call
         except REDError as e:
-            QMessageBox.critical(self, 'Delete Error',
+            QMessageBox.critical(get_main_window(), 'Delete Program Error',
                                  u'Could not delete program [{0}]:\n\n{1}'.format(name, str(e)))
             return
-
-        QMessageBox.information(self, 'Delete Successful',
-                                 u'Program [{0}] successful deleted!'.format(name))
 
         self.stacked_container.removeWidget(program_info)
         self.list_programs.takeItem(self.list_programs.row(selected_items[0]))

@@ -28,13 +28,14 @@ from brickv.plugin_system.plugins.red.program_utils import Constants
 from brickv.plugin_system.plugins.red.ui_program_info_octave import Ui_ProgramInfoOctave
 
 class ProgramInfoOctave(ProgramInfo, Ui_ProgramInfoOctave):
-    def __init__(self, context, *args, **kwargs):
-        ProgramInfo.__init__(self, context, *args, **kwargs)
+    def __init__(self, context):
+        ProgramInfo.__init__(self, context)
 
         self.setupUi(self)
 
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
 
+    # overrides ProgramInfo.update_ui_state
     def update_ui_state(self):
         show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
 
@@ -57,13 +58,11 @@ class ProgramInfoOctave(ProgramInfo, Ui_ProgramInfoOctave):
         self.get_executable_versions('octave', cb_octave_versions)
 
         # start mode
-        start_mode_api_name = self.program.cast_custom_option_value('octave.start_mode', unicode, '<unknown>')
-        start_mode          = Constants.get_octave_start_mode(start_mode_api_name)
-
-        self.label_start_mode.setText(Constants.octave_start_mode_display_names[start_mode])
-
+        start_mode_api_name    = self.program.cast_custom_option_value('octave.start_mode', unicode, '<unknown>')
+        start_mode             = Constants.get_octave_start_mode(start_mode_api_name)
         start_mode_script_file = start_mode == Constants.OCTAVE_START_MODE_SCRIPT_FILE
 
+        self.label_start_mode.setText(Constants.octave_start_mode_display_names[start_mode])
         self.label_script_file_title.setVisible(start_mode_script_file)
         self.label_script_file.setVisible(start_mode_script_file)
 

@@ -21,11 +21,10 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import pyqtProperty
-
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_c import Ui_ProgramPageC
+import posixpath
 
 def get_gcc_versions(script_manager, callback):
     def cb_versions(result):
@@ -48,33 +47,42 @@ def get_gcc_versions(script_manager, callback):
 
 
 class ProgramPageC(ProgramPage, Ui_ProgramPageC):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
-        self.language = Constants.LANGUAGE_C
+        self.language                               = Constants.LANGUAGE_C
+        self.edit_mode                              = False
+        self.compile_from_source_help_new_template  = unicode(self.label_compile_from_source_help_new.text())
+        self.compile_from_source_help_edit_template = unicode(self.label_compile_from_source_help_edit.text())
 
         self.setTitle('{0}{1} Configuration'.format(title_prefix, Constants.language_display_names[self.language]))
 
         self.registerField('c.start_mode', self.combo_start_mode)
-        self.registerField('c.executable', self.combo_executable, 'currentText')
+        self.registerField('c.executable', self.edit_executable)
+        self.registerField('c.compile_from_source', self.check_compile_from_source)
         self.registerField('c.working_directory', self.combo_working_directory, 'currentText')
-        self.registerField('c.make_options', self, 'get_make_options')
 
         self.combo_start_mode.currentIndexChanged.connect(self.update_ui_state)
-        self.combo_start_mode.currentIndexChanged.connect(lambda: self.completeChanged.emit())
+        self.combo_start_mode.currentIndexChanged.connect(self.completeChanged.emit)
+        self.check_compile_from_source.stateChanged.connect(self.update_ui_state)
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
+        self.label_spacer.setText('')
 
-        self.combo_executable_checker         = MandatoryEditableComboBoxChecker(self, self.combo_executable, self.label_executable)
-        self.combo_working_directory_selector = MandatoryDirectorySelector(self, self.combo_working_directory, self.label_working_directory)
-        self.option_list_editor               = ListWidgetEditor(self.label_options,
-                                                                 self.list_options,
-                                                                 self.label_options_help,
-                                                                 self.button_add_option,
-                                                                 self.button_remove_option,
-                                                                 self.button_up_option,
-                                                                 self.button_down_option,
+        self.edit_executable_checker          = MandatoryLineEditChecker(self,
+                                                                         self.label_executable,
+                                                                         self.edit_executable)
+        self.combo_working_directory_selector = MandatoryDirectorySelector(self,
+                                                                           self.label_working_directory,
+                                                                           self.combo_working_directory)
+        self.make_option_list_editor          = ListWidgetEditor(self.label_make_options,
+                                                                 self.list_make_options,
+                                                                 self.label_make_options_help,
+                                                                 self.button_add_make_option,
+                                                                 self.button_remove_make_option,
+                                                                 self.button_up_make_option,
+                                                                 self.button_down_make_option,
                                                                  '<new Make option {0}>')
 
     # overrides QWizardPage.initializePage
@@ -92,62 +100,119 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
             else:
                 gpp = '<b>{0}</b>'.format(versions[1].executable)
 
-            self.label_compiler_available.setText('Available are {0} and {1}'.format(gcc, gpp))
+            self.label_compile_from_source_help_new.setText(self.compile_from_source_help_new_template.replace('<GCC>', gcc).replace('<G++>', gpp))
+            self.label_compile_from_source_help_edit.setText(self.compile_from_source_help_edit_template.replace('<GCC>', gcc).replace('<G++>', gpp))
 
         self.get_executable_versions('gcc', cb_gcc_versions)
 
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_C_START_MODE)
-        self.combo_executable.clear()
+        self.check_compile_from_source.setCheckState(Qt.Unchecked)
         self.check_show_advanced_options.setCheckState(Qt.Unchecked)
         self.combo_working_directory_selector.reset()
-        self.option_list_editor.reset()
+        self.make_option_list_editor.reset()
 
         # if a program exists then this page is used in an edit wizard
         if self.wizard().program != None:
-            program = self.wizard().program
+            program        = self.wizard().program
+            self.edit_mode = True
 
+            # start mode
+            start_mode_api_name = program.cast_custom_option_value('c.start_mode', unicode, '<unknown>')
+            start_mode          = Constants.get_c_start_mode(start_mode_api_name)
+
+            self.combo_start_mode.setCurrentIndex(start_mode)
+
+            # executable
+            self.edit_executable.setText(program.cast_custom_option_value('c.executable', unicode, ''))
+
+            # compile from source
+            if program.cast_custom_option_value('c.compile_from_source', bool, False):
+                self.check_compile_from_source.setCheckState(Qt.Checked)
+            else:
+                self.check_compile_from_source.setCheckState(Qt.Unchecked)
+
+            # working directory
             self.combo_working_directory_selector.set_current_text(unicode(program.working_directory))
+
+            # make options
+            self.make_option_list_editor.clear()
+
+            for make_option in program.cast_custom_option_value_list('c.make_options', unicode, []):
+                self.make_option_list_editor.add_item(make_option)
 
         self.update_ui_state()
 
     # overrides QWizardPage.isComplete
     def isComplete(self):
-        if not self.combo_executable_checker.complete:
+        if not self.edit_executable_checker.complete:
             return False
 
         return self.combo_working_directory_selector.complete and ProgramPage.isComplete(self)
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         start_mode            = self.get_field('c.start_mode').toInt()[0]
         start_mode_executable = start_mode == Constants.C_START_MODE_EXECUTABLE
-        start_mode_make       = start_mode == Constants.C_START_MODE_MAKE
+        compile_from_source   = self.check_compile_from_source.checkState() == Qt.Checked
         show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
 
-        self.label_compiler.setVisible(start_mode_make)
-        self.label_compiler_available.setVisible(start_mode_make)
-        self.label_start_executable_help.setVisible(start_mode_executable)
-        self.label_start_make_help.setVisible(start_mode_make)
+        self.edit_executable.setVisible(start_mode_executable)
         self.label_executable_help.setVisible(start_mode_executable)
-        self.label_executable_make_help.setVisible(start_mode_make)
+        self.line1.setVisible(start_mode_executable)
+        self.check_compile_from_source.setVisible(start_mode_executable)
+        self.label_compile_from_source_help_new.setVisible(start_mode_executable and not self.edit_mode)
+        self.label_compile_from_source_help_edit.setVisible(start_mode_executable and self.edit_mode)
         self.combo_working_directory_selector.set_visible(show_advanced_options)
-        self.option_list_editor.set_visible(show_advanced_options and start_mode_make)
+        self.make_option_list_editor.set_visible(compile_from_source and show_advanced_options)
+        self.label_spacer.setVisible(not compile_from_source or not show_advanced_options)
 
-        self.option_list_editor.update_ui_state()
+        self.make_option_list_editor.update_ui_state()
 
-    @pyqtProperty(str)
     def get_make_options(self):
-        return ' '.join(self.option_list_editor.get_items())
+        return self.make_option_list_editor.get_items()
+
+    def get_html_summary(self):
+        start_mode          = self.get_field('c.start_mode').toInt()[0]
+        executable          = self.get_field('c.executable').toString()
+        compile_from_source = self.get_field('c.compile_from_source').toBool()
+        working_directory   = self.get_field('c.working_directory').toString()
+        make_options        = ' '.join(self.make_option_list_editor.get_items())
+
+        html = u'Start Mode: {0}<br/>'.format(Qt.escape(Constants.c_start_mode_display_names[start_mode]))
+
+        if start_mode == Constants.C_START_MODE_EXECUTABLE:
+            html += u'Executable: {0}<br/>'.format(Qt.escape(executable))
+
+        if compile_from_source:
+            html += u'Compile From Source: Enabled<br/>'
+        else:
+            html += u'Compile From Source: Disabled<br/>'
+
+        html += u'Working Directory: {0}<br/>'.format(Qt.escape(working_directory))
+
+        if compile_from_source:
+            html += u'Make Options: {0}<br/>'.format(Qt.escape(make_options))
+
+        return html
 
     def get_custom_options(self):
-        return {}
+        return {
+            'c.start_mode':          Constants.c_start_mode_api_names[self.get_field('c.start_mode').toInt()[0]],
+            'c.executable':          unicode(self.get_field('c.executable').toString()),
+            'c.compile_from_source': self.get_field('c.compile_from_source').toBool(),
+            'c.make_options':        self.make_option_list_editor.get_items()
+        }
 
     def get_command(self):
         executable        = unicode(self.get_field('c.executable').toString())
-        arguments         = self.option_list_editor.get_items()
+        arguments         = []
         environment       = []
         working_directory = unicode(self.get_field('c.working_directory').toString())
 
         if not executable.startswith('/'):
-            executable = os.path.join('./', executable)
+            executable = posixpath.join('./', executable)
 
         return executable, arguments, environment, working_directory
+
+    def apply_program_changes(self):
+        self.apply_program_custom_options_and_command_changes()

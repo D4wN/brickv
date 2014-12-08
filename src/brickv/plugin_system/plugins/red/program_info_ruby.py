@@ -28,13 +28,14 @@ from brickv.plugin_system.plugins.red.program_utils import Constants
 from brickv.plugin_system.plugins.red.ui_program_info_ruby import Ui_ProgramInfoRuby
 
 class ProgramInfoRuby(ProgramInfo, Ui_ProgramInfoRuby):
-    def __init__(self, context, *args, **kwargs):
-        ProgramInfo.__init__(self, context, *args, **kwargs)
+    def __init__(self, context):
+        ProgramInfo.__init__(self, context)
 
         self.setupUi(self)
 
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
 
+    # overrides ProgramInfo.update_ui_state
     def update_ui_state(self):
         show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
 
@@ -57,14 +58,12 @@ class ProgramInfoRuby(ProgramInfo, Ui_ProgramInfoRuby):
         self.get_executable_versions('ruby', cb_ruby_versions)
 
         # start mode
-        start_mode_api_name = self.program.cast_custom_option_value('ruby.start_mode', unicode, '<unknown>')
-        start_mode          = Constants.get_ruby_start_mode(start_mode_api_name)
-
-        self.label_start_mode.setText(Constants.ruby_start_mode_display_names[start_mode])
-
+        start_mode_api_name    = self.program.cast_custom_option_value('ruby.start_mode', unicode, '<unknown>')
+        start_mode             = Constants.get_ruby_start_mode(start_mode_api_name)
         start_mode_script_file = start_mode == Constants.RUBY_START_MODE_SCRIPT_FILE
         start_mode_command     = start_mode == Constants.RUBY_START_MODE_COMMAND
 
+        self.label_start_mode.setText(Constants.ruby_start_mode_display_names[start_mode])
         self.label_script_file_title.setVisible(start_mode_script_file)
         self.label_script_file.setVisible(start_mode_script_file)
         self.label_command_title.setVisible(start_mode_command)

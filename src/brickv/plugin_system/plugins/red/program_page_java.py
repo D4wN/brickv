@@ -27,7 +27,8 @@ from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_java import Ui_ProgramPageJava
 from brickv.plugin_system.plugins.red.javatools.jarinfo import JarInfo
 from brickv.plugin_system.plugins.red.javatools import unpack_class
-import os
+from brickv.async_call import async_call
+import posixpath
 
 def get_java_versions(script_manager, callback):
     def cb_versions(result):
@@ -45,7 +46,7 @@ def get_java_versions(script_manager, callback):
     script_manager.execute_script('java_versions', cb_versions)
 
 
-def get_classes_from_class_or_jar(uploads):
+def get_main_classes_from_class_or_jar(uploads):
     MAIN_ENDING = '.main(java.lang.String[]):void'
 
     def parse_jar(f):
@@ -82,8 +83,8 @@ def get_classes_from_class_or_jar(uploads):
 
 
 class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
@@ -98,12 +99,14 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         self.registerField('java.working_directory', self.combo_working_directory, 'currentText')
 
         self.combo_start_mode.currentIndexChanged.connect(self.update_ui_state)
-        self.combo_start_mode.currentIndexChanged.connect(lambda: self.completeChanged.emit())
+        self.combo_start_mode.currentIndexChanged.connect(self.completeChanged.emit)
+        self.check_show_class_path.stateChanged.connect(self.update_ui_state)
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
+        self.label_spacer.setText('')
 
         self.combo_main_class_checker         = MandatoryEditableComboBoxChecker(self,
-                                                                                 self.combo_main_class,
-                                                                                 self.label_main_class)
+                                                                                 self.label_main_class,
+                                                                                 self.combo_main_class)
         self.combo_jar_file_selector          = MandatoryTypedFileSelector(self,
                                                                            self.label_jar_file,
                                                                            self.combo_jar_file,
@@ -111,8 +114,8 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
                                                                            self.combo_jar_file_type,
                                                                            self.label_jar_file_help)
         self.combo_working_directory_selector = MandatoryDirectorySelector(self,
-                                                                           self.combo_working_directory,
-                                                                           self.label_working_directory)
+                                                                           self.label_working_directory,
+                                                                           self.combo_working_directory)
         # FIXME: allow adding class path entries using a combo box prefilled with avialable .jar files
         self.class_path_list_editor           = ListWidgetEditor(self.label_class_path,
                                                                  self.list_class_path,
@@ -140,33 +143,104 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_JAVA_START_MODE)
         self.combo_jar_file_selector.reset()
         self.class_path_list_editor.reset()
+        self.check_show_class_path.setCheckState(Qt.Unchecked)
         self.check_show_advanced_options.setCheckState(Qt.Unchecked)
         self.combo_working_directory_selector.reset()
         self.option_list_editor.reset()
 
-        identifier = str(self.get_field('identifier').toString())
-        root_dir = os.path.join('/', 'home', 'tf', 'programs', identifier, 'bin')
-        for f in sorted(self.wizard().available_files):
-            if f.endswith('.jar'):
-                self.class_path_list_editor.add_item(os.path.join(root_dir, f))
+        program = self.wizard().program
+
+        # if a program exists then this page is used in an edit wizard
+        if program != None:
+            bin_directory = posixpath.join(unicode(program.root_directory), 'bin')
+        else:
+            identifier    = unicode(self.get_field('identifier').toString())
+            bin_directory = posixpath.join('/', 'home', 'tf', 'programs', identifier, 'bin')
+
+        jar_filenames = []
+
+        for filename in sorted(self.wizard().available_files):
+            if filename.endswith('.jar'):
+                jar_filenames.append(posixpath.join(bin_directory, filename))
+
+        if program == None:
+            for jar_filename in jar_filenames:
+                self.class_path_list_editor.add_item(jar_filename)
+
+        self.class_path_list_editor.set_add_menu_items(['/usr/tinkerforge/bindings/java/Tinkerforge.jar'] + jar_filenames,
+                                                       '<new class path entry>')
 
         self.combo_main_class.clear()
         self.combo_main_class.clearEditText()
 
         # FIXME: make this work in edit mode
-        # FIXME: make get_classes_from_class_or_jar async
         if self.wizard().hasVisitedPage(Constants.PAGE_FILES):
-            for cls in sorted(get_classes_from_class_or_jar(self.wizard().page(Constants.PAGE_FILES).get_uploads())):
-                self.combo_main_class.addItem(cls)
+            uploads = self.wizard().page(Constants.PAGE_FILES).get_uploads()
 
-        if self.combo_main_class.count() > 1:
-            self.combo_main_class.clearEditText()
+            if len(uploads) > 0:
+                progress = ExpandingProgressDialog(self)
+                progress.hide_progress_text()
+                progress.setWindowTitle('New Program')
+                progress.setLabelText('Collecting Java main classes')
+                progress.setModal(True)
+                progress.setRange(0, 0)
+                progress.setCancelButton(None) # FIXME: make this cancelable
+                progress.show()
+
+                def cb_main_classes(main_classes):
+                    for main_class in main_classes:
+                        self.combo_main_class.addItem(main_class)
+
+                    if self.combo_main_class.count() > 1:
+                        self.combo_main_class.clearEditText()
+
+                    progress.cancel()
+
+                    self.combo_main_class.setEnabled(True)
+                    self.completeChanged.emit()
+
+                def cb_main_classes_error():
+                    progress.cancel()
+
+                    self.combo_main_class.clearEditText()
+                    self.combo_main_class.setEnabled(True)
+                    self.completeChanged.emit()
+
+                def get_main_classes_async(uploads):
+                    return sorted(get_main_classes_from_class_or_jar(uploads))
+
+                self.combo_main_class.setEnabled(False)
+
+                async_call(get_main_classes_async, uploads, cb_main_classes, cb_main_classes_error)
 
         # if a program exists then this page is used in an edit wizard
-        if self.wizard().program != None:
-            program = self.wizard().program
+        if program != None:
+            # start mode
+            start_mode_api_name = program.cast_custom_option_value('java.start_mode', unicode, '<unknown>')
+            start_mode          = Constants.get_java_start_mode(start_mode_api_name)
 
+            self.combo_start_mode.setCurrentIndex(start_mode)
+
+            # main class
+            self.combo_main_class_checker.set_current_text(program.cast_custom_option_value('java.main_class', unicode, ''))
+
+            # jar file
+            self.combo_jar_file_selector.set_current_text(program.cast_custom_option_value('java.jar_file', unicode, ''))
+
+            # class path
+            self.class_path_list_editor.clear()
+
+            for class_path_entry in program.cast_custom_option_value_list('java.class_path', unicode, []):
+                self.class_path_list_editor.add_item(class_path_entry)
+
+            # working directory
             self.combo_working_directory_selector.set_current_text(unicode(program.working_directory))
+
+            # options
+            self.option_list_editor.clear()
+
+            for option in program.cast_custom_option_value_list('java.options', unicode, []):
+                self.option_list_editor.add_item(option)
 
         self.update_ui_state()
 
@@ -188,18 +262,22 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
 
         return self.combo_working_directory_selector.complete and ProgramPage.isComplete(self)
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         start_mode            = self.get_field('java.start_mode').toInt()[0]
         start_mode_main_class = start_mode == Constants.JAVA_START_MODE_MAIN_CLASS
         start_mode_jar_file   = start_mode == Constants.JAVA_START_MODE_JAR_FILE
+        show_class_path       = self.check_show_class_path.checkState() == Qt.Checked
         show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
 
         self.label_main_class.setVisible(start_mode_main_class)
         self.combo_main_class.setVisible(start_mode_main_class)
         self.label_main_class_help.setVisible(start_mode_main_class)
         self.combo_jar_file_selector.set_visible(start_mode_jar_file)
+        self.class_path_list_editor.set_visible(show_class_path)
         self.combo_working_directory_selector.set_visible(show_advanced_options)
         self.option_list_editor.set_visible(show_advanced_options)
+        self.label_spacer.setVisible(not show_class_path and not show_advanced_options)
 
         self.class_path_list_editor.update_ui_state()
         self.option_list_editor.update_ui_state()
@@ -207,8 +285,17 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
     def get_executable(self):
         return unicode(self.combo_version.itemData(self.get_field('java.version').toInt()[0]).toString())
 
+    def get_html_summary(self):
+        return 'FIXME<br/>'
+
     def get_custom_options(self):
-        return {}
+        return {
+            'java.start_mode': Constants.java_start_mode_api_names[self.get_field('java.start_mode').toInt()[0]],
+            'java.main_class': unicode(self.get_field('java.main_class').toString()),
+            'java.jar_file':   unicode(self.get_field('java.jar_file').toString()),
+            'java.class_path': self.class_path_list_editor.get_items(),
+            'java.options':    self.option_list_editor.get_items()
+        }
 
     def get_command(self):
         executable         = self.get_executable()
@@ -229,3 +316,6 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         working_directory = unicode(self.get_field('java.working_directory').toString())
 
         return executable, arguments, environment, working_directory
+
+    def apply_program_changes(self):
+        self.apply_program_custom_options_and_command_changes()

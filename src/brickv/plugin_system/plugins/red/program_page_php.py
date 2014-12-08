@@ -2,6 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_php.py: Program Wizard PHP Page
 
@@ -43,12 +44,13 @@ def get_php_versions(script_manager, callback):
 
 
 class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
-        self.language = Constants.LANGUAGE_PHP
+        self.language     = Constants.LANGUAGE_PHP
+        self.url_template = unicode(self.label_url.text())
 
         self.setTitle('{0}{1} Configuration'.format(title_prefix, Constants.language_display_names[self.language]))
 
@@ -59,8 +61,9 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
         self.registerField('php.working_directory', self.combo_working_directory, 'currentText')
 
         self.combo_start_mode.currentIndexChanged.connect(self.update_ui_state)
-        self.combo_start_mode.currentIndexChanged.connect(lambda: self.completeChanged.emit())
+        self.combo_start_mode.currentIndexChanged.connect(self.completeChanged.emit)
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
+        self.label_spacer.setText('')
 
         self.combo_script_file_selector       = MandatoryTypedFileSelector(self,
                                                                            self.label_script_file,
@@ -69,11 +72,11 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
                                                                            self.combo_script_file_type,
                                                                            self.label_script_file_help)
         self.edit_command_checker             = MandatoryLineEditChecker(self,
-                                                                         self.edit_command,
-                                                                         self.label_command)
+                                                                         self.label_command,
+                                                                         self.edit_command)
         self.combo_working_directory_selector = MandatoryDirectorySelector(self,
-                                                                           self.combo_working_directory,
-                                                                           self.label_working_directory)
+                                                                           self.label_working_directory,
+                                                                           self.combo_working_directory)
         self.option_list_editor               = ListWidgetEditor(self.label_options,
                                                                  self.list_options,
                                                                  self.label_options_help,
@@ -91,14 +94,15 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
 
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_PHP_START_MODE)
         self.combo_script_file_selector.reset()
+        self.label_url.setText(self.url_template.replace('<SERVER>', 'red-brick').replace('<IDENTIFIER>', self.get_field('identifier').toString()))
         self.check_show_advanced_options.setCheckState(Qt.Unchecked)
         self.combo_working_directory_selector.reset()
         self.option_list_editor.reset()
 
         # if a program exists then this page is used in an edit wizard
-        if self.wizard().program != None:
-            program = self.wizard().program
+        program = self.wizard().program
 
+        if program != None:
             # start mode
             start_mode_api_name = program.cast_custom_option_value('php.start_mode', unicode, '<unknown>')
             start_mode          = Constants.get_php_start_mode(start_mode_api_name)
@@ -127,6 +131,10 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
         executable = self.get_executable()
         start_mode = self.get_field('php.start_mode').toInt()[0]
 
+        # In web interface mode there is nothing to configure at all
+        if start_mode == Constants.PYTHON_START_MODE_WEB_INTERFACE:
+            return ProgramPage.isComplete(self)
+
         if len(executable) == 0:
             return False
 
@@ -140,23 +148,57 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
 
         return self.combo_working_directory_selector.complete and ProgramPage.isComplete(self)
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        start_mode             = self.get_field('php.start_mode').toInt()[0]
-        start_mode_script_file = start_mode == Constants.PHP_START_MODE_SCRIPT_FILE
-        start_mode_command     = start_mode == Constants.PHP_START_MODE_COMMAND
-        show_advanced_options  = self.check_show_advanced_options.checkState() == Qt.Checked
+        start_mode               = self.get_field('php.start_mode').toInt()[0]
+        start_mode_script_file   = start_mode == Constants.PHP_START_MODE_SCRIPT_FILE
+        start_mode_command       = start_mode == Constants.PHP_START_MODE_COMMAND
+        start_mode_web_interface = start_mode == Constants.PHP_START_MODE_WEB_INTERFACE
+        show_advanced_options    = self.check_show_advanced_options.checkState() == Qt.Checked
 
+        self.combo_version.setVisible(not start_mode_web_interface)
+        self.label_version.setVisible(not start_mode_web_interface)
         self.combo_script_file_selector.set_visible(start_mode_script_file)
         self.label_command.setVisible(start_mode_command)
         self.edit_command.setVisible(start_mode_command)
         self.label_command_help.setVisible(start_mode_command)
-        self.combo_working_directory_selector.set_visible(show_advanced_options)
-        self.option_list_editor.set_visible(show_advanced_options)
+        self.label_web_interface_help.setVisible(start_mode_web_interface)
+        self.label_url_title.setVisible(start_mode_web_interface)
+        self.label_url.setVisible(start_mode_web_interface)
+        self.line.setVisible(not start_mode_web_interface)
+        self.check_show_advanced_options.setVisible(not start_mode_web_interface)
+        self.combo_working_directory_selector.set_visible(not start_mode_web_interface and show_advanced_options)
+        self.option_list_editor.set_visible(not start_mode_web_interface and show_advanced_options)
+        self.label_spacer.setVisible(start_mode_web_interface or not show_advanced_options)
 
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
         return unicode(self.combo_version.itemData(self.get_field('php.version').toInt()[0]).toString())
+
+    def get_html_summary(self):
+        version           = self.get_field('php.version').toInt()[0]
+        start_mode        = self.get_field('php.start_mode').toInt()[0]
+        script_file       = self.get_field('php.script_file').toString()
+        command           = self.get_field('php.command').toString()
+        working_directory = self.get_field('php.working_directory').toString()
+        options           = ' '.join(self.option_list_editor.get_items())
+
+        if start_mode == Constants.PHP_START_MODE_WEB_INTERFACE:
+            html = u'Start Mode: {0}<br/>'.format(Qt.escape(Constants.php_start_mode_display_names[start_mode]))
+        else:
+            html  = u'PHP Version: {0}<br/>'.format(Qt.escape(self.combo_version.itemText(version)))
+            html += u'Start Mode: {0}<br/>'.format(Qt.escape(Constants.php_start_mode_display_names[start_mode]))
+
+            if start_mode == Constants.PHP_START_MODE_SCRIPT_FILE:
+                html += u'Script File: {0}<br/>'.format(Qt.escape(script_file))
+            elif start_mode == Constants.PHP_START_MODE_COMMAND:
+                html += u'Command: {0}<br/>'.format(Qt.escape(command))
+
+            html += u'Working Directory: {0}<br/>'.format(Qt.escape(working_directory))
+            html += u'PHP Options: {0}<br/>'.format(Qt.escape(options))
+
+        return html
 
     def get_custom_options(self):
         return {
@@ -167,10 +209,14 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
         }
 
     def get_command(self):
+        start_mode = self.get_field('php.start_mode').toInt()[0]
+
+        if start_mode == Constants.PHP_START_MODE_WEB_INTERFACE:
+            return None
+
         executable  = self.get_executable()
         arguments   = self.option_list_editor.get_items()
         environment = []
-        start_mode  = self.get_field('php.start_mode').toInt()[0]
 
         if start_mode == Constants.PHP_START_MODE_SCRIPT_FILE:
             arguments.append(unicode(self.get_field('php.script_file').toString()))

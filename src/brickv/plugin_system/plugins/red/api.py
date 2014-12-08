@@ -112,63 +112,56 @@ class REDError(Exception):
     def error_code(self): return self._error_code
 
 
-class WeakMethod:
+class MethodRef:
     def __init__(self, method):
-        self.target_ref = weakref.ref(method.__self__)
-        self.method_ref = weakref.ref(method.__func__)
+        self.target_ref   = weakref.ref(method.__self__)
+        self.function_ref = weakref.ref(method.__func__)
 
-    def __call__(self, *args, **kwargs):
-        target = self.target_ref()
-        method = self.method_ref()
-
-        if target == None or method == None:
-            return None
-        else:
-            return method(target, *args, **kwargs)
-
-    def alive(self):
-        return self.target_ref() != None and self.method_ref() != None
+    def get(self):
+        return self.target_ref(), self.function_ref()
 
 
 class REDBrick(BrickRED):
     def __init__(self, *args):
         BrickRED.__init__(self, *args)
 
-        self._active_callbacks = {}
+        self._active_callbacks      = {}
         self._active_callbacks_lock = threading.Lock()
-        self._next_cookie = 1
+        self._next_cookie           = 1
 
     def _dispatch_callback(self, callback_id, *args, **kwargs):
         active_callbacks = self._active_callbacks[callback_id]
-        dead_callbacks = []
+        dead_callbacks   = []
 
         for cookie in list(active_callbacks.keys()):
             try:
-                callback_function = active_callbacks[cookie]
+                callback_target, callback_function = active_callbacks[cookie].get()
             except KeyError:
                 continue
 
-            if callback_function.alive():
+            if callback_target != None and callback_function != None:
                 try:
-                    callback_function(*args, **kwargs)
+                    callback_function(callback_target, *args, **kwargs)
                 except:
+                    print 'REDBrick._dispatch_callback: callback_function failed'
                     traceback.print_exc()
             else:
                 dead_callbacks.append(cookie)
 
-        with self._active_callbacks_lock:
-            for cookie in dead_callbacks:
-                del active_callbacks[cookie]
+        if len(dead_callbacks) > 0:
+            with self._active_callbacks_lock:
+                for cookie in dead_callbacks:
+                    del active_callbacks[cookie]
 
     def add_callback(self, callback_id, callback_function):
         with self._active_callbacks_lock:
-            cookie = self._next_cookie
+            cookie             = self._next_cookie
             self._next_cookie += 1
 
             if callback_id in self._active_callbacks:
-                self._active_callbacks[callback_id][cookie] = WeakMethod(callback_function)
+                self._active_callbacks[callback_id][cookie] = MethodRef(callback_function)
             else:
-                self._active_callbacks[callback_id] = {cookie: WeakMethod(callback_function)}
+                self._active_callbacks[callback_id] = {cookie: MethodRef(callback_function)}
 
                 self.register_callback(callback_id, functools.partial(self._dispatch_callback, callback_id))
 
@@ -190,19 +183,15 @@ class REDBrick(BrickRED):
 
 
 class REDSession(QtCore.QObject):
-    KEEP_ALIVE_INTERVAL = 10 # seconds
-    LIFETIME = int(KEEP_ALIVE_INTERVAL * 3.5)
+    KEEP_ALIVE_INTERVAL = 5 # seconds
+    LIFETIME            = 60 # seconds
 
     def __init__(self, brick):
         QtCore.QObject.__init__(self)
 
-        self._brick = brick
-        self._session_id = None
-
-        # FIXME: use a thread here to avoid depending on the main UI thread
-        # which might be blocked for a while by something
-        self._keep_alive_timer = QtCore.QTimer(self)
-        self._keep_alive_timer.timeout.connect(self._keep_session_alive, QtCore.Qt.QueuedConnection)
+        self._brick            = brick
+        self._session_id       = None
+        self._keep_alive_timer = None
 
     def __del__(self):
         self.expire()
@@ -211,11 +200,24 @@ class REDSession(QtCore.QObject):
         return '<REDSession session_id: {0}>'.format(self._session_id)
 
     def _keep_session_alive(self):
+        if self._session_id == None:
+            # session is expired, don't keep it alive anymore longer
+            return
+
         try:
             error_code = self._brick.keep_session_alive(self._session_id, REDSession.LIFETIME)
         except:
             # FIXME: error handling
+            print 'REDSession._keep_session_alive: keep_session_alive failed'
             traceback.print_exc()
+
+        if self._session_id == None:
+            # session got expired during the keep-alive call, don't keep it alive any longer
+            return
+
+        self._keep_alive_timer = threading.Timer(REDSession.KEEP_ALIVE_INTERVAL,
+                                                 self._keep_session_alive)
+        self._keep_alive_timer.start()
 
     def create(self):
         self.expire()
@@ -227,28 +229,32 @@ class REDSession(QtCore.QObject):
 
         self._session_id = session_id
 
-        self._keep_alive_timer.start(REDSession.KEEP_ALIVE_INTERVAL * 1000)
+        self._keep_alive_timer = threading.Timer(REDSession.KEEP_ALIVE_INTERVAL,
+                                                 self._keep_session_alive)
+        self._keep_alive_timer.start()
 
         return self
 
     # don't call this method with async_call, this is already non-blocking
     def expire(self):
-        if self._session_id is None:
+        if self._session_id == None:
             # expiring an unattached session is allowed and does nothing
             return
 
-        self._keep_alive_timer.stop()
+        if self._keep_alive_timer != None:
+            self._keep_alive_timer.cancel()
 
         # ensure to remove references to REDObject via their added callback methods
         self._brick.remove_all_callbacks()
 
-        session_id = self._session_id
+        session_id       = self._session_id
         self._session_id = None
 
         try:
             self._brick.expire_session_unchecked(session_id)
         except:
             # ignoring IPConnection-level error
+            print 'REDSession.expire: expire_session_unchecked failed'
             traceback.print_exc()
 
     @property
@@ -264,6 +270,7 @@ def _attach_or_release(session, object_class, object_id, extra_object_ids_to_rel
             session._brick.release_object_unchecked(object_id, session._session_id)
         except:
             # ignoring IPConnection-level error
+            print '_attach_or_release: first release_object_unchecked failed'
             traceback.print_exc()
 
         for extra_object_id in extra_object_ids_to_release_on_error:
@@ -271,6 +278,7 @@ def _attach_or_release(session, object_class, object_id, extra_object_ids_to_rel
                 session._brick.release_object_unchecked(extra_object_id, session._session_id)
             except:
                 # ignoring IPConnection-level error
+                print '_attach_or_release: second release_object_unchecked failed'
                 traceback.print_exc()
 
         raise # just re-raise the original exception
@@ -295,6 +303,7 @@ class REDObjectReleaser:
                 self._session._brick.release_object_unchecked(self._object_id, self._session._session_id)
             except:
                 # ignoring IPConnection-level error
+                print 'REDObjectReleaser.release: release_object_unchecked failed'
                 traceback.print_exc()
 
 
@@ -375,6 +384,7 @@ class REDObject(QtCore.QObject):
                 self._session._brick.release_object_unchecked(object_id, self._session._session_id)
             except:
                 # ignoring IPConnection-level error
+                print 'REDObject.release: release_object_unchecked failed'
                 traceback.print_exc()
 
     @property
@@ -541,36 +551,41 @@ def _get_zero_padded_chunk(data, max_chunk_length, start = 0):
 
 class REDFileBase(REDObject):
     class WriteAsyncData(QtCore.QObject):
-        signal_status = QtCore.pyqtSignal(int, int)
-        signal_error  = QtCore.pyqtSignal(object)
+        _qtcb_result = QtCore.pyqtSignal(object)
+        _qtcb_status = QtCore.pyqtSignal(int, int)
 
-        def __init__(self, data, length, callback_status, callback_error):
+        def __init__(self, data, result_callback, status_callback):
             QtCore.QObject.__init__(self)
 
             self.data    = data
-            self.length  = length
+            self.length  = len(data)
             self.written = 0
+            self.abort   = False
 
-            if callback_error is not None:
-                self.signal_error.connect(callback_error, QtCore.Qt.QueuedConnection)
-            if callback_status is not None:
-                self.signal_status.connect(callback_status, QtCore.Qt.QueuedConnection)
+            if result_callback != None:
+                self._qtcb_result.connect(result_callback, QtCore.Qt.QueuedConnection)
+
+            if status_callback != None:
+                self._qtcb_status.connect(status_callback, QtCore.Qt.QueuedConnection)
 
     class ReadAsyncData(QtCore.QObject):
-        signal_status = QtCore.pyqtSignal(int, int)
-        signal        = QtCore.pyqtSignal(object)
+        _qtcb_result = QtCore.pyqtSignal(object)
+        _qtcb_status = QtCore.pyqtSignal(int, int)
 
-        def __init__(self, data, max_length, callback_status, callback):
+        def __init__(self, max_length, result_callback, status_callback):
             QtCore.QObject.__init__(self)
 
-            self.data = data
-            self.max_length = max_length
+            self.max_length   = max_length
             self.burst_length = 0
+            self.data_length  = 0
+            self.data_chunks  = []
+            self.abort        = False
 
-            if callback_status is not None:
-                self.signal_status.connect(callback_status, QtCore.Qt.QueuedConnection)
-            if callback is not None:
-                self.signal.connect(callback, QtCore.Qt.QueuedConnection)
+            if result_callback != None:
+                self._qtcb_result.connect(result_callback, QtCore.Qt.QueuedConnection)
+
+            if status_callback != None:
+                self._qtcb_status.connect(status_callback, QtCore.Qt.QueuedConnection)
 
     MAX_READ_BUFFER_LENGTH            = 62
     MAX_READ_ASYNC_BUFFER_LENGTH      = 60
@@ -588,10 +603,16 @@ class REDFileBase(REDObject):
     TYPE_SOCKET    = BrickRED.FILE_TYPE_SOCKET
     TYPE_PIPE      = BrickRED.FILE_TYPE_PIPE
 
+    EVENT_READABLE = BrickRED.FILE_EVENT_READABLE
+    EVENT_WRITABLE = BrickRED.FILE_EVENT_WRITABLE
+
     AsyncReadResult = namedtuple('AsyncReadResult', 'data error')
 
     # Number of chunks written in one async read/write burst
-    ASYNC_BURST_CHUNKS = 2000
+    ASYNC_BURST_CHUNKS      = 50
+    ASYNC_READ_BURST_LENGTH = ASYNC_BURST_CHUNKS * MAX_READ_ASYNC_BUFFER_LENGTH
+
+    _qtcb_events_occurred = QtCore.pyqtSignal(int)
 
     def _initialize(self):
         self._type               = None
@@ -605,58 +626,79 @@ class REDFileBase(REDObject):
         self._modification_time  = None
         self._status_change_time = None
 
-        self._cb_async_file_write_cookie = None
-        self._cb_async_file_read_cookie  = None
+        self.events_occurred_callback = None
+
+        self._cb_async_write_cookie     = None
+        self._cb_async_read_cookie      = None
+        self._cb_events_occurred_cookie = None
 
         self._write_async_data = None
         self._read_async_data  = None
 
     def _attach_callbacks(self):
-        self._cb_async_file_write_cookie = self._session._brick.add_callback(REDBrick.CALLBACK_ASYNC_FILE_WRITE,
-                                                                             self._cb_async_file_write)
-        self._cb_async_file_read_cookie  = self._session._brick.add_callback(REDBrick.CALLBACK_ASYNC_FILE_READ,
-                                                                             self._cb_async_file_read)
+        self._qtcb_events_occurred.connect(self._cb_events_occurred, QtCore.Qt.QueuedConnection)
+
+        self._cb_async_write_cookie     = self._session._brick.add_callback(REDBrick.CALLBACK_ASYNC_FILE_WRITE,
+                                                                            self._cb_async_write)
+        self._cb_async_read_cookie      = self._session._brick.add_callback(REDBrick.CALLBACK_ASYNC_FILE_READ,
+                                                                            self._cb_async_read)
+        self._cb_events_occurred_cookie = self._session._brick.add_callback(REDBrick.CALLBACK_FILE_EVENTS_OCCURRED,
+                                                                            self._cb_events_occurred_emit)
 
     def _detach_callbacks(self):
+        self._qtcb_events_occurred.disconnect(self._cb_events_occurred)
+
         self._session._brick.remove_callback(REDBrick.CALLBACK_ASYNC_FILE_WRITE,
-                                             self._cb_async_file_write_cookie)
+                                             self._cb_async_write_cookie)
         self._session._brick.remove_callback(REDBrick.CALLBACK_ASYNC_FILE_READ,
-                                             self._cb_async_file_read_cookie)
+                                             self._cb_async_read_cookie)
+        self._session._brick.remove_callback(REDBrick.CALLBACK_FILE_EVENTS_OCCURRED,
+                                             self._cb_events_occurred_cookie)
 
-        self._cb_async_file_write_cookie = None
-        self._cb_async_file_read_cookie  = None
+        self._cb_async_write_cookie     = None
+        self._cb_async_read_cookie      = None
+        self._cb_events_occurred_cookie = None
 
-    # Unset all of the temporary async data in case of error.
-    def _report_write_async_error(self, error):
-        self._write_async_data.signal_error.emit(error)
+    def _report_write_async_status(self):
+        self._write_async_data._qtcb_status.emit(self._write_async_data.written, self._write_async_data.length)
+
+    def _report_write_async_result(self, error):
+        self._write_async_data._qtcb_result.emit(error)
         self._write_async_data = None
 
-    def _cb_async_file_write(self, file_id, error_code, length_written):
+    def _cb_async_write(self, file_id, error_code, length_written):
         if self.object_id != file_id:
+            return
+
+        if self._write_async_data == None:
             return
 
         if error_code != REDError.E_SUCCESS:
             # FIXME: recover seek position on error after successful call?
-            self._report_write_async_error(REDError('Could not write to file object {0}'.format(self.object_id), error_code))
+            self._report_write_async_result(REDError('Could not write to file object {0}'.format(self.object_id), error_code))
             return
 
         # Remove data of async call. Data of unchecked writes has been removed already.
         self._write_async_data.written += length_written
-        self._write_async_data.signal_status.emit(self._write_async_data.written, self._write_async_data.length)
+        self._report_write_async_status()
 
         # If there is no data remaining we are done.
         if self._write_async_data.written >= self._write_async_data.length:
-            self._report_write_async_error(None)
+            self._report_write_async_result(None)
             return
 
         self._next_write_async_burst()
 
     def _next_write_async_burst(self):
+        if self._write_async_data.abort:
+            self._report_write_async_result(REDError('Could not write to file object {0}'.format(self.object_id), REDError.E_OPERATION_ABORTED))
+            return
+
         unchecked_writes = 0
 
         # do at most ASYNC_BURST_CHUNKS - 1 unchecked writes before the final async write per burst
         while unchecked_writes < REDFileBase.ASYNC_BURST_CHUNKS - 1 and \
-              (self._write_async_data.length-self._write_async_data.written) > REDFileBase.MAX_WRITE_ASYNC_BUFFER_LENGTH:
+              (self._write_async_data.length - self._write_async_data.written) > REDFileBase.MAX_WRITE_ASYNC_BUFFER_LENGTH:
             chunk, length_to_write = _get_zero_padded_chunk(self._write_async_data.data,
                                                             REDFileBase.MAX_WRITE_UNCHECKED_BUFFER_LENGTH,
                                                             self._write_async_data.written)
@@ -664,11 +706,11 @@ class REDFileBase(REDObject):
             try:
                 self._session._brick.write_file_unchecked(self.object_id, chunk, length_to_write)
             except Exception as e:
-                self._report_write_async_error(e)
+                self._report_write_async_result(e)
                 return
 
             self._write_async_data.written += length_to_write
-            unchecked_writes += 1
+            unchecked_writes               += 1
 
         chunk, length_to_write = _get_zero_padded_chunk(self._write_async_data.data,
                                                         REDFileBase.MAX_WRITE_ASYNC_BUFFER_LENGTH,
@@ -678,45 +720,79 @@ class REDFileBase(REDObject):
             # FIXME: Do we need a timeout here for the case that no callback comes?
             self._session._brick.write_file_async(self.object_id, chunk, length_to_write)
         except Exception as e:
-            self._report_write_async_error(e)
+            self._report_write_async_result(e)
 
-    def _report_read_async_error(self, error):
-        self._read_async_data.signal.emit(REDFileBase.AsyncReadResult(self._read_async_data.data, error))
+    def _report_read_async_status(self):
+        self._read_async_data._qtcb_status.emit(self._read_async_data.data_length, self._read_async_data.max_length)
+
+    def _report_read_async_result(self, error):
+        data = bytearray().join(self._read_async_data.data_chunks)
+
+        self._read_async_data._qtcb_result.emit(REDFileBase.AsyncReadResult(data, error))
         self._read_async_data = None
 
-    def _cb_async_file_read(self, file_id, error_code, buf, length_read):
+    def _cb_async_read(self, file_id, error_code, buf, length_read):
         if self.object_id != file_id:
             return
 
+        if self._read_async_data == None:
+            return
+
+        if self._read_async_data.abort:
+            error_code = REDError.E_SUCCESS
+
         if error_code != REDError.E_SUCCESS:
-            self._report_read_async_error(REDError('Could not read file object {0}'.format(self.object_id), error_code))
+            self._report_read_async_result(REDError('Could not read from file object {0}'.format(self.object_id), error_code))
+            return
+
+        if length_read == 0:
+            # no more data to read, report the result
+            self._report_read_async_result(None)
             return
 
         self._read_async_data.burst_length += length_read
+        self._read_async_data.data_length  += length_read
 
-        if length_read > 0:
-            self._read_async_data.data += bytearray(buf[:length_read])
-            self._read_async_data.signal_status.emit(len(self._read_async_data.data), self._read_async_data.max_length)
-        else:
-            if len(self._read_async_data.data) != self._read_async_data.max_length and self._read_async_data.burst_length == REDFileBase.ASYNC_BURST_CHUNKS:
-                to_read = min(self._read_async_data.max_length - len(self._read_async_data.data), REDFileBase.ASYNC_BURST_CHUNKS)
-                self._read_async_data.burst_length = 0
-                self._session._brick.read_file_async(self.object_id, to_read)
-                return
+        self._read_async_data.data_chunks.append(bytearray(buf[:length_read]))
 
-            # Return data if length is 0 (i.e. the given length was greater then the file length)
-            self._report_read_async_error(None)
+        if self._read_async_data.data_length >= self._read_async_data.max_length:
+            # read max_length data, report the result
+            self._report_read_async_status()
+            self._report_read_async_result(None)
+        elif self._read_async_data.burst_length == REDFileBase.ASYNC_READ_BURST_LENGTH:
+            # burst finished, start next one
+            self._report_read_async_status()
+            self._next_read_async_burst()
+
+    def _next_read_async_burst(self):
+        remaining_length = self._read_async_data.max_length - self._read_async_data.data_length
+
+        if remaining_length < 0:
             return
 
-        if self._read_async_data.burst_length == REDFileBase.ASYNC_BURST_CHUNKS:
-            to_read = min(self._read_async_data.max_length - len(self._read_async_data.data), REDFileBase.ASYNC_BURST_CHUNKS)
-            self._read_async_data.burst_length = 0
-            self._session._brick.read_file_async(self.object_id, to_read)
+        length_to_read                     = min(remaining_length, REDFileBase.ASYNC_READ_BURST_LENGTH)
+        self._read_async_data.burst_length = 0
+
+        try:
+            # FIXME: Do we need a timeout here for the case that no callback comes?
+            self._session._brick.read_file_async(self.object_id, length_to_read)
+        except Exception as e:
+            self._report_read_async_result(e)
+
+    def _cb_events_occurred_emit(self, file_id, events):
+        if self.object_id != file_id:
             return
 
-        # And also return data if we read all of the data the user asked for
-        if len(self._read_async_data.data) == self._read_async_data.max_length:
-            self._report_read_async_error(None)
+        # cannot directly use emit function as callback functions, because this
+        # triggers a segfault on the second call for some unknown reason. adding
+        # a method in between helps
+        self._qtcb_events_occurred.emit(events)
+
+    def _cb_events_occurred(self, events):
+        events_occurred_callback = self.events_occurred_callback
+
+        if events_occurred_callback != None:
+            events_occurred_callback(events)
 
     def update(self):
         if self.object_id is None:
@@ -762,15 +838,17 @@ class REDFileBase(REDObject):
 
             remaining_data = remaining_data[length_written:]
 
-    def write_async(self, data, callback_error=None, callback_status=None):
+    def write_async(self, data, result_callback=None, status_callback=None):
         if self.object_id is None:
             raise RuntimeError('Cannot write to unattached file object')
 
-        if self._write_async_data is not None:
+        if self._write_async_data != None:
             raise RuntimeError('Another asynchronous write is already in progress')
 
-        d = bytearray(data)
-        self._write_async_data = create_object_in_qt_main_thread(REDFileBase.WriteAsyncData, (d, len(d) , callback_status, callback_error))
+        self._write_async_data = create_object_in_qt_main_thread(REDFileBase.WriteAsyncData,
+                                                                 (bytearray(data), result_callback, status_callback))
+
+        self._report_write_async_status()
         self._next_write_async_burst()
 
     def read(self, length):
@@ -780,8 +858,7 @@ class REDFileBase(REDObject):
         data = bytearray()
 
         while length > 0:
-            length_to_read = min(length, REDFileBase.MAX_READ_BUFFER_LENGTH)
-
+            length_to_read                 = min(length, REDFileBase.MAX_READ_BUFFER_LENGTH)
             error_code, chunk, length_read = self._session._brick.read_file(self.object_id, length_to_read)
 
             if error_code != REDError.E_SUCCESS:
@@ -796,16 +873,43 @@ class REDFileBase(REDObject):
 
         return data
 
-    # calls "callback" with data of length min("length_max", "length_of_file")
-    def read_async(self, length_max, callback, callback_status = None):
+    # calls "result_callback" with data of length min("max_length", "length_of_file")
+    def read_async(self, max_length, result_callback, status_callback=None):
         if self.object_id is None:
-            raise RuntimeError('Cannot write to unattached file object')
+            raise RuntimeError('Cannot read from unattached file object')
 
-        if self._read_async_data is not None:
-            raise RuntimeError('Another asynchronous write is already in progress')
+        if self._read_async_data != None:
+            raise RuntimeError('Another asynchronous read is already in progress')
 
-        self._read_async_data = create_object_in_qt_main_thread(REDFileBase.ReadAsyncData, (bytearray(), length_max, callback_status, callback))
-        self._session._brick.read_file_async(self.object_id, min(length_max, REDFileBase.ASYNC_BURST_CHUNKS))
+        self._read_async_data = create_object_in_qt_main_thread(REDFileBase.ReadAsyncData,
+                                                                (max_length, result_callback, status_callback))
+
+        self._report_read_async_status()
+        self._next_read_async_burst()
+
+    def abort_async_read(self):
+        if self.object_id is None:
+            raise RuntimeError('Cannot abort asynchronous read from unattached file object')
+
+        if self._read_async_data != None:
+            self._read_async_data.abort = True
+            self._session._brick.abort_async_file_read(self.object_id)
+
+    def abort_async_write(self):
+        if self.object_id is None:
+            raise RuntimeError('Cannot abort asynchronous read from unattached file object')
+
+        if self._write_async_data != None:
+            self._write_async_data.abort = True
+
+    def set_events(self, events):
+        if self.object_id is None:
+            raise RuntimeError('Cannot set events of unattached file object')
+
+        error_code = self._session._brick.set_file_events(self.object_id, events)
+
+        if error_code != REDError.E_SUCCESS:
+            raise REDError('Could not set events of file object {0}'.format(self.object_id), error_code)
 
     @property
     def type(self):               return self._type
@@ -839,6 +943,7 @@ class REDFile(REDFileBase):
     FLAG_NON_BLOCKING = BrickRED.FILE_FLAG_NON_BLOCKING
     FLAG_TRUNCATE     = BrickRED.FILE_FLAG_TRUNCATE
     FLAG_TEMPORARY    = BrickRED.FILE_FLAG_TEMPORARY
+    FLAG_REPLACE      = BrickRED.FILE_FLAG_REPLACE
 
     def __repr__(self):
         return '<REDFile object_id: {0}, name: {1}>'.format(self.object_id, repr(self._name))
@@ -909,6 +1014,7 @@ class REDFileOrPipeAttacher(REDObject):
                 self._session._brick.release_object_unchecked(name_string_id, self._session._session_id)
             except:
                 # ignoring IPConnection-level error
+                print 'REDFileOrPipeAttacher.attach: release_object_unchecked failed'
                 traceback.print_exc()
 
             obj = _attach_or_release(self._session, REDFile, self.object_id)
@@ -916,33 +1022,6 @@ class REDFileOrPipeAttacher(REDObject):
         self.detach()
 
         return obj
-
-
-REDFileInfo = namedtuple('REDFileInfo', 'type permissions uid gid length access_timestamp modification_timestamp status_change_timestamp')
-
-def lookup_file_info(session, name, follow_symlink):
-    if not isinstance(name, REDString):
-        name = REDString(session).allocate(name)
-
-    result     = session._brick.lookup_file_info(name, follow_symlink, session._session_id)
-    error_code = result[0]
-
-    if error_code != REDError.E_SUCCESS:
-        raise REDError('Could not lookup file info', error_code)
-
-    return REDFileInfo(result[1:])
-
-
-def lookup_symlink_target(session, name, canonicalize):
-    if not isinstance(name, REDString):
-        name = REDString(session).allocate(name)
-
-    error_code, target_string_id = session._brick.lookup_symlink_target(name, canonicalize, session._session_id)
-
-    if error_code != REDError.E_SUCCESS:
-        raise REDError('Could not lookup symlink target', error_code)
-
-    return _attach_or_release(session, REDString, target_string_id)
 
 
 class REDDirectory(REDObject):
@@ -1110,6 +1189,10 @@ class REDProcess(REDObject):
 
         if state_changed_callback is not None:
             state_changed_callback(self)
+
+    def _fake_state_change_callback(self):
+        self.update_state()
+        self._cb_state_changed(self._state, self._timestamp, self._exit_code)
 
     def update(self):
         self.update_command()
@@ -1318,6 +1401,7 @@ class REDProgram(REDObject):
         self._last_spawned_timestamp = None
         self._custom_options         = None
 
+        self.enable_callbacks                 = False
         self.scheduler_state_changed_callback = None
         self.process_spawned_callback         = None
 
@@ -1333,7 +1417,6 @@ class REDProgram(REDObject):
         self._cb_process_spawned_emit_cookie = self._session._brick.add_callback(BrickRED.CALLBACK_PROGRAM_PROCESS_SPAWNED,
                                                                                  self._cb_process_spawned_emit)
 
-
     def _detach_callbacks(self):
         self._qtcb_scheduler_state_changed.disconnect(self._cb_scheduler_state_changed)
         self._session._brick.remove_callback(BrickRED.CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED,
@@ -1348,7 +1431,7 @@ class REDProgram(REDObject):
         self._cb_process_spawned_emit_cookie         = None
 
     def _cb_scheduler_state_changed_emit(self, program_id):
-        if self.object_id != program_id:
+        if not self.enable_callbacks or self.object_id != program_id:
             return
 
         # cannot directly use emit function as callback functions, because this
@@ -1366,19 +1449,24 @@ class REDProgram(REDObject):
             message = _attach_or_release(self._session, REDString, message_string_id)
         except:
             message = None
+
+            print 'REDProgram._cb_scheduler_state_changed: _attach_or_release failed'
             traceback.print_exc() # FIXME: error handling
 
         self._scheduler_state     = state
         self._scheduler_timestamp = timestamp
         self._scheduler_message   = message
 
+        if self._scheduler_message == None:
+            return
+
         scheduler_state_changed_callback = self.scheduler_state_changed_callback
 
-        if scheduler_state_changed_callback is not None:
+        if scheduler_state_changed_callback != None:
             scheduler_state_changed_callback(self)
 
     def _cb_process_spawned_emit(self, program_id):
-        if self.object_id != program_id:
+        if not self.enable_callbacks or self.object_id != program_id:
             return
 
         # cannot directly use emit function as callback functions, because this
@@ -1396,15 +1484,27 @@ class REDProgram(REDObject):
             process = _attach_or_release(self._session, REDProcess, process_id)
         except:
             process = None
+
+            print 'REDProgram._cb_process_spawned: _attach_or_release failed'
             traceback.print_exc() # FIXME: error handling
 
         self._last_spawned_process   = process
         self._last_spawned_timestamp = timestamp
 
+        if self._last_spawned_process == None:
+            return
+
         process_spawned_callback = self.process_spawned_callback
 
-        if process_spawned_callback is not None:
+        if process_spawned_callback != None:
             process_spawned_callback(self)
+
+        if self._last_spawned_process.state != REDProcess.STATE_RUNNING:
+            try:
+                self._last_spawned_process._fake_state_change_callback()
+            except:
+                print 'REDProgram._cb_process_spawned: _fake_state_change_callback failed'
+                traceback.print_exc() # FIXME: error handling
 
     def update(self):
         self.update_identifier()
@@ -1545,6 +1645,11 @@ class REDProgram(REDObject):
         if self.object_id is None:
             raise RuntimeError('Cannot update unattached program object')
 
+        if self._last_spawned_process != None:
+            state_changed_callback = self._last_spawned_process.state_changed_callback
+        else:
+            state_changed_callback = None
+
         error_code, process_id, timestamp = self._session._brick.get_last_spawned_program_process(self.object_id, self._session._session_id)
 
         if error_code == REDError.E_DOES_NOT_EXIST:
@@ -1558,6 +1663,9 @@ class REDProgram(REDObject):
 
         self._last_spawned_process   = _attach_or_release(self._session, REDProcess, process_id)
         self._last_spawned_timestamp = timestamp
+
+        if self._last_spawned_process != None:
+            self._last_spawned_process.state_changed_callback = state_changed_callback
 
     def update_custom_options(self):
         if self.object_id is None:
@@ -1751,6 +1859,12 @@ class REDProgram(REDObject):
             if not isinstance(name, REDString):
                 name = REDString(self._session).allocate(name)
 
+            if isinstance(value, bool):
+                if value:
+                    value = 'true'
+                else:
+                    value = 'false'
+
             if not isinstance(value, REDString):
                 value = REDString(self._session).allocate(value)
 
@@ -1778,10 +1892,18 @@ class REDProgram(REDObject):
         except KeyError:
             return default
 
-        try:
-            return cast(unicode(string))
-        except ValueError:
-            return default
+        if cast == bool:
+            if unicode(string) == 'true':
+                return True
+            elif unicode(string) == 'false':
+                return False
+            else:
+                return default
+        else:
+            try:
+                return cast(unicode(string))
+            except ValueError:
+                return default
 
     def cast_custom_option_value_list(self, name, cast, default):
         length = self.cast_custom_option_value(name + '.length', int, None)

@@ -28,8 +28,8 @@ from collections import namedtuple
 ProgramInfoContext = namedtuple('ProgramInfoContext', 'session script_manager executable_versions program')
 
 class ProgramInfo(QWidget):
-    def __init__(self, context, *args, **kwargs):
-        QWidget.__init__(self, *args, **kwargs)
+    def __init__(self, context):
+        QWidget.__init__(self)
 
         self.session             = context.session
         self.script_manager      = context.script_manager
@@ -37,6 +37,9 @@ class ProgramInfo(QWidget):
         self.program             = context.program
 
     def update_ui_state(self):
+        pass
+
+    def close_all_dialogs(self):
         pass
 
     # to be used on language configuratiopn pages
@@ -54,3 +57,7 @@ class ProgramInfo(QWidget):
             QTimer.singleShot(100, cb_get)
         else:
             cb_get()
+
+    # to be overriden on language configuratiopn pages
+    def get_language_action(self):
+        return None, 'None'

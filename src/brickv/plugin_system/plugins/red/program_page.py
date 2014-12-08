@@ -25,12 +25,16 @@ from PyQt4.QtCore import QTimer
 from PyQt4.QtGui import QWizardPage
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_utils import *
+from brickv.utils import get_main_window
 import time
 
 class ProgramPage(QWizardPage):
     # makes QWizardPage.field virtual
     def get_field(self, name):
         return self.wizard().get_field(name)
+
+    def update_ui_state(self):
+        pass
 
     def set_formatted_sub_title(self, sub_title):
         language = Constants.language_display_names[self.get_field('language').toInt()[0]]
@@ -48,7 +52,7 @@ class ProgramPage(QWizardPage):
         try:
             program.set_custom_option_value('last_edit', int(time.time())) # FIXME: async_call
         except REDError as e:
-            QMessageBox.critical(self, 'Edit Error',
+            QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update last edit timestamp of program [{0}]:\n\n{1}'
                                  .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
 
@@ -78,7 +82,10 @@ class ProgramPage(QWizardPage):
 
             # if a program exists then this page is used in an edit wizard
             if self.wizard().program != None:
-                set_current_combo_index_from_data(combo_version, unicode(self.wizard().program.executable))
+                executable = unicode(self.wizard().program.executable)
+
+                if len(executable) > 0:
+                    set_current_combo_index_from_data(combo_version, executable)
 
             combo_version.setEnabled(True)
             self.completeChanged.emit()
@@ -90,29 +97,39 @@ class ProgramPage(QWizardPage):
         program = self.wizard().program
 
         if program == None:
-            return
+            return False
 
         # command
-        executable, arguments, environment, working_directory = self.get_command()
+        command = self.get_command()
 
-        editable_arguments_offset   = max(program.cast_custom_option_value('editable_arguments_offset', int, 0), 0)
-        editable_arguments          = program.arguments.items[editable_arguments_offset:]
-        editable_environment_offset = max(program.cast_custom_option_value('editable_environment_offset', int, 0), 0)
-        editable_environment        = program.environment.items[editable_environment_offset:]
+        if command != None:
+            executable, arguments, environment, working_directory = command
 
-        editable_arguments_offset   = len(arguments)
-        editable_environment_offset = len(environment)
+            editable_arguments_offset   = max(program.cast_custom_option_value('editable_arguments_offset', int, 0), 0)
+            editable_arguments          = program.arguments.items[editable_arguments_offset:]
+            editable_environment_offset = max(program.cast_custom_option_value('editable_environment_offset', int, 0), 0)
+            editable_environment        = program.environment.items[editable_environment_offset:]
 
-        arguments   += editable_arguments
-        environment += editable_environment
+            editable_arguments_offset   = len(arguments)
+            editable_environment_offset = len(environment)
+
+            arguments   += editable_arguments
+            environment += editable_environment
+        else:
+            executable                  = '/bin/false'
+            arguments                   = []
+            environment                 = []
+            working_directory           = '.'
+            editable_arguments_offset   = 0
+            editable_environment_offset = 0
 
         try:
             program.set_command(executable, arguments, environment, working_directory) # FIXME: async_call
         except REDError as e:
-            QMessageBox.critical(self, 'Edit Error',
+            QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update command of program [{0}]:\n\n{1}'
                                  .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
-            return
+            return False
 
         # custom options
         custom_options = self.get_custom_options()
@@ -124,9 +141,11 @@ class ProgramPage(QWizardPage):
             try:
                 program.set_custom_option_value(name, value) # FIXME: async_call
             except REDError as e:
-                QMessageBox.critical(self, 'Edit Error',
+                QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                      u'Could not update custom options of program [{0}]:\n\n{1}'
                                      .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
-                return
+                return False
 
         self.set_last_edit_timestamp()
+
+        return True

@@ -41,15 +41,21 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
         self.console = TerminalWidget()
         self.console_layout.insertWidget(1, self.console)
         
-        self.connect_button.pressed.connect(self.connect_pressed)
-        self.refresh_button.pressed.connect(self.update_ports)
-        self.copy_button.pressed.connect(self.console.copy_selection_to_clipboard)
+        self.refresh_button.clicked.connect(self.refresh_ports)
+        self.connect_button.clicked.connect(self.connect_clicked)
+        self.copy_button.clicked.connect(self.console.copy_selection_to_clipboard)
         
+        # make all elements on this tab non-focusable so the focus has
+        # to stay on the console widget
+        self.combo_serial_port.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.connect_button.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.refresh_button.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.copy_button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.setFocusPolicy(QtCore.Qt.NoFocus)
         
-        self.update_ports()
+        self.refresh_ports()
 
-    def update_ports(self):
+    def refresh_ports(self):
         current_text = self.combo_serial_port.currentText()
         self.combo_serial_port.clear()
         try:
@@ -60,10 +66,11 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
         preferred_index = None
         
         for port in ports:
-            # TODO: What is preferred port for windows/mac here?
             if preferred_index is None:
                 if 'ttyACM' in port[0] or \
-                   'ttyUSB' in port[0]:
+                   'ttyUSB' in port[0] or \
+                   'RED Brick' in port[0] or \
+                   'usbmodem' in port[0]:
                     preferred_index = self.combo_serial_port.count()
 
             if len(port[1]) > 0 and port[0] != port[1]:
@@ -71,34 +78,47 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
             else:
                 self.combo_serial_port.addItem(port[0], port[0])
 
+        self.combo_serial_port.setEnabled(self.combo_serial_port.count() > 0)
+
         if self.combo_serial_port.count() == 0:
-            self.combo_serial_port.addItem('Could not find serial port')
+            self.combo_serial_port.addItem('No serial port found')
         elif preferred_index is not None:
             self.combo_serial_port.setCurrentIndex(preferred_index)
         else:
             index = self.combo_serial_port.findText(current_text)
             if index >= 0:
                 self.combo_serial_port.setCurrentIndex(index)
-        
-    def connect_pressed(self):
+
+    def connect_clicked(self):
         text = self.connect_button.text()
+
         if text == 'Connect':
-            self.console.setDisabled(False)
+            self.combo_serial_port.setEnabled(False)
+            self.refresh_button.setEnabled(False)
+            self.console.setEnabled(True)
             self.connect_button.setText("Disconnect")
             
-            text = unicode(self.combo_serial_port.currentText())
+            port = unicode(self.combo_serial_port.itemData(self.combo_serial_port.currentIndex()).toString())
+
             if self.console._session == None:
                 try:
-                    self.console.execute(command=text)
+                    self.console.execute(command=port)
+                    self.console.setFocus()
                 except:
                     # TODO: Error popup?
-                    self.console.setDisabled(True)
-                    self.connect_button.setText("Connect")
-                    self.destroy()
+                    self.destroy_session()
         else:
-            self.console.setDisabled(True)
-            self.connect_button.setText("Connect")
-            self.destroy()
+            self.destroy_session()
+
+    def destroy_session(self):
+        if self.console._session != None:
+            self.console.stop()
+            self.console._session = None
+
+        self.combo_serial_port.setEnabled(True)
+        self.refresh_button.setEnabled(True)
+        self.console.setEnabled(False)
+        self.connect_button.setText("Connect")
 
     def tab_on_focus(self):
         self.console._reset()
@@ -106,7 +126,5 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
     def tab_off_focus(self):
         pass
 
-    def destroy(self):
-        if self.console._session is not None:
-            self.console.stop()
-            self.console._session = None
+    def tab_destroy(self):
+        self.destroy_session()

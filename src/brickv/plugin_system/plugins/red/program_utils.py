@@ -22,17 +22,23 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt, QDir, QVariant, QDateTime
-from PyQt4.QtGui import QListWidget, QListWidgetItem, QTreeWidgetItem
+from PyQt4.QtGui import QListWidget, QListWidgetItem, QTreeWidgetItem, \
+                        QProgressDialog, QProgressBar, QInputDialog, QMenu
 from brickv.plugin_system.plugins.red.api import REDProgram
 import re
-import os
+import posixpath
+import functools
 from collections import namedtuple
 
 ExecutableVersion = namedtuple('ExecutableVersion', 'executable version')
 
+# source: absolute path on host in host format
+# target: path relative to bin directory on RED Brick in POSIX format
+Upload = namedtuple('Upload', 'source target')
 
-def get_key_from_value(dictionary, value):
-    return dictionary.keys()[dictionary.values().index(value)]
+# source: path relative to bin directory on RED Brick in POSIX format
+# target: path relative to download directory on host in host format
+Download = namedtuple('Download', 'source target')
 
 
 class Constants:
@@ -55,24 +61,27 @@ class Constants:
     PAGE_SCHEDULE   = 1017
     PAGE_SUMMARY    = 1018
     PAGE_UPLOAD     = 1019
+    PAGE_DOWNLOAD   = 1020
 
     # must match item order in combo_language on general page
     LANGUAGE_INVALID    = 0
-    LANGUAGE_C          = 1
-    LANGUAGE_CSHARP     = 2
-    LANGUAGE_DELPHI     = 3
-    LANGUAGE_JAVA       = 4
-    LANGUAGE_JAVASCRIPT = 5
-    LANGUAGE_OCTAVE     = 6
-    LANGUAGE_PERL       = 7
-    LANGUAGE_PHP        = 8
-    LANGUAGE_PYTHON     = 9
-    LANGUAGE_RUBY       = 10
-    LANGUAGE_SHELL      = 11
-    LANGUAGE_VBNET      = 12
+    LANGUAGE_SEPARATOR  = 1 # horizontal line in combo box
+    LANGUAGE_C          = 2
+    LANGUAGE_CSHARP     = 3
+    LANGUAGE_DELPHI     = 4
+    LANGUAGE_JAVA       = 5
+    LANGUAGE_JAVASCRIPT = 6
+    LANGUAGE_OCTAVE     = 7
+    LANGUAGE_PERL       = 8
+    LANGUAGE_PHP        = 9
+    LANGUAGE_PYTHON     = 10
+    LANGUAGE_RUBY       = 11
+    LANGUAGE_SHELL      = 12
+    LANGUAGE_VBNET      = 13
 
     language_display_names = {
         LANGUAGE_INVALID:    '<invalid>',
+        LANGUAGE_SEPARATOR:  '<separator>',
         LANGUAGE_C:          'C/C++',
         LANGUAGE_CSHARP:     'C#',
         LANGUAGE_DELPHI:     'Delphi/Lazarus',
@@ -89,6 +98,7 @@ class Constants:
 
     language_api_names = {
         LANGUAGE_INVALID:    '<invalid>',
+        LANGUAGE_SEPARATOR:  '<separator>',
         LANGUAGE_C:          'c',
         LANGUAGE_CSHARP:     'csharp',
         LANGUAGE_DELPHI:     'delphi',
@@ -132,6 +142,7 @@ class Constants:
 
     arguments_help = {
         LANGUAGE_INVALID:    '<invalid>',
+        LANGUAGE_SEPARATOR:  '<separator>',
         LANGUAGE_C:          'This list of arguments will be passed to the main() function.',
         LANGUAGE_CSHARP:     'This list of arguments will be passed to the Main() method.',
         LANGUAGE_DELPHI:     'This list of arguments will be available as ParamStr array.',
@@ -148,6 +159,7 @@ class Constants:
 
     language_file_ending = { # endswith XXX sorted by file ending index
         LANGUAGE_INVALID:    [],
+        LANGUAGE_SEPARATOR:  [],
         LANGUAGE_C:          [''],
         LANGUAGE_CSHARP:     ['', '.exe'],
         LANGUAGE_DELPHI:     ['', ('.pas', '.pp')],
@@ -164,7 +176,21 @@ class Constants:
 
     # must match item order in combo_start_mode on C/C++ page
     C_START_MODE_EXECUTABLE = 0
-    C_START_MODE_MAKE = 1
+
+    c_start_mode_api_names = {
+        C_START_MODE_EXECUTABLE: 'executable'
+    }
+
+    c_start_mode_display_names = {
+        C_START_MODE_EXECUTABLE: 'Executable'
+    }
+
+    @staticmethod
+    def get_c_start_mode(c_start_mode_api_name):
+        try:
+            return get_key_from_value(Constants.c_start_mode_api_names, c_start_mode_api_name)
+        except ValueError:
+            return Constants.DEFAULT_C_START_MODE
 
     # must match item order in combo_start_mode on C# page
     CSHARP_START_MODE_EXECUTABLE = 0
@@ -186,15 +212,84 @@ class Constants:
 
     # must match item order in combo_start_mode on Delphi/Lazarus page
     DELPHI_START_MODE_EXECUTABLE = 0
-    DELPHI_START_MODE_COMPILE    = 1
+
+    delphi_start_mode_api_names = {
+        DELPHI_START_MODE_EXECUTABLE: 'executable'
+    }
+
+    delphi_start_mode_display_names = {
+        DELPHI_START_MODE_EXECUTABLE: 'Executable'
+    }
+
+    @staticmethod
+    def get_delphi_start_mode(delphi_start_mode_api_name):
+        try:
+            return get_key_from_value(Constants.delphi_start_mode_api_names, delphi_start_mode_api_name)
+        except ValueError:
+            return Constants.DEFAULT_DELPHI_START_MODE
 
     # must match item order in combo_start_mode on Java page
     JAVA_START_MODE_MAIN_CLASS = 0
     JAVA_START_MODE_JAR_FILE   = 1
 
+    java_start_mode_api_names = {
+        JAVA_START_MODE_MAIN_CLASS: 'main_class',
+        JAVA_START_MODE_JAR_FILE:   'jar_file'
+    }
+
+    java_start_mode_display_names = {
+        JAVA_START_MODE_MAIN_CLASS: 'Main Class',
+        JAVA_START_MODE_JAR_FILE:   'JAR File'
+    }
+
+    @staticmethod
+    def get_java_start_mode(java_start_mode_api_name):
+        try:
+            return get_key_from_value(Constants.java_start_mode_api_names, java_start_mode_api_name)
+        except ValueError:
+            return Constants.DEFAULT_JAVA_START_MODE
+
+    # must match item order in combo_flavor on JavaScript page
+    JAVASCRIPT_FLAVOR_BROWSER = 0
+    JAVASCRIPT_FLAVOR_NODEJS  = 1
+
+    javascript_flavor_api_names = {
+        JAVASCRIPT_FLAVOR_BROWSER: 'browser',
+        JAVASCRIPT_FLAVOR_NODEJS:  'nodejs'
+    }
+
+    javascript_flavor_display_names = {
+        JAVASCRIPT_FLAVOR_BROWSER: 'Browser',
+        JAVASCRIPT_FLAVOR_NODEJS:  'Node.js'
+    }
+
+    @staticmethod
+    def get_javascript_flavor(javascript_flavor_api_name):
+        try:
+            return get_key_from_value(Constants.javascript_flavor_api_names, javascript_flavor_api_name)
+        except ValueError:
+            return Constants.DEFAULT_JAVASCRIPT_FLAVOR
+
     # must match item order in combo_start_mode on JavaScript page
     JAVASCRIPT_START_MODE_SCRIPT_FILE = 0
     JAVASCRIPT_START_MODE_COMMAND     = 1
+
+    javascript_start_mode_api_names = {
+        JAVASCRIPT_START_MODE_SCRIPT_FILE: 'script_file',
+        JAVASCRIPT_START_MODE_COMMAND:     'command',
+    }
+
+    javascript_start_mode_display_names = {
+        JAVASCRIPT_START_MODE_SCRIPT_FILE: 'Script File',
+        JAVASCRIPT_START_MODE_COMMAND:     'Command',
+    }
+
+    @staticmethod
+    def get_javascript_start_mode(javascript_start_mode_api_name):
+        try:
+            return get_key_from_value(Constants.javascript_start_mode_api_names, javascript_start_mode_api_name)
+        except ValueError:
+            return Constants.DEFAULT_JAVASCRIPT_START_MODE
 
     # must match item order in combo_start_mode on Octave page
     OCTAVE_START_MODE_SCRIPT_FILE = 0
@@ -236,17 +331,20 @@ class Constants:
             return Constants.DEFAULT_PERL_START_MODE
 
     # must match item order in combo_start_mode on PHP page
-    PHP_START_MODE_SCRIPT_FILE = 0
-    PHP_START_MODE_COMMAND     = 1
+    PHP_START_MODE_SCRIPT_FILE   = 0
+    PHP_START_MODE_COMMAND       = 1
+    PHP_START_MODE_WEB_INTERFACE = 2
 
     php_start_mode_api_names = {
-        PHP_START_MODE_SCRIPT_FILE: 'script_file',
-        PHP_START_MODE_COMMAND:     'command',
+        PHP_START_MODE_SCRIPT_FILE:   'script_file',
+        PHP_START_MODE_COMMAND:       'command',
+        PHP_START_MODE_WEB_INTERFACE: 'web_interface',
     }
 
     php_start_mode_display_names = {
-        PHP_START_MODE_SCRIPT_FILE: 'Script File',
-        PHP_START_MODE_COMMAND:     'Command',
+        PHP_START_MODE_SCRIPT_FILE:   'Script File',
+        PHP_START_MODE_COMMAND:       'Command',
+        PHP_START_MODE_WEB_INTERFACE: 'Web Interface',
     }
 
     @staticmethod
@@ -257,20 +355,23 @@ class Constants:
             return Constants.DEFAULT_PHP_START_MODE
 
     # must match item order in combo_start_mode on Python page
-    PYTHON_START_MODE_SCRIPT_FILE = 0
-    PYTHON_START_MODE_MODULE_NAME = 1
-    PYTHON_START_MODE_COMMAND     = 2
+    PYTHON_START_MODE_SCRIPT_FILE   = 0
+    PYTHON_START_MODE_MODULE_NAME   = 1
+    PYTHON_START_MODE_COMMAND       = 2
+    PYTHON_START_MODE_WEB_INTERFACE = 3
 
     python_start_mode_api_names = {
-        PYTHON_START_MODE_SCRIPT_FILE: 'script_file',
-        PYTHON_START_MODE_MODULE_NAME: 'module_name',
-        PYTHON_START_MODE_COMMAND:     'command',
+        PYTHON_START_MODE_SCRIPT_FILE:   'script_file',
+        PYTHON_START_MODE_MODULE_NAME:   'module_name',
+        PYTHON_START_MODE_COMMAND:       'command',
+        PYTHON_START_MODE_WEB_INTERFACE: 'web_interface',
     }
 
     python_start_mode_display_names = {
-        PYTHON_START_MODE_SCRIPT_FILE: 'Script File',
-        PYTHON_START_MODE_MODULE_NAME: 'Module Name',
-        PYTHON_START_MODE_COMMAND:     'Command',
+        PYTHON_START_MODE_SCRIPT_FILE:   'Script File',
+        PYTHON_START_MODE_MODULE_NAME:   'Module Name',
+        PYTHON_START_MODE_COMMAND:       'Command',
+        PYTHON_START_MODE_WEB_INTERFACE: 'Web Interface',
     }
 
     @staticmethod
@@ -425,11 +526,12 @@ class Constants:
         return Constants.api_stderr_redirection_display_names[Constants.api_stderr_redirections[stderr_redirection]]
 
     # must match item order in combo_start_mode on schedule page
-    START_MODE_NEVER    = 0
-    START_MODE_ALWAYS   = 1
-    START_MODE_INTERVAL = 2
-    START_MODE_CRON     = 3
-    START_MODE_ONCE     = 4 # never + start from upload page
+    START_MODE_NEVER     = 0
+    START_MODE_ALWAYS    = 1
+    START_MODE_INTERVAL  = 2
+    START_MODE_CRON      = 3
+    START_MODE_SEPARATOR = 4 # horizontal line in combo box
+    START_MODE_ONCE      = 5 # never + start from upload page
 
     api_start_modes = {
         START_MODE_NEVER:    REDProgram.START_MODE_NEVER,
@@ -454,7 +556,7 @@ class Constants:
         return Constants.api_start_mode_display_names[Constants.api_start_modes[start_mode]]
 
     api_scheduler_state_display_name = {
-        REDProgram.SCHEDULER_STATE_STOPPED:  'Stopped',
+        REDProgram.SCHEDULER_STATE_STOPPED: 'Stopped',
         REDProgram.SCHEDULER_STATE_RUNNING: 'Running'
     }
 
@@ -462,6 +564,7 @@ class Constants:
     DEFAULT_CSHARP_START_MODE     = CSHARP_START_MODE_EXECUTABLE
     DEFAULT_DELPHI_START_MODE     = DELPHI_START_MODE_EXECUTABLE
     DEFAULT_JAVA_START_MODE       = JAVA_START_MODE_MAIN_CLASS
+    DEFAULT_JAVASCRIPT_FLAVOR     = JAVASCRIPT_FLAVOR_BROWSER
     DEFAULT_JAVASCRIPT_START_MODE = JAVASCRIPT_START_MODE_SCRIPT_FILE
     DEFAULT_OCTAVE_START_MODE     = OCTAVE_START_MODE_SCRIPT_FILE
     DEFAULT_PERL_START_MODE       = PERL_START_MODE_SCRIPT_FILE
@@ -478,15 +581,39 @@ class Constants:
 
 # workaround miscalculated initial size-hint for initially hidden QListWidgets
 class ExpandingListWidget(QListWidget):
-    def __init__(self, *args, **kwargs):
-        QListWidget.__init__(self, *args, **kwargs)
-
     # overrides QListWidget.sizeHint
     def sizeHint(self):
         size = QListWidget.sizeHint(self)
 
         if size.height() < 2000:
             size.setHeight(2000)
+
+        return size
+
+
+class ExpandingProgressDialog(QProgressDialog):
+    def hide_progress_text(self):
+        progress = QProgressBar(self)
+        progress.setTextVisible(False)
+        self.setBar(progress)
+
+    # overrides QProgressDialog.sizeHint
+    def sizeHint(self):
+        size = QProgressDialog.sizeHint(self)
+
+        if size.width() < 400:
+            size.setWidth(400)
+
+        return size
+
+
+class ExpandingInputDialog(QInputDialog):
+    # overrides QInputDialog.sizeHint
+    def sizeHint(self):
+        size = QInputDialog.sizeHint(self)
+
+        if size.width() < 400:
+            size.setWidth(400)
 
         return size
 
@@ -504,6 +631,7 @@ class ListWidgetEditor:
         self.button_down_item   = button_down_item
         self.new_item_text      = new_item_text
         self.new_item_counter   = 1
+        self.menu_add_items     = None
 
         self.list_items.itemSelectionChanged.connect(self.update_ui_state)
         self.button_add_item.clicked.connect(self.add_new_item)
@@ -538,14 +666,36 @@ class ListWidgetEditor:
         self.button_up_item.setVisible(visible)
         self.button_down_item.setVisible(visible)
 
-    def add_item(self, text, edit_item=False):
+    def set_add_menu_items(self, items, empty_item=None):
+        if len(items) > 0:
+            menu_add_items = QMenu()
+
+            if empty_item != None:
+                menu_add_items.addAction(empty_item).triggered.connect(functools.partial(self.add_item, empty_item, edit_item=True))
+                menu_add_items.addSeparator()
+
+            for item in items:
+                menu_add_items.addAction(item).triggered.connect(functools.partial(self.add_item, item, select_item=True))
+
+            self.menu_add_items = menu_add_items
+            self.button_add_item.setMenu(menu_add_items)
+        else:
+            self.button_add_item.setMenu(None)
+            self.menu_add_items = None
+
+    def add_item(self, text, edit_item=False, select_item=False):
         item = QListWidgetItem(text)
         item.setFlags(item.flags() | Qt.ItemIsEditable)
 
         self.list_items.addItem(item)
 
         if edit_item:
+            self.list_items.setCurrentItem(item)
+            self.list_items.setFocus()
             self.list_items.editItem(item)
+        elif select_item:
+            self.list_items.setCurrentItem(item)
+            self.list_items.setFocus()
 
         self.update_ui_state()
 
@@ -554,6 +704,7 @@ class ListWidgetEditor:
         self.new_item_counter += 1
 
         self.add_item(self.new_item_text.format(counter), edit_item=True)
+        self.list_items.verticalScrollBar().setValue(self.list_items.verticalScrollBar().maximum())
 
     def remove_selected_item(self):
         for item in self.list_items.selectedItems():
@@ -660,14 +811,19 @@ class TreeWidgetEditor:
         self.button_up_item.setVisible(visible)
         self.button_down_item.setVisible(visible)
 
-    def add_item(self, texts, edit_item=False):
+    def add_item(self, texts, edit_item=False, select_item=False):
         item = QTreeWidgetItem(texts)
         item.setFlags(item.flags() | Qt.ItemIsEditable)
 
         self.tree_items.addTopLevelItem(item)
 
         if edit_item:
+            self.tree_items.setCurrentItem(item)
+            self.tree_items.setFocus()
             self.tree_items.editItem(item)
+        elif select_item:
+            self.tree_items.setCurrentItem(item)
+            self.tree_items.setFocus()
 
         self.update_ui_state()
 
@@ -680,6 +836,7 @@ class TreeWidgetEditor:
         self.new_item_counter += 1
 
         self.add_item(texts, edit_item=True)
+        self.tree_items.verticalScrollBar().setValue(self.tree_items.verticalScrollBar().maximum())
 
     def remove_selected_item(self):
         for item in self.tree_items.selectedItems():
@@ -739,10 +896,10 @@ class TreeWidgetEditor:
 
 
 class MandatoryLineEditChecker:
-    def __init__(self, page, edit, label, regexp=None): # FIXME: swap edit and label
+    def __init__(self, page, label, edit, regexp=None):
         self.page     = page
-        self.edit     = edit
         self.label    = label
+        self.edit     = edit
         self.regexp   = None
         self.complete = False
 
@@ -771,16 +928,29 @@ class MandatoryLineEditChecker:
 
 
 class MandatoryEditableComboBoxChecker:
-    def __init__(self, page, combo, label): # FIXME: swap combo and label
+    def __init__(self, page, label, combo):
         self.page     = page
-        self.combo    = combo
         self.label    = label
+        self.combo    = combo
         self.complete = False
 
         self.combo.currentIndexChanged.connect(lambda: self.check(True))
         self.combo.editTextChanged.connect(lambda: self.check(True))
 
         self.check(False)
+
+    def set_current_text(self, text):
+        if len(text) == 0:
+            self.combo.clearEditText()
+            return
+
+        i = self.combo.findText(text)
+
+        if i < 0:
+            self.combo.addItem(text)
+            i = self.combo.count() - 1
+
+        self.combo.setCurrentIndex(i)
 
     def check(self, emit):
         was_complete = self.complete
@@ -807,7 +977,7 @@ class MandatoryTypedFileSelector:
         self.label_help = label_help
 
         # FIXME
-        self.c1 = MandatoryEditableComboBoxChecker(page, combo_file, label_file)
+        self.c1 = MandatoryEditableComboBoxChecker(page, label_file, combo_file)
         self.c2 = ComboBoxFileEndingChecker(page, combo_file, combo_type)
 
     def set_visible(self, visible):
@@ -843,10 +1013,10 @@ class MandatoryTypedFileSelector:
 
 # expects the combo box to be editable
 class MandatoryDirectorySelector:
-    def __init__(self, page, combo, label):
+    def __init__(self, page, label, combo):
         self.page  = page
-        self.combo = combo
         self.label = label
+        self.combo = combo
         self.complete = False
         self.original_items = []
 
@@ -884,7 +1054,7 @@ class MandatoryDirectorySelector:
     # ensure that directory is relative, non-empty and does not start with ..
     def check(self, emit):
         was_complete  = self.complete
-        directory     = unicode(QDir.cleanPath(os.path.join(unicode(self.combo.currentText()), '.')))
+        directory     = unicode(QDir.cleanPath(posixpath.join(unicode(self.combo.currentText()), '.')))
         self.complete = len(directory) > 0 and \
                         not directory.startswith('/') and \
                         directory != './..' and \
@@ -937,6 +1107,10 @@ class ComboBoxFileEndingChecker:
             self.combo_file.clearEditText()
 
 
+def get_key_from_value(dictionary, value):
+    return dictionary.keys()[dictionary.values().index(value)]
+
+
 def set_current_combo_index_from_data(combo, data):
     i = combo.findData(QVariant(data))
 
@@ -948,7 +1122,16 @@ def set_current_combo_index_from_data(combo, data):
 
 
 def timestamp_to_date_at_time(timestamp):
-    date = QDateTime.fromTime_t(timestamp).toString('yyyy-MM-dd')
-    time = QDateTime.fromTime_t(timestamp).toString('HH:mm:ss')
+    date = unicode(QDateTime.fromTime_t(timestamp).toString('yyyy-MM-dd'))
+    time = unicode(QDateTime.fromTime_t(timestamp).toString('HH:mm:ss'))
 
     return date + ' at ' + time
+
+# FIXME: the values should be rouned up
+def get_file_display_size(size):
+    if size < 1024:
+        return '%d Bytes' % size
+    elif size < 1048576:
+        return '%.1f kiB' % (size / 1024.0)
+    else:
+        return '%.1f MiB' % (size / 1048576.0)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
 import psutil
 import sys
@@ -20,9 +21,9 @@ else:
 
 all_process_info = []
 for p in psutil.process_iter():
-    process_dict = {'command':p.name, 'pid':p.pid, 'user':p.username,\
-    'cpu':"%.1f" % p.get_cpu_percent(interval=0),\
-    'memory':"%.1f" % p.get_memory_percent()}
+    process_dict = {'cmd': p.name, 'pid': p.pid, 'usr': p.username,
+                    'cpu': int(p.get_cpu_percent(interval=0) * 10),
+                    'mem': int(p.get_memory_percent() * 10)}
     all_process_info.append(process_dict)
 
 print psutil.used_phymem()
@@ -36,6 +37,6 @@ interfaces = psutil.network_io_counters(pernic=True)
 #    del interfaces['lo']
 if 'tunl0' in interfaces:
     del interfaces['tunl0']
-print json.dumps(interfaces)
+print json.dumps(interfaces, separators=(',', ':'))
 
-print json.dumps(all_process_info )
+print json.dumps(all_process_info, separators=(',', ':'))

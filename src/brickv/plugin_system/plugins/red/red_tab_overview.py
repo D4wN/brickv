@@ -21,15 +21,13 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
+from PyQt4 import QtCore, Qt, QtGui
+from brickv.plugin_system.plugins.red.ui_red_tab_overview import Ui_REDTabOverview
+from brickv.plugin_system.plugins.red.api import *
 import json
 from operator import itemgetter
 import time
-
-from PyQt4 import QtCore, Qt, QtGui
-
-#from brickv.program_path import get_program_path
-from brickv.plugin_system.plugins.red.ui_red_tab_overview import Ui_REDTabOverview
-from brickv.plugin_system.plugins.red.api import *
+import sys
 
 # constants
 REFRESH_TIME = 3000 # in milliseconds
@@ -37,6 +35,15 @@ REFRESH_TIMEOUT = 500 # in milliseconds
 DEFAULT_TVIEW_NIC_HEADER_WIDTH = 210 # in pixels
 DEFAULT_TVIEW_PROCESS_HEADER_WIDTH_FIRST = 210 # in pixels
 DEFAULT_TVIEW_PROCESS_HEADER_WIDTH_OTHER = 105 # in pixels
+
+class ProcessesProxyModel(QtGui.QSortFilterProxyModel):
+    # overrides QSortFilterProxyModel.lessThan
+    def lessThan(self, left, right):
+        # cpu and mem
+        if left.column() in [3, 4]:
+            return left.data(QtCore.Qt.UserRole + 1).toInt()[0] < right.data(QtCore.Qt.UserRole + 1).toInt()[0]
+
+        return QtGui.QSortFilterProxyModel.lessThan(self, left, right)
 
 class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
     def __init__(self):
@@ -55,16 +62,20 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
         self.refresh_counter = 0
         self.nic_time = 0
 
+        # For MAC progress bar text fix
+        self.label_pbar_cpu.hide()
+        self.label_pbar_memory.hide()
+        self.label_pbar_storage.hide()
+
         # connecting signals to slots
         self.refresh_timer.timeout.connect(self.cb_refresh)
         self.button_refresh.clicked.connect(self.refresh_clicked)
-        self.tview_nic_horizontal_header.sortIndicatorChanged.connect\
-            (self.cb_tview_nic_sort_indicator_changed)
-        self.tview_process_horizontal_header.sortIndicatorChanged.connect\
-            (self.cb_tview_process_sort_indicator_changed)
+        self.cbox_based_on.currentIndexChanged.connect(self.change_process_sort_order)
+        self.tview_nic_horizontal_header.sortIndicatorChanged.connect(self.cb_tview_nic_sort_indicator_changed)
+        self.tview_process_horizontal_header.sortIndicatorChanged.connect(self.cb_tview_process_sort_indicator_changed)
 
     def tab_on_focus(self):
-        self.button_refresh.setText('Gathering data...')
+        self.button_refresh.setText('Collecting data...')
         self.button_refresh.setDisabled(True)
         self.is_tab_on_focus = True
         self.script_manager.execute_script('overview',
@@ -76,10 +87,19 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
         self.is_tab_on_focus = False
         self.refresh_timer.stop()
 
+    def tab_destroy(self):
+        pass
+
     def refresh_clicked(self):
         self.refresh_timer.stop()
         self.refresh_counter = REFRESH_TIME/REFRESH_TIMEOUT
         self.cb_refresh()
+
+    def change_process_sort_order(self):
+        if self.cbox_based_on.currentIndex() == 0:
+            self.tview_process.horizontalHeader().setSortIndicator(3, QtCore.Qt.DescendingOrder)
+        elif self.cbox_based_on.currentIndex() == 1:
+            self.tview_process.horizontalHeader().setSortIndicator(4, QtCore.Qt.DescendingOrder)
 
     # the callbacks
     def cb_refresh(self):
@@ -87,7 +107,7 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
         if self.refresh_counter >= REFRESH_TIME/REFRESH_TIMEOUT:
             self.refresh_counter = 0
             self.refresh_timer.stop()
-            self.button_refresh.setText('Gathering data...')
+            self.button_refresh.setText('Collecting data...')
             self.button_refresh.setDisabled(True)
             self.script_manager.execute_script('overview',
                                                self.cb_state_changed)
@@ -106,65 +126,81 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
         if result == None:
             return
 
-        csv_tokens = result.stdout.split('\n')
-        for i, t in enumerate(csv_tokens):
-            if t == "" and i < len(csv_tokens) - 1:
-                return
+        try:
+            csv_tokens = result.stdout.split('\n')
+            for i, t in enumerate(csv_tokens):
+                if t == "" and i < len(csv_tokens) - 1:
+                    return
 
-        _uptime = csv_tokens[0]
-        days, days_remainder = divmod(int(_uptime), 24 * 60 * 60)
-        hours, hours_remainder = divmod(days_remainder, 60 * 60)
-        minutes, _ = divmod(hours_remainder, 60)
-        uptime = ''
+            _uptime = csv_tokens[0]
+            days, days_remainder = divmod(int(_uptime), 24 * 60 * 60)
+            hours, hours_remainder = divmod(days_remainder, 60 * 60)
+            minutes, _ = divmod(hours_remainder, 60)
+            uptime = ''
 
-        if days > 0:
-            uptime += str(days)
+            if days > 0:
+                uptime += str(days)
 
-            if days == 1:
-                uptime += ' day '
+                if days == 1:
+                    uptime += ' day '
+                else:
+                    uptime += ' days '
+
+            if hours > 0:
+                uptime += str(hours)
+
+                if hours == 1:
+                    uptime += ' hour '
+                else:
+                    uptime += ' hours '
+
+            uptime += str(minutes)
+
+            if minutes == 1:
+                uptime += ' minute'
             else:
-                uptime += ' days '
+                uptime += ' minutes'
 
-        if hours > 0:
-            uptime += str(hours)
+            cpu_percent = csv_tokens[1]
+            cpu_percent_v = int(csv_tokens[1].split('.')[0])
 
-            if hours == 1:
-                uptime += ' hour '
-            else:
-                uptime += ' hours '
+            memory_used = self.bytes2human(int(csv_tokens[2]))
+            memory_total = self.bytes2human(int(csv_tokens[3]))
+            memory_percent = str("%.1f" % ((float(memory_used) / float(memory_total)) * 100))
+            memory_percent_v = int(memory_percent.split('.')[0])
 
-        uptime += str(minutes)
+            storage_used = self.bytes2human(int(csv_tokens[4]))
+            storage_total = self.bytes2human(int(csv_tokens[5]))
+            storage_percent = str("%.1f" % ((float(storage_used) / float(storage_total)) * 100))
+            storage_percent_v = int(storage_percent.split('.')[0])
 
-        if minutes == 1:
-            uptime += ' minute'
-        else:
-            uptime += ' minutes'
-
-        cpu_percent = csv_tokens[1]
-        cpu_percent_v = int(csv_tokens[1].split('.')[0])
-
-        memory_used = self.bytes2human(int(csv_tokens[2]))
-        memory_total = self.bytes2human(int(csv_tokens[3]))
-        memory_percent = str("%.1f" % ((float(memory_used) / float(memory_total)) * 100))
-        memory_percent_v = int(memory_percent.split('.')[0])
-
-        storage_used = self.bytes2human(int(csv_tokens[4]))
-        storage_total = self.bytes2human(int(csv_tokens[5]))
-        storage_percent = str("%.1f" % ((float(storage_used) / float(storage_total)) * 100))
-        storage_percent_v = int(storage_percent.split('.')[0])
-
-        nic_data_dict = json.loads(csv_tokens[6])
-        processes_data_list = json.loads(csv_tokens[7])
+            nic_data_dict = json.loads(csv_tokens[6])
+            processes_data_list = json.loads(csv_tokens[7])
+        except:
+            # some parsing error due to malfromed or incomplete output occured.
+            # ignore it and wait for the next update
+            return
 
         self.label_uptime_value.setText(str(uptime))
 
-        self.pbar_cpu.setFormat("{0}%".format(cpu_percent))
+        pbar_cpu_fmt = "{0}%".format(cpu_percent)
+        pbar_memory_fmt = "{0}% [{1} of {2} MiB]".format(memory_percent, memory_used, memory_total)
+        pbar_storage_fmt = "{0}% [{1} of {2} GiB]".format(storage_percent, storage_used, storage_total)
+
+        if sys.platform == 'darwin':
+            self.label_pbar_cpu.show()
+            self.label_pbar_memory.show()
+            self.label_pbar_storage.show()
+            self.label_pbar_cpu.setText(pbar_cpu_fmt)
+            self.label_pbar_memory.setText(pbar_memory_fmt)
+            self.label_pbar_storage.setText(pbar_storage_fmt)
+        else:
+            self.pbar_cpu.setFormat(pbar_cpu_fmt)
+            self.pbar_memory.setFormat(pbar_memory_fmt)
+            self.pbar_storage.setFormat(pbar_storage_fmt)
+
         self.pbar_cpu.setValue(cpu_percent_v)
-
-        self.pbar_memory.setFormat("{0}% [{1} of {2} MiB]".format(memory_percent, memory_used, memory_total))
         self.pbar_memory.setValue(memory_percent_v)
-
-        self.pbar_storage.setFormat("{0}% [{1} of {2} GiB]".format(storage_percent, storage_used, storage_total))
         self.pbar_storage.setValue(storage_percent_v)
 
         self.nic_item_model.removeRows(0, self.nic_item_model.rowCount())
@@ -208,30 +244,34 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
 
         if self.cbox_based_on.currentIndex() == 0:
             processes_data_list_sorted = sorted(processes_data_list,
-                                                key = itemgetter('cpu'),
-                                                reverse = True)
+                                                key=itemgetter('cpu'),
+                                                reverse=True)
         elif self.cbox_based_on.currentIndex() == 1:
             processes_data_list_sorted = sorted(processes_data_list,
-                                                key = itemgetter('memory'),
-                                                reverse = True)
+                                                key=itemgetter('mem'),
+                                                reverse=True)
 
         processes_data_list_sorted = processes_data_list_sorted[:self.sbox_number_of_process.value()]
 
         for i, p in enumerate(processes_data_list_sorted):
-            _item_command = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['command']))
-            self.process_item_model.setItem(i, 0,_item_command)
+            _item_cmd = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['cmd']))
+            self.process_item_model.setItem(i, 0, _item_cmd)
 
             _item_pid = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['pid']))
             self.process_item_model.setItem(i, 1, _item_pid)
 
-            _item_user = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['user']))
-            self.process_item_model.setItem(i, 2, _item_user)
+            _item_usr = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['usr']))
+            self.process_item_model.setItem(i, 2, _item_usr)
 
-            _item_cpu = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['cpu'])+'%')
+            cpu = processes_data_list_sorted[i]['cpu']
+            _item_cpu = Qt.QStandardItem(unicode(cpu / 10.0)+'%')
+            _item_cpu.setData(QtCore.QVariant(cpu))
             self.process_item_model.setItem(i, 3, _item_cpu)
 
-            _item_memory = Qt.QStandardItem(unicode(processes_data_list_sorted[i]['memory'])+'%')
-            self.process_item_model.setItem(i, 4, _item_memory)
+            mem = processes_data_list_sorted[i]['mem']
+            _item_mem = Qt.QStandardItem(unicode(mem / 10.0)+'%')
+            _item_mem.setData(QtCore.QVariant(mem))
+            self.process_item_model.setItem(i, 4, _item_mem)
 
         self.tview_process.horizontalHeader().setSortIndicator(self.tview_process_previous_sort['column_index'],
                                                                self.tview_process_previous_sort['order'])
@@ -279,7 +319,9 @@ class REDTabOverview(QtGui.QWidget, Ui_REDTabOverview):
         self.process_item_model.setHorizontalHeaderItem(4, Qt.QStandardItem("Memory"))
         self.tview_process.setSpan(0, 0, 1, 5)
         self.process_item_model.setItem(0, 0, Qt.QStandardItem("Collecting data..."))
-        self.tview_process.setModel(self.process_item_model)
+        self.process_item_proxy_model = ProcessesProxyModel(self)
+        self.process_item_proxy_model.setSourceModel(self.process_item_model)
+        self.tview_process.setModel(self.process_item_proxy_model)
         self.tview_process.setColumnWidth(0, DEFAULT_TVIEW_PROCESS_HEADER_WIDTH_FIRST)
         self.tview_process.setColumnWidth(1, DEFAULT_TVIEW_PROCESS_HEADER_WIDTH_OTHER)
         self.tview_process.setColumnWidth(2, DEFAULT_TVIEW_PROCESS_HEADER_WIDTH_OTHER)

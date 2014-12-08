@@ -28,20 +28,18 @@ from brickv.plugin_system.plugins.red.program_utils import Constants
 from brickv.plugin_system.plugins.red.ui_program_info_php import Ui_ProgramInfoPHP
 
 class ProgramInfoPHP(ProgramInfo, Ui_ProgramInfoPHP):
-    def __init__(self, context, *args, **kwargs):
-        ProgramInfo.__init__(self, context, *args, **kwargs)
+    def __init__(self, context):
+        ProgramInfo.__init__(self, context)
 
         self.setupUi(self)
 
+        self.url_template = unicode(self.label_url.text())
+
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
 
+    # overrides ProgramInfo.update_ui_state
     def update_ui_state(self):
         show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
-
-        self.label_working_directory_title.setVisible(show_advanced_options)
-        self.label_working_directory.setVisible(show_advanced_options)
-        self.label_options_title.setVisible(show_advanced_options)
-        self.label_options.setVisible(show_advanced_options)
 
         # version
         def cb_php_versions(versions):
@@ -57,24 +55,36 @@ class ProgramInfoPHP(ProgramInfo, Ui_ProgramInfoPHP):
         self.get_executable_versions('php', cb_php_versions)
 
         # start mode
-        start_mode_api_name = self.program.cast_custom_option_value('php.start_mode', unicode, '<unknown>')
-        start_mode          = Constants.get_php_start_mode(start_mode_api_name)
+        start_mode_api_name      = self.program.cast_custom_option_value('php.start_mode', unicode, '<unknown>')
+        start_mode               = Constants.get_php_start_mode(start_mode_api_name)
+        start_mode_script_file   = start_mode == Constants.PHP_START_MODE_SCRIPT_FILE
+        start_mode_command       = start_mode == Constants.PHP_START_MODE_COMMAND
+        start_mode_web_interface = start_mode == Constants.PHP_START_MODE_WEB_INTERFACE
 
+        self.label_version_title.setVisible(not start_mode_web_interface)
+        self.label_version.setVisible(not start_mode_web_interface)
         self.label_start_mode.setText(Constants.php_start_mode_display_names[start_mode])
-
-        start_mode_script_file = start_mode == Constants.PHP_START_MODE_SCRIPT_FILE
-        start_mode_command     = start_mode == Constants.PHP_START_MODE_COMMAND
-
         self.label_script_file_title.setVisible(start_mode_script_file)
         self.label_script_file.setVisible(start_mode_script_file)
         self.label_command_title.setVisible(start_mode_command)
         self.label_command.setVisible(start_mode_command)
+        self.label_url_title.setVisible(start_mode_web_interface)
+        self.label_url.setVisible(start_mode_web_interface)
+        self.line.setVisible(not start_mode_web_interface)
+        self.check_show_advanced_options.setVisible(not start_mode_web_interface)
+        self.label_working_directory_title.setVisible(show_advanced_options and not start_mode_web_interface)
+        self.label_working_directory.setVisible(show_advanced_options and not start_mode_web_interface)
+        self.label_options_title.setVisible(show_advanced_options and not start_mode_web_interface)
+        self.label_options.setVisible(show_advanced_options and not start_mode_web_interface)
 
         # script file
         self.label_script_file.setText(self.program.cast_custom_option_value('php.script_file', unicode, '<unknown>'))
 
         # command
         self.label_command.setText(self.program.cast_custom_option_value('php.command', unicode, '<unknown>'))
+
+        # url
+        self.label_url.setText(self.url_template.replace('<SERVER>', 'red-brick').replace('<IDENTIFIER>', unicode(self.program.identifier)))
 
         # working directory
         self.label_working_directory.setText(unicode(self.program.working_directory))

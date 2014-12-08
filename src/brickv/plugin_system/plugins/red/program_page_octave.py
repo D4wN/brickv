@@ -2,6 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_octave.py: Program Wizard Octave Page
 
@@ -43,8 +44,8 @@ def get_octave_versions(script_manager, callback):
 
 
 class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
@@ -58,8 +59,9 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
         self.registerField('octave.working_directory', self.combo_working_directory, 'currentText')
 
         self.combo_start_mode.currentIndexChanged.connect(self.update_ui_state)
-        self.combo_start_mode.currentIndexChanged.connect(lambda: self.completeChanged.emit())
+        self.combo_start_mode.currentIndexChanged.connect(self.completeChanged.emit)
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
+        self.label_spacer.setText('')
 
         self.combo_script_file_selector       = MandatoryTypedFileSelector(self,
                                                                            self.label_script_file,
@@ -68,8 +70,8 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
                                                                            self.combo_script_file_type,
                                                                            self.label_script_file_help)
         self.combo_working_directory_selector = MandatoryDirectorySelector(self,
-                                                                           self.combo_working_directory,
-                                                                           self.label_working_directory)
+                                                                           self.label_working_directory,
+                                                                           self.combo_working_directory)
         self.option_list_editor               = ListWidgetEditor(self.label_options,
                                                                  self.list_options,
                                                                  self.label_options_help,
@@ -98,9 +100,9 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
             self.option_list_editor.add_item(unicode('--no-window-system'))
 
         # if a program exists then this page is used in an edit wizard
-        if self.wizard().program != None:
-            program = self.wizard().program
+        program = self.wizard().program
 
+        if program != None:
             # start mode
             start_mode_api_name = program.cast_custom_option_value('octave.start_mode', unicode, '<unknown>')
             start_mode          = Constants.get_octave_start_mode(start_mode_api_name)
@@ -135,6 +137,7 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
 
         return self.combo_working_directory_selector.complete and ProgramPage.isComplete(self)
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         start_mode             = self.get_field('octave.start_mode').toInt()[0]
         start_mode_script_file = start_mode == Constants.OCTAVE_START_MODE_SCRIPT_FILE
@@ -143,11 +146,30 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
         self.combo_script_file_selector.set_visible(start_mode_script_file)
         self.combo_working_directory_selector.set_visible(show_advanced_options)
         self.option_list_editor.set_visible(show_advanced_options)
+        self.label_spacer.setVisible(not show_advanced_options)
 
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
         return unicode(self.combo_version.itemData(self.get_field('octave.version').toInt()[0]).toString())
+
+    def get_html_summary(self):
+        version           = self.get_field('octave.version').toInt()[0]
+        start_mode        = self.get_field('octave.start_mode').toInt()[0]
+        script_file       = self.get_field('octave.script_file').toString()
+        working_directory = self.get_field('octave.working_directory').toString()
+        options           = ' '.join(self.option_list_editor.get_items())
+
+        html  = u'Octave Version: {0}<br/>'.format(Qt.escape(self.combo_version.itemText(version)))
+        html += u'Start Mode: {0}<br/>'.format(Qt.escape(Constants.octave_start_mode_display_names[start_mode]))
+
+        if start_mode == Constants.OCTAVE_START_MODE_SCRIPT_FILE:
+            html += u'Script File: {0}<br/>'.format(Qt.escape(script_file))
+
+        html += u'Working Directory: {0}<br/>'.format(Qt.escape(working_directory))
+        html += u'Octave Options: {0}<br/>'.format(Qt.escape(options))
+
+        return html
 
     def get_custom_options(self):
         return {

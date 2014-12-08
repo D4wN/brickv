@@ -28,13 +28,14 @@ from brickv.plugin_system.plugins.red.program_utils import Constants
 from brickv.plugin_system.plugins.red.ui_program_info_vbnet import Ui_ProgramInfoVBNET
 
 class ProgramInfoVBNET(ProgramInfo, Ui_ProgramInfoVBNET):
-    def __init__(self, context, *args, **kwargs):
-        ProgramInfo.__init__(self, context, *args, **kwargs)
+    def __init__(self, context):
+        ProgramInfo.__init__(self, context)
 
         self.setupUi(self)
 
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
 
+    # overrides ProgramInfo.update_ui_state
     def update_ui_state(self):
         show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
 
@@ -57,13 +58,11 @@ class ProgramInfoVBNET(ProgramInfo, Ui_ProgramInfoVBNET):
         self.get_executable_versions('mono', cb_mono_versions)
 
         # start mode
-        start_mode_api_name = self.program.cast_custom_option_value('vbnet.start_mode', unicode, '<unknown>')
-        start_mode          = Constants.get_vbnet_start_mode(start_mode_api_name)
-
-        self.label_start_mode.setText(Constants.vbnet_start_mode_display_names[start_mode])
-
+        start_mode_api_name   = self.program.cast_custom_option_value('vbnet.start_mode', unicode, '<unknown>')
+        start_mode            = Constants.get_vbnet_start_mode(start_mode_api_name)
         start_mode_executable = start_mode == Constants.VBNET_START_MODE_EXECUTABLE
 
+        self.label_start_mode.setText(Constants.vbnet_start_mode_display_names[start_mode])
         self.label_executable_title.setVisible(start_mode_executable)
         self.label_executable.setVisible(start_mode_executable)
 

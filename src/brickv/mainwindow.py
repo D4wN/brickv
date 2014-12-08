@@ -22,7 +22,7 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import pyqtSignal, QVariant, Qt, QTimer, QEvent, pyqtSlot
+from PyQt4.QtCore import pyqtSignal, QVariant, Qt, QTimer, QEvent
 from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, \
                         QPushButton, QWidget, QHBoxLayout, QVBoxLayout, \
                         QLabel, QFrame, QSpacerItem, QSizePolicy, \
@@ -33,11 +33,9 @@ from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
 from brickv.flashing import FlashingWindow
 from brickv.advanced import AdvancedWindow
-from brickv.logger_setup import LoggerSetupWindow 
 from brickv.async_call import async_start_thread, async_next_session
 from brickv.bindings.brick_master import BrickMaster
 from brickv.bindings.brick_red import BrickRED
-from brickv.program_path import get_program_path
 from brickv import config
 from brickv import infos
 from brickv.tab_window import TabWindow
@@ -48,7 +46,6 @@ import sys
 import time
 import gc
 
-
 class MainWindow(QMainWindow, Ui_MainWindow):
     qtcb_enumerate = pyqtSignal(str, str, 'char', type((0,)), type((0,)), int, int)
     qtcb_connected = pyqtSignal(int)
@@ -58,9 +55,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         QMainWindow.__init__(self, parent)
 
         self.setupUi(self)
-
-        self.icon = QIcon(os.path.join(get_program_path(), "brickv-icon.png"))
-        self.setWindowIcon(self.icon)
 
         signal.signal(signal.SIGINT, self.exit_brickv)
         signal.signal(signal.SIGTERM, self.exit_brickv)
@@ -99,7 +93,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_device_info = None
         self.flashing_window = None
         self.advanced_window = None
-        self.logger_setup_window = None # MARV: logger_setup_window
         self.delayed_refresh_updates_timer = QTimer()
         self.delayed_refresh_updates_timer.timeout.connect(self.delayed_refresh_updates)
         self.delayed_refresh_updates_timer.setInterval(500)
@@ -110,10 +103,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tab_widget.setMovable(True)
         self.tab_widget.tabBar().installEventFilter(self)
 
-        self.button_connect.pressed.connect(self.connect_pressed)
-        self.button_logger_setup.pressed.connect(self.logger_setup_pressed) # TODO: marvs entrie
-        self.button_flashing.pressed.connect(self.flashing_pressed)
-        self.button_advanced.pressed.connect(self.advanced_pressed)
+        self.button_connect.clicked.connect(self.connect_clicked)
+        self.button_flashing.clicked.connect(self.flashing_clicked)
+        self.button_advanced.clicked.connect(self.advanced_clicked)
         self.plugin_manager = PluginManager()
 
         # host info
@@ -156,6 +148,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_auto_reconnects.hide()
         self.auto_reconnects = 0
 
+    # override QMainWindow.closeEvent
     def closeEvent(self, event):
         self.exit_brickv()
 
@@ -341,17 +334,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         return True
 
-    # FIXME: meine funktionen
-    # TODO: KEKSE
-    def logger_setup_pressed(self): 
-        print "HELLO LOGGER_SETUP"
-        
-        if self.logger_setup_window is None:
-            self.logger_setup_window = LoggerSetupWindow(self)
-            
-        self.logger_setup_window.show()
-
-    def flashing_pressed(self):
+    def flashing_clicked(self):
         first = False
 
         if self.flashing_window is None:
@@ -360,23 +343,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.update_flashing_window()
         self.flashing_window.show()
-        self.flashing_window.refresh_updates_pressed()
+        self.flashing_window.refresh_updates_clicked()
 
-    def advanced_pressed(self):
+    def advanced_clicked(self):
         if self.advanced_window is None:
             self.advanced_window = AdvancedWindow(self)
 
         self.update_advanced_window()
         self.advanced_window.show()
 
-    @pyqtSlot()
-    def reconnect(self):
-        time.sleep(0.5)
-        self.connect_pressed()
-        time.sleep(0.5)
-        self.connect_pressed()
-
-    def connect_pressed(self):
+    def connect_clicked(self):
         if self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_DISCONNECTED:
             try:
                 self.last_host = str(self.combo_host.currentText())
@@ -402,7 +378,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_plugin(uid_text)
 
     def create_tab_window(self, device_info, connected_uid, position):
-        tab_window = TabWindow(self.tab_widget, device_info.name, self.icon, self.untab)
+        tab_window = TabWindow(self.tab_widget, device_info.name, self.untab)
         tab_window._info = device_info
         tab_window.set_callback_on_tab(lambda index:
             self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_PENDING and \
@@ -427,7 +403,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             button = QToolButton()
             button.setText(connected_uid)
-            button.pressed.connect(lambda: self.show_plugin(connected_uid))
+            button.clicked.connect(lambda: self.show_plugin(connected_uid))
 
             info_bar.addWidget(button)
             info_bar.addSpacerItem(QSpacerItem(1, 1, QSizePolicy.Expanding))
@@ -444,7 +420,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not device_info.plugin.has_custom_version(label_version_name, label_version):
             label_version_name.setText('FW Version:')
             label_version.setText(infos.get_version_string(device_info.plugin.firmware_version))
-    
+
         info_bar.addWidget(label_version_name)
         info_bar.addWidget(label_version)
 
@@ -802,4 +778,4 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.delayed_refresh_updates_timer.stop()
 
         if self.flashing_window is not None and self.flashing_window.isVisible():
-            self.flashing_window.refresh_updates_pressed()
+            self.flashing_window.refresh_updates_clicked()

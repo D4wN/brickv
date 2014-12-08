@@ -95,7 +95,7 @@ class Joystick(PluginBase):
         self.calibration_button = QPushButton('Calibrate (0, 0)')
         self.position_label = PositionLabel('Position: (0, 0)')
         
-        self.calibration_button.pressed.connect(self.calibration_pressed)
+        self.calibration_button.clicked.connect(self.calibration_clicked)
         
         self.current_x = None
         self.current_y = None
@@ -121,6 +121,7 @@ class Joystick(PluginBase):
         layout.addWidget(self.calibration_button)
 
     def start(self):
+        async_call(self.js.get_position, None, lambda pos: self.cb_position(*pos), self.increase_error_count)
         async_call(self.js.set_position_callback_period, 20, None, self.increase_error_count)
         
         self.plot_widget.stop = False
@@ -140,7 +141,7 @@ class Joystick(PluginBase):
     def has_device_identifier(device_identifier):
         return device_identifier == BrickletJoystick.DEVICE_IDENTIFIER
 
-    def calibration_pressed(self):
+    def calibration_clicked(self):
         try:
             self.js.calibrate()
         except ip_connection.Error:

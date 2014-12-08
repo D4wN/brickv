@@ -22,24 +22,24 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt, QDir, QVariant
-from PyQt4.QtGui import QIcon, QFileDialog, QListWidgetItem, QProgressDialog, QApplication
+from PyQt4.QtGui import QIcon, QFileDialog, QListWidgetItem, QApplication
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_files import Ui_ProgramPageFiles
-from brickv.program_path import get_program_path
+from brickv.utils import get_main_window, get_resources_path
 import os
-from collections import namedtuple
-
-Upload = namedtuple('Upload', 'source target')
+import posixpath
+import sys
 
 class ProgramPageFiles(ProgramPage, Ui_ProgramPageFiles):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
-        self.folder_icon = QIcon(os.path.join(get_program_path(), "folder-icon.png"))
-        self.file_icon   = QIcon(os.path.join(get_program_path(), "file-icon.png"))
+        self.edit_mode   = False
+        self.folder_icon = QIcon(os.path.join(get_resources_path(), "folder-icon.png"))
+        self.file_icon   = QIcon(os.path.join(get_resources_path(), "file-icon.png"))
 
         self.setTitle(title_prefix + 'Files')
 
@@ -54,11 +54,23 @@ class ProgramPageFiles(ProgramPage, Ui_ProgramPageFiles):
         self.list_files.clear()
         self.update_ui_state()
 
+        # if a program exists then this page is used in an edit wizard
+        if self.wizard().program != None:
+            self.edit_mode = True
+
+    # overrides QWizardPage.isComplete
+    def isComplete(self):
+        if self.edit_mode:
+            return self.list_files.count() > 0 and ProgramPage.isComplete(self)
+
+        return ProgramPage.isComplete(self)
+
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         self.button_remove_selected_files.setEnabled(len(self.list_files.selectedItems()) > 0)
 
     def show_add_files_dialog(self):
-        filenames = QFileDialog.getOpenFileNames(self, "Select files to be uploaded")
+        filenames = QFileDialog.getOpenFileNames(get_main_window(), 'Add Files')
 
         for filename in filenames:
             filename = unicode(QDir.toNativeSeparators(filename))
@@ -73,8 +85,19 @@ class ProgramPageFiles(ProgramPage, Ui_ProgramPageFiles):
             item.setData(Qt.DecorationRole, QVariant(self.file_icon))
             self.list_files.addItem(item)
 
+        self.completeChanged.emit()
+
     def show_add_directory_dialog(self):
-        directory = unicode(QDir.toNativeSeparators(QFileDialog.getExistingDirectory(self, "Select a directory of files to be uploaded")))
+        directory = unicode(QDir.toNativeSeparators(QFileDialog.getExistingDirectory(get_main_window(), 'Add Directory')))
+
+        if len(directory) == 0:
+            return
+
+        # FIXME: on Mac OS X the getExistingDirectory() might return the directory with
+        #        the last part being invalid, try to find the valid part of the directory
+        if sys.platform == 'darwin':
+            while len(directory) > 0 and not os.path.isdir(directory):
+                directory = os.path.split(directory)[0]
 
         if len(directory) == 0:
             return
@@ -83,21 +106,22 @@ class ProgramPageFiles(ProgramPage, Ui_ProgramPageFiles):
             return
 
         uploads = []
-        progress = QProgressDialog(self)
+
+        progress = ExpandingProgressDialog(self)
+        progress.hide_progress_text()
         progress.setWindowTitle('New Program')
-        progress.setLabelText(u"Collecting content of '{0}'".format(directory))
-        progress.setWindowModality(Qt.WindowModal)
-        progress.setMaximum(0)
-        progress.setValue(0)
+        progress.setLabelText(u"Collecting content of {0}".format(directory))
+        progress.setModal(True)
+        progress.setRange(0, 0)
         progress.show()
 
         for root, directories, files in os.walk(directory):
             for filename in files:
                 source = os.path.join(root, filename)
-                target = os.path.relpath(source, directory)
+                target = unicode(QDir.fromNativeSeparators(os.path.relpath(source, directory)))
                 uploads.append(Upload(source, target))
 
-                # ensure that the UI stays responsive and the keep-alive timer works
+                # ensure that the UI stays responsive
                 QApplication.processEvents()
 
                 if progress.wasCanceled():
@@ -115,9 +139,13 @@ class ProgramPageFiles(ProgramPage, Ui_ProgramPageFiles):
         item.setData(Qt.DecorationRole, QVariant(self.folder_icon))
         self.list_files.addItem(item)
 
+        self.completeChanged.emit()
+
     def remove_selected_files(self):
         for item in self.list_files.selectedItems():
             self.list_files.takeItem(self.list_files.row(item))
+
+        self.completeChanged.emit()
 
     def get_items(self):
         items = []

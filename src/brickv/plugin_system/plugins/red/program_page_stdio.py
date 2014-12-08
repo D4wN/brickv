@@ -26,11 +26,12 @@ from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_stdio import Ui_ProgramPageStdio
+from brickv.utils import get_main_window
 import os
 
 class ProgramPageStdio(ProgramPage, Ui_ProgramPageStdio):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
@@ -50,9 +51,9 @@ class ProgramPageStdio(ProgramPage, Ui_ProgramPageStdio):
         self.combo_stderr_redirection.currentIndexChanged.connect(self.update_ui_state)
         self.combo_stderr_redirection.currentIndexChanged.connect(self.emit_complete_changed)
 
-        self.combo_stdin_file_checker = MandatoryEditableComboBoxChecker(self, self.combo_stdin_file, self.label_stdin_file)
-        self.edit_stdout_file_checker = MandatoryLineEditChecker(self, self.edit_stdout_file, self.label_stdout_file)
-        self.edit_stderr_file_checker = MandatoryLineEditChecker(self, self.edit_stderr_file, self.label_stderr_file)
+        self.combo_stdin_file_checker = MandatoryEditableComboBoxChecker(self, self.label_stdin_file, self.combo_stdin_file)
+        self.edit_stdout_file_checker = MandatoryLineEditChecker(self, self.label_stdout_file, self.edit_stdout_file)
+        self.edit_stderr_file_checker = MandatoryLineEditChecker(self, self.label_stderr_file, self.edit_stderr_file)
 
     # overrides QWizardPage.initializePage
     def initializePage(self):
@@ -64,9 +65,9 @@ class ProgramPageStdio(ProgramPage, Ui_ProgramPageStdio):
         self.combo_stdin_file.clearEditText()
 
         # if a program exists then this page is used in an edit wizard
-        if self.wizard().program != None:
-            program = self.wizard().program
+        program = self.wizard().program
 
+        if program != None:
             stdin_redirection  = Constants.get_stdin_redirection(program.stdin_redirection)
             stdout_redirection = Constants.get_stdout_redirection(program.stdout_redirection)
             stderr_redirection = Constants.get_stderr_redirection(program.stderr_redirection)
@@ -106,6 +107,7 @@ class ProgramPageStdio(ProgramPage, Ui_ProgramPageStdio):
 
         return ProgramPage.isComplete(self)
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         stdin_redirection                 = self.get_field('stdin_redirection').toInt()[0]
         stdout_redirection                = self.get_field('stdout_redirection').toInt()[0]
@@ -163,7 +165,7 @@ class ProgramPageStdio(ProgramPage, Ui_ProgramPageStdio):
                                           stdout_redirection, stdout_file,
                                           stderr_redirection, stderr_file) # FIXME: async_call
         except REDError as e:
-            QMessageBox.critical(self, 'Edit Error',
+            QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update stdio redirection of program [{0}]:\n\n{1}'
                                  .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
             return

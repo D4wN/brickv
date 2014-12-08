@@ -27,8 +27,8 @@ from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_summary import Ui_ProgramPageSummary
 
 class ProgramPageSummary(ProgramPage, Ui_ProgramPageSummary):
-    def __init__(self, title_prefix='', *args, **kwargs):
-        ProgramPage.__init__(self, *args, **kwargs)
+    def __init__(self, title_prefix=''):
+        ProgramPage.__init__(self)
 
         self.setupUi(self)
 
@@ -38,7 +38,9 @@ class ProgramPageSummary(ProgramPage, Ui_ProgramPageSummary):
     def initializePage(self):
         self.set_formatted_sub_title(u'The complete configuration of the {language} program [{name}].')
 
-        language_display_name = Constants.language_display_names[self.get_field('language').toInt()[0]]
+        language              = self.get_field('language').toInt()[0]
+        language_display_name = Constants.language_display_names[language]
+        language_api_name     = Constants.language_api_names[language]
 
         # general information
         html  = u'<b>General Information</b><br/>'
@@ -63,14 +65,12 @@ class ProgramPageSummary(ProgramPage, Ui_ProgramPageSummary):
 
         html += u'<br/>'
 
-        language = self.get_field('language').toInt()[0]
-        is_browser = self.get_field('javascript.version').toInt()[0] == 0
-        if not (language == Constants.LANGUAGE_JAVASCRIPT and is_browser):
-            # language specific configuration
-            html += u'<b>{0} Configuration</b><br/>'.format(Qt.escape(language_display_name))
-            html += u'FIXME<br/>'
-            html += u'<br/>'
+        # language specific configuration
+        html += u'<b>{0} Configuration</b><br/>'.format(Qt.escape(language_display_name))
+        html += self.wizard().page(Constants.get_language_page(language_api_name)).get_html_summary()
+        html += u'<br/>'
 
+        if self.wizard().hasVisitedPage(Constants.PAGE_ARGUMENTS):
             # arguments
             html += u'<b>Arguments</b>'
 
@@ -101,7 +101,8 @@ class ProgramPageSummary(ProgramPage, Ui_ProgramPageSummary):
 
             html += u'<br/>'
 
-            # stdio redirection
+        # stdio redirection
+        if self.wizard().hasVisitedPage(Constants.PAGE_STDIO):
             html += u'<b>Stdio Redirection</b><br/>'
 
             stdin_redirection  = self.get_field('stdin_redirection').toInt()[0]
@@ -125,7 +126,8 @@ class ProgramPageSummary(ProgramPage, Ui_ProgramPageSummary):
 
             html += u'<br/>'
 
-            # schedule
+        # schedule
+        if self.wizard().hasVisitedPage(Constants.PAGE_SCHEDULE):
             html += u'<b>Schedule</b><br/>'
 
             start_mode = self.get_field('start_mode').toInt()[0]
@@ -137,9 +139,9 @@ class ProgramPageSummary(ProgramPage, Ui_ProgramPageSummary):
 
             if start_mode != Constants.START_MODE_NEVER and start_mode != Constants.START_MODE_ONCE:
                 if self.get_field('continue_after_error').toBool():
-                    html += u'Continue After Error: Yes<br/>'
+                    html += u'Continue After Error: Enabled<br/>'
                 else:
-                    html += u'Continue After Error: No<br/>'
+                    html += u'Continue After Error: Disabled<br/>'
 
             if start_mode == Constants.START_MODE_INTERVAL:
                 html += u'Interval: {0} seconds<br/>'.format(self.get_field('start_interval').toUInt()[0])
@@ -149,5 +151,6 @@ class ProgramPageSummary(ProgramPage, Ui_ProgramPageSummary):
         self.text_summary.setHtml(html)
         self.update_ui_state()
 
+    # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
         pass

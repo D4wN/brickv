@@ -83,15 +83,16 @@ class TerminalWidget(QWidget):
         self._char_height = [0]*(self._rows+1)
 
 #        self.parent().setTabOrder(self, self)
-        self.setFocusPolicy(Qt.WheelFocus)
+        self.setFocusPolicy(Qt.StrongFocus)
         self.setAutoFillBackground(False)
         self.setAttribute(Qt.WA_OpaquePaintEvent, True)
         self.setCursor(Qt.IBeamCursor)
         font = QFont(font_name)
+        font.setStyleHint(QFont.TypeWriter)
         font.setPixelSize(font_size)
         self.setFont(font)
         self._session = None
-        self._last_update = 0 
+        self._last_update = 0
         self._screen = []
         self._text = []
         self._cursor_rect = None
@@ -102,7 +103,8 @@ class TerminalWidget(QWidget):
         self._press_pos = None
         self._selection = None
         self._clipboard = QApplication.clipboard()
-        
+        self._pixmap = None
+
     def execute(self, command):
         self._update_metrics()
         self._session = SerialSession(command, self)
@@ -128,7 +130,7 @@ class TerminalWidget(QWidget):
         if self._session == None:
             return
         self._session.close()
-        
+
     def focusNextPrevChild(self, next):
         if self._session == None:
             return True
@@ -156,7 +158,7 @@ class TerminalWidget(QWidget):
         self.setMaximumHeight(self._char_height[self._rows-1])
         self.setMinimumWidth(self._char_width[self._columns])
         self.setMaximumWidth(self._char_width[self._columns])
-        
+
         if self._session == None:
             self._dirty = True
             self.repaint()
@@ -174,27 +176,42 @@ class TerminalWidget(QWidget):
     def update_screen(self):
         if self._session == None:
             return
-        
+
         # max 25 fps
         new_update = time.time()
         if (new_update - self._last_update) < 0.040:
             return
-        
+
         self._last_update = new_update
-        
+
         old_screen = self._screen
         (self._cursor_col, self._cursor_row), self._screen = self._session.dump()
         self._update_cursor_rect()
         if old_screen != self._screen:
             self._dirty = True
-        
+
         self.repaint()
 
     def paintEvent(self, event):
-        painter = QPainter(self)
+        # the original code tried to be clever about painting an caching. it
+        # only painted the screen if it was dirty. for the redraws when the
+        # dirty flag was not set it relyed on the OS not the clear the cash.
+        # but this does not work (at least on Mac OS X). instead of caching in
+        # the OS cache the screen in a pixmap to have full control over it
+        if self._pixmap == None or self.size() != self._pixmap.size():
+            self._pixmap = QPixmap(self.size())
+            self._dirty = True
+
         if self._dirty:
             self._dirty = False
-            self._paint_screen(painter)
+
+            pixmap_painter = QPainter(self._pixmap)
+            pixmap_painter.setFont(self.font())
+
+            self._paint_screen(pixmap_painter)
+
+        painter = QPainter(self)
+        painter.drawPixmap(0, 0, self._pixmap)
 
         # We don't use the blinky cursor for now
 #        if self._cursor_rect is not None and self._selection is None:
@@ -270,7 +287,7 @@ class TerminalWidget(QWidget):
             y += self._char_height[0]
             text_append(text_line)
         self._text = text
-        
+
     def _paint_selection(self, painter):
         pcol = QColor(200, 200, 200, 50)
         pen = QPen(pcol)
@@ -278,13 +295,14 @@ class TerminalWidget(QWidget):
         brush = QBrush(bcol)
         painter.setPen(pen)
         painter.setBrush(brush)
-        for (start_col, start_row, end_col, end_row) in self._selection:
-            x, y = self._pos2pixel(start_col, start_row)
-            width, height = self._pos2pixel(
-                end_col - start_col, end_row - start_row)
-            rect = QRect(x, y, width, height)
-#            painter.drawRect(rect)
-            painter.fillRect(rect, brush)
+        if self._selection != None:
+            for (start_col, start_row, end_col, end_row) in self._selection:
+                x, y = self._pos2pixel(start_col, start_row)
+                width, height = self._pos2pixel(
+                    end_col - start_col, end_row - start_row)
+                rect = QRect(x, y, width, height)
+#                painter.drawRect(rect)
+                painter.fillRect(rect, brush)
 
     def zoom_in(self):
         font = self.font()
@@ -303,7 +321,7 @@ class TerminalWidget(QWidget):
     def keyPressEvent(self, event):
         if self._session == None:
             return
-        
+
         text = unicode(event.text())
         key = event.key()
         modifiers = event.modifiers()
@@ -337,7 +355,7 @@ class TerminalWidget(QWidget):
     def mousePressEvent(self, event):
         if self._session == None:
             return
-        
+
         button = event.button()
         if button == Qt.RightButton:
             ctx_event = QContextMenuEvent(QContextMenuEvent.Mouse, event.pos())
@@ -409,9 +427,10 @@ class TerminalWidget(QWidget):
 
     def text_selection(self):
         text = []
-        for (start_col, start_row, end_col, end_row) in self._selection:
-            for row in range(start_row, end_row):
-                text.append(self._text[row][start_col:end_col])
+        if self._selection != None:
+            for (start_col, start_row, end_col, end_row) in self._selection:
+                for row in range(start_row, end_row):
+                    text.append(self._text[row][start_col:end_col])
         return "\n".join(text)
 
     def column_count(self):
@@ -427,7 +446,7 @@ class TerminalWidget(QWidget):
     def mouseMoveEvent(self, event):
         if self._session == None:
             return
-        
+
         if self._press_pos:
             move_pos = event.pos()
             self._selection = self._selection_rects(self._press_pos, move_pos)
@@ -442,7 +461,7 @@ class TerminalWidget(QWidget):
     def mouseDoubleClickEvent(self, event):
         if self._session == None:
             return
-        
+
         self._press_pos = None
         # double clicks create a selection for the word under the cursor
         pos = event.pos()

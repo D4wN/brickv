@@ -47,8 +47,8 @@ from brickv.plugin_system.plugins.red.program_page_summary import ProgramPageSum
 from brickv.plugin_system.plugins.red.program_page_upload import ProgramPageUpload
 
 class ProgramWizardNew(ProgramWizard):
-    def __init__(self, context, *args, **kwargs):
-        ProgramWizard.__init__(self, context, *args, **kwargs)
+    def __init__(self, parent, context):
+        ProgramWizard.__init__(self, parent, context)
 
         self.setWindowTitle('New Program')
 
@@ -86,7 +86,17 @@ class ProgramWizardNew(ProgramWizard):
             except KeyError:
                 return Constants.PAGE_GENERAL
         elif currentId == Constants.PAGE_JAVASCRIPT:
-            if self.get_field('javascript.version').toInt()[0] == 0:
+            if self.get_field('javascript.flavor').toInt()[0] == Constants.JAVASCRIPT_FLAVOR_BROWSER:
+                return Constants.PAGE_SUMMARY
+            else:
+                return Constants.PAGE_ARGUMENTS
+        elif currentId == Constants.PAGE_PYTHON:
+            if self.get_field('python.start_mode').toInt()[0] == Constants.PYTHON_START_MODE_WEB_INTERFACE:
+                return Constants.PAGE_SUMMARY
+            else:
+                return Constants.PAGE_ARGUMENTS
+        elif currentId == Constants.PAGE_PHP:
+            if self.get_field('php.start_mode').toInt()[0] == Constants.PHP_START_MODE_WEB_INTERFACE:
                 return Constants.PAGE_SUMMARY
             else:
                 return Constants.PAGE_ARGUMENTS
@@ -124,7 +134,7 @@ class ProgramWizardNew(ProgramWizard):
 
     @property
     def program(self):
-        if self.hasVisitedPage(Constants.PAGE_FILES):
+        if self.hasVisitedPage(Constants.PAGE_UPLOAD):
             return self.page(Constants.PAGE_UPLOAD).program
         else:
             return None
