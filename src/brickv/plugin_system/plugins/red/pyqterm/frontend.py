@@ -2,14 +2,12 @@
 import time
 
 from PyQt4.QtCore import QRect, Qt, pyqtSignal, pyqtSlot
-from PyQt4.QtGui import (
-    QApplication, QClipboard, QWidget, QPainter, QFont, QBrush, QColor,
-    QPen, QPixmap, QImage, QContextMenuEvent)
+from PyQt4.QtGui import QApplication, QClipboard, QWidget, QPainter, QFont, \
+                        QBrush, QColor, QPen, QPixmap,  QContextMenuEvent
 
 from .backend import SerialSession
 
 DEBUG = False
-
 
 class TerminalWidget(QWidget):
 
@@ -322,7 +320,7 @@ class TerminalWidget(QWidget):
         if self._session == None:
             return
 
-        text = unicode(event.text())
+        text = event.text()
         key = event.key()
         modifiers = event.modifiers()
         ctrl = modifiers == Qt.ControlModifier
@@ -338,16 +336,16 @@ class TerminalWidget(QWidget):
                 if s:
                     self.send(s.encode("utf-8"))
                 elif DEBUG:
-                    print "Unkonwn key combination"
-                    print "Modifiers:", modifiers
-                    print "Key:", key
+                    print("Unkonwn key combination")
+                    print("Modifiers: " + str(modifiers))
+                    print("Key: " + str(key))
                     for name in dir(Qt):
                         if not name.startswith("Key_"):
                             continue
                         value = getattr(Qt, name)
                         if value == key:
-                            print "Symbol: Qt.%s" % name
-                    print "Text: %r" % text
+                            print("Symbol: Qt.%s" % name)
+                    print("Text: %r" % text)
         event.accept()
         if key in (Qt.Key_Enter, Qt.Key_Return):
             self.return_pressed.emit()
@@ -368,7 +366,7 @@ class TerminalWidget(QWidget):
         elif button == Qt.MiddleButton:
             self._press_pos = None
             self._selection = None
-            text = unicode(self._clipboard.text(QClipboard.Selection))
+            text = self._clipboard.text(QClipboard.Selection)
             self.send(text.encode("utf-8"))
             # self.update_screen()
 
@@ -453,7 +451,7 @@ class TerminalWidget(QWidget):
 
             sel = self.text_selection()
             if DEBUG:
-                print "%r copied to xselection" % sel
+                print("%r copied to xselection" % sel)
             self._clipboard.setText(sel, QClipboard.Selection)
 
             self.update_screen()
@@ -491,7 +489,7 @@ class TerminalWidget(QWidget):
 
         sel = self.text_selection()
         if DEBUG:
-            print "%r copied to xselection" % sel
+            print("%r copied to xselection" % sel)
         self._clipboard.setText(sel, QClipboard.Selection)
 
         self.update_screen()

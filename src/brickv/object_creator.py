@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-  
+# -*- coding: utf-8 -*-
 """
-brickv (Brick Viewer) 
+brickv (Brick Viewer)
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
 
 object_creator.py: Creates objects in Qt main thread
 
 This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License 
-as published by the Free Software Foundation; either version 2 
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
@@ -32,15 +32,15 @@ def create_object_in_qt_main_thread(cls, data):
     oc = ObjectCreator(cls, data)
     QtCore.QCoreApplication.instance().object_creator_signal.emit(oc)
     oc.semaphore.acquire()
-    return oc.object
+    return oc.obj
 
-class ObjectCreator:
+class ObjectCreator(object):
     def __init__(self, cls, data):
-        self.cls = cls 
+        self.cls = cls
         self.data = data
         self.semaphore = threading.Semaphore(0)
-        self.object = None
-        
+        self.obj = None
+
     def create(self):
-        self.object = self.cls(*self.data)
+        self.obj = self.cls(*self.data)
         self.semaphore.release()

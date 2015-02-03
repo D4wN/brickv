@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 Copyright (C) 2014 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
 
 program_info_main.py: Program Info Main Widget
@@ -64,23 +64,21 @@ from brickv.plugin_system.plugins.red.program_page_schedule import ProgramPageSc
 from brickv.plugin_system.plugins.red.ui_program_info_main import Ui_ProgramInfoMain
 from brickv.async_call import async_call
 from brickv.utils import get_main_window
-import os
-import json
 
 class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
     name_changed = pyqtSignal()
 
-    def __init__(self, session, script_manager, image_version_ref, executable_versions, program):
+    def __init__(self, session, script_manager, image_version, executable_versions, program):
         QWidget.__init__(self)
 
         self.setupUi(self)
 
         self.session             = session
         self.script_manager      = script_manager
-        self.image_version_ref   = image_version_ref
+        self.image_version       = image_version
         self.executable_versions = executable_versions
         self.program             = program
-        self.root_directory      = unicode(self.program.root_directory)
+        self.root_directory      = self.program.root_directory
 
         self.program.scheduler_state_changed_callback = self.scheduler_state_changed
         self.program.process_spawned_callback         = self.process_spawned
@@ -281,7 +279,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
             language_display_name = '<unknown>'
 
         self.label_name.setText(name)
-        self.label_identifier.setText(unicode(self.program.identifier))
+        self.label_identifier.setText(self.program.identifier)
         self.label_language.setText(language_display_name)
         self.label_description.setText(description)
         self.label_first_upload.setText(timestamp_to_date_at_time(first_upload))
@@ -339,8 +337,8 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
                     self.label_program_current_state.setText('Not running, last run exited with an error (exit code: {0}) on {1}'
                                                             .format(self.program.last_spawned_process.exit_code, date_at_time))
             elif self.program.last_spawned_process.state == REDProcess.STATE_KILLED:
-                    self.label_program_current_state.setText('Not running, last run was killed (signal: {0}) on {1}'
-                                                             .format(self.program.last_spawned_process.exit_code, date_at_time))
+                self.label_program_current_state.setText('Not running, last run was killed (signal: {0}) on {1}'
+                                                         .format(self.program.last_spawned_process.exit_code, date_at_time))
             elif self.program.last_spawned_process.state == REDProcess.STATE_STOPPED:
                 self.label_program_current_state.setText('Stopped on {0}'.format(date_at_time)) # FIXME: show continue button?
 
@@ -359,7 +357,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.label_last_scheduler_state_change.setText(timestamp_to_date_at_time(self.program.scheduler_timestamp))
 
         if self.program.scheduler_message != None:
-            self.label_last_scheduler_message.setText(unicode(self.program.scheduler_message))
+            self.label_last_scheduler_message.setText(self.program.scheduler_message)
         else:
             self.label_last_scheduler_message.setText('None')
 
@@ -402,7 +400,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         editable_arguments_offset = max(self.program.cast_custom_option_value('editable_arguments_offset', int, 0), 0)
 
         for argument in self.program.arguments.items[editable_arguments_offset:]:
-            arguments.append(unicode(argument))
+            arguments.append(argument)
 
         self.label_arguments.setText('\n'.join(arguments))
 
@@ -410,9 +408,9 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         editable_environment_offset = max(self.program.cast_custom_option_value('editable_environment_offset', int, 0), 0)
 
         for variable in self.program.environment.items[editable_environment_offset:]:
-            environment.append(unicode(variable))
+            environment.append(variable)
 
-        show_environment = self.check_show_environment.checkState() == Qt.Checked
+        show_environment = self.check_show_environment.isChecked()
 
         self.label_environment_title.setVisible(show_environment)
         self.label_environment.setVisible(show_environment)
@@ -437,21 +435,21 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.set_widget_enabled(self.button_send_stdin_pipe_input, process_running)
 
         if stdin_redirection_file:
-            self.label_stdin_file.setText(unicode(self.program.stdin_file_name))
+            self.label_stdin_file.setText(self.program.stdin_file_name)
 
         self.label_stdout_target.setText(Constants.api_stdout_redirection_display_names.get(self.program.stdout_redirection, '<unknown>'))
         self.label_stdout_file_title.setVisible(stdout_redirection_file)
         self.label_stdout_file.setVisible(stdout_redirection_file)
 
         if stdout_redirection_file:
-            self.label_stdout_file.setText(unicode(self.program.stdout_file_name))
+            self.label_stdout_file.setText(self.program.stdout_file_name)
 
         self.label_stderr_target.setText(Constants.api_stderr_redirection_display_names.get(self.program.stderr_redirection, '<unknown>'))
         self.label_stderr_file_title.setVisible(stderr_redirection_file)
         self.label_stderr_file.setVisible(stderr_redirection_file)
 
         if stderr_redirection_file:
-            self.label_stderr_file.setText(unicode(self.program.stderr_file_name))
+            self.label_stderr_file.setText(self.program.stderr_file_name)
 
         # schedule
         self.group_schedule.setVisible(show_schedule)
@@ -475,7 +473,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.label_start_fields.setVisible(start_mode_cron)
 
         if start_mode_cron:
-            self.label_start_fields.setText(unicode(self.program.start_fields))
+            self.label_start_fields.setText(self.program.start_fields)
 
         self.label_continue_after_error_title.setVisible(not start_mode_never)
         self.label_continue_after_error.setVisible(not start_mode_never)
@@ -488,37 +486,37 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
     def start_program(self):
         try:
             self.program.start()
-        except REDError as e:
+        except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Start Error',
                                  u'Could not start program [{0}]:\n\n{1}'
-                                 .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), str(e)))
+                                 .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
 
     # FIXME: either send SIGINT before SIGKILL, or add a dedicated button for SIGINT
     def kill_process(self):
         if self.program.last_spawned_process != None:
             try:
                 self.program.last_spawned_process.kill(REDProcess.SIGNAL_KILL)
-            except REDError as e:
+            except (Error, REDError) as e:
                 QMessageBox.critical(get_main_window(), 'Kill Error',
                                      u'Could not kill current process of program [{0}]:\n\n{1}'
-                                     .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), str(e)))
+                                     .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
 
     def continue_schedule(self):
         try:
             self.program.continue_schedule()
-        except REDError as e:
+        except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Schedule Error',
                                  u'Could not continue schedule of program [{0}]:\n\n{1}'
-                                 .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), str(e)))
+                                 .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
 
     def send_stdin_pipe_input(self):
         if self.program.last_spawned_process != None and self.program.last_spawned_process.stdin != None:
             try:
-                self.program.last_spawned_process.stdin.write_async((unicode(self.edit_stdin_pipe_input.text()) + u'\n').encode('utf-8'))
-            except REDError as e:
+                self.program.last_spawned_process.stdin.write_async((self.edit_stdin_pipe_input.text() + u'\n').encode('utf-8'))
+            except (Error, REDError) as e:
                 QMessageBox.critical(get_main_window(), 'Pipe Input Error',
                                      u'Could not write to stdin of current process of program [{0}]:\n\n{1}'
-                                     .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), str(e)))
+                                     .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
             else:
                 self.edit_stdin_pipe_input.setText('')
 
@@ -558,7 +556,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
     def show_edit_general_wizard(self):
         self.set_edit_buttons_enabled(False)
 
-        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version_ref, self.executable_versions)
+        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version, self.executable_versions)
         page    = ProgramPageGeneral()
 
         self.edit_general_wizard = ProgramWizardEdit(self, context, self.program, self.widget_files.available_files, self.widget_files.available_directories)
@@ -599,7 +597,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
 
         self.set_edit_buttons_enabled(False)
 
-        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version_ref, self.executable_versions)
+        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version, self.executable_versions)
         page    = language_page_classes[language_page]()
 
         self.edit_language_wizard = ProgramWizardEdit(self, context, self.program, self.widget_files.available_files, self.widget_files.available_directories,)
@@ -617,7 +615,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
     def show_edit_arguments_wizard(self):
         self.set_edit_buttons_enabled(False)
 
-        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version_ref, self.executable_versions)
+        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version, self.executable_versions)
         page    = ProgramPageArguments()
 
         self.edit_arguments_wizard = ProgramWizardEdit(self, context, self.program, self.widget_files.available_files, self.widget_files.available_directories)
@@ -635,7 +633,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
     def show_edit_stdio_wizard(self):
         self.set_edit_buttons_enabled(False)
 
-        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version_ref, self.executable_versions)
+        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version, self.executable_versions)
         page    = ProgramPageStdio()
 
         self.edit_stdio_wizard = ProgramWizardEdit(self, context, self.program, self.widget_files.available_files, self.widget_files.available_directories)
@@ -653,7 +651,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
     def show_edit_schedule_wizard(self):
         self.set_edit_buttons_enabled(False)
 
-        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version_ref, self.executable_versions)
+        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version, self.executable_versions)
         page    = ProgramPageSchedule()
 
         self.edit_schedule_wizard = ProgramWizardEdit(self, context, self.program, self.widget_files.available_files, self.widget_files.available_directories)
@@ -672,11 +670,12 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.set_edit_buttons_enabled(False)
         self.set_program_callbacks_enabled(False)
 
-        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version_ref, self.executable_versions)
+        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version, self.executable_versions)
 
         self.upload_files_wizard = ProgramWizardUpload(self, context, self.program)
+        self.upload_files_wizard.exec_()
 
-        if self.upload_files_wizard.exec_() == QDialog.Accepted:
+        if self.upload_files_wizard.upload_successful:
             self.widget_files.refresh_files()
 
         self.upload_files_wizard = None
@@ -689,7 +688,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.set_edit_buttons_enabled(False)
         self.set_program_callbacks_enabled(False)
 
-        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version_ref, self.executable_versions)
+        context = ProgramWizardContext(self.session, [], self.script_manager, self.image_version, self.executable_versions)
 
         self.download_wizard = ProgramWizardDownload(self, context, self.program, download_kind, download_directory, downloads)
         self.download_wizard.exec_()

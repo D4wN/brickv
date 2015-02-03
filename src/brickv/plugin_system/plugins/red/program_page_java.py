@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_java.py: Program Wizard Java Page
 
@@ -21,14 +21,17 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import QVariant
+from PyQt4.QtCore import QVariant, QTimer
+from PyQt4.QtGui import QDialog, QMessageBox
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_java import Ui_ProgramPageJava
-from brickv.plugin_system.plugins.red.javatools.jarinfo import JarInfo
-from brickv.plugin_system.plugins.red.javatools import unpack_class
+from brickv.plugin_system.plugins.red.java_utils import get_jar_file_main_classes, get_class_file_main_classes
 from brickv.async_call import async_call
+from brickv.utils import get_main_window
 import posixpath
+import json
+import zlib
 
 def get_java_versions(script_manager, callback):
     def cb_versions(result):
@@ -46,38 +49,23 @@ def get_java_versions(script_manager, callback):
     script_manager.execute_script('java_versions', cb_versions)
 
 
-def get_main_classes_from_class_or_jar(uploads):
-    MAIN_ENDING = '.main(java.lang.String[]):void'
-
-    def parse_jar(f):
-        try:
-            with JarInfo(filename=f) as ji:
-                return ji.get_provides()
-        except:
-            pass
-
-        return []
-
-    def parse_class(f):
-        try:
-            with open(f) as cf:
-                return unpack_class(cf).get_provides()
-        except:
-            pass
-
-        return []
-
-    classes = []
+def get_main_classes_from_class_or_jar(uploads, abort_ref):
     main_classes = []
-    for upload in uploads:
-        if upload.source.endswith('.jar'):
-            classes.extend(parse_jar(upload.source))
-        elif upload.source.endswith('.class'):
-            classes.extend(parse_class(upload.source))
 
-    for cls in classes:
-        if cls.endswith(MAIN_ENDING):
-            main_classes.append(cls.replace(MAIN_ENDING, ''))
+    for upload in uploads:
+        if abort_ref[0]:
+            break
+
+        if upload.source.endswith('.jar'):
+            try:
+                main_classes.extend(get_jar_file_main_classes(upload.source, abort_ref))
+            except:
+                pass
+        elif upload.source.endswith('.class'):
+            try:
+                main_classes.extend(get_class_file_main_classes(upload.source))
+            except:
+                pass
 
     return main_classes
 
@@ -88,7 +76,9 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
 
         self.setupUi(self)
 
-        self.language = Constants.LANGUAGE_JAVA
+        self.language              = Constants.LANGUAGE_JAVA
+        self.bin_directory         = '/tmp'
+        self.class_path_candidates = []
 
         self.setTitle('{0}{1} Configuration'.format(title_prefix, Constants.language_display_names[self.language]))
 
@@ -101,7 +91,9 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         self.combo_start_mode.currentIndexChanged.connect(self.update_ui_state)
         self.combo_start_mode.currentIndexChanged.connect(self.completeChanged.emit)
         self.check_show_class_path.stateChanged.connect(self.update_ui_state)
+        self.button_add_class_path_entry.clicked.connect(self.add_class_path_entry)
         self.check_show_advanced_options.stateChanged.connect(self.update_ui_state)
+        self.label_main_class_error.setVisible(False)
         self.label_spacer.setText('')
 
         self.combo_main_class_checker         = MandatoryEditableComboBoxChecker(self,
@@ -116,11 +108,10 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         self.combo_working_directory_selector = MandatoryDirectorySelector(self,
                                                                            self.label_working_directory,
                                                                            self.combo_working_directory)
-        # FIXME: allow adding class path entries using a combo box prefilled with avialable .jar files
         self.class_path_list_editor           = ListWidgetEditor(self.label_class_path,
                                                                  self.list_class_path,
                                                                  self.label_class_path_help,
-                                                                 self.button_add_class_path_entry,
+                                                                 None,
                                                                  self.button_remove_class_path_entry,
                                                                  self.button_up_class_path_entry,
                                                                  self.button_down_class_path_entry,
@@ -143,48 +134,147 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_JAVA_START_MODE)
         self.combo_jar_file_selector.reset()
         self.class_path_list_editor.reset()
-        self.check_show_class_path.setCheckState(Qt.Unchecked)
-        self.check_show_advanced_options.setCheckState(Qt.Unchecked)
+        self.check_show_class_path.setChecked(False)
+        self.check_show_advanced_options.setChecked(False)
         self.combo_working_directory_selector.reset()
         self.option_list_editor.reset()
 
+        # if a program exists then this page is used in an edit wizard
         program = self.wizard().program
 
-        # if a program exists then this page is used in an edit wizard
         if program != None:
-            bin_directory = posixpath.join(unicode(program.root_directory), 'bin')
+            self.bin_directory = posixpath.join(program.root_directory, 'bin')
         else:
-            identifier    = unicode(self.get_field('identifier').toString())
-            bin_directory = posixpath.join('/', 'home', 'tf', 'programs', identifier, 'bin')
+            identifier         = self.get_field('identifier').toString()
+            self.bin_directory = posixpath.join('/', 'home', 'tf', 'programs', identifier, 'bin')
 
-        jar_filenames = []
+        # collect class path entries
+        self.class_path_candidates = ['.']
 
         for filename in sorted(self.wizard().available_files):
-            if filename.endswith('.jar'):
-                jar_filenames.append(posixpath.join(bin_directory, filename))
+            directroy = posixpath.split(filename)[0]
 
-        if program == None:
-            for jar_filename in jar_filenames:
-                self.class_path_list_editor.add_item(jar_filename)
+            if len(directroy) > 0 and directroy not in self.class_path_candidates:
+                self.class_path_candidates.append(directroy)
 
-        self.class_path_list_editor.set_add_menu_items(['/usr/tinkerforge/bindings/java/Tinkerforge.jar'] + jar_filenames,
-                                                       '<new class path entry>')
+            if filename.endswith('.class') or filename.endswith('.properties'):
+                if program == None:
+                    self.class_path_list_editor.add_item(directroy)
+            elif filename.endswith('.jar'):
+                self.class_path_candidates.append(filename)
+
+                if program == None:
+                    self.class_path_list_editor.add_item(filename)
+
+        self.class_path_list_editor.add_item('/usr/tinkerforge/bindings/java/Tinkerforge.jar')
+        self.class_path_candidates.append('/usr/tinkerforge/bindings/java/Tinkerforge.jar')
 
         self.combo_main_class.clear()
         self.combo_main_class.clearEditText()
 
-        # FIXME: make this work in edit mode
-        if self.wizard().hasVisitedPage(Constants.PAGE_FILES):
+        # collect main classes
+        if program != None:
+            self.combo_main_class.setEnabled(False)
+
+            def get_main_classes():
+                def progress_canceled(sd_ref):
+                    sd = sd_ref[0]
+
+                    if sd == None:
+                        return
+
+                    self.wizard().script_manager.abort_script(sd)
+
+                sd_ref   = [None]
+                progress = ExpandingProgressDialog(self.wizard())
+                progress.hide_progress_text()
+                progress.setWindowTitle('Edit Program')
+                progress.setLabelText('Collecting Java main classes')
+                progress.setModal(True)
+                progress.setRange(0, 0)
+                progress.canceled.connect(lambda: progress_canceled(sd_ref))
+                progress.show()
+
+                def cb_java_main_classes(sd_ref, result):
+                    sd = sd_ref[0]
+
+                    if sd != None:
+                        aborted = sd.abort
+                    else:
+                        aborted = False
+
+                    sd_ref[0] = None
+
+                    def done():
+                        progress.cancel()
+                        self.combo_main_class.setEnabled(True)
+                        self.completeChanged.emit()
+
+                    if aborted:
+                        done()
+                        return
+
+                    if result == None or result.exit_code != 0:
+                        if result == None or len(result.stderr) == 0:
+                            self.label_main_class_error.setText('<b>Error:</b> Internal script error occurred')
+                        else:
+                            self.label_main_class_error.setText('<b>Error:</b> ' + Qt.escape(result.stderr.decode('utf-8').strip()))
+
+                        self.label_main_class_error.setVisible(True)
+                        done()
+                        return
+
+                    def expand_async(data):
+                        try:
+                            main_classes = json.loads(zlib.decompress(buffer(data)).decode('utf-8'))
+
+                            if not isinstance(main_classes, dict):
+                                main_classes = {}
+                        except:
+                            main_classes = {}
+
+                        return main_classes
+
+                    def cb_expand_success(main_classes):
+                        self.combo_main_class.clear()
+
+                        for cls in sorted(main_classes.keys()):
+                            self.combo_main_class.addItem(cls, QVariant(main_classes[cls]))
+
+                        self.combo_main_class_checker.set_current_text(program.cast_custom_option_value('java.main_class', unicode, ''))
+                        done()
+
+                    def cb_expand_error():
+                        self.label_main_class_error.setText('<b>Error:</b> Internal async error occurred')
+                        self.label_main_class_error.setVisible(True)
+                        done()
+
+                    async_call(expand_async, result.stdout, cb_expand_success, cb_expand_error)
+
+                sd_ref[0] = self.wizard().script_manager.execute_script('java_main_classes',
+                                                                        lambda result: cb_java_main_classes(sd_ref, result),
+                                                                        [self.bin_directory], max_length=1024*1024,
+                                                                        decode_output_as_utf8=False)
+
+            # need to decouple this with a timer, otherwise it's executed at
+            # a time where the progress bar cannot properly enter model state
+            # to block the parent widget
+            QTimer.singleShot(0, get_main_classes)
+        elif self.wizard().hasVisitedPage(Constants.PAGE_FILES):
             uploads = self.wizard().page(Constants.PAGE_FILES).get_uploads()
 
             if len(uploads) > 0:
+                def progress_canceled(abort_ref):
+                    abort_ref[0] = True
+
+                abort_ref = [False]
                 progress = ExpandingProgressDialog(self)
                 progress.hide_progress_text()
                 progress.setWindowTitle('New Program')
                 progress.setLabelText('Collecting Java main classes')
                 progress.setModal(True)
                 progress.setRange(0, 0)
-                progress.setCancelButton(None) # FIXME: make this cancelable
+                progress.canceled.connect(lambda: progress_canceled(abort_ref))
                 progress.show()
 
                 def cb_main_classes(main_classes):
@@ -200,6 +290,9 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
                     self.completeChanged.emit()
 
                 def cb_main_classes_error():
+                    self.label_main_class_error.setText('<b>Error:</b> Internal async error occurred')
+                    self.label_main_class_error.setVisible(True)
+
                     progress.cancel()
 
                     self.combo_main_class.clearEditText()
@@ -207,7 +300,7 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
                     self.completeChanged.emit()
 
                 def get_main_classes_async(uploads):
-                    return sorted(get_main_classes_from_class_or_jar(uploads))
+                    return sorted(get_main_classes_from_class_or_jar(uploads, abort_ref))
 
                 self.combo_main_class.setEnabled(False)
 
@@ -234,7 +327,7 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
                 self.class_path_list_editor.add_item(class_path_entry)
 
             # working directory
-            self.combo_working_directory_selector.set_current_text(unicode(program.working_directory))
+            self.combo_working_directory_selector.set_current_text(program.working_directory)
 
             # options
             self.option_list_editor.clear()
@@ -267,14 +360,15 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         start_mode            = self.get_field('java.start_mode').toInt()[0]
         start_mode_main_class = start_mode == Constants.JAVA_START_MODE_MAIN_CLASS
         start_mode_jar_file   = start_mode == Constants.JAVA_START_MODE_JAR_FILE
-        show_class_path       = self.check_show_class_path.checkState() == Qt.Checked
-        show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_class_path       = self.check_show_class_path.isChecked()
+        show_advanced_options = self.check_show_advanced_options.isChecked()
 
         self.label_main_class.setVisible(start_mode_main_class)
         self.combo_main_class.setVisible(start_mode_main_class)
         self.label_main_class_help.setVisible(start_mode_main_class)
         self.combo_jar_file_selector.set_visible(start_mode_jar_file)
         self.class_path_list_editor.set_visible(show_class_path)
+        self.button_add_class_path_entry.setVisible(show_class_path)
         self.combo_working_directory_selector.set_visible(show_advanced_options)
         self.option_list_editor.set_visible(show_advanced_options)
         self.label_spacer.setVisible(not show_class_path and not show_advanced_options)
@@ -282,17 +376,60 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         self.class_path_list_editor.update_ui_state()
         self.option_list_editor.update_ui_state()
 
+    def add_class_path_entry(self):
+        dialog = ExpandingInputDialog(self)
+        dialog.setModal(True)
+        dialog.setWindowTitle('Add Class Path Entry')
+        dialog.setLabelText('Enter/Choose new class path entry:')
+        dialog.setOkButtonText('Add')
+        dialog.setComboBoxItems(self.class_path_candidates)
+        dialog.setComboBoxEditable(True)
+        dialog.setTextValue('')
+
+        if dialog.exec_() != QDialog.Accepted:
+            return
+
+        entry = dialog.textValue()
+
+        if len(entry) == 0:
+            QMessageBox.critical(get_main_window(), 'Add Class Path Entry Error',
+                                 'A valid class path entry cannot be empty.',
+                                 QMessageBox.Ok)
+            return
+
+        self.class_path_list_editor.add_item(entry, select_item=True)
+
     def get_executable(self):
-        return unicode(self.combo_version.itemData(self.get_field('java.version').toInt()[0]).toString())
+        return self.combo_version.itemData(self.get_field('java.version').toInt()[0]).toString()
 
     def get_html_summary(self):
-        return 'FIXME<br/>'
+        version           = self.get_field('java.version').toInt()[0]
+        start_mode        = self.get_field('java.start_mode').toInt()[0]
+        main_class        = self.get_field('java.main_class').toString()
+        jar_file          = self.get_field('java.jar_file').toString()
+        working_directory = self.get_field('java.working_directory').toString()
+        class_path        = ':'.join(self.class_path_list_editor.get_items())
+        options           = ' '.join(self.option_list_editor.get_items())
+
+        html  = u'Java Version: {0}<br/>'.format(Qt.escape(self.combo_version.itemText(version)))
+        html += u'Start Mode: {0}<br/>'.format(Qt.escape(Constants.java_start_mode_display_names[start_mode]))
+
+        if start_mode == Constants.JAVA_START_MODE_MAIN_CLASS:
+            html += u'Main Class: {0}<br/>'.format(Qt.escape(main_class))
+        elif start_mode == Constants.JAVA_START_MODE_JAR_FILE:
+            html += u'JAR File: {0}<br/>'.format(Qt.escape(jar_file))
+
+        html += u'Class Path: {0}<br/>'.format(Qt.escape(class_path))
+        html += u'Working Directory: {0}<br/>'.format(Qt.escape(working_directory))
+        html += u'JVM Options: {0}<br/>'.format(Qt.escape(options))
+
+        return html
 
     def get_custom_options(self):
         return {
             'java.start_mode': Constants.java_start_mode_api_names[self.get_field('java.start_mode').toInt()[0]],
-            'java.main_class': unicode(self.get_field('java.main_class').toString()),
-            'java.jar_file':   unicode(self.get_field('java.jar_file').toString()),
+            'java.main_class': self.get_field('java.main_class').toString(),
+            'java.jar_file':   self.get_field('java.jar_file').toString(),
             'java.class_path': self.class_path_list_editor.get_items(),
             'java.options':    self.option_list_editor.get_items()
         }
@@ -305,15 +442,23 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         class_path_entries = self.class_path_list_editor.get_items()
 
         if len(class_path_entries) > 0:
-            arguments += ['-cp', ':'.join(class_path_entries)]
+            absolute_entries = []
+
+            for filename in class_path_entries:
+                if not filename.startswith('/'):
+                    absolute_entries.append(posixpath.join(self.bin_directory, filename))
+                else:
+                    absolute_entries.append(filename)
+
+            arguments += ['-cp', ':'.join(absolute_entries)]
 
         if start_mode == Constants.JAVA_START_MODE_MAIN_CLASS:
-            arguments.append(unicode(self.get_field('java.main_class').toString()))
+            arguments.append(self.get_field('java.main_class').toString())
         elif start_mode == Constants.JAVA_START_MODE_JAR_FILE:
             arguments.append('-jar')
-            arguments.append(unicode(self.get_field('java.jar_file').toString()))
+            arguments.append(self.get_field('java.jar_file').toString())
 
-        working_directory = unicode(self.get_field('java.working_directory').toString())
+        working_directory = self.get_field('java.working_directory').toString()
 
         return executable, arguments, environment, working_directory
 

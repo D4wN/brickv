@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_arguments.py: Program Wizard Arguments Page
 
@@ -68,7 +68,7 @@ class ProgramPageArguments(ProgramPage, Ui_ProgramPageArguments):
 
         self.label_arguments_help.setText(Constants.arguments_help[language])
         self.argument_list_editor.reset()
-        self.check_show_environment.setCheckState(Qt.Unchecked)
+        self.check_show_environment.setChecked(False)
         self.label_environment_help.setText('This list of environment variables will be set for the {0} program.'
                                             .format(Constants.language_display_names[language]))
         self.environment_list_editor.reset()
@@ -81,13 +81,12 @@ class ProgramPageArguments(ProgramPage, Ui_ProgramPageArguments):
             editable_arguments_offset = max(program.cast_custom_option_value('editable_arguments_offset', int, 0), 0)
 
             for argument in program.arguments.items[editable_arguments_offset:]:
-                self.argument_list_editor.add_item(unicode(argument))
+                self.argument_list_editor.add_item(argument)
 
             self.environment_list_editor.clear()
             editable_environment_offset = max(program.cast_custom_option_value('editable_environment_offset', int, 0), 0)
 
             for variable in program.environment.items[editable_environment_offset:]:
-                variable = unicode(variable)
                 i = variable.find('=')
 
                 if i < 0:
@@ -107,7 +106,7 @@ class ProgramPageArguments(ProgramPage, Ui_ProgramPageArguments):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        show_environment = self.check_show_environment.checkState() == Qt.Checked
+        show_environment = self.check_show_environment.isChecked()
 
         self.environment_list_editor.set_visible(show_environment)
 
@@ -159,10 +158,10 @@ class ProgramPageArguments(ProgramPage, Ui_ProgramPageArguments):
 
         try:
             program.set_command(executable, arguments, environment, working_directory) # FIXME: async_call
-        except REDError as e:
+        except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update arguments and environment of program [{0}]:\n\n{1}'
-                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
+                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
             return
 
         self.set_last_edit_timestamp()

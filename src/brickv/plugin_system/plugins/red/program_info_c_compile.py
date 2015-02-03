@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_info_c_compile.py: Program C/C++ Compile Info Widget
 
@@ -25,7 +25,6 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QDialog
 from brickv.plugin_system.plugins.red.ui_program_info_c_compile import Ui_ProgramInfoCCompile
 import posixpath
-import traceback
 
 class ProgramInfoCCompile(QDialog, Ui_ProgramInfoCCompile):
     def __init__(self, parent, script_manager, program):
@@ -39,7 +38,7 @@ class ProgramInfoCCompile(QDialog, Ui_ProgramInfoCCompile):
         self.script_data    = None
 
         self.rejected.connect(self.cancel_make_execution)
-        self.button_make.clicked.connect(lambda: self.execute_make())
+        self.button_make.clicked.connect(lambda: self.execute_make(None))
         self.button_clean.clicked.connect(lambda: self.execute_make('clean'))
         self.button_cancel.clicked.connect(self.cancel_make_execution)
         self.button_close.clicked.connect(self.reject)
@@ -56,7 +55,7 @@ class ProgramInfoCCompile(QDialog, Ui_ProgramInfoCCompile):
 
         self.edit_log.verticalScrollBar().setValue(self.edit_log.verticalScrollBar().maximum())
 
-    def execute_make(self, target=None):
+    def execute_make(self, target): # target = None for default
         self.button_make.setEnabled(False)
         self.button_clean.setEnabled(False)
         self.button_cancel.setEnabled(True)
@@ -90,7 +89,7 @@ class ProgramInfoCCompile(QDialog, Ui_ProgramInfoCCompile):
             self.log('Executing make...')
 
         make_options      = self.program.cast_custom_option_value_list('c.make_options', unicode, [])
-        working_directory = posixpath.join(unicode(self.program.root_directory), 'bin', unicode(self.program.working_directory))
+        working_directory = posixpath.join(self.program.root_directory, 'bin', self.program.working_directory)
 
         if target != None:
             make_options.append(target)
@@ -107,8 +106,4 @@ class ProgramInfoCCompile(QDialog, Ui_ProgramInfoCCompile):
         self.button_clean.setEnabled(True)
         self.button_cancel.setEnabled(False)
 
-        try:
-            self.script_manager.abort_script(self.script_data)
-        except:
-            print 'ProgramInfoCCompile.cancel_make_execution: abort_script failed'
-            traceback.print_exc()
+        self.script_manager.abort_script(self.script_data)

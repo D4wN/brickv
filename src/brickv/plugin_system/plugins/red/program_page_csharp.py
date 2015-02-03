@@ -2,7 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_csharp.py: Program Wizard C# Page
 
@@ -22,7 +22,6 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import QVariant
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_csharp import Ui_ProgramPageCSharp
@@ -89,7 +88,7 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
 
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_CSHARP_START_MODE)
         self.combo_executable_selector.reset()
-        self.check_show_advanced_options.setCheckState(Qt.Unchecked)
+        self.check_show_advanced_options.setChecked(False)
         self.combo_working_directory_selector.reset()
         self.option_list_editor.reset()
 
@@ -107,7 +106,7 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
             self.combo_executable_selector.set_current_text(program.cast_custom_option_value('csharp.executable', unicode, ''))
 
             # working directory
-            self.combo_working_directory_selector.set_current_text(unicode(program.working_directory))
+            self.combo_working_directory_selector.set_current_text(program.working_directory)
 
             # options
             self.option_list_editor.clear()
@@ -135,7 +134,7 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
     def update_ui_state(self):
         start_mode            = self.get_field('csharp.start_mode').toInt()[0]
         start_mode_executable = start_mode == Constants.CSHARP_START_MODE_EXECUTABLE
-        show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_advanced_options = self.check_show_advanced_options.isChecked()
 
         self.label_executable.setVisible(start_mode_executable)
         self.label_executable_type.setVisible(start_mode_executable)
@@ -149,7 +148,7 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
-        return unicode(self.combo_version.itemData(self.get_field('csharp.version').toInt()[0]).toString())
+        return self.combo_version.itemData(self.get_field('csharp.version').toInt()[0]).toString()
 
     def get_html_summary(self):
         version           = self.get_field('csharp.version').toInt()[0]
@@ -172,7 +171,7 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
     def get_custom_options(self):
         return {
             'csharp.start_mode': Constants.csharp_start_mode_api_names[self.get_field('csharp.start_mode').toInt()[0]],
-            'csharp.executable': unicode(self.get_field('csharp.executable').toString()),
+            'csharp.executable': self.get_field('csharp.executable').toString(),
             'csharp.options':    self.option_list_editor.get_items()
         }
 
@@ -183,9 +182,9 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
         start_mode  = self.get_field('csharp.start_mode').toInt()[0]
 
         if start_mode == Constants.CSHARP_START_MODE_EXECUTABLE:
-            arguments.append(unicode(self.get_field('csharp.executable').toString()))
+            arguments.append(self.get_field('csharp.executable').toString())
 
-        working_directory = unicode(self.get_field('csharp.working_directory').toString())
+        working_directory = self.get_field('csharp.working_directory').toString()
 
         return executable, arguments, environment, working_directory
 

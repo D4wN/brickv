@@ -2,7 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_php.py: Program Wizard PHP Page
 
@@ -22,7 +22,6 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import QVariant
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_php import Ui_ProgramPagePHP
@@ -50,7 +49,7 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
         self.setupUi(self)
 
         self.language     = Constants.LANGUAGE_PHP
-        self.url_template = unicode(self.label_url.text())
+        self.url_template = self.label_url.text()
 
         self.setTitle('{0}{1} Configuration'.format(title_prefix, Constants.language_display_names[self.language]))
 
@@ -95,7 +94,7 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_PHP_START_MODE)
         self.combo_script_file_selector.reset()
         self.label_url.setText(self.url_template.replace('<SERVER>', 'red-brick').replace('<IDENTIFIER>', self.get_field('identifier').toString()))
-        self.check_show_advanced_options.setCheckState(Qt.Unchecked)
+        self.check_show_advanced_options.setChecked(False)
         self.combo_working_directory_selector.reset()
         self.option_list_editor.reset()
 
@@ -116,7 +115,7 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
             self.edit_command.setText(program.cast_custom_option_value('php.command', unicode, ''))
 
             # working directory
-            self.combo_working_directory_selector.set_current_text(unicode(program.working_directory))
+            self.combo_working_directory_selector.set_current_text(program.working_directory)
 
             # options
             self.option_list_editor.clear()
@@ -154,7 +153,7 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
         start_mode_script_file   = start_mode == Constants.PHP_START_MODE_SCRIPT_FILE
         start_mode_command       = start_mode == Constants.PHP_START_MODE_COMMAND
         start_mode_web_interface = start_mode == Constants.PHP_START_MODE_WEB_INTERFACE
-        show_advanced_options    = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_advanced_options    = self.check_show_advanced_options.isChecked()
 
         self.combo_version.setVisible(not start_mode_web_interface)
         self.label_version.setVisible(not start_mode_web_interface)
@@ -174,7 +173,7 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
-        return unicode(self.combo_version.itemData(self.get_field('php.version').toInt()[0]).toString())
+        return self.combo_version.itemData(self.get_field('php.version').toInt()[0]).toString()
 
     def get_html_summary(self):
         version           = self.get_field('php.version').toInt()[0]
@@ -203,8 +202,8 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
     def get_custom_options(self):
         return {
             'php.start_mode':  Constants.php_start_mode_api_names[self.get_field('php.start_mode').toInt()[0]],
-            'php.script_file': unicode(self.get_field('php.script_file').toString()),
-            'php.command':     unicode(self.get_field('php.command').toString()),
+            'php.script_file': self.get_field('php.script_file').toString(),
+            'php.command':     self.get_field('php.command').toString(),
             'php.options':     self.option_list_editor.get_items()
         }
 
@@ -219,12 +218,12 @@ class ProgramPagePHP(ProgramPage, Ui_ProgramPagePHP):
         environment = []
 
         if start_mode == Constants.PHP_START_MODE_SCRIPT_FILE:
-            arguments.append(unicode(self.get_field('php.script_file').toString()))
+            arguments.append(self.get_field('php.script_file').toString())
         elif start_mode == Constants.PHP_START_MODE_COMMAND:
             arguments.append('-r')
-            arguments.append(unicode(self.get_field('php.command').toString()))
+            arguments.append(self.get_field('php.command').toString())
 
-        working_directory = unicode(self.get_field('php.working_directory').toString())
+        working_directory = self.get_field('php.working_directory').toString()
 
         return executable, arguments, environment, working_directory
 

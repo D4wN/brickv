@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
 
 program_page_upload.py: Program Wizard Upload Page
@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QWizard, QApplication, QPixmap
+from PyQt4.QtGui import QWizard, QPixmap
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
@@ -63,7 +63,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.source_display_size             = None
         self.last_upload_size                = None
         self.progress_file_next_update       = 0
-        self.replace_help_template           = unicode(self.label_replace_help.text())
+        self.replace_help_template           = self.label_replace_help.text()
         self.warnings                        = 0
         self.canceled                        = False
 
@@ -88,7 +88,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
     def initializePage(self):
         self.set_formatted_sub_title(u'Upload the {language} program [{name}].')
 
-        self.wizard().rejected.connect(lambda: self.cancel_upload())
+        self.wizard().rejected.connect(self.cancel_upload)
 
         # if a program exists then this page is used in an edit wizard
         if self.wizard().program != None:
@@ -104,7 +104,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        rename_new_file = self.check_rename_new_file.checkState() == Qt.Checked
+        rename_new_file = self.check_rename_new_file.isChecked()
 
         self.line1.setVisible(self.conflict_resolution_in_progress)
         self.label_replace_icon.setVisible(self.conflict_resolution_in_progress)
@@ -128,7 +128,6 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.canceled = True
 
     def check_new_name(self, name):
-        name   = unicode(name) # convert QString to unicode
         target = posixpath.split(self.upload.target)[1]
 
         if len(name) == 0:
@@ -193,7 +192,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         if not self.edit_mode and defined:
             try:
                 self.program.purge() # FIXME: async_call
-            except REDError:
+            except (Error, REDError):
                 pass # FIXME: report this error?
 
     def get_total_step_count(self):
@@ -239,11 +238,11 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         if not self.edit_mode:
             self.next_step('Defining new program...', increase=0)
 
-            identifier = unicode(self.get_field('identifier').toString())
+            identifier = self.get_field('identifier').toString()
 
             try:
                 self.program = REDProgram(self.wizard().session).define(identifier) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e, defined=False)
                 return
 
@@ -254,27 +253,27 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
             self.next_step('Setting custom options...')
 
             # set custom option: name
-            name = unicode(self.get_field('name').toString())
+            name = self.get_field('name').toString()
 
             try:
                 self.program.set_custom_option_value('name', name) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
             # set custom option: language
             try:
                 self.program.set_custom_option_value('language', self.language_api_name) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
             # set custom option: description
-            description = unicode(self.get_field('description').toString())
+            description = self.get_field('description').toString()
 
             try:
                 self.program.set_custom_option_value('description', description) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
@@ -283,14 +282,14 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
             try:
                 self.program.set_custom_option_value('first_upload', timestamp) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
             # set custom option: last_edit
             try:
                 self.program.set_custom_option_value('last_edit', timestamp) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
@@ -300,7 +299,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
             for name, value in custom_options.iteritems():
                 try:
                     self.program.set_custom_option_value(name, value) # FIXME: async_call
-                except REDError as e:
+                except (Error, REDError) as e:
                     self.upload_error('...error: {0}', e)
                     return
 
@@ -310,9 +309,9 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.next_step('Uploading files...', log=False)
 
         if self.edit_mode:
-            self.root_directory = unicode(self.wizard().program.root_directory)
+            self.root_directory = self.wizard().program.root_directory
         else:
-            self.root_directory = unicode(self.program.root_directory)
+            self.root_directory = self.program.root_directory
 
         self.progress_file.setRange(0, len(self.remaining_uploads))
 
@@ -346,6 +345,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.progress_file.setRange(0, self.source_stat.st_size)
         self.progress_file.setFormat(get_file_display_size(0) + ' of ' + self.source_display_size)
         self.progress_file.setValue(0)
+        self.progress_file_next_update = 0
 
         self.target_path = posixpath.join(self.root_directory, 'bin', self.upload.target)
 
@@ -355,8 +355,8 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
             if target_directory not in self.created_directories:
                 try:
-                    create_directory(self.wizard().session, target_directory, DIRECTORY_FLAG_RECURSIVE, 0755, 1000, 1000)
-                except REDError as e:
+                    create_directory(self.wizard().session, target_directory, DIRECTORY_FLAG_RECURSIVE, 0o755, 1000, 1000)
+                except (Error, REDError) as e:
                     self.upload_error('...error: Could not create target directory {0}: {1}', target_directory, e)
                     return
 
@@ -378,21 +378,21 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         #        cross-compiled and doesn't have the typsical Windows file
         #        extensions for executables
         if (self.source_stat.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)) != 0:
-            permissions = 0755
+            permissions = 0o755
         else:
-            permissions = 0644
+            permissions = 0o644
 
         # FIXME: workaround permission problem were this really matters (C/C++
         #        and Delphi/Lazarus with cross-compiled executables)
         if not self.edit_mode and \
            self.language_api_name in ['c', 'delphi'] and \
            posixpath.normpath(self.command[0]) == posixpath.normpath(self.upload.target):
-            permissions = 0755
+            permissions = 0o755
 
         try:
             self.target_file = REDFile(self.wizard().session).open(self.target_path, flags,
                                                                    permissions, 1000, 1000) # FIXME: async_call
-        except REDError as e:
+        except (Error, REDError) as e:
             if e.error_code == REDError.E_ALREADY_EXISTS:
                 self.start_conflict_resolution()
             else:
@@ -422,20 +422,15 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
                                                           timestamp_to_date_at_time(int(target_file.modification_time))))
 
                 target_file.release()
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.label_existing_stats.setText(u'<b>Error</b>: Could not open target file: {0}', Qt.escape(unicode(e)))
 
             self.label_new_stats.setText('{0}, last modified on {1}'
                                          .format(self.source_display_size,
                                                  timestamp_to_date_at_time(int(self.source_stat.st_mtime))))
 
-            self.label_replace_help.setText(self.replace_help_template.replace('<FILE>', unicode(Qt.escape(self.upload.target))))
-
-            if self.auto_conflict_resolution == ProgramPageUpload.CONFLICT_RESOLUTION_RENAME:
-                self.check_rename_new_file.setCheckState(Qt.Checked)
-            else:
-                self.check_rename_new_file.setCheckState(Qt.Unchecked)
-
+            self.label_replace_help.setText(self.replace_help_template.replace('<FILE>', Qt.escape(self.upload.target)))
+            self.check_rename_new_file.setChecked(self.auto_conflict_resolution == ProgramPageUpload.CONFLICT_RESOLUTION_RENAME)
             self.edit_new_name.setText('') # force a new-name check
             self.edit_new_name.setText(posixpath.split(self.upload.target)[1])
 
@@ -443,12 +438,12 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
             self.update_ui_state()
 
     def resolve_conflict_by_replace(self):
-        if not self.conflict_resolution_in_progress or self.check_rename_new_file.checkState() != Qt.Unchecked:
+        if not self.conflict_resolution_in_progress or self.check_rename_new_file.isChecked():
             return
 
         self.log(u'...replacing {0}'.format(self.upload.target))
 
-        if self.check_remember_decision.checkState() == Qt.Checked:
+        if self.check_remember_decision.isChecked():
             self.auto_conflict_resolution = ProgramPageUpload.CONFLICT_RESOLUTION_REPLACE
         else:
             self.auto_conflict_resolution = None
@@ -466,13 +461,13 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.target_path = posixpath.join(self.root_directory, 'bin', self.upload.target)
 
     def resolve_conflict_by_rename(self):
-        if not self.conflict_resolution_in_progress or self.check_rename_new_file.checkState() != Qt.Checked:
+        if not self.conflict_resolution_in_progress or not self.check_rename_new_file.isChecked():
             return
 
-        self.rename_upload_target(unicode(self.edit_new_name.text()))
+        self.rename_upload_target(self.edit_new_name.text())
         self.log(u'...uploading as {0}'.format(self.upload.target))
 
-        if self.check_remember_decision.checkState() == Qt.Checked:
+        if self.check_remember_decision.isChecked():
             self.auto_conflict_resolution = ProgramPageUpload.CONFLICT_RESOLUTION_RENAME
         else:
             self.auto_conflict_resolution = None
@@ -486,7 +481,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         if not self.conflict_resolution_in_progress:
             return
 
-        if self.check_remember_decision.checkState() == Qt.Checked:
+        if self.check_remember_decision.isChecked():
             self.auto_conflict_resolution = ProgramPageUpload.CONFLICT_RESOLUTION_SKIP
         else:
             self.auto_conflict_resolution = None
@@ -541,7 +536,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
         try:
             self.target_file.write_async(data, self.upload_write_async_cb_result, self.upload_write_async_cb_status)
-        except REDError as e:
+        except (Error, REDError) as e:
             self.upload_error('...error: Could not write to target file {0}: {1}', self.target_path, e)
 
     def upload_write_async_done(self):
@@ -575,7 +570,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
             try:
                 self.program.set_command(executable, arguments, environment, working_directory) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
@@ -587,14 +582,14 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
             # set custom option: editable_arguments_offset
             try:
                 self.program.set_custom_option_value('editable_arguments_offset', str(editable_arguments_offset)) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
             # set custom option: editable_environment_offset
             try:
                 self.program.set_custom_option_value('editable_environment_offset', str(editable_environment_offset)) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
@@ -607,15 +602,15 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
             stdin_redirection  = Constants.api_stdin_redirections[self.get_field('stdin_redirection').toInt()[0]]
             stdout_redirection = Constants.api_stdout_redirections[self.get_field('stdout_redirection').toInt()[0]]
             stderr_redirection = Constants.api_stderr_redirections[self.get_field('stderr_redirection').toInt()[0]]
-            stdin_file         = unicode(self.get_field('stdin_file').toString())
-            stdout_file        = unicode(self.get_field('stdout_file').toString())
-            stderr_file        = unicode(self.get_field('stderr_file').toString())
+            stdin_file         = self.get_field('stdin_file').toString()
+            stdout_file        = self.get_field('stdout_file').toString()
+            stderr_file        = self.get_field('stderr_file').toString()
 
             try:
                 self.program.set_stdio_redirection(stdin_redirection, stdin_file,
                                                    stdout_redirection, stdout_file,
                                                    stderr_redirection, stderr_file) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
@@ -646,11 +641,11 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
             continue_after_error = self.get_field('continue_after_error').toBool()
             start_interval       = self.get_field('start_interval').toUInt()[0]
-            start_fields         = unicode(self.get_field('start_fields').toString())
+            start_fields         = self.get_field('start_fields').toString()
 
             try:
                 self.program.set_schedule(api_start_mode, continue_after_error, start_interval, start_fields) # FIXME: async_call
-            except REDError as e:
+            except (Error, REDError) as e:
                 self.upload_error('...error: {0}', e)
                 return
 
@@ -662,13 +657,13 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
                 try:
                     self.program.set_custom_option_value('started_once_after_upload', True) # FIXME: async_call
-                except REDError as e:
+                except (Error, REDError) as e:
                     self.upload_error('...error: {0}', e)
                     return
 
                 try:
                     self.program.start() # FIXME: async_call
-                except REDError as e:
+                except (Error, REDError) as e:
                     self.upload_error('...error: {0}', e)
                     return
 
@@ -709,7 +704,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.next_step('Executing make...')
 
         make_options      = self.wizard().page(Constants.get_language_page(self.language_api_name)).get_make_options()
-        working_directory = posixpath.join(unicode(self.program.root_directory), 'bin', unicode(self.program.working_directory))
+        working_directory = posixpath.join(self.program.root_directory, 'bin', self.program.working_directory)
 
         self.wizard().script_manager.execute_script('make_helper', cb_make_helper, [working_directory] + make_options,
                                                     max_length=1024*1024, redirect_stderr_to_stdout=True,
@@ -734,7 +729,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.next_step('Executing fpcmake and make...')
 
         make_options      = self.wizard().page(Constants.get_language_page(self.language_api_name)).get_make_options()
-        working_directory = posixpath.join(unicode(self.program.root_directory), 'bin', unicode(self.program.working_directory))
+        working_directory = posixpath.join(self.program.root_directory, 'bin', self.program.working_directory)
 
         self.wizard().script_manager.execute_script('fpcmake_helper', cb_fpcmake_helper, [working_directory] + make_options,
                                                     max_length=1024*1024, redirect_stderr_to_stdout=True,

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2014-08-05.      #
+# This file was automatically generated on 2015-01-07.      #
 #                                                           #
-# Bindings Version 2.1.2                                    #
+# Bindings Version 2.1.4                                    #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
@@ -755,7 +755,7 @@ class BrickMaster(Device):
 
     def get_usb_voltage(self):
         """
-        Returns the USB voltage in mV.
+        Returns the USB voltage in mV. Does not work with hardware version 2.1.
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_USB_VOLTAGE, (), '', 'H')
 

@@ -2,6 +2,7 @@
 """
 IMU Plugin
 Copyright (C) 2012 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2012-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 calibrate_import_export.py: IMU Calibration Import/Export implementation
 
@@ -27,6 +28,7 @@ from PyQt4.QtCore import Qt
 
 from brickv.plugin_system.plugins.imu.ui_calibrate_import_export import Ui_calibrate_import_export
 from brickv.imu_calibration import parse_imu_calibration, IMU_CALIBRATION_URL
+from brickv.utils import get_main_window
 
 class CalibrateImportExport(QWidget, Ui_calibrate_import_export):
     def __init__(self, parent):
@@ -48,10 +50,10 @@ class CalibrateImportExport(QWidget, Ui_calibrate_import_export):
         pass
 
     def popup_ok(self, title, message):
-        QMessageBox.information(self, title, message, QMessageBox.Ok)
+        QMessageBox.information(get_main_window(), title, message, QMessageBox.Ok)
 
     def popup_fail(self, title, message):
-        QMessageBox.critical(self, title, message, QMessageBox.Ok)
+        QMessageBox.critical(get_main_window(), title, message, QMessageBox.Ok)
 
     def create_progress_bar(self, title):
         progress = QProgressDialog(self)
@@ -80,7 +82,7 @@ class CalibrateImportExport(QWidget, Ui_calibrate_import_export):
                 chunk = response.read(1024)
 
             response.close()
-        except urllib2.HTTPError, e:
+        except urllib2.HTTPError as e:
             if e.code == 404:
                 progress.cancel()
                 self.popup_ok('Factory Calibration', 'No factory calibration available')
@@ -108,7 +110,7 @@ class CalibrateImportExport(QWidget, Ui_calibrate_import_export):
             for value in parsed:
                 self.imu.set_calibration(value[0], value[1])
         except:
-            self.popup_fail('Factory Calibration', text)
+            self.popup_fail('Factory Calibration', 'Could not apply calibration')
             return
 
         self.parent.refresh_values()
@@ -116,7 +118,7 @@ class CalibrateImportExport(QWidget, Ui_calibrate_import_export):
         self.popup_ok('Factory Calibration', 'Successfully restored factory calibration')
 
     def import_clicked(self):
-        text = str(self.text_edit.toPlainText())
+        text = self.text_edit.toPlainText()
 
         try:
             for value in parse_imu_calibration(text):

@@ -141,14 +141,14 @@ class SAMBAException(Exception):
 class SAMBARebootError(SAMBAException):
     pass
 
-class SAMBA:
-    def __init__(self, port_name, progress = None):
+class SAMBA(object):
+    def __init__(self, port_name, progress=None):
         self.current_mode = None
         self.progress = progress
 
         try:
             self.port = Serial(port_name, 115200, timeout=5)
-        except SerialException, e:
+        except SerialException as e:
             if '[Errno 13]' in str(e):
                 raise SAMBAException("No permission to open serial port")
             else:
@@ -269,7 +269,6 @@ class SAMBA:
             offset = 0
 
             while len(ic_prefix) < ic_prefix_length:
-                address = ic_prefix_address + offset
                 ic_prefix += self.read_word(ic_prefix_address + offset)
                 offset += 4
 
@@ -438,13 +437,13 @@ class SAMBA:
 
         return response[2:-1]
 
-    def write_bytes(self, address, bytes):
+    def write_bytes(self, address, bytes_):
         self.change_mode('T')
 
         try:
             # FIXME: writes '33337777BBBBFFFF' instead of '0123456789ABCDEF'
-            self.port.write('S%X,%X#' % (address, len(bytes)))
-            self.port.write(bytes)
+            self.port.write('S%X,%X#' % (address, len(bytes_)))
+            self.port.write(bytes_)
         except:
             raise SAMBAException('Write error while writing to address 0x%08X' % address)
 

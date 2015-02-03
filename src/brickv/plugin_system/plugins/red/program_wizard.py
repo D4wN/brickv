@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_wizard.py: Program Wizard
 
@@ -21,11 +21,10 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QWizard
 from collections import namedtuple
 
-ProgramWizardContext = namedtuple('ProgramWizardContext', 'session identifiers script_manager image_version_ref executable_versions')
+ProgramWizardContext = namedtuple('ProgramWizardContext', 'session identifiers script_manager image_version executable_versions')
 
 class ProgramWizard(QWizard):
     def __init__(self, parent, context):
@@ -36,7 +35,7 @@ class ProgramWizard(QWizard):
         self.session             = context.session
         self.identifiers         = context.identifiers
         self.script_manager      = context.script_manager
-        self.image_version_ref   = context.image_version_ref
+        self.image_version       = context.image_version
         self.executable_versions = context.executable_versions
 
     # overrides QWizard.sizeHint

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_schedule.py: Program Wizard Schedule Page
 
@@ -22,6 +22,7 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QMessageBox
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
@@ -34,7 +35,7 @@ class ProgramPageSchedule(ProgramPage, Ui_ProgramPageSchedule):
 
         self.setupUi(self)
 
-        self.interval_help_template = unicode(self.label_start_mode_interval_help.text())
+        self.interval_help_template = self.label_start_mode_interval_help.text()
 
         self.setTitle(title_prefix + 'Schedule')
 
@@ -47,7 +48,7 @@ class ProgramPageSchedule(ProgramPage, Ui_ProgramPageSchedule):
         self.spin_start_interval.valueChanged.connect(self.update_interval_help)
 
         self.edit_start_fields_checker = MandatoryLineEditChecker(self, self.label_start_fields, self.edit_start_fields,
-                                                                  '^ *(@\S+|\S+ +\S+ +\S+ +\S+ +\S+) *$')
+                                                                  r'^ *(@\S+|\S+ +\S+ +\S+ +\S+ +\S+) *$')
 
     # overrides QWizardPage.initializePage
     def initializePage(self):
@@ -58,19 +59,12 @@ class ProgramPageSchedule(ProgramPage, Ui_ProgramPageSchedule):
         program = self.wizard().program
 
         if program != None:
-            start_mode = Constants.get_start_mode(program.start_mode)
-
-            self.combo_start_mode.setCurrentIndex(start_mode)
-
-            if program.continue_after_error:
-                self.check_continue_after_error.setCheckState(Qt.Checked)
-            else:
-                self.check_continue_after_error.setCheckState(Qt.Unchecked)
-
+            self.combo_start_mode.setCurrentIndex(Constants.get_start_mode(program.start_mode))
+            self.check_continue_after_error.setChecked(program.continue_after_error)
             self.spin_start_interval.setValue(program.start_interval)
 
             if program.start_mode == REDProgram.START_MODE_CRON:
-                self.edit_start_fields.setText(unicode(program.start_fields))
+                self.edit_start_fields.setText(program.start_fields)
         elif self.combo_start_mode.count() <= Constants.START_MODE_SEPARATOR:
             self.combo_start_mode.insertSeparator(Constants.START_MODE_SEPARATOR)
             self.combo_start_mode.insertItem(Constants.START_MODE_ONCE, 'Once After Upload')
@@ -84,7 +78,7 @@ class ProgramPageSchedule(ProgramPage, Ui_ProgramPageSchedule):
 
         if start_mode == Constants.START_MODE_CRON and \
            not self.edit_start_fields_checker.complete:
-                return False
+            return False
 
         return ProgramPage.isComplete(self)
 
@@ -123,22 +117,22 @@ class ProgramPageSchedule(ProgramPage, Ui_ProgramPageSchedule):
         start_mode           = Constants.api_start_modes[self.get_field('start_mode').toInt()[0]]
         continue_after_error = self.get_field('continue_after_error').toBool()
         start_interval       = self.get_field('start_interval').toUInt()[0]
-        start_fields         = unicode(self.get_field('start_fields').toString())
+        start_fields         = self.get_field('start_fields').toString()
 
         try:
             program.set_schedule(start_mode, continue_after_error, start_interval, start_fields) # FIXME: async_call
-        except REDError as e:
+        except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update stdio redirection of program [{0}]:\n\n{1}'
-                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
+                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
             return
 
         try:
             program.set_custom_option_value('started_once_after_upload', False) # FIXME: async_call
-        except REDError as e:
+        except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update custom options of program [{0}]:\n\n{1}'
-                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
+                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
             return
 
         self.set_last_edit_timestamp()

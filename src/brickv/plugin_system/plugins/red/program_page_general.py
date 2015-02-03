@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_general.py: Program Wizard General Page
 
@@ -21,7 +21,7 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import QRegExp, QString, Qt
+from PyQt4.QtCore import QRegExp, Qt
 from PyQt4.QtGui import QRegExpValidator, QMessageBox
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
@@ -73,7 +73,7 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
             self.setSubTitle('Specify name and description for the program.')
 
             self.edit_name.setText(program.cast_custom_option_value('name', unicode, '<unknown>'))
-            self.edit_identifier.setText(unicode(program.identifier))
+            self.edit_identifier.setText(program.identifier)
             self.text_description.setPlainText(program.cast_custom_option_value('description', unicode, ''))
 
             language_api_name = program.cast_custom_option_value('language', unicode, '<unknown>')
@@ -96,7 +96,7 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        auto_generate = self.check_auto_generate.checkState() == Qt.Checked
+        auto_generate = self.check_auto_generate.isChecked()
 
         self.auto_generate_identifier(self.edit_name.text())
 
@@ -111,13 +111,11 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
         self.label_language_help.setEnabled(not self.edit_mode)
 
     def auto_generate_identifier(self, name):
-        if self.check_auto_generate.checkState() != Qt.Checked or self.edit_mode:
+        if not self.check_auto_generate.isChecked() or self.edit_mode:
             return
 
-        name = unicode(name) # convert QString to Unicode
-
         # ensure the identifier matches ^[a-zA-Z0-9_][a-zA-Z0-9._-]{2,}$
-        identifier = str(re.sub('[^a-zA-Z0-9._-]', '_', name)).lstrip('-.')
+        identifier = re.sub('[^a-zA-Z0-9._-]', '_', name).lstrip('-.')
 
         unique_identifier = identifier
         counter = 1
@@ -140,7 +138,6 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
                                  .format(name))
 
     def check_identifier(self, identifier):
-        identifier = unicode(identifier) # convert QString to Unicode
         identifier_was_unique = self.identifier_is_unique
 
         if identifier in self.wizard().identifiers:
@@ -167,24 +164,24 @@ class ProgramPageGeneral(ProgramPage, Ui_ProgramPageGeneral):
         if program == None:
             return
 
-        name = unicode(self.get_field('name').toString())
+        name = self.get_field('name').toString()
 
         try:
             program.set_custom_option_value('name', name) # FIXME: async_call
-        except REDError as e:
+        except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update name of program [{0}]:\n\n{1}'
-                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
+                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
             return
 
-        description = unicode(self.get_field('description').toString())
+        description = self.get_field('description').toString()
 
         try:
             program.set_custom_option_value('description', description) # FIXME: async_call
-        except REDError as e:
+        except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update description of program [{0}]:\n\n{1}'
-                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
+                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
             return
 
         self.set_last_edit_timestamp()

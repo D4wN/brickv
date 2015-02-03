@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_wizard_download.py: Download Logs/Files Wizard
 
@@ -21,8 +21,6 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QWizard
 from brickv.plugin_system.plugins.red.program_wizard import ProgramWizard
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.program_page_download import ProgramPageDownload
@@ -44,7 +42,7 @@ class ProgramWizardDownload(ProgramWizard):
     # overrides ProgramWizard.get_field
     def get_field(self, name):
         if name == 'identifier':
-            return QVariant(unicode(self.program.identifier))
+            return QVariant(self.program.identifier)
         elif name == 'name':
             return QVariant(self.program.cast_custom_option_value('name', unicode, '<unknown>'))
         elif name == 'language':

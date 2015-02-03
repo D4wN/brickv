@@ -22,7 +22,6 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QWidget
 from brickv.plugin_system.plugins.red.program_info import ProgramInfo
 from brickv.plugin_system.plugins.red.program_utils import Constants
 from brickv.plugin_system.plugins.red.ui_program_info_java import Ui_ProgramInfoJava
@@ -38,8 +37,8 @@ class ProgramInfoJava(ProgramInfo, Ui_ProgramInfoJava):
 
     # overrides ProgramInfo.update_ui_state
     def update_ui_state(self):
-        show_class_path       = self.check_show_class_path.checkState() == Qt.Checked
-        show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_class_path       = self.check_show_class_path.isChecked()
+        show_advanced_options = self.check_show_advanced_options.isChecked()
 
         self.label_class_path_title.setVisible(show_class_path)
         self.label_class_path.setVisible(show_class_path)
@@ -50,10 +49,8 @@ class ProgramInfoJava(ProgramInfo, Ui_ProgramInfoJava):
 
         # version
         def cb_java_versions(versions):
-            executable = unicode(self.program.executable)
-
             for version in versions:
-                if version.executable == executable:
+                if version.executable == self.program.executable:
                     self.label_version.setText(version.version)
                     return
 
@@ -83,7 +80,7 @@ class ProgramInfoJava(ProgramInfo, Ui_ProgramInfoJava):
         self.label_class_path.setText('\n'.join(self.program.cast_custom_option_value_list('java.class_path', unicode, [])))
 
         # working directory
-        self.label_working_directory.setText(unicode(self.program.working_directory))
+        self.label_working_directory.setText(self.program.working_directory)
 
         # options
         self.label_options.setText('\n'.join(self.program.cast_custom_option_value_list('java.options', unicode, [])))

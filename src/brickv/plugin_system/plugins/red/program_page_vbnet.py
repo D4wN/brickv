@@ -2,7 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_vbnet.py: Program Wizard Visual Basic .NET Page
 
@@ -22,7 +22,6 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import QVariant
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_vbnet import Ui_ProgramPageVBNET
@@ -73,7 +72,7 @@ class ProgramPageVBNET(ProgramPage, Ui_ProgramPageVBNET):
 
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_VBNET_START_MODE)
         self.combo_executable_selector.reset()
-        self.check_show_advanced_options.setCheckState(Qt.Unchecked)
+        self.check_show_advanced_options.setChecked(False)
         self.combo_working_directory_selector.reset()
         self.option_list_editor.reset()
 
@@ -91,7 +90,7 @@ class ProgramPageVBNET(ProgramPage, Ui_ProgramPageVBNET):
             self.combo_executable_selector.set_current_text(program.cast_custom_option_value('vbnet.executable', unicode, ''))
 
             # working directory
-            self.combo_working_directory_selector.set_current_text(unicode(program.working_directory))
+            self.combo_working_directory_selector.set_current_text(program.working_directory)
 
             # options
             self.option_list_editor.clear()
@@ -119,7 +118,7 @@ class ProgramPageVBNET(ProgramPage, Ui_ProgramPageVBNET):
     def update_ui_state(self):
         start_mode            = self.get_field('vbnet.start_mode').toInt()[0]
         start_mode_executable = start_mode == Constants.VBNET_START_MODE_EXECUTABLE
-        show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_advanced_options = self.check_show_advanced_options.isChecked()
 
         self.combo_executable_selector.set_visible(start_mode_executable)
         self.combo_working_directory_selector.set_visible(show_advanced_options)
@@ -129,7 +128,7 @@ class ProgramPageVBNET(ProgramPage, Ui_ProgramPageVBNET):
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
-        return unicode(self.combo_version.itemData(self.get_field('vbnet.version').toInt()[0]).toString())
+        return self.combo_version.itemData(self.get_field('vbnet.version').toInt()[0]).toString()
 
     def get_html_summary(self):
         version           = self.get_field('vbnet.version').toInt()[0]
@@ -152,7 +151,7 @@ class ProgramPageVBNET(ProgramPage, Ui_ProgramPageVBNET):
     def get_custom_options(self):
         return {
             'vbnet.start_mode': Constants.vbnet_start_mode_api_names[self.get_field('vbnet.start_mode').toInt()[0]],
-            'vbnet.executable': unicode(self.get_field('vbnet.executable').toString()),
+            'vbnet.executable': self.get_field('vbnet.executable').toString(),
             'vbnet.options':    self.option_list_editor.get_items()
         }
 
@@ -163,9 +162,9 @@ class ProgramPageVBNET(ProgramPage, Ui_ProgramPageVBNET):
         start_mode  = self.get_field('vbnet.start_mode').toInt()[0]
 
         if start_mode == Constants.VBNET_START_MODE_EXECUTABLE:
-            arguments.append(unicode(self.get_field('vbnet.executable').toString()))
+            arguments.append(self.get_field('vbnet.executable').toString())
 
-        working_directory = unicode(self.get_field('vbnet.working_directory').toString())
+        working_directory = self.get_field('vbnet.working_directory').toString()
 
         return executable, arguments, environment, working_directory
 

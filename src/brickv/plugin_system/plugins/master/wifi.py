@@ -2,7 +2,7 @@
 """
 Master Plugin
 Copyright (C) 2010-2012 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2012-2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2012-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 wifi.py: Wifi for Master Plugin implementation
 
@@ -23,16 +23,15 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtGui import QWidget, QMessageBox, QFileDialog, QProgressDialog, QLineEdit
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QDir
+
+from brickv.plugin_system.plugins.master.ui_wifi import Ui_Wifi
+from brickv.plugin_system.plugins.master.wifi_status import WifiStatus
+from brickv.async_call import async_call
+from brickv.utils import get_main_window
 
 import os
 import time
-import sys
-
-from brickv.plugin_system.plugins.master.ui_wifi import Ui_Wifi
-
-from brickv.plugin_system.plugins.master.wifi_status import WifiStatus
-from brickv.async_call import async_call
 
 class Wifi(QWidget, Ui_Wifi):
     def __init__(self, parent):
@@ -83,11 +82,11 @@ class Wifi(QWidget, Ui_Wifi):
         if parent.firmware_version >= (2, 2, 0):
             self.wifi_use_auth.stateChanged.connect(self.wifi_auth_changed)
             self.wifi_show_characters.stateChanged.connect(self.wifi_show_characters_changed)
-            
+
             self.wifi_show_characters.hide()
             self.wifi_secret_label.hide()
             self.wifi_secret.hide()
-            
+
             async_call(self.master.get_wifi_authentication_secret, None, self.get_wifi_authentication_secret_async, self.parent.increase_error_count)
         else:
             self.wifi_use_auth.setText("Use Authentication (FW Version >= 2.2.0 required)")
@@ -101,24 +100,24 @@ class Wifi(QWidget, Ui_Wifi):
     def destroy(self):
         if self.wifi_status:
             self.wifi_status.close()
-        
+
     def get_wifi_authentication_secret_async(self, secret):
         self.wifi_secret.setText(secret)
         if secret == '':
             self.wifi_show_characters.hide()
             self.wifi_secret_label.hide()
             self.wifi_secret.hide()
-            self.wifi_use_auth.setChecked(Qt.Unchecked)
+            self.wifi_use_auth.setChecked(False)
         else:
             self.wifi_show_characters.show()
             self.wifi_secret_label.show()
             self.wifi_secret.show()
-            self.wifi_use_auth.setChecked(Qt.Checked)
+            self.wifi_use_auth.setChecked(True)
             if self.wifi_show_characters.isChecked():
                 self.wifi_secret.setEchoMode(QLineEdit.Normal)
             else:
                 self.wifi_secret.setEchoMode(QLineEdit.Password)
-            
+
     def wifi_auth_changed(self, state):
         if state == Qt.Checked:
             self.wifi_show_characters.show()
@@ -133,7 +132,7 @@ class Wifi(QWidget, Ui_Wifi):
             self.wifi_secret_label.hide()
             self.wifi_secret.hide()
             self.wifi_secret.setText('')
-        
+
     def wifi_show_characters_changed(self, state):
         if state == Qt.Checked:
             self.wifi_secret.setEchoMode(QLineEdit.Normal)
@@ -193,7 +192,7 @@ class Wifi(QWidget, Ui_Wifi):
         ssid = ssid.replace('\0', '')
         self.connection = connection
 
-        self.wifi_ssid.setText(ssid);
+        self.wifi_ssid.setText(ssid)
         self.wifi_connection.setCurrentIndex(connection)
         self.wifi_ip1.setValue(ip[0])
         self.wifi_ip2.setValue(ip[1])
@@ -222,40 +221,40 @@ class Wifi(QWidget, Ui_Wifi):
             self.wifi_password.setEchoMode(QLineEdit.Password)
 
     def ca_certificate_browse_clicked(self):
-        last_dir = ''
         if len(self.wifi_ca_certificate_url.text()) > 0:
-            last_dir = os.path.dirname(os.path.realpath(unicode(self.wifi_ca_certificate_url.text().toUtf8(), 'utf-8')))
+            last_dir = os.path.dirname(os.path.realpath(self.wifi_ca_certificate_url.text()))
+        else:
+            last_dir = QDir.toNativeSeparators(QDir.homePath())
 
-        file_name = QFileDialog.getOpenFileName(self,
-                                                'Open CA Certificate',
-                                                last_dir)
-        if len(file_name) > 0:
-            self.wifi_ca_certificate_url.setText(file_name)
+        filename = QFileDialog.getOpenFileName(get_main_window(), 'Open CA Certificate', last_dir)
+
+        if len(filename) > 0:
+            self.wifi_ca_certificate_url.setText(QDir.toNativeSeparators(filename))
 
     def client_certificate_browse_clicked(self):
-        last_dir = ''
         if len(self.wifi_client_certificate_url.text()) > 0:
-            last_dir = os.path.dirname(os.path.realpath(unicode(self.wifi_client_certificate_url.text().toUtf8(), 'utf-8')))
+            last_dir = os.path.dirname(os.path.realpath(self.wifi_client_certificate_url.text()))
+        else:
+            last_dir = QDir.toNativeSeparators(QDir.homePath())
 
-        file_name = QFileDialog.getOpenFileName(self,
-                                                'Open Client Certificate',
-                                                last_dir)
-        if len(file_name) > 0:
-            self.wifi_client_certificate_url.setText(file_name)
+        filename = QFileDialog.getOpenFileName(get_main_window(), 'Open Client Certificate', last_dir)
+
+        if len(filename) > 0:
+            self.wifi_client_certificate_url.setText(QDir.toNativeSeparators(filename))
 
     def private_key_browse_clicked(self):
-        last_dir = ''
         if len(self.wifi_private_key_url.text()) > 0:
-            last_dir = os.path.dirname(os.path.realpath(unicode(self.wifi_private_key_url.text().toUtf8(), 'utf-8')))
+            last_dir = os.path.dirname(os.path.realpath(self.wifi_private_key_url.text()))
+        else:
+            last_dir = QDir.toNativeSeparators(QDir.homePath())
 
-        file_name = QFileDialog.getOpenFileName(self,
-                                                'Open Private Key',
-                                                last_dir)
-        if len(file_name) > 0:
-            self.wifi_private_key_url.setText(file_name)
+        filename = QFileDialog.getOpenFileName(get_main_window(), 'Open Private Key', last_dir)
+
+        if len(filename) > 0:
+            self.wifi_private_key_url.setText(QDir.toNativeSeparators(filename))
 
     def encryption_changed(self, index):
-        if str(self.wifi_encryption.currentText()) in 'WPA/WPA2':
+        if self.wifi_encryption.currentText() in 'WPA/WPA2':
             if self.parent.firmware_version >= (2, 0, 2):
                 self.wifi_key.setMaxLength(63)
             else:
@@ -290,7 +289,7 @@ class Wifi(QWidget, Ui_Wifi):
             self.wifi_private_key_url.setVisible(False)
             self.wifi_private_key_browse.setVisible(False)
             self.wifi_private_key_label.setVisible(False)
-        elif str(self.wifi_encryption.currentText()) in 'WPA Enterprise':
+        elif self.wifi_encryption.currentText() in 'WPA Enterprise':
             self.wifi_key.setVisible(False)
             self.wifi_key_label.setVisible(False)
             self.wifi_key_show.setVisible(False)
@@ -320,7 +319,7 @@ class Wifi(QWidget, Ui_Wifi):
             self.wifi_private_key_url.setVisible(True)
             self.wifi_private_key_browse.setVisible(True)
             self.wifi_private_key_label.setVisible(True)
-        elif str(self.wifi_encryption.currentText()) in 'WEP':
+        elif self.wifi_encryption.currentText() in 'WEP':
             self.wifi_key.setMaxLength(26)
             self.wifi_key.setVisible(True)
             self.wifi_key_label.setVisible(True)
@@ -444,7 +443,7 @@ class Wifi(QWidget, Ui_Wifi):
             self.wifi_dot8.setVisible(True)
             self.wifi_dot9.setVisible(True)
 
-        current = str(self.wifi_encryption.currentText())
+        current = self.wifi_encryption.currentText()
 
         if self.wifi_connection.currentIndex() in (2, 3, 4, 5):
             self.wifi_encryption.clear()
@@ -462,10 +461,10 @@ class Wifi(QWidget, Ui_Wifi):
             self.wifi_encryption.setCurrentIndex(index)
 
     def popup_ok(self, message='Successfully saved configuration.\nNew configuration will be used after reset of the Master Brick.'):
-        QMessageBox.information(self, 'Configuration', message, QMessageBox.Ok)
+        QMessageBox.information(get_main_window(), 'Configuration', message, QMessageBox.Ok)
 
     def popup_fail(self, message='Could not save configuration.'):
-        QMessageBox.critical(self, 'Configuration', message, QMessageBox.Ok)
+        QMessageBox.critical(get_main_window(), 'Configuration', message, QMessageBox.Ok)
 
     def show_status_clicked(self):
         if self.wifi_status is None:
@@ -484,13 +483,12 @@ class Wifi(QWidget, Ui_Wifi):
 
     def get_certificate(self, url_edit):
         cert_path = url_edit.text()
-        cert_path = unicode(cert_path.toUtf8(), 'utf-8').encode(sys.getfilesystemencoding())
         try:
             if os.path.isfile(cert_path):
                 certificate_file = map(ord, file(cert_path, 'rb').read()) # Convert certificate to list of bytes
                 certificate_length = len(certificate_file)
                 if certificate_length > 6*1024:
-                    QMessageBox.critical(self, "Save", "Certificate too big (max size: 6kB).", QMessageBox.Ok)
+                    QMessageBox.critical(get_main_window(), "Save", "Certificate too big (max size: 6kB).", QMessageBox.Ok)
                     return []
 
                 return certificate_file
@@ -552,19 +550,19 @@ class Wifi(QWidget, Ui_Wifi):
         encryption = self.wifi_encryption.currentIndex()
 
         try:
-            secret = str(self.wifi_secret.text()).encode('ascii')
+            secret = self.wifi_secret.text().encode('ascii')
         except:
             self.popup_fail('Secret cannot contain non-ASCII characters')
             return
 
         try:
-            hostname = str(self.wifi_hostname.text()).encode('ascii')
+            hostname = self.wifi_hostname.text().encode('ascii')
         except:
             self.popup_fail('Hostname cannot contain non-ASCII characters')
             return
 
         try:
-            key = str(self.wifi_key.text()).encode('ascii')
+            key = self.wifi_key.text().encode('ascii')
         except:
             self.popup_fail('Key cannot contain non-ASCII characters')
             return
@@ -573,7 +571,7 @@ class Wifi(QWidget, Ui_Wifi):
             self.popup_fail('Key cannot contain quotation mark')
             return
 
-        if str(self.wifi_encryption.currentText()) in 'WEP':
+        if self.wifi_encryption.currentText() in 'WEP':
             if len(key) == 0:
                 self.popup_fail('WEP key cannot be empty')
                 return
@@ -589,7 +587,7 @@ class Wifi(QWidget, Ui_Wifi):
                 return
 
         long_key = key
-        if str(self.wifi_encryption.currentText()) in 'WPA/WPA2':
+        if self.wifi_encryption.currentText() in 'WPA/WPA2':
             if len(key) < 8:
                 self.popup_fail('WPA/WPA2 key has to be at least 8 chars long')
                 return
@@ -604,7 +602,7 @@ class Wifi(QWidget, Ui_Wifi):
         eap_options = eap_outer | (eap_inner << 2)
 
         try:
-            ssid = str(self.wifi_ssid.text()).encode('ascii')
+            ssid = self.wifi_ssid.text().encode('ascii')
         except:
             self.popup_fail('SSID cannot contain non-ASCII characters')
             return
@@ -678,8 +676,8 @@ class Wifi(QWidget, Ui_Wifi):
 
         if test_ok and encryption == 1:
             test_ok = False
-            username = str(self.wifi_username.text())
-            password = str(self.wifi_password.text())
+            username = self.wifi_username.text()
+            password = self.wifi_password.text()
             self.master.set_wifi_certificate(0xFFFF, map(ord, username) + [0] * (32 - len(username)), len(username))
             self.master.set_wifi_certificate(0xFFFE, map(ord, password) + [0] * (32 - len(password)), len(password))
             username_old = self.master.get_wifi_certificate(0xFFFF)

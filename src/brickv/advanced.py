@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-  
+# -*- coding: utf-8 -*-
 """
-brickv (Brick Viewer) 
+brickv (Brick Viewer)
 Copyright (C) 2011-2012 Olaf Lüke <olaf@tinkerforge.com>
 Copyright (C) 2012 Bastian Nordmeyer <bastian@tinkerforge.com>
-Copyright (C) 2012, 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2012, 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 advanced.py: GUI for advanced features
 
 This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License 
-as published by the Free Software Foundation; either version 2 
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
@@ -23,25 +23,25 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from brickv.ui_advanced import Ui_widget_advanced
+from brickv.ui_advanced import Ui_Advanced
 
 from PyQt4.QtCore import Qt, QTimer
-from PyQt4.QtGui import QFrame
+from PyQt4.QtGui import QDialog
 
 from brickv import infos
 
 NO_BRICK = 'No Brick found'
 
-class AdvancedWindow(QFrame, Ui_widget_advanced):
+class AdvancedWindow(QDialog, Ui_Advanced):
     def __init__(self, parent):
-        QFrame.__init__(self, parent, Qt.Popup | Qt.Window | Qt.Tool)
+        QDialog.__init__(self, parent)
 
         self.setupUi(self)
 
         self.button_calibrate.setEnabled(False)
 
         self.brick_infos = []
-        
+
         self.parent = parent
         self.button_calibrate.clicked.connect(self.calibrate_clicked)
         self.combo_brick.currentIndexChanged.connect(self.brick_changed)
@@ -67,7 +67,7 @@ class AdvancedWindow(QFrame, Ui_widget_advanced):
 
         self.parent.ipcon.adc_calibrate(self.current_device(),
                                         port_names[self.combo_port.currentIndex()])
-        
+
         self.update_calibration()
 
     def current_device(self):
@@ -79,7 +79,7 @@ class AdvancedWindow(QFrame, Ui_widget_advanced):
     def update_calibration(self):
         device = self.current_device()
 
-        if device is None:
+        if device is None or self.combo_port.count() == 0:
             self.label_offset.setText('-')
             self.label_gain.setText('-')
         else:
@@ -105,11 +105,10 @@ class AdvancedWindow(QFrame, Ui_widget_advanced):
                 self.combo_port.addItem('{0}: {1}'.format(key.upper(), info.bricklets[key].get_combo_item()))
 
         self.update_ui_state()
+        self.update_calibration()
 
-        if self.combo_port.count() > 0:
-            self.update_calibration()
-        else:
-            self.check_enable_calibration.setChecked(Qt.Unchecked)
+        if self.combo_port.count() == 0:
+            self.check_enable_calibration.setChecked(False)
 
     def enable_calibration_changed(self, state):
         self.button_calibrate.setEnabled(state == Qt.Checked)

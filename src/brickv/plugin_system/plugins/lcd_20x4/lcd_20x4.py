@@ -67,7 +67,7 @@ class LCD20x4(PluginBase):
         self.line_pos_layout.addStretch()
 
         self.text_label = QLabel('Text: ')
-        self.text_edit = QLineEdit();
+        self.text_edit = QLineEdit()
         self.text_edit.setMaxLength(LCD20x4.MAX_POSITION)
         self.text_button = QPushButton('Send Text')
         self.text_layout = QHBoxLayout()
@@ -302,7 +302,7 @@ class LCD20x4(PluginBase):
     def text_clicked(self):
         line = int(self.line_combo.currentText())
         position = int(self.pos_combo.currentText())
-        text = unicode(self.text_edit.text().toUtf8(), 'utf-8')
+        text = self.text_edit.text()
         if self.firmware_version >= (2, 0, 1):
             for i in range(8):
                 text = text.replace('\\' + str(i), chr(i+8))

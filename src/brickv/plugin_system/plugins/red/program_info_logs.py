@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 Copyright (C) 2014 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
 
 program_info_logs.py: Program Logs Info Widget
@@ -22,14 +22,13 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import Qt, QVariant, QDateTime
+from PyQt4.QtCore import Qt, QVariant, QDateTime, QDir
 from PyQt4.QtGui import QIcon, QWidget, QStandardItemModel, QStandardItem, QFileDialog, \
                         QMessageBox, QSortFilterProxyModel, QApplication
 from brickv.plugin_system.plugins.red.api import *
-from brickv.plugin_system.plugins.red.program_utils import Download, ExpandingProgressDialog, get_file_display_size
+from brickv.plugin_system.plugins.red.program_utils import Download, get_file_display_size
 from brickv.plugin_system.plugins.red.ui_program_info_logs import Ui_ProgramInfoLogs
 from brickv.plugin_system.plugins.red.program_info_logs_view import ProgramInfoLogsView
-from brickv.async_call import async_call
 from brickv.utils import get_main_window, get_resources_path
 import os
 import posixpath
@@ -71,13 +70,14 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
         self.is_alive                      = is_alive
         self.show_download_wizard          = show_download_wizard
         self.set_program_callbacks_enabled = set_program_callbacks_enabled
-        self.log_directory                 = posixpath.join(unicode(self.program.root_directory), 'log')
+        self.log_directory                 = posixpath.join(self.program.root_directory, 'log')
         self.refresh_in_progress           = False
         self.view_dialog                   = None
         self.file_icon                     = QIcon(os.path.join(get_resources_path(), "file-icon.png"))
         self.tree_logs_model               = QStandardItemModel(self)
         self.tree_logs_model_header        = ['Date / Time', 'Size']
         self.tree_logs_proxy_model         = LogsProxyModel(self)
+        self.last_download_directory       = QDir.toNativeSeparators(QDir.homePath())
 
         self.tree_logs_model.setHorizontalHeaderLabels(self.tree_logs_model_header)
         self.tree_logs_proxy_model.setSourceModel(self.tree_logs_model)
@@ -111,7 +111,7 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
         def cb_logs_list(result):
             if result == None or result.exit_code != 0:
                 if result == None or len(result.stderr) == 0:
-                    self.label_error.setText('<b>Error:</b> Internal error occurred')
+                    self.label_error.setText('<b>Error:</b> Internal script error occurred')
                 else:
                     self.label_error.setText('<b>Error:</b> ' + Qt.escape(result.stderr.decode('utf-8')))
 
@@ -183,8 +183,8 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
                     except ValueError:
                         continue
 
-                    date      = unicode(QDateTime.fromTime_t(timestamp).toString('yyyy-MM-dd'))
-                    time      = unicode(QDateTime.fromTime_t(timestamp).toString('HH:mm:ss'))
+                    date      = QDateTime.fromTime_t(timestamp).toString('yyyy-MM-dd')
+                    time      = QDateTime.fromTime_t(timestamp).toString('HH:mm:ss')
                     date_time = date + 'T' + time
 
                     if date in date_rows:
@@ -257,7 +257,7 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
             if item_type == ITEM_TYPE_PARENT_CONT:
                 for i in range(item_list[0].rowCount()):
                     f_size = item_list[0].child(i, 1).data(USER_ROLE_SIZE).toInt()[0] # File size
-                    file_name = unicode(item_list[0].child(i, 0).data(USER_ROLE_FILE_NAME).toString())
+                    file_name = item_list[0].child(i, 0).data(USER_ROLE_FILE_NAME).toString()
                     f_path = posixpath.join(self.log_directory, file_name) # File path
                     if not f_path in logs_download_dict['files']:
                         logs_download_dict['files'][f_path] = {'size': f_size}
@@ -269,7 +269,7 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
                     parent_time = item_list[0].child(i)
                     for j in range(parent_time.rowCount()):
                         f_size = parent_time.child(j, 1).data(USER_ROLE_SIZE).toInt()[0] # File size
-                        file_name = unicode(parent_time.child(j, 0).data(USER_ROLE_FILE_NAME).toString())
+                        file_name = parent_time.child(j, 0).data(USER_ROLE_FILE_NAME).toString()
                         f_path = posixpath.join(self.log_directory, file_name) # File path
                         if not f_path in logs_download_dict['files']:
                             logs_download_dict['files'][f_path] = {'size': f_size}
@@ -279,7 +279,7 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
             elif item_type == ITEM_TYPE_PARENT_TIME:
                 for i in range(item_list[0].rowCount()):
                     f_size = item_list[0].child(i, 1).data(USER_ROLE_SIZE).toInt()[0] # File size
-                    file_name = unicode(item_list[0].child(i, 0).data(USER_ROLE_FILE_NAME).toString())
+                    file_name = item_list[0].child(i, 0).data(USER_ROLE_FILE_NAME).toString()
                     f_path = posixpath.join(self.log_directory, file_name) # File path
                     if not f_path in logs_download_dict['files']:
                         logs_download_dict['files'][f_path] = {'size': f_size}
@@ -288,7 +288,7 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
 
             elif item_type in [ITEM_TYPE_LOG_FILE, ITEM_TYPE_LOG_FILE_CONT]:
                 f_size = item_list[1].data(USER_ROLE_SIZE).toInt()[0] # File size
-                file_name = unicode(item_list[0].data(USER_ROLE_FILE_NAME).toString())
+                file_name = item_list[0].data(USER_ROLE_FILE_NAME).toString()
                 f_path = posixpath.join(self.log_directory, file_name) # File path
                 if not f_path in logs_download_dict['files']:
                     logs_download_dict['files'][f_path] = {'size': f_size}
@@ -322,10 +322,13 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
         if len(log_files_to_download['foobar']) == 0:
             return
 
-        download_directory = unicode(QFileDialog.getExistingDirectory(get_main_window(), 'Download Logs'))
+        download_directory = QFileDialog.getExistingDirectory(get_main_window(), 'Download Logs',
+                                                              self.last_download_directory)
 
         if len(download_directory) == 0:
             return
+
+        download_directory = QDir.toNativeSeparators(download_directory)
 
         # FIXME: on Mac OS X the getExistingDirectory() might return the directory with
         #        the last part being invalid, try to find the valid part of the directory
@@ -335,6 +338,8 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
 
         if len(download_directory) == 0:
             return
+
+        self.last_download_directory = download_directory
 
         downloads = []
 
@@ -366,7 +371,7 @@ class ProgramInfoLogs(QWidget, Ui_ProgramInfoLogs):
         self.view_log(selected_log_items[0])
 
     def view_log(self, item):
-        file_name = posixpath.join(self.log_directory, unicode(item.data(USER_ROLE_FILE_NAME).toString()))
+        file_name = posixpath.join(self.log_directory, item.data(USER_ROLE_FILE_NAME).toString())
 
         self.set_program_callbacks_enabled(False)
 

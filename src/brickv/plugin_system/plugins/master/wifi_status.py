@@ -22,26 +22,27 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtGui import QFrame
+from PyQt4.QtGui import QDialog
 from PyQt4.QtCore import Qt
 
-from brickv.plugin_system.plugins.master.ui_wifi_status import Ui_wifi_status
+from brickv.plugin_system.plugins.master.ui_wifi_status import Ui_WifiStatus
 from brickv.async_call import async_call
 
-class WifiStatus(QFrame, Ui_wifi_status):
+class WifiStatus(QDialog, Ui_WifiStatus):
     def __init__(self, parent):
-        QFrame.__init__(self, parent, Qt.Popup | Qt.Window | Qt.Tool)
+        QDialog.__init__(self, parent)
 
         self.setupUi(self)
 
         self.parent = parent
         self.master = self.parent.master
 
+        self.button_close.clicked.connect(self.close)
+
         self.update_status()
 
     def update_status_async(self, status):
-        self.status = status
-        mac, bssid, channel, rssi, ip, sub, gw, rx, tx, state = self.status
+        mac, bssid, channel, rssi, ip, sub, gw, rx, tx, state = status
 
         self.wifi_status_mac.setText("%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x" % mac[::-1])
         self.wifi_status_bssid.setText("%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x" % bssid[::-1])

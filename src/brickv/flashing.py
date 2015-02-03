@@ -3,7 +3,7 @@
 brickv (Brick Viewer)
 Copyright (C) 2011-2012 Olaf Lüke <olaf@tinkerforge.com>
 Copyright (C) 2012 Bastian Nordmeyer <bastian@tinkerforge.com>
-Copyright (C) 2012 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2012-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 flashing.py: GUI for flashing features
 
@@ -23,22 +23,22 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from brickv.ui_flashing import Ui_widget_flashing
-from brickv.bindings.ip_connection import IPConnection, Error, base58encode, base58decode, BASE58, uid64_to_uid32
+from brickv.ui_flashing import Ui_Flashing
+from brickv.bindings.ip_connection import IPConnection, Error, base58encode, \
+                                          base58decode, BASE58, uid64_to_uid32
 from brickv.imu_calibration import parse_imu_calibration, IMU_CALIBRATION_URL
-from PyQt4.QtCore import Qt, QTimer
-from PyQt4.QtGui import QApplication, QColor, QFrame, QFileDialog, QMessageBox, QProgressDialog, QStandardItemModel, QStandardItem, QBrush
+from PyQt4.QtCore import Qt, QTimer, QDir
+from PyQt4.QtGui import QApplication, QColor, QDialog, QFileDialog, QMessageBox, \
+                        QProgressDialog, QStandardItemModel, QStandardItem, QBrush
 from brickv.samba import SAMBA, SAMBAException, SAMBARebootError, get_serial_ports
 from brickv.infos import get_version_string
+from brickv.utils import get_main_window
 from brickv import infos
 
-import sys
 import os
 import urllib2
-import re
 import time
 import struct
-from xml.etree.ElementTree import fromstring as etreefromstring
 from serial import SerialException
 
 LATEST_VERSIONS_URL = 'http://download.tinkerforge.com/latest_versions.txt'
@@ -60,7 +60,7 @@ def error_to_name(e):
     else:
         return e.message
 
-class ProgressWrapper:
+class ProgressWrapper(object):
     def __init__(self, progress):
         self.progress = progress
 
@@ -80,9 +80,9 @@ class ProgressWrapper:
     def setMaximum(self, value):
         self.progress.setMaximum(value)
 
-class FlashingWindow(QFrame, Ui_widget_flashing):
+class FlashingWindow(QDialog, Ui_Flashing):
     def __init__(self, parent):
-        QFrame.__init__(self, parent, Qt.Popup | Qt.Window | Qt.Tool)
+        QDialog.__init__(self, parent)
 
         self.setupUi(self)
 
@@ -90,6 +90,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
         self.firmware_infos = {}
         self.plugin_infos = {}
         self.brick_infos = []
+        self.refresh_updates_pending = False
 
         self.parent = parent
         self.tab_widget.currentChanged.connect(self.tab_changed)
@@ -209,7 +210,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
                 self.combo_firmware.addItem(SELECT)
                 self.combo_firmware.insertSeparator(self.combo_firmware.count())
 
-            for firmware_info in sorted(self.firmware_infos.values(), cmp=lambda x, y: cmp(x.name, y.name)):
+            for firmware_info in sorted(self.firmware_infos.values(), key=lambda x: x.name):
                 name = '{0} ({1}.{2}.{3})'.format(firmware_info.name, *firmware_info.firmware_version_latest)
                 self.combo_firmware.addItem(name, firmware_info.url_part)
 
@@ -221,7 +222,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
                 self.combo_plugin.addItem(SELECT)
                 self.combo_plugin.insertSeparator(self.combo_plugin.count())
 
-            for plugin_info in sorted(self.plugin_infos.values(), cmp=lambda x, y: cmp(x.name, y.name)):
+            for plugin_info in sorted(self.plugin_infos.values(), key=lambda x: x.name):
                 name = '{0} ({1}.{2}.{3})'.format(plugin_info.name, *plugin_info.firmware_version_latest)
                 self.combo_plugin.addItem(name, plugin_info.url_part)
 
@@ -398,28 +399,26 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
         self.update_ui_state()
 
     def firmware_browse_clicked(self):
-        last_dir = ''
         if len(self.edit_custom_firmware.text()) > 0:
-            last_dir = os.path.dirname(os.path.realpath(unicode(self.edit_custom_firmware.text().toUtf8(), 'utf-8')))
+            last_dir = os.path.dirname(os.path.realpath(self.edit_custom_firmware.text()))
+        else:
+            last_dir = QDir.toNativeSeparators(QDir.homePath())
 
-        file_name = QFileDialog.getOpenFileName(self,
-                                                'Open Firmware',
-                                                last_dir,
-                                                '*.bin')
-        if len(file_name) > 0:
-            self.edit_custom_firmware.setText(file_name)
-            self.update_ui_state()
+        filename = QFileDialog.getOpenFileName(get_main_window(), 'Open Firmware', last_dir, '*.bin')
+
+        if len(filename) > 0:
+            self.edit_custom_firmware.setText(QDir.toNativeSeparators(filename))
 
     def firmware_save_clicked(self):
-        port = str(self.combo_serial_port.itemData(self.combo_serial_port.currentIndex()).toString())
+        port_name = self.combo_serial_port.itemData(self.combo_serial_port.currentIndex()).toString()
 
         try:
-            samba = SAMBA(port)
-        except SAMBAException, e:
+            samba = SAMBA(port_name)
+        except SAMBAException as e:
             self.refresh_serial_ports()
             self.popup_fail('Brick', 'Could not connect to Brick: {0}'.format(str(e)))
             return
-        except SerialException, e:
+        except SerialException as e:
             self.refresh_serial_ports()
             self.popup_fail('Brick', str(e)[0].upper() + str(e)[1:])
             return
@@ -440,16 +439,16 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
             return
         elif current_text == CUSTOM:
             firmware_file_name = self.edit_custom_firmware.text()
-            firmware_file_name = unicode(firmware_file_name.toUtf8(), 'utf-8').encode(sys.getfilesystemencoding())
 
             try:
-                firmware = file(firmware_file_name, 'rb').read()
+                with open(firmware_file_name, 'rb') as f:
+                    firmware = f.read()
             except IOError:
                 progress.cancel()
                 self.popup_fail('Brick', 'Could not read firmware file')
                 return
         else:
-            url_part = str(self.combo_firmware.itemData(self.combo_firmware.currentIndex()).toString())
+            url_part = self.combo_firmware.itemData(self.combo_firmware.currentIndex()).toString()
             name = self.firmware_infos[url_part].name
             version = self.firmware_infos[url_part].firmware_version_latest
 
@@ -508,7 +507,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
 
             try:
                 imu_uid = base58encode(uid64_to_uid32(samba.read_uid64()))
-            except SerialException, e:
+            except SerialException as e:
                 progress.cancel()
                 self.popup_fail('Brick', 'Could read UID of IMU Brick: {0}'.format(str(e)))
                 return
@@ -535,7 +534,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
                         chunk = response.read(1024)
 
                     response.close()
-                except urllib2.HTTPError, e:
+                except urllib2.HTTPError as e:
                     if e.code == 404:
                         imu_calibration_text = None
                         self.popup_ok('IMU Brick', 'No factory calibration for IMU Brick [{0}] available'.format(imu_uid))
@@ -626,7 +625,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
 
     def uid_save_clicked(self):
         device, port = self.current_device_and_port()
-        uid = str(self.edit_uid.text())
+        uid = self.edit_uid.text()
 
         if len(uid) == 0:
             self.popup_fail('Bricklet', 'UID cannot be empty')
@@ -700,7 +699,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
             self.combo_plugin.setCurrentIndex(0)
             return
 
-        url_part = str(self.combo_port.itemData(index).toString())
+        url_part = self.combo_port.itemData(index).toString()
 
         if len(url_part) == 0:
             self.combo_plugin.setCurrentIndex(0)
@@ -853,16 +852,16 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
             return
         elif current_text == CUSTOM:
             plugin_file_name = self.edit_custom_plugin.text()
-            plugin_file_name = unicode(plugin_file_name.toUtf8(), 'utf-8').encode(sys.getfilesystemencoding())
 
             try:
-                plugin = map(ord, file(plugin_file_name, 'rb').read()) # Convert plugin to list of bytes
+                with open(plugin_file_name, 'rb') as f:
+                    plugin = map(ord, f.read()) # Convert plugin to list of bytes
             except IOError:
                 progress.cancel()
                 self.popup_fail('Bricklet', 'Could not read plugin file')
                 return
         else:
-            url_part = str(self.combo_plugin.itemData(self.combo_plugin.currentIndex()).toString())
+            url_part = self.combo_plugin.itemData(self.combo_plugin.currentIndex()).toString()
             name = self.plugin_infos[url_part].name
             version = self.plugin_infos[url_part].firmware_version_latest
             plugin = self.download_bricklet_plugin(progress, url_part, name, version)
@@ -871,8 +870,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
 
         # Flash plugin
         device, port = self.current_device_and_port()
-
-        url_part = str(self.combo_plugin.itemData(self.combo_plugin.currentIndex()).toString())
+        url_part = self.combo_plugin.itemData(self.combo_plugin.currentIndex()).toString()
 
         if current_text == CUSTOM:
             if not self.write_bricklet_plugin(plugin, device, port, os.path.split(plugin_file_name)[-1], progress):
@@ -901,16 +899,15 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
             return None
 
     def plugin_browse_clicked(self):
-        last_dir = ''
-        if len(self.edit_custom_plugin.text()) > 0:
-            last_dir = os.path.dirname(os.path.realpath(unicode(self.edit_custom_plugin.text().toUtf8(), 'utf-8')))
+        last_dir = QDir.toNativeSeparators(QDir.homePath())
 
-        file_name = QFileDialog.getOpenFileName(self,
-                                                'Open Plugin',
-                                                last_dir,
-                                                '*.bin')
-        if len(file_name) > 0:
-            self.edit_custom_plugin.setText(file_name)
+        if len(self.edit_custom_plugin.text()) > 0:
+            last_dir = os.path.dirname(os.path.realpath(self.edit_custom_plugin.text()))
+
+        filename = QFileDialog.getOpenFileName(get_main_window(), 'Open Plugin', last_dir, '*.bin')
+
+        if len(filename) > 0:
+            self.edit_custom_plugin.setText(QDir.toNativeSeparators(filename))
 
     def auto_update_bricklets_clicked(self):
         def brick_for_bricklet(bricklet):
@@ -1055,7 +1052,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
         except:
             infos.infos[infos.UID_BRICKV].firmware_version_latest = (0, 0, 0)
 
-        for device_info in sorted(infos.infos.values(), cmp=lambda x, y: cmp(x.name, y.name)):
+        for device_info in sorted(infos.infos.values(), key=lambda x: x.name):
             if device_info.type == 'brick':
                 try:
                     device_info.firmware_version_latest = self.firmware_infos[device_info.url_part].firmware_version_latest
@@ -1092,7 +1089,6 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
                 parent[0].setData(device_uid, Qt.UserRole)
                 items.append(parent)
 
-                brick_got_removed = False
                 for port in device_info.bricklets:
                     if not device_info.bricklets[port] or device_info.bricklets[port].protocol_version == 1:
                         try:
@@ -1180,7 +1176,7 @@ class FlashingWindow(QFrame, Ui_widget_flashing):
                 protocol1_error_still_there = True
                 continue
             for i in range(len(items)):
-                if str(items[i][0].data(Qt.UserRole).toString()) == device_uid:
+                if items[i][0].data(Qt.UserRole).toString() == device_uid:
                     del items[i]
                     break
 

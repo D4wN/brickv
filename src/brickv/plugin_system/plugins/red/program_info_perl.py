@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_info_perl.py: Program Perl Info Widget
 
@@ -22,7 +22,6 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QWidget
 from brickv.plugin_system.plugins.red.program_info import ProgramInfo
 from brickv.plugin_system.plugins.red.program_utils import Constants
 from brickv.plugin_system.plugins.red.ui_program_info_perl import Ui_ProgramInfoPerl
@@ -37,7 +36,7 @@ class ProgramInfoPerl(ProgramInfo, Ui_ProgramInfoPerl):
 
     # overrides ProgramInfo.update_ui_state
     def update_ui_state(self):
-        show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_advanced_options = self.check_show_advanced_options.isChecked()
 
         self.label_working_directory_title.setVisible(show_advanced_options)
         self.label_working_directory.setVisible(show_advanced_options)
@@ -46,10 +45,8 @@ class ProgramInfoPerl(ProgramInfo, Ui_ProgramInfoPerl):
 
         # version
         def cb_perl_versions(versions):
-            executable = unicode(self.program.executable)
-
             for version in versions:
-                if version.executable == executable:
+                if version.executable == self.program.executable:
                     self.label_version.setText(version.version)
                     return
 
@@ -76,7 +73,7 @@ class ProgramInfoPerl(ProgramInfo, Ui_ProgramInfoPerl):
         self.label_command.setText(self.program.cast_custom_option_value('perl.command', unicode, '<unknown>'))
 
         # working directory
-        self.label_working_directory.setText(unicode(self.program.working_directory))
+        self.label_working_directory.setText(self.program.working_directory)
 
         # options
         self.label_options.setText('\n'.join(self.program.cast_custom_option_value_list('perl.options', unicode, [])))

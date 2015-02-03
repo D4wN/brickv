@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 Copyright (C) 2014 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
 
 red.py: RED Plugin implementation
@@ -22,29 +22,59 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from brickv.plugin_system.plugin_base import PluginBase
+from PyQt4.QtGui import QLabel, QVBoxLayout
+from PyQt4.QtCore import Qt
 
+from brickv.plugin_system.plugin_base import PluginBase
 from brickv.plugin_system.plugins.red.ui_red import Ui_RED
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.script_manager import ScriptManager
+from brickv.async_call import async_call
+import re
+
+class ImageVersion(object):
+    string = None
+    number = (0, 0)
+    flavor = None
 
 class RED(PluginBase, Ui_RED):
     def __init__(self, *args):
         PluginBase.__init__(self, 'RED Brick', REDBrick, *args)
 
-        self.session = REDSession(self.device).create()
+        try:
+            self.session = REDSession(self.device, self.increase_error_count).create()
+        except Exception as e:
+            self.session = None
+
+            label = QLabel('Could not create session. There seems to be a problem with the RED Brick API Daemon:\n\n' + unicode(e))
+            label.setAlignment(Qt.AlignHCenter)
+
+            layout = QVBoxLayout(self)
+            layout.addStretch()
+            layout.addWidget(label)
+            layout.addStretch()
+
+            return
+
+        self.image_version  = ImageVersion()
+        self.label_version  = None
         self.script_manager = ScriptManager(self.session)
+        self.tabs           = []
 
         self.setupUi(self)
 
-        self.tabs_list = []
-        for index in range(0, self.red_tab_widget.count()):
-            self.tabs_list.append(self.red_tab_widget.widget(index))
-            self.tabs_list[index].session = self.session
-            self.tabs_list[index].script_manager = self.script_manager
+        self.tab_widget.hide()
 
-        # signals and slots
-        self.red_tab_widget.currentChanged.connect(self.cb_red_tab_widget_current_changed)
+        for i in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(i)
+
+            tab.session        = self.session
+            tab.script_manager = self.script_manager
+            tab.image_version  = self.image_version
+
+            self.tabs.append(tab)
+
+        self.tab_widget.currentChanged.connect(self.tab_widget_current_changed)
 
         # FIXME: RED Brick doesn't do enumerate-connected callback correctly yet
         #        for Brick(let)s connected to it. Trigger a enumerate to pick up
@@ -52,21 +82,51 @@ class RED(PluginBase, Ui_RED):
         self.ipcon.enumerate()
 
     def start(self):
-        for index, tab in enumerate(self.tabs_list):
-            if index == self.red_tab_widget.currentIndex():
-                tab.tab_on_focus()
-            else:
-                tab.tab_off_focus()
-        
-        self.tabs_list[4].label_version = self.label_version
-        self.tabs_list[4].update_main()
+        if self.session == None:
+            return
+
+        if self.image_version.string == None:
+            # FIXME: this is should actually be sync to ensure that the image
+            #        version is known before it'll be used
+            def read_image_version_async(red_file):
+                return red_file.open('/etc/tf_image_version',
+                                     REDFile.FLAG_READ_ONLY | REDFile.FLAG_NON_BLOCKING,
+                                     0, 0, 0).read(256).decode('utf-8').strip()
+
+            def cb_success(image_version):
+                if self.label_version != None:
+                    self.label_version.setText(image_version)
+
+                m = re.match(r'(\d+)\.(\d+)\s+\((.+)\)', image_version)
+
+                if m != None:
+                    try:
+                        self.image_version.string = image_version
+                        self.image_version.number = (int(m.group(1)), int(m.group(2)))
+                        self.image_version.flavor = m.group(3)
+                    except:
+                        pass
+
+                self.label_discovering.hide()
+                self.tab_widget.show()
+                self.tab_widget_current_changed(self.tab_widget.currentIndex())
+
+            async_call(read_image_version_async, REDFile(self.session), cb_success, None)
+        else:
+            self.tab_widget_current_changed(self.tab_widget.currentIndex())
 
     def stop(self):
-        for tab in self.tabs_list:
+        if self.session == None:
+            return
+
+        for tab in self.tabs:
             tab.tab_off_focus()
 
     def destroy(self):
-        for tab in self.tabs_list:
+        if self.session == None:
+            return
+
+        for tab in self.tabs:
             tab.tab_destroy()
 
         self.script_manager.destroy()
@@ -77,33 +137,39 @@ class RED(PluginBase, Ui_RED):
 
     def reset_device(self):
         pass
-    
+
     def has_drop_down(self):
         return ['System', 'Restart Brick Daemon', 'Reboot RED Brick', 'Shut down RED Brick']
-    
+
     def drop_down_triggered(self, action):
+        if self.session == None:
+            return
+
         def cb(result):
             if result == None or result.stderr != '':
                 pass # TODO: Error popup?
 
         t = action.text()
         param = -1
-        
+
         if t == 'Restart Brick Daemon':
             param = 0
         elif t == 'Reboot RED Brick':
             param = 1
         elif t == 'Shut down RED Brick':
             param = 2
-        
+
         if param != -1:
             self.script_manager.execute_script('restart_reboot_shutdown', cb, [str(param)])
-        
+
     def has_custom_version(self, label_version_name, label_version):
-        self.label_version_name = label_version_name
-        self.label_version_name.setText('Image Version: ')
+        label_version_name.setText('Image Version: ')
+
         self.label_version = label_version
-        
+
+        if self.image_version.string != None:
+            self.label_version.setText(self.image_version.string)
+
         return True
 
     def is_brick(self):
@@ -116,10 +182,9 @@ class RED(PluginBase, Ui_RED):
     def has_device_identifier(device_identifier):
         return device_identifier == BrickRED.DEVICE_IDENTIFIER
 
-    # the callbacks
-    def cb_red_tab_widget_current_changed(self, tab_index):
-        for index, tab in enumerate(self.tabs_list):
-            if (index == tab_index):
+    def tab_widget_current_changed(self, index):
+        for i, tab in enumerate(self.tabs):
+            if i == index:
                 tab.tab_on_focus()
             else:
                 tab.tab_off_focus()

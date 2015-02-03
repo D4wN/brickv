@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_python.py: Program Wizard Python Page
 
@@ -21,7 +21,6 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import QVariant
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_python import Ui_ProgramPagePython
@@ -52,7 +51,7 @@ class ProgramPagePython(ProgramPage, Ui_ProgramPagePython):
         self.setupUi(self)
 
         self.language     = Constants.LANGUAGE_PYTHON
-        self.url_template = unicode(self.label_url.text())
+        self.url_template = self.label_url.text()
 
         self.setTitle('{0}{1} Configuration'.format(title_prefix, Constants.language_display_names[self.language]))
 
@@ -101,7 +100,7 @@ class ProgramPagePython(ProgramPage, Ui_ProgramPagePython):
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_PYTHON_START_MODE)
         self.combo_script_file_selector.reset()
         self.label_url.setText(self.url_template.replace('<SERVER>', 'red-brick').replace('<IDENTIFIER>', self.get_field('identifier').toString()))
-        self.check_show_advanced_options.setCheckState(Qt.Unchecked)
+        self.check_show_advanced_options.setChecked(False)
         self.combo_working_directory_selector.reset()
         self.option_list_editor.reset()
 
@@ -125,7 +124,7 @@ class ProgramPagePython(ProgramPage, Ui_ProgramPagePython):
             self.edit_command.setText(program.cast_custom_option_value('python.command', unicode, ''))
 
             # working directory
-            self.combo_working_directory_selector.set_current_text(unicode(program.working_directory))
+            self.combo_working_directory_selector.set_current_text(program.working_directory)
 
             # options
             self.option_list_editor.clear()
@@ -168,7 +167,7 @@ class ProgramPagePython(ProgramPage, Ui_ProgramPagePython):
         start_mode_module_name   = start_mode == Constants.PYTHON_START_MODE_MODULE_NAME
         start_mode_command       = start_mode == Constants.PYTHON_START_MODE_COMMAND
         start_mode_web_interface = start_mode == Constants.PYTHON_START_MODE_WEB_INTERFACE
-        show_advanced_options    = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_advanced_options    = self.check_show_advanced_options.isChecked()
 
         self.combo_version.setVisible(not start_mode_web_interface)
         self.label_version.setVisible(not start_mode_web_interface)
@@ -191,7 +190,7 @@ class ProgramPagePython(ProgramPage, Ui_ProgramPagePython):
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
-        return unicode(self.combo_version.itemData(self.get_field('python.version').toInt()[0]).toString())
+        return self.combo_version.itemData(self.get_field('python.version').toInt()[0]).toString()
 
     def get_html_summary(self):
         version           = self.get_field('python.version').toInt()[0]
@@ -223,9 +222,9 @@ class ProgramPagePython(ProgramPage, Ui_ProgramPagePython):
     def get_custom_options(self):
         return {
             'python.start_mode':  Constants.python_start_mode_api_names[self.get_field('python.start_mode').toInt()[0]],
-            'python.script_file': unicode(self.get_field('python.script_file').toString()),
-            'python.module_name': unicode(self.get_field('python.module_name').toString()),
-            'python.command':     unicode(self.get_field('python.command').toString()),
+            'python.script_file': self.get_field('python.script_file').toString(),
+            'python.module_name': self.get_field('python.module_name').toString(),
+            'python.command':     self.get_field('python.command').toString(),
             'python.options':     self.option_list_editor.get_items()
         }
 
@@ -240,15 +239,15 @@ class ProgramPagePython(ProgramPage, Ui_ProgramPagePython):
         environment = []
 
         if start_mode == Constants.PYTHON_START_MODE_SCRIPT_FILE:
-            arguments.append(unicode(self.get_field('python.script_file').toString()))
+            arguments.append(self.get_field('python.script_file').toString())
         elif start_mode == Constants.PYTHON_START_MODE_MODULE_NAME:
             arguments.append('-m')
-            arguments.append(unicode(self.get_field('python.module_name').toString()))
+            arguments.append(self.get_field('python.module_name').toString())
         elif start_mode == Constants.PYTHON_START_MODE_COMMAND:
             arguments.append('-c')
-            arguments.append(unicode(self.get_field('python.command').toString()))
+            arguments.append(self.get_field('python.command').toString())
 
-        working_directory = unicode(self.get_field('python.working_directory').toString())
+        working_directory = self.get_field('python.working_directory').toString()
 
         return executable, arguments, environment, working_directory
 

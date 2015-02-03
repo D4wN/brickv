@@ -2,6 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
+Copyright (C) 2015 Matthias Bolte <matthias@tinkerforge.com>
 
 red_tab_versions.py: RED versions tab implementation
 
@@ -21,7 +22,8 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4 import Qt, QtCore, QtGui
+from PyQt4.QtGui import QStandardItemModel, QStandardItem
+from brickv.plugin_system.plugins.red.red_tab import REDTab
 from brickv.plugin_system.plugins.red.ui_red_tab_versions import Ui_REDTabVersions
 from brickv.plugin_system.plugins.red.api import *
 
@@ -33,71 +35,79 @@ DEFAULT_NAME_HEADER_WIDTH = 200
 DEFAULT_VERSION_HEADER_WIDTH = 100
 DEFAULT_DESCRIPTION_HEADER_WIDTH = 300
 
-NUM_TABS = 8
+NUM_TABS = 12
 
-class REDTabVersions(QtGui.QWidget, Ui_REDTabVersions):
+class REDTabVersions(REDTab, Ui_REDTabVersions):
     def __init__(self):
-        QtGui.QWidget.__init__(self)
-        self.setupUi(self)
+        REDTab.__init__(self)
 
-        self.session        = None # set from RED after construction
-        self.script_manager = None # set from RED after construction
+        self.setupUi(self)
 
         self.package_list = [[] for i in range(NUM_TABS)]
 
         self.language_packages = None
         self.language_packages_file = None
 
-        languages = "C#/mono", "C/C++", "Delphi/Lazarus", "Java", "JavaScript", "Octave", "Perl", "PHP", "Python", "Ruby", "Shell", "VB.NET"
+        languages = "C#/Mono", "C/C++", "Delphi/Lazarus", "Java", "JavaScript", "Octave", "Perl", "PHP", "Python", "Ruby", "Shell", "VB.NET"
 
         self.package_list[0].append({'name': 'Brick Daemon', 'version': 'Collecting Data...', 'description': 'Daemon that manages Bricks/Bricklets'})
         self.package_list[0].append({'name': 'RED Brick API Daemon', 'version': 'Collecting Data...', 'description': 'Daemon that implements RED Brick API'})
         self.package_list[0].append({'name': 'RED Brick Image', 'version': 'Collecting Data...', 'description': 'SD card image of RED Brick'})
         for language in languages:
-            self.package_list[0].append({'name': 'Bindings ' + language, 'version': 'Collecting Data...', 'description': 'Tinkerforge bindings for ' + language })
+            self.package_list[0].append({'name': 'Bindings ' + language, 'version': 'Collecting Data...', 'description': 'Tinkerforge bindings for ' + language})
 
         for i in range(1, NUM_TABS):
             self.package_list[i].append({'name': 'Collecting Data...', 'version': 'Collecting Data...', 'description': 'Collecting Data...'})
 
         self.tables = [
-            self.table_main,
-            self.table_csharp,
-            self.table_c,
-            self.table_java,
-            self.table_perl,
-            self.table_php,
-            self.table_python,
-            self.table_ruby,
+            self.tree_main,
+            self.tree_c,
+            self.tree_csharp,
+            self.tree_delphi,
+            self.tree_java,
+            self.tree_javascript,
+            self.tree_matlab,
+            self.tree_perl,
+            self.tree_php,
+            self.tree_python,
+            self.tree_ruby,
+            self.tree_shell
         ]
         self.update_funcs = [
             self.update_main,
-            lambda: self.update_language((1, "mono")),
-            lambda: self.update_language((2, "c")),
-            lambda: self.update_language((3, "java")),
-            lambda: self.update_language((4, "perl")),
-            lambda: self.update_language((5, "php")),
-            lambda: self.update_language((6, "python")),
-            lambda: self.update_language((7, "ruby")),
+            lambda: self.update_language((1, "c")),
+            lambda: self.update_language((2, "mono")),
+            lambda: self.update_language((3, "delphi")),
+            lambda: self.update_language((4, "java")),
+            lambda: self.update_language((5, "node")),
+            lambda: self.update_language((6, "matlab")),
+            lambda: self.update_language((7, "perl")),
+            lambda: self.update_language((8, "php")),
+            lambda: self.update_language((9, "python")),
+            lambda: self.update_language((10, "ruby")),
+            lambda: self.update_language((11, "shell"))
         ]
 
         self.tab_data = []
 
         self.models = []
         for i in range(NUM_TABS):
-            self.models.append(Qt.QStandardItemModel(0, 3, self))
-            self.models[i].setHorizontalHeaderItem(0, Qt.QStandardItem("Package"))
-            self.models[i].setHorizontalHeaderItem(1, Qt.QStandardItem("Version"))
-            self.models[i].setHorizontalHeaderItem(2, Qt.QStandardItem("Description"))
-            self.models[i].setItem(0, 0, Qt.QStandardItem("Collecting data..."))
+            self.models.append(QStandardItemModel(0, 3, self))
+            self.models[i].setHorizontalHeaderItem(0, QStandardItem("Package"))
+            self.models[i].setHorizontalHeaderItem(1, QStandardItem("Version"))
+            self.models[i].setHorizontalHeaderItem(2, QStandardItem("Description"))
+            self.models[i].setItem(0, 0, QStandardItem("Collecting data..."))
 
-            self.tables[i].setSpan(0, 0, 1, 3)
             self.tables[i].setModel(self.models[i])
             self.tables[i].setColumnWidth(0, DEFAULT_NAME_HEADER_WIDTH)
             self.tables[i].setColumnWidth(1, DEFAULT_VERSION_HEADER_WIDTH)
             self.tables[i].setColumnWidth(2, DEFAULT_DESCRIPTION_HEADER_WIDTH)
-            self.tables[i].horizontalHeader().setSortIndicator(1, QtCore.Qt.DescendingOrder)
 
-            self.tab_data.append({'table': self.tables[i], 'model': self.models[i], 'list': self.package_list[i], 'update_func': self.update_funcs[i], 'updated': False})
+            self.tab_data.append({'table':       self.tables[i],
+                                  'model':       self.models[i],
+                                  'list':        self.package_list[i],
+                                  'update_func': self.update_funcs[i],
+                                  'updated':     False})
 
         self.tabs.currentChanged.connect(self.version_tab_changed)
 
@@ -122,13 +132,14 @@ class REDTabVersions(QtGui.QWidget, Ui_REDTabVersions):
 
             versions = result.stdout.split('\n')
             num_versions = len(self.package_list[0])
+
             if len(versions) < num_versions:
                 # TODO: Error for user?
                 return
 
-            self.label_version.setText(versions[2])
             for i in range(num_versions):
                 self.package_list[0][i]['version'] = versions[i]
+
             self.tab_data[0]['updated'] = True
             self.update_table()
 
@@ -179,6 +190,6 @@ class REDTabVersions(QtGui.QWidget, Ui_REDTabVersions):
             for j, item_name in enumerate(['name', 'version', 'description']):
                 item = tab_data['model'].item(i, j)
                 if item == None:
-                    tab_data['model'].setItem(i, j, Qt.QStandardItem(p[item_name]))
+                    tab_data['model'].setItem(i, j, QStandardItem(p[item_name]))
                 else:
                     tab_data['model'].item(i, j).setText(p[item_name])

@@ -3,6 +3,7 @@
 RED Plugin
 Copyright (C) 2014 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 red_tab_console.py: RED console tab implementation
 
@@ -22,29 +23,28 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4 import Qt, QtCore, QtGui
+from PyQt4 import QtCore
+from brickv.plugin_system.plugins.red.red_tab import REDTab
 from brickv.plugin_system.plugins.red.ui_red_tab_console import Ui_REDTabConsole
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.pyqterm import TerminalWidget
 from brickv.samba import get_serial_ports
 
-class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
+class REDTabConsole(REDTab, Ui_REDTabConsole):
     append_text_signal = QtCore.pyqtSignal(str)
-    
-    def __init__(self):
-        QtGui.QWidget.__init__(self)
-        self.setupUi(self)
 
-        self.session        = None # set from RED after construction
-        self.script_manager = None # set from RED after construction
+    def __init__(self):
+        REDTab.__init__(self)
+
+        self.setupUi(self)
 
         self.console = TerminalWidget()
         self.console_layout.insertWidget(1, self.console)
-        
+
         self.refresh_button.clicked.connect(self.refresh_ports)
         self.connect_button.clicked.connect(self.connect_clicked)
         self.copy_button.clicked.connect(self.console.copy_selection_to_clipboard)
-        
+
         # make all elements on this tab non-focusable so the focus has
         # to stay on the console widget
         self.combo_serial_port.setFocusPolicy(QtCore.Qt.NoFocus)
@@ -52,7 +52,7 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
         self.refresh_button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.copy_button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.setFocusPolicy(QtCore.Qt.NoFocus)
-        
+
         self.refresh_ports()
 
     def refresh_ports(self):
@@ -64,7 +64,7 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
             ports = []
 
         preferred_index = None
-        
+
         for port in ports:
             if preferred_index is None:
                 if 'ttyACM' in port[0] or \
@@ -93,20 +93,35 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
         text = self.connect_button.text()
 
         if text == 'Connect':
-            self.combo_serial_port.setEnabled(False)
-            self.refresh_button.setEnabled(False)
-            self.console.setEnabled(True)
-            self.connect_button.setText("Disconnect")
-            
-            port = unicode(self.combo_serial_port.itemData(self.combo_serial_port.currentIndex()).toString())
+            def open_console():
+                self.combo_serial_port.setEnabled(False)
+                self.refresh_button.setEnabled(False)
+                self.console.setEnabled(True)
+                self.connect_button.setText("Disconnect")
 
-            if self.console._session == None:
-                try:
-                    self.console.execute(command=port)
-                    self.console.setFocus()
-                except:
-                    # TODO: Error popup?
-                    self.destroy_session()
+                port = self.combo_serial_port.itemData(self.combo_serial_port.currentIndex()).toString()
+
+                if self.console._session == None:
+                    try:
+                        self.console.execute(command=port)
+                        self.console.setFocus()
+                    except:
+                        # TODO: Error popup?
+                        self.destroy_session()
+
+            def cb_pkill_ttyGS0(result):
+                if result == None or result.exit_code not in [0, 1]: # 0 == no error, 1 == nothing killed
+                    # FIXME: report error
+                    return
+
+                open_console()
+
+            # FIXME: disable this for now as it doesn't work reliable. init
+            #        seems to stop spawning getty for a while after some kills
+            # kill everything running on ttyGS0 with force, this ensures that no hanging
+            # process blocks ttyGS0 and that we get a clean shell instance
+            #self.script_manager.execute_script('pkill_ttyGS0', cb_pkill_ttyGS0, ['SIGKILL'])
+            open_console()
         else:
             self.destroy_session()
 
@@ -114,6 +129,14 @@ class REDTabConsole(QtGui.QWidget, Ui_REDTabConsole):
         if self.console._session != None:
             self.console.stop()
             self.console._session = None
+
+            def cb_pkill_ttyGS0(result):
+                pass
+
+            # FIXME: disable this for now as it doesn't work reliable. init
+            #        seems to stop spawning getty for a while after some kills
+            # ask everything running on ttyGS0 to exit
+            #self.script_manager.execute_script('pkill_ttyGS0', cb_pkill_ttyGS0, ['SIGTERM'])
 
         self.combo_serial_port.setEnabled(True)
         self.refresh_button.setEnabled(True)

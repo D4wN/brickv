@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 Copyright (C) 2014 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
 
 program_info_files.py: Program Files Info Widget
@@ -24,8 +24,8 @@ Boston, MA 02111-1307, USA.
 
 from PyQt4.QtCore import Qt, QDateTime, QVariant, QDir
 from PyQt4.QtGui import QIcon, QWidget, QStandardItemModel, QStandardItem, \
-                        QAbstractItemView, QLineEdit, QSortFilterProxyModel, \
-                        QFileDialog, QMessageBox, QInputDialog, QApplication, QDialog
+                        QSortFilterProxyModel,  QFileDialog, QMessageBox, \
+                        QInputDialog, QApplication, QDialog
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_utils import Download, ExpandingProgressDialog, \
                                                            ExpandingInputDialog, get_file_display_size
@@ -70,11 +70,11 @@ def get_full_item_path(item):
         parent = item.parent()
 
         if parent != None:
-            return expand(parent, posixpath.join(unicode(parent.text()), path))
+            return expand(parent, posixpath.join(parent.text(), path))
         else:
             return path
 
-    return expand(item, unicode(item.text()))
+    return expand(item, item.text())
 
 
 def expand_directory_walk_to_model(directory_walk, model, folder_icon, file_icon):
@@ -155,7 +155,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         self.set_widget_enabled      = set_widget_enabled
         self.is_alive                = is_alive
         self.show_download_wizard    = show_download_wizard
-        self.bin_directory           = posixpath.join(unicode(self.program.root_directory), 'bin')
+        self.bin_directory           = posixpath.join(self.program.root_directory, 'bin')
         self.refresh_in_progress     = False
         self.available_files         = []
         self.available_directories   = []
@@ -164,6 +164,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         self.tree_files_model        = QStandardItemModel(self)
         self.tree_files_model_header = ['Name', 'Size', 'Last Modified']
         self.tree_files_proxy_model  = FilesProxyModel(self)
+        self.last_download_directory = QDir.toNativeSeparators(QDir.homePath())
 
         self.tree_files_model.setHorizontalHeaderLabels(self.tree_files_model_header)
         self.tree_files_proxy_model.setSourceModel(self.tree_files_model)
@@ -199,7 +200,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         def cb_directory_walk(result):
             if result == None or result.exit_code != 0:
                 if result == None or len(result.stderr) == 0:
-                    self.label_error.setText('<b>Error:</b> Internal error occurred')
+                    self.label_error.setText('<b>Error:</b> Internal script error occurred')
                 else:
                     self.label_error.setText('<b>Error:</b> ' + Qt.escape(result.stderr.decode('utf-8').strip()))
 
@@ -240,7 +241,8 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
                 self.refresh_files_done()
 
             def cb_expand_error():
-                # FIXME: report error
+                self.label_error.setText('<b>Error:</b> Internal async error occurred')
+                self.label_error.setVisible(True)
                 self.refresh_files_done()
 
             async_call(expand_async, result.stdout, cb_expand_success, cb_expand_error)
@@ -271,17 +273,6 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
 
         return selected_name_items
 
-    def get_directly_selected_name_items(self):
-        selected_indexes    = self.tree_files.selectedIndexes()
-        selected_name_items = []
-
-        for selected_index in selected_indexes:
-            if selected_index.column() == 0:
-                mapped_index = self.tree_files_proxy_model.mapToSource(selected_index)
-                selected_name_items.append(self.tree_files_model.itemFromIndex(mapped_index))
-
-        return selected_name_items
-
     def download_selected_files(self):
         selected_name_items = self.get_directly_selected_name_items()
 
@@ -297,9 +288,9 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
                 for i in range(name_item.rowCount()):
                     expand(name_item.child(i, 0))
             elif item_type == ITEM_TYPE_FILE:
-                file_name = get_full_item_path(name_item)
+                filename = get_full_item_path(name_item)
 
-                downloads.append(Download(file_name, unicode(QDir.toNativeSeparators(file_name))))
+                downloads.append(Download(filename, QDir.toNativeSeparators(filename)))
 
         for selected_name_item in selected_name_items:
             expand(selected_name_item)
@@ -307,10 +298,13 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         if len(downloads) == 0:
             return
 
-        download_directory = unicode(QFileDialog.getExistingDirectory(get_main_window(), 'Download Files'))
+        download_directory = QFileDialog.getExistingDirectory(get_main_window(), 'Download Files',
+                                                              self.last_download_directory)
 
         if len(download_directory) == 0:
             return
+
+        download_directory = QDir.toNativeSeparators(download_directory)
 
         # FIXME: on Mac OS X the getExistingDirectory() might return the directory with
         #        the last part being invalid, try to find the valid part of the directory
@@ -320,6 +314,8 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
 
         if len(download_directory) == 0:
             return
+
+        self.last_download_directory = download_directory
 
         self.show_download_wizard('files', download_directory, downloads)
 
@@ -356,7 +352,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
             title     = 'Rename Directory'
             type_name = 'directory'
 
-        old_name = unicode(name_item.text())
+        old_name = name_item.text()
 
         # get new name
         dialog = ExpandingInputDialog(get_main_window())
@@ -370,7 +366,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        new_name = unicode(dialog.textValue())
+        new_name = dialog.textValue()
 
         if new_name == old_name:
             return
@@ -390,7 +386,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
             name_item_parent = self.tree_files_model.invisibleRootItem()
 
         for i in range(name_item_parent.rowCount()):
-            if new_name == unicode(name_item_parent.child(i).text()):
+            if new_name == name_item_parent.child(i).text():
                 QMessageBox.critical(get_main_window(), title + ' Error',
                                      'The new {0} name is already in use.'.format(type_name),
                                      QMessageBox.Ok)
@@ -473,9 +469,9 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
             item_type = selected_name_item.data(USER_ROLE_ITEM_TYPE).toInt()[0]
 
             if item_type == ITEM_TYPE_DIRECTORY:
-                dirs_to_delete.append(unicode(posixpath.join(self.bin_directory, path)))
+                dirs_to_delete.append(posixpath.join(self.bin_directory, path))
             else:
-                files_to_delete.append(unicode(posixpath.join(self.bin_directory, path)))
+                files_to_delete.append(posixpath.join(self.bin_directory, path))
 
         message = 'Deleting '
 

@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>REDTabSettingsAP</class>
+ <widget class="QWidget" name="REDTabSettingsAP">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>637</width>
+    <height>675</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="3" column="0">
+    <widget class="QProgressBar" name="pbar_working_wait">
+     <property name="maximum">
+      <number>0</number>
+     </property>
+     <property name="value">
+      <number>-1</number>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QScrollArea" name="sarea_ap">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>617</width>
+        <height>555</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="1" colspan="2">
+        <widget class="QLabel" name="label_ap_status">
+         <property name="text">
+          <string>-</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="2">
+        <widget class="QCheckBox" name="chkbox_ap_wpa_key_show">
+         <property name="text">
+          <string>Show Characters</string>
+         </property>
+        </widget>
+       </item>
+       <item row="17" column="0" colspan="3">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_ip">
+         <property name="text">
+          <string>IP:</string>
+         </property>
+         <property name="buddy">
+          <cstring>sbox_ap_intf_ip1</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QLineEdit" name="ledit_ap_wpa_key">
+         <property name="echoMode">
+          <enum>QLineEdit::Password</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1" colspan="2">
+        <widget class="QLineEdit" name="ledit_ap_domain"/>
+       </item>
+       <item row="2" column="1" colspan="2">
+        <widget class="QComboBox" name="cbox_ap_interface"/>
+       </item>
+       <item row="12" column="1" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_start1">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_start2">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_start3">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_start4">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="label_channel">
+         <property name="text">
+          <string>Channel:</string>
+         </property>
+         <property name="buddy">
+          <cstring>sbox_ap_channel</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_intf_mask1">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_intf_mask2">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_intf_mask3">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_intf_mask4">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="5" column="1">
+        <widget class="QLineEdit" name="ledit_ap_ssid"/>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_ssid">
+         <property name="text">
+          <string>SSID:</string>
+         </property>
+         <property name="buddy">
+          <cstring>ledit_ap_ssid</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="1" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_mask1">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_mask2">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_mask3">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_mask4">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="label_wpa_key">
+         <property name="text">
+          <string>WPA Key:</string>
+         </property>
+         <property name="buddy">
+          <cstring>ledit_ap_wpa_key</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="0">
+        <widget class="QLabel" name="label_ap_pool_end">
+         <property name="text">
+          <string>DHCP Pool End:</string>
+         </property>
+         <property name="buddy">
+          <cstring>sbox_ap_pool_end1</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1" colspan="2">
+        <widget class="QSpinBox" name="sbox_ap_channel">
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>14</number>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_subnet_mask">
+         <property name="text">
+          <string>Subnet Mask:</string>
+         </property>
+         <property name="buddy">
+          <cstring>sbox_ap_intf_mask1</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_intf_ip1">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_intf_ip2">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_intf_ip3">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_intf_ip4">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="15" column="0" colspan="3">
+        <widget class="Line" name="line2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="0">
+        <widget class="QLabel" name="label_ap_pool_start">
+         <property name="text">
+          <string>DHCP Pool Start:</string>
+         </property>
+         <property name="buddy">
+          <cstring>sbox_ap_pool_start1</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1" colspan="2">
+        <widget class="QCheckBox" name="chkbox_ap_enable_dns_dhcp">
+         <property name="text">
+          <string>Enable DNS/DHCP</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="2">
+        <widget class="QCheckBox" name="chkbox_ap_ssid_hidden">
+         <property name="text">
+          <string>Hidden</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_interface">
+         <property name="text">
+          <string>Interface:</string>
+         </property>
+         <property name="buddy">
+          <cstring>cbox_ap_interface</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0">
+        <widget class="QLabel" name="label_ap_domain">
+         <property name="text">
+          <string>DNS Domain:</string>
+         </property>
+         <property name="buddy">
+          <cstring>ledit_ap_domain</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="0" colspan="3">
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QPushButton" name="pbutton_ap_refresh">
+           <property name="text">
+            <string>Refresh</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pbutton_ap_show_dhcp_leases">
+           <property name="text">
+            <string>Show DHCP Leases</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pbutton_ap_save">
+           <property name="text">
+            <string>Save</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string>Status:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="0">
+        <widget class="QLabel" name="label_ap_pool_mask">
+         <property name="text">
+          <string>DHCP Subnet Mask:</string>
+         </property>
+         <property name="buddy">
+          <cstring>sbox_ap_pool_mask1</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0" colspan="3">
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="1" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_end1">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_end2">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_end3">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="sbox_ap_pool_end4">
+           <property name="maximum">
+            <number>255</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0" colspan="3">
+        <widget class="Line" name="line_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="label_ap_server_name">
+         <property name="text">
+          <string>Server Name:</string>
+         </property>
+         <property name="buddy">
+          <cstring>ledit_ap_server_name</cstring>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1" colspan="2">
+        <widget class="QLineEdit" name="ledit_ap_server_name"/>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_working_wait">
+     <property name="text">
+      <string>Working, please wait...</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_ap_disabled">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Access point service is disabled.</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_ap_unsupported">
+     <property name="text">
+      <string>Access point service requires Image Version &gt;= 1.4</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>sarea_ap</tabstop>
+  <tabstop>cbox_ap_interface</tabstop>
+  <tabstop>sbox_ap_intf_ip1</tabstop>
+  <tabstop>sbox_ap_intf_ip2</tabstop>
+  <tabstop>sbox_ap_intf_ip3</tabstop>
+  <tabstop>sbox_ap_intf_ip4</tabstop>
+  <tabstop>sbox_ap_intf_mask1</tabstop>
+  <tabstop>sbox_ap_intf_mask2</tabstop>
+  <tabstop>sbox_ap_intf_mask3</tabstop>
+  <tabstop>sbox_ap_intf_mask4</tabstop>
+  <tabstop>ledit_ap_ssid</tabstop>
+  <tabstop>chkbox_ap_ssid_hidden</tabstop>
+  <tabstop>ledit_ap_wpa_key</tabstop>
+  <tabstop>chkbox_ap_wpa_key_show</tabstop>
+  <tabstop>sbox_ap_channel</tabstop>
+  <tabstop>chkbox_ap_enable_dns_dhcp</tabstop>
+  <tabstop>ledit_ap_server_name</tabstop>
+  <tabstop>ledit_ap_domain</tabstop>
+  <tabstop>sbox_ap_pool_start1</tabstop>
+  <tabstop>sbox_ap_pool_start2</tabstop>
+  <tabstop>sbox_ap_pool_start3</tabstop>
+  <tabstop>sbox_ap_pool_start4</tabstop>
+  <tabstop>sbox_ap_pool_end1</tabstop>
+  <tabstop>sbox_ap_pool_end2</tabstop>
+  <tabstop>sbox_ap_pool_end3</tabstop>
+  <tabstop>sbox_ap_pool_end4</tabstop>
+  <tabstop>sbox_ap_pool_mask1</tabstop>
+  <tabstop>sbox_ap_pool_mask2</tabstop>
+  <tabstop>sbox_ap_pool_mask3</tabstop>
+  <tabstop>sbox_ap_pool_mask4</tabstop>
+  <tabstop>pbutton_ap_refresh</tabstop>
+  <tabstop>pbutton_ap_save</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

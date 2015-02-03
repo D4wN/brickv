@@ -2,7 +2,7 @@
 """
 brickv (Brick Viewer)
 Copyright (C) 2009-2012 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2012-2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2012-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 mainwindow.py: New/Removed Bricks are handled here and plugins shown if clicked
 
@@ -22,12 +22,12 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import pyqtSignal, QVariant, Qt, QTimer, QEvent
+from PyQt4.QtCore import pyqtSignal, Qt, QTimer, QEvent
 from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, \
-                        QPushButton, QWidget, QHBoxLayout, QVBoxLayout, \
+                        QPushButton, QHBoxLayout, QVBoxLayout, \
                         QLabel, QFrame, QSpacerItem, QSizePolicy, \
                         QStandardItemModel, QStandardItem, QToolButton, \
-                        QLineEdit, QCursor, QIcon, QMenu, QToolButton
+                        QLineEdit, QCursor, QMenu, QToolButton
 from brickv.ui_mainwindow import Ui_MainWindow
 from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
@@ -40,7 +40,6 @@ from brickv import config
 from brickv import infos
 from brickv.tab_window import TabWindow
 
-import os
 import signal
 import sys
 import time
@@ -134,19 +133,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.checkbox_remember_secret.hide()
         self.checkbox_remember_secret.stateChanged.connect(self.remember_secret_state_changed)
 
-        if self.host_infos[0].use_authentication:
-            self.checkbox_authentication.setCheckState(Qt.Checked)
-
+        self.checkbox_authentication.setChecked(self.host_infos[0].use_authentication)
         self.edit_secret.setText(self.host_infos[0].secret)
-
-        if self.host_infos[0].remember_secret:
-            self.checkbox_remember_secret.setCheckState(Qt.Checked)
+        self.checkbox_remember_secret.setChecked(self.host_infos[0].remember_secret)
 
         self.host_index_changing = False
 
         # auto-reconnect
         self.label_auto_reconnects.hide()
         self.auto_reconnects = 0
+
+        # RED Session losts
+        self.label_red_session_losts.hide()
+        self.red_session_losts = 0
 
     # override QMainWindow.closeEvent
     def closeEvent(self, event):
@@ -163,7 +162,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.do_disconnect()
 
         if signl != None and frme != None:
-            print "Received SIGINT or SIGTERM, shutting down."
+            print("Received SIGINT or SIGTERM, shutting down.")
             sys.exit()
 
     def host_index_changed(self, i):
@@ -173,18 +172,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.host_index_changing = True
 
         self.spinbox_port.setValue(self.host_infos[i].port)
-
-        if self.host_infos[i].use_authentication:
-            self.checkbox_authentication.setCheckState(Qt.Checked)
-        else:
-            self.checkbox_authentication.setCheckState(Qt.Unchecked)
-
+        self.checkbox_authentication.setChecked(self.host_infos[i].use_authentication)
         self.edit_secret.setText(self.host_infos[i].secret)
-
-        if self.host_infos[i].remember_secret:
-            self.checkbox_remember_secret.setCheckState(Qt.Checked)
-        else:
-            self.checkbox_remember_secret.setCheckState(Qt.Unchecked)
+        self.checkbox_remember_secret.setChecked(self.host_infos[i].remember_secret)
 
         self.host_index_changing = False
 
@@ -237,10 +227,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if i < 0:
             return
 
-        #self.host_infos[i].host = str(self.combo_host.currentText())
+        #self.host_infos[i].host = self.combo_host.currentText()
         self.host_infos[i].port = self.spinbox_port.value()
         self.host_infos[i].use_authentication = self.checkbox_authentication.isChecked()
-        self.host_infos[i].secret = str(self.edit_secret.text())
+        self.host_infos[i].secret = self.edit_secret.text()
         self.host_infos[i].remember_secret = self.checkbox_remember_secret.isChecked()
 
     def remove_all_device_infos(self):
@@ -282,6 +272,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.auto_reconnects = 0
         self.label_auto_reconnects.hide()
 
+        self.red_session_losts = 0
+        self.label_red_session_losts.hide()
+
         self.reset_view()
         async_next_session()
 
@@ -303,7 +296,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return True
 
         try:
-            secret = str(self.edit_secret.text()).encode('ascii')
+            secret = self.edit_secret.text().encode('ascii')
         except:
             self.do_disconnect()
 
@@ -335,10 +328,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return True
 
     def flashing_clicked(self):
-        first = False
-
         if self.flashing_window is None:
-            first = True
             self.flashing_window = FlashingWindow(self)
 
         self.update_flashing_window()
@@ -355,7 +345,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def connect_clicked(self):
         if self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_DISCONNECTED:
             try:
-                self.last_host = str(self.combo_host.currentText())
+                self.last_host = self.combo_host.currentText()
                 self.button_connect.setDisabled(True)
                 self.button_connect.setText("Connecting ...")
                 self.button_connect.repaint()
@@ -374,7 +364,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         uid_index = index.sibling(index.row(), 1)
 
         if uid_index.isValid():
-            uid_text = str(uid_index.data().toString())
+            uid_text = uid_index.data().toString()
             self.show_plugin(uid_text)
 
     def create_tab_window(self, device_info, connected_uid, position):
@@ -417,6 +407,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # firmware version
         label_version_name = QLabel('Version:')
         label_version = QLabel('...')
+
         if not device_info.plugin.has_custom_version(label_version_name, label_version):
             label_version_name.setText('FW Version:')
             label_version.setText(infos.get_version_string(device_info.plugin.firmware_version))
@@ -519,12 +510,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def cb_enumerate(self, uid, connected_uid, position,
                      hardware_version, firmware_version,
                      device_identifier, enumeration_type):
-
-        # because the enumerate callback is decoupled by a signal/slot, strings
-        # arrive here as QStrings, convert them back to normal Python strings
-        uid = str(uid)
-        connected_uid = str(connected_uid)
-
         if self.ipcon.get_connection_state() != IPConnection.CONNECTION_STATE_CONNECTED:
             # ignore enumerate callbacks that arrived after the connection got closed
             return
@@ -590,6 +575,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.update_tree_view()
 
+    def hack_to_remove_red_brick_tab(self, red_brick_uid):
+        for device_info in infos.get_device_infos():
+            if device_info.uid == red_brick_uid:
+                self.tab_widget.setCurrentIndex(0)
+                self.remove_device_info(device_info.uid)
+
+                self.red_session_losts += 1
+                self.label_red_session_losts.setText('RED Brick Session Loss Count: {0}'.format(self.red_session_losts))
+                self.label_red_session_losts.show()
+
+                break
+
+        self.update_tree_view()
+
     def cb_connected(self, connect_reason):
         self.disconnect_times = []
 
@@ -598,6 +597,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if connect_reason == IPConnection.CONNECT_REASON_REQUEST:
             self.auto_reconnects = 0
             self.label_auto_reconnects.hide()
+
+            self.red_session_losts = 0
+            self.label_red_session_losts.hide()
 
             self.ipcon.set_auto_reconnect(True)
 
@@ -653,6 +655,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if disconnect_reason == IPConnection.DISCONNECT_REASON_REQUEST:
             self.auto_reconnects = 0
             self.label_auto_reconnects.hide()
+
+            self.red_session_losts = 0
+            self.label_red_session_losts.hide()
 
         if disconnect_reason == IPConnection.DISCONNECT_REASON_REQUEST or not self.ipcon.get_auto_reconnect():
             self.update_ui_state()
@@ -735,7 +740,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def update_tree_view(self):
         self.tree_view_model.clear()
 
-        for info in sorted(infos.infos.values(), cmp=lambda x, y: cmp(x.name, y.name)):
+        for info in sorted(infos.infos.values(), key=lambda x: x.name):
             if info.type == 'brick':
                 parent = [QStandardItem(info.name),
                           QStandardItem(info.uid),

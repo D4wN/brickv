@@ -2,6 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_c.py: Program Wizard C/C++ Page
 
@@ -54,8 +55,8 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
 
         self.language                               = Constants.LANGUAGE_C
         self.edit_mode                              = False
-        self.compile_from_source_help_new_template  = unicode(self.label_compile_from_source_help_new.text())
-        self.compile_from_source_help_edit_template = unicode(self.label_compile_from_source_help_edit.text())
+        self.compile_from_source_help_new_template  = self.label_compile_from_source_help_new.text()
+        self.compile_from_source_help_edit_template = self.label_compile_from_source_help_edit.text()
 
         self.setTitle('{0}{1} Configuration'.format(title_prefix, Constants.language_display_names[self.language]))
 
@@ -106,8 +107,8 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
         self.get_executable_versions('gcc', cb_gcc_versions)
 
         self.combo_start_mode.setCurrentIndex(Constants.DEFAULT_C_START_MODE)
-        self.check_compile_from_source.setCheckState(Qt.Unchecked)
-        self.check_show_advanced_options.setCheckState(Qt.Unchecked)
+        self.check_compile_from_source.setChecked(False)
+        self.check_show_advanced_options.setChecked(False)
         self.combo_working_directory_selector.reset()
         self.make_option_list_editor.reset()
 
@@ -126,13 +127,10 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
             self.edit_executable.setText(program.cast_custom_option_value('c.executable', unicode, ''))
 
             # compile from source
-            if program.cast_custom_option_value('c.compile_from_source', bool, False):
-                self.check_compile_from_source.setCheckState(Qt.Checked)
-            else:
-                self.check_compile_from_source.setCheckState(Qt.Unchecked)
+            self.check_compile_from_source.setChecked(program.cast_custom_option_value('c.compile_from_source', bool, False))
 
             # working directory
-            self.combo_working_directory_selector.set_current_text(unicode(program.working_directory))
+            self.combo_working_directory_selector.set_current_text(program.working_directory)
 
             # make options
             self.make_option_list_editor.clear()
@@ -153,8 +151,8 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
     def update_ui_state(self):
         start_mode            = self.get_field('c.start_mode').toInt()[0]
         start_mode_executable = start_mode == Constants.C_START_MODE_EXECUTABLE
-        compile_from_source   = self.check_compile_from_source.checkState() == Qt.Checked
-        show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
+        compile_from_source   = self.check_compile_from_source.isChecked()
+        show_advanced_options = self.check_show_advanced_options.isChecked()
 
         self.edit_executable.setVisible(start_mode_executable)
         self.label_executable_help.setVisible(start_mode_executable)
@@ -198,16 +196,16 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
     def get_custom_options(self):
         return {
             'c.start_mode':          Constants.c_start_mode_api_names[self.get_field('c.start_mode').toInt()[0]],
-            'c.executable':          unicode(self.get_field('c.executable').toString()),
+            'c.executable':          self.get_field('c.executable').toString(),
             'c.compile_from_source': self.get_field('c.compile_from_source').toBool(),
             'c.make_options':        self.make_option_list_editor.get_items()
         }
 
     def get_command(self):
-        executable        = unicode(self.get_field('c.executable').toString())
+        executable        = self.get_field('c.executable').toString()
         arguments         = []
         environment       = []
-        working_directory = unicode(self.get_field('c.working_directory').toString())
+        working_directory = self.get_field('c.working_directory').toString()
 
         if not executable.startswith('/'):
             executable = posixpath.join('./', executable)

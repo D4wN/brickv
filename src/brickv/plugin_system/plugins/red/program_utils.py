@@ -23,11 +23,10 @@ Boston, MA 02111-1307, USA.
 
 from PyQt4.QtCore import Qt, QDir, QVariant, QDateTime
 from PyQt4.QtGui import QListWidget, QListWidgetItem, QTreeWidgetItem, \
-                        QProgressDialog, QProgressBar, QInputDialog, QMenu
+                        QProgressDialog, QProgressBar, QInputDialog
 from brickv.plugin_system.plugins.red.api import REDProgram
 import re
 import posixpath
-import functools
 from collections import namedtuple
 
 ExecutableVersion = namedtuple('ExecutableVersion', 'executable version')
@@ -41,7 +40,7 @@ Upload = namedtuple('Upload', 'source target')
 Download = namedtuple('Download', 'source target')
 
 
-class Constants:
+class Constants(object):
     PAGE_GENERAL    = 1001
     PAGE_FILES      = 1002
     PAGE_C          = 1003
@@ -618,7 +617,7 @@ class ExpandingInputDialog(QInputDialog):
         return size
 
 
-class ListWidgetEditor:
+class ListWidgetEditor(object):
     def __init__(self, label_items, list_items, label_items_help,
                  button_add_item, button_remove_item,
                  button_up_item, button_down_item, new_item_text):
@@ -631,10 +630,12 @@ class ListWidgetEditor:
         self.button_down_item   = button_down_item
         self.new_item_text      = new_item_text
         self.new_item_counter   = 1
-        self.menu_add_items     = None
 
         self.list_items.itemSelectionChanged.connect(self.update_ui_state)
-        self.button_add_item.clicked.connect(self.add_new_item)
+
+        if self.button_add_item != None:
+            self.button_add_item.clicked.connect(self.add_new_item)
+
         self.button_remove_item.clicked.connect(self.remove_selected_item)
         self.button_up_item.clicked.connect(self.up_selected_item)
         self.button_down_item.clicked.connect(self.down_selected_item)
@@ -642,7 +643,7 @@ class ListWidgetEditor:
         self.original_items = []
 
         for row in range(self.list_items.count()):
-            self.original_items.append(unicode(self.list_items.item(row).text()))
+            self.original_items.append(self.list_items.item(row).text())
 
     def update_ui_state(self):
         has_selection = len(self.list_items.selectedItems()) > 0
@@ -661,27 +662,13 @@ class ListWidgetEditor:
         self.label_items.setVisible(visible)
         self.list_items.setVisible(visible)
         self.label_items_help.setVisible(visible)
-        self.button_add_item.setVisible(visible)
+
+        if self.button_add_item != None:
+            self.button_add_item.setVisible(visible)
+
         self.button_remove_item.setVisible(visible)
         self.button_up_item.setVisible(visible)
         self.button_down_item.setVisible(visible)
-
-    def set_add_menu_items(self, items, empty_item=None):
-        if len(items) > 0:
-            menu_add_items = QMenu()
-
-            if empty_item != None:
-                menu_add_items.addAction(empty_item).triggered.connect(functools.partial(self.add_item, empty_item, edit_item=True))
-                menu_add_items.addSeparator()
-
-            for item in items:
-                menu_add_items.addAction(item).triggered.connect(functools.partial(self.add_item, item, select_item=True))
-
-            self.menu_add_items = menu_add_items
-            self.button_add_item.setMenu(menu_add_items)
-        else:
-            self.button_add_item.setMenu(None)
-            self.menu_add_items = None
 
     def add_item(self, text, edit_item=False, select_item=False):
         item = QListWidgetItem(text)
@@ -751,12 +738,12 @@ class ListWidgetEditor:
         items = []
 
         for row in range(self.list_items.count()):
-            items.append(unicode(self.list_items.item(row).text()))
+            items.append(self.list_items.item(row).text())
 
         return items
 
 
-class TreeWidgetEditor:
+class TreeWidgetEditor(object):
     def __init__(self, label_items, tree_items, label_items_help,
                  button_add_item, button_remove_item,
                  button_up_item, button_down_item, new_item_texts):
@@ -785,7 +772,7 @@ class TreeWidgetEditor:
             item = []
 
             for column in range(child.columnCount()):
-                item.append(unicode(child.text(column)))
+                item.append(child.text(column))
 
             self.original_items.append(item)
 
@@ -888,14 +875,14 @@ class TreeWidgetEditor:
             item = []
 
             for column in range(child.columnCount()):
-                item.append(unicode(child.text(column)))
+                item.append(child.text(column))
 
             items.append(item)
 
         return items
 
 
-class MandatoryLineEditChecker:
+class MandatoryLineEditChecker(object):
     def __init__(self, page, label, edit, regexp=None):
         self.page     = page
         self.label    = label
@@ -912,7 +899,7 @@ class MandatoryLineEditChecker:
 
     def check(self, emit):
         was_complete = self.complete
-        text = unicode(self.edit.text())
+        text = self.edit.text()
         self.complete = len(text) > 0
 
         if self.complete and self.regexp != None:
@@ -927,7 +914,7 @@ class MandatoryLineEditChecker:
             self.page.completeChanged.emit()
 
 
-class MandatoryEditableComboBoxChecker:
+class MandatoryEditableComboBoxChecker(object):
     def __init__(self, page, label, combo):
         self.page     = page
         self.label    = label
@@ -967,7 +954,7 @@ class MandatoryEditableComboBoxChecker:
 
 # expects the combo box to be editable
 # FIXME: ensure that file is relative, non-empty and does not start with ..
-class MandatoryTypedFileSelector:
+class MandatoryTypedFileSelector(object):
     def __init__(self, page, label_file, combo_file, label_type, combo_type, label_help):
         self.page       = page
         self.label_file = label_file
@@ -1012,7 +999,7 @@ class MandatoryTypedFileSelector:
 
 
 # expects the combo box to be editable
-class MandatoryDirectorySelector:
+class MandatoryDirectorySelector(object):
     def __init__(self, page, label, combo):
         self.page  = page
         self.label = label
@@ -1021,7 +1008,7 @@ class MandatoryDirectorySelector:
         self.original_items = []
 
         for i in range(combo.count()):
-            self.original_items.append(unicode(combo.itemText(i)))
+            self.original_items.append(combo.itemText(i))
 
         self.combo.currentIndexChanged.connect(lambda: self.check(True))
         self.combo.editTextChanged.connect(lambda: self.check(True))
@@ -1054,7 +1041,7 @@ class MandatoryDirectorySelector:
     # ensure that directory is relative, non-empty and does not start with ..
     def check(self, emit):
         was_complete  = self.complete
-        directory     = unicode(QDir.cleanPath(posixpath.join(unicode(self.combo.currentText()), '.')))
+        directory     = QDir.cleanPath(posixpath.join(self.combo.currentText(), '.'))
         self.complete = len(directory) > 0 and \
                         not directory.startswith('/') and \
                         directory != './..' and \
@@ -1071,9 +1058,9 @@ class MandatoryDirectorySelector:
             self.page.completeChanged.emit()
 
 
-class ComboBoxFileEndingChecker:
-    class NoEndingCheckRequired:
-        class NoIndexChangeRequired:
+class ComboBoxFileEndingChecker(object):
+    class NoEndingCheckRequired(object):
+        class NoIndexChangeRequired(object):
             def connect(self, *args, **kwargs):
                 return
         currentIndexChanged = NoIndexChangeRequired()
@@ -1122,10 +1109,11 @@ def set_current_combo_index_from_data(combo, data):
 
 
 def timestamp_to_date_at_time(timestamp):
-    date = unicode(QDateTime.fromTime_t(timestamp).toString('yyyy-MM-dd'))
-    time = unicode(QDateTime.fromTime_t(timestamp).toString('HH:mm:ss'))
+    date = QDateTime.fromTime_t(timestamp).toString('yyyy-MM-dd')
+    time = QDateTime.fromTime_t(timestamp).toString('HH:mm:ss')
 
     return date + ' at ' + time
+
 
 # FIXME: the values should be rouned up
 def get_file_display_size(size):

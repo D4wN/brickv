@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 program_page_stdio.py: Program Wizard Stdio Page
 
@@ -27,7 +27,6 @@ from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_stdio import Ui_ProgramPageStdio
 from brickv.utils import get_main_window
-import os
 
 class ProgramPageStdio(ProgramPage, Ui_ProgramPageStdio):
     def __init__(self, title_prefix=''):
@@ -77,13 +76,13 @@ class ProgramPageStdio(ProgramPage, Ui_ProgramPageStdio):
             self.combo_stderr_redirection.setCurrentIndex(stderr_redirection)
 
             if program.stdin_redirection == REDProgram.STDIO_REDIRECTION_FILE:
-                self.combo_stdin_file.lineEdit().setText(unicode(program.stdin_file_name))
+                self.combo_stdin_file.lineEdit().setText(program.stdin_file_name)
 
             if program.stdout_redirection == REDProgram.STDIO_REDIRECTION_FILE:
-                self.edit_stdout_file.setText(unicode(program.stdout_file_name))
+                self.edit_stdout_file.setText(program.stdout_file_name)
 
             if program.stdin_redirection == REDProgram.STDIO_REDIRECTION_FILE:
-                self.edit_stderr_file.setText(unicode(program.stderr_file_name))
+                self.edit_stderr_file.setText(program.stderr_file_name)
 
         self.update_ui_state()
 
@@ -156,18 +155,18 @@ class ProgramPageStdio(ProgramPage, Ui_ProgramPageStdio):
         stdin_redirection  = Constants.api_stdin_redirections[self.get_field('stdin_redirection').toInt()[0]]
         stdout_redirection = Constants.api_stdout_redirections[self.get_field('stdout_redirection').toInt()[0]]
         stderr_redirection = Constants.api_stderr_redirections[self.get_field('stderr_redirection').toInt()[0]]
-        stdin_file         = unicode(self.get_field('stdin_file').toString())
-        stdout_file        = unicode(self.get_field('stdout_file').toString())
-        stderr_file        = unicode(self.get_field('stderr_file').toString())
+        stdin_file         = self.get_field('stdin_file').toString()
+        stdout_file        = self.get_field('stdout_file').toString()
+        stderr_file        = self.get_field('stderr_file').toString()
 
         try:
             program.set_stdio_redirection(stdin_redirection, stdin_file,
                                           stdout_redirection, stdout_file,
                                           stderr_redirection, stderr_file) # FIXME: async_call
-        except REDError as e:
+        except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Edit Program Error',
                                  u'Could not update stdio redirection of program [{0}]:\n\n{1}'
-                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>')))
+                                 .format(program.cast_custom_option_value('name', unicode, '<unknown>'), unicode(e)))
             return
 
         self.set_last_edit_timestamp()

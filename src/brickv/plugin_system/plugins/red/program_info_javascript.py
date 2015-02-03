@@ -22,7 +22,6 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QWidget
 from brickv.plugin_system.plugins.red.program_info import ProgramInfo
 from brickv.plugin_system.plugins.red.program_utils import Constants
 from brickv.plugin_system.plugins.red.ui_program_info_javascript import Ui_ProgramInfoJavaScript
@@ -37,7 +36,7 @@ class ProgramInfoJavaScript(ProgramInfo, Ui_ProgramInfoJavaScript):
 
     # overrides ProgramInfo.update_ui_state
     def update_ui_state(self):
-        show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_advanced_options = self.check_show_advanced_options.isChecked()
 
         # flavor
         flavor_api_name = self.program.cast_custom_option_value('javascript.flavor', unicode, '<unknown>')
@@ -49,10 +48,8 @@ class ProgramInfoJavaScript(ProgramInfo, Ui_ProgramInfoJavaScript):
             self.label_flavor.setText('Client-Side')
         elif flavor_nodejs:
             def cb_nodejs_versions(versions):
-                executable = unicode(self.program.executable)
-
                 for version in versions:
-                    if version.executable == executable:
+                    if version.executable == self.program.executable:
                         self.label_flavor.setText('Server-Side (Node.js {0})'.format(version.version))
                         return
 
@@ -88,7 +85,7 @@ class ProgramInfoJavaScript(ProgramInfo, Ui_ProgramInfoJavaScript):
         self.label_command.setText(self.program.cast_custom_option_value('javascript.command', unicode, '<unknown>'))
 
         # working directory
-        self.label_working_directory.setText(unicode(self.program.working_directory))
+        self.label_working_directory.setText(self.program.working_directory)
 
         # options
         self.label_options.setText('\n'.join(self.program.cast_custom_option_value_list('javascript.options', unicode, [])))

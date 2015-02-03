@@ -22,7 +22,6 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QWidget
 from brickv.plugin_system.plugins.red.program_info import ProgramInfo
 from brickv.plugin_system.plugins.red.program_utils import Constants
 from brickv.plugin_system.plugins.red.ui_program_info_delphi import Ui_ProgramInfoDelphi
@@ -40,7 +39,7 @@ class ProgramInfoDelphi(ProgramInfo, Ui_ProgramInfoDelphi):
 
     # overrides ProgramInfo.update_ui_state
     def update_ui_state(self):
-        show_advanced_options = self.check_show_advanced_options.checkState() == Qt.Checked
+        show_advanced_options = self.check_show_advanced_options.isChecked()
         compile_from_source   = self.program.cast_custom_option_value('delphi.compile_from_source', bool, False)
 
         # start mode
@@ -66,7 +65,7 @@ class ProgramInfoDelphi(ProgramInfo, Ui_ProgramInfoDelphi):
             self.label_compile_from_source.setText('Disabled')
 
         # working directory
-        self.label_working_directory.setText(unicode(self.program.working_directory))
+        self.label_working_directory.setText(self.program.working_directory)
 
         # make options
         self.label_make_options.setText('\n'.join(self.program.cast_custom_option_value_list('delphi.make_options', unicode, [])))

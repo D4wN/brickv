@@ -28,6 +28,7 @@ from PyQt4.QtGui import QWidget, QMessageBox
 from brickv.plugin_system.plugins.master.ui_rs485 import Ui_RS485
 
 from brickv.async_call import async_call
+from brickv.utils import get_main_window
 from brickv import infos
 
 class RS485(QWidget, Ui_RS485):
@@ -38,6 +39,8 @@ class RS485(QWidget, Ui_RS485):
 
         self.parent = parent
         self.master = parent.master
+        self.update_address = 0
+        self.update_address_slave = 0
 
         if parent.firmware_version >= (1, 2, 0):
             async_call(self.master.get_rs485_configuration, None, self.get_rs485_configuration_async, self.parent.increase_error_count)
@@ -82,7 +85,7 @@ class RS485(QWidget, Ui_RS485):
             if infos.infos[self.parent.uid].enumeration_type == IPConnection.ENUMERATION_TYPE_CONNECTED:
                 self.parent.ipcon.enumerate()
 
-        self.lineedit_slave_address.setText(address_slave_text)
+        self.lineedit_slave_addresses.setText(address_slave_text)
         self.address_spinbox.setValue(self.update_address)
 
         self.save_button.clicked.connect(self.save_clicked)
@@ -103,10 +106,10 @@ class RS485(QWidget, Ui_RS485):
         self.stopbits_spinbox.setValue(stopbits)
 
     def popup_ok(self):
-        QMessageBox.information(self, 'Configuration', 'Successfully saved configuration.\nNew configuration will be used after reset of the Master Brick.', QMessageBox.Ok)
+        QMessageBox.information(get_main_window(), 'Configuration', 'Successfully saved configuration.\nNew configuration will be used after reset of the Master Brick.', QMessageBox.Ok)
 
     def popup_fail(self):
-        QMessageBox.critical(self, 'Configuration', 'Could not save configuration.', QMessageBox.Ok)
+        QMessageBox.critical(get_main_window(), 'Configuration', 'Could not save configuration.', QMessageBox.Ok)
 
     def save_clicked(self):
         speed = self.speed_spinbox.value()
@@ -126,7 +129,7 @@ class RS485(QWidget, Ui_RS485):
         else:
             address = 0
 
-        address_slave_text = str(self.lineedit_slave_address.text().replace(' ', ''))
+        address_slave_text = self.lineedit_slave_addresses.text().replace(' ', '')
         if address_slave_text == '':
             address_slave = []
         else:
@@ -155,15 +158,17 @@ class RS485(QWidget, Ui_RS485):
 
     def rs485_type_changed(self, index):
         if index == 0:
-            self.label_slave_address.hide()
-            self.lineedit_slave_address.hide()
-            self.label.show()
+            self.label_address.show()
             self.address_spinbox.show()
+            self.label_slave_addresses.hide()
+            self.lineedit_slave_addresses.hide()
+            self.label_slave_addresses_help.hide()
         else:
-            self.label_slave_address.show()
-            self.lineedit_slave_address.show()
-            self.label.hide()
+            self.label_address.hide()
             self.address_spinbox.hide()
+            self.label_slave_addresses.show()
+            self.lineedit_slave_addresses.show()
+            self.label_slave_addresses_help.show()
 
     def update_data(self):
         pass

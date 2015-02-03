@@ -2,6 +2,7 @@
 """
 RED Plugin
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 red_tab_extension.py: RED extension configuration
 
@@ -21,7 +22,8 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4 import Qt, QtCore, QtGui
+from PyQt4 import QtGui
+from brickv.plugin_system.plugins.red.red_tab import REDTab
 from brickv.plugin_system.plugins.red.ui_red_tab_extension import Ui_REDTabExtension
 from brickv.plugin_system.plugins.red.api import *
 
@@ -31,7 +33,6 @@ import time
 
 from PyQt4.QtGui import QWidget, QMessageBox
 from brickv.plugin_system.plugins.master.ui_rs485 import Ui_RS485
-from brickv.plugin_system.plugins.master.ethernet import SpinBoxHex
 from brickv.plugin_system.plugins.red.ui_red_tab_extension_ethernet import Ui_Ethernet
 from brickv.plugin_system.plugins.red import config_parser
 from brickv.utils import get_main_window
@@ -56,7 +57,6 @@ class RS485(QWidget, Ui_RS485):
         self.extension = extension
         self.config = config
 
-    def start(self):
         self.rs485_type.currentIndexChanged.connect(self.rs485_type_changed)
         self.save_button.clicked.connect(self.save_clicked)
 
@@ -87,7 +87,7 @@ class RS485(QWidget, Ui_RS485):
 
         # Slave addresses
         slave_address = self.slave_text_to_int(self.config['slave_address'])
-        self.lineedit_slave_address.setText(', '.join(map(str, slave_address)))
+        self.lineedit_slave_addresses.setText(', '.join(map(str, slave_address)))
 
     def save_clicked(self):
         new_config = {}
@@ -108,7 +108,7 @@ class RS485(QWidget, Ui_RS485):
         else:
             new_config['address'] = 0
 
-        new_config['slave_address'] = self.slave_text_to_int(self.lineedit_slave_address.text())
+        new_config['slave_address'] = self.slave_text_to_int(self.lineedit_slave_addresses.text())
         new_config['slave_address'].append(0)
         new_config['type'] = 2
         new_config['extension'] = self.extension
@@ -124,7 +124,7 @@ class RS485(QWidget, Ui_RS485):
 
         async_call(new_config['eeprom_file'].open,
                    ('/tmp/new_eeprom_extension_' + str(new_config['extension']) + ".conf",
-                    REDFile.FLAG_WRITE_ONLY | REDFile.FLAG_CREATE | REDFile.FLAG_NON_BLOCKING | REDFile.FLAG_TRUNCATE, 0555, 0, 0),
+                    REDFile.FLAG_WRITE_ONLY | REDFile.FLAG_CREATE | REDFile.FLAG_NON_BLOCKING | REDFile.FLAG_TRUNCATE, 0o555, 0, 0),
                    lambda x: self.upload_eeprom_data(new_config, x),
                    lambda: cb_file_open_error(new_config))
 
@@ -180,16 +180,18 @@ class RS485(QWidget, Ui_RS485):
 
     def rs485_type_changed(self, index):
         if index == 0:
-            self.label_slave_address.hide()
-            self.lineedit_slave_address.hide()
-            self.label.show()
+            self.label_slave_addresses.hide()
+            self.lineedit_slave_addresses.hide()
+            self.label_slave_addresses_help.hide()
+            self.label_address.show()
             self.address_spinbox.show()
             self.save_button.setDisabled(True)
             self.save_button.setText("RS485 Slave currently not supported on RED Brick")
         else:
-            self.label_slave_address.show()
-            self.lineedit_slave_address.show()
-            self.label.hide()
+            self.label_slave_addresses.show()
+            self.lineedit_slave_addresses.show()
+            self.label_slave_addresses_help.show()
+            self.label_address.hide()
             self.address_spinbox.hide()
             self.save_button.setDisabled(False)
             self.save_button.setText("Save RS485 Configuration")
@@ -214,25 +216,6 @@ class Ethernet(QWidget, Ui_Ethernet):
         self.extension = extension
         self.config = config
 
-        self.ethernet_mac6 = SpinBoxHex()
-        self.ethernet_mac5 = SpinBoxHex()
-        self.ethernet_mac4 = SpinBoxHex()
-        self.ethernet_mac3 = SpinBoxHex()
-        self.ethernet_mac2 = SpinBoxHex()
-        self.ethernet_mac1 = SpinBoxHex()
-        self.mac_layout.addWidget(self.ethernet_mac6)
-        self.mac_layout.addWidget(QtGui.QLabel(':'))
-        self.mac_layout.addWidget(self.ethernet_mac5)
-        self.mac_layout.addWidget(QtGui.QLabel(':'))
-        self.mac_layout.addWidget(self.ethernet_mac4)
-        self.mac_layout.addWidget(QtGui.QLabel(':'))
-        self.mac_layout.addWidget(self.ethernet_mac3)
-        self.mac_layout.addWidget(QtGui.QLabel(':'))
-        self.mac_layout.addWidget(self.ethernet_mac2)
-        self.mac_layout.addWidget(QtGui.QLabel(':'))
-        self.mac_layout.addWidget(self.ethernet_mac1)
-
-    def start(self):
         mac = map(lambda x: int(x, 16), self.config['mac'].split(':'))
         self.ethernet_mac6.setValue(mac[0])
         self.ethernet_mac5.setValue(mac[1])
@@ -254,7 +237,7 @@ class Ethernet(QWidget, Ui_Ethernet):
 
         async_call(new_config['eeprom_file'].open,
                    ('/tmp/new_eeprom_extension_' + str(new_config['extension']) + ".conf",
-                    REDFile.FLAG_WRITE_ONLY | REDFile.FLAG_CREATE | REDFile.FLAG_NON_BLOCKING | REDFile.FLAG_TRUNCATE, 0555, 0, 0),
+                    REDFile.FLAG_WRITE_ONLY | REDFile.FLAG_CREATE | REDFile.FLAG_NON_BLOCKING | REDFile.FLAG_TRUNCATE, 0o555, 0, 0),
                    lambda x: self.upload_eeprom_data(new_config, x), lambda: cb_file_open_error(new_config))
 
     def upload_eeprom_data(self, new_config, result):
@@ -284,38 +267,25 @@ class Ethernet(QWidget, Ui_Ethernet):
 
         new_config['eeprom_file'].write_async(map(chr, data), lambda x: cb_error(new_config, x), None)
 
-class REDTabExtension(QtGui.QWidget, Ui_REDTabExtension):
+class REDTabExtension(REDTab, Ui_REDTabExtension):
     def __init__(self):
-        QtGui.QWidget.__init__(self)
+        REDTab.__init__(self)
+
         self.setupUi(self)
 
-        self.session        = None # set from RED after construction
-        self.script_manager = None # set from RED after construction
-
         self.red_file = [None, None]
-        self.extensions_found = 0
-        self.extensions = []
+        self.config_read_counter = 0
 
-    def set_extension_label(self):
-        if len(self.extensions) == 0:
-            self.extension_label.setText('Could not find any Master Extensions on RED Brick stack.')
+        self.tab_widget.hide()
+
+    def update_ui_state(self):
+        if self.tab_widget.count() == 0:
+            self.label_status.setText('Could not find any Master Extensions on RED Brick stack.')
+            self.label_status.show()
+            self.tab_widget.hide()
         else:
-            self.extension_label.setText('Found ' + ' and '.join(self.extensions) + ' on RED Brick stack.')
-
-        for i in range(self.extension_layout.count()):
-            self.extension_layout.itemAt(i).widget().start()
-
-    def set_not_present_extension(self, extension):
-        # TODO: Give the user an options to change the extension type here?
-        pass
-
-    def set_rs485_extension(self, extension, config):
-        self.extensions.append('RS485 Extension')
-        self.extension_layout.addWidget(RS485(self, extension, config))
-
-    def set_ethernet_extension(self, extension, config):
-        self.extensions.append('Ethernet Extension')
-        self.extension_layout.addWidget(Ethernet(self, extension, config))
+            self.label_status.hide()
+            self.tab_widget.show()
 
     def cb_file_read(self, extension, result):
         self.red_file[extension].release()
@@ -328,22 +298,20 @@ class REDTabExtension(QtGui.QWidget, Ui_REDTabExtension):
                 t = 0
 
             if t == 2:
-                self.set_rs485_extension(extension, config)
+                self.tab_widget.addTab(RS485(self, extension, config), 'RS485')
             elif t == 4:
-                self.set_ethernet_extension(extension, config)
-            else:
-                self.set_not_present_extension(extension)
+                self.tab_widget.addTab(Ethernet(self, extension, config), 'Ethernet')
 
-        self.extensions_found += 1
-        if self.extensions_found == 2:
-            self.set_extension_label()
+        self.config_read_counter += 1
+
+        if self.config_read_counter == 2:
+            self.update_ui_state()
 
     def cb_file_open_error(self, extension):
-        self.set_not_present_extension(extension)
+        self.config_read_counter += 1
 
-        self.extensions_found += 1
-        if self.extensions_found == 2:
-            self.set_extension_label()
+        if self.config_read_counter == 2:
+            self.update_ui_state()
 
     def cb_file_open(self, extension, result):
         if not isinstance(result, REDFile):
@@ -353,10 +321,13 @@ class REDTabExtension(QtGui.QWidget, Ui_REDTabExtension):
         self.red_file[extension].read_async(self.red_file[extension].length, lambda x: self.cb_file_read(extension, x))
 
     def tab_on_focus(self):
-        self.extensions_found = 0
-        self.extensions = []
-        for i in reversed(range(self.extension_layout.count())): 
-            self.extension_layout.itemAt(i).widget().setParent(None)
+        self.config_read_counter = 0
+        for i in reversed(range(self.tab_widget.count())):
+            self.tab_widget.removeTab(i)
+
+        self.label_status.setText('Discovering Extensions...')
+        self.label_status.show()
+        self.tab_widget.hide()
 
         self.red_file[0] = REDFile(self.session)
         async_call(self.red_file[0].open,

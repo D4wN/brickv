@@ -24,7 +24,6 @@ Boston, MA 02111-1307, USA.
 
 from brickv.plugin_system.plugin_base import PluginBase
 from brickv.plot_widget import PlotWidget
-from brickv.bindings import ip_connection
 from brickv.bindings.bricklet_analog_in import BrickletAnalogIn
 from brickv.async_call import async_call
 
@@ -95,8 +94,8 @@ class AnalogIn(PluginBase):
             layout_h1.addStretch()
             layout.addLayout(layout_h1)
 
-    def get_range_async(self, range):
-        self.combo_range.setCurrentIndex(self.combo_range.findData(range))
+    def get_range_async(self, range_):
+        self.combo_range.setCurrentIndex(self.combo_range.findData(range_))
 
     def get_averaging_async(self, average):
         self.spin_average.setValue(average)
@@ -135,8 +134,8 @@ class AnalogIn(PluginBase):
 
     def range_changed(self, index):
         if index >= 0 and self.firmware_version >= (2, 0, 1):
-            range = self.combo_range.itemData(index).toInt()[0]
-            async_call(self.ai.set_range, range, None, self.increase_error_count)
+            range_ = self.combo_range.itemData(index).toInt()[0]
+            async_call(self.ai.set_range, range_, None, self.increase_error_count)
 
     def spin_average_finished(self):
         self.ai.set_averaging(self.spin_average.value())

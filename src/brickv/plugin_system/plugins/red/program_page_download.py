@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 RED Plugin
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 Copyright (C) 2014 Olaf Lüke <olaf@tinkerforge.com>
 
 program_page_download.py: Program Wizard Download Page
@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QWizard, QApplication, QPixmap, QTextCursor
+from PyQt4.QtGui import QWizard, QPixmap, QTextCursor
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
@@ -31,7 +31,6 @@ from brickv.plugin_system.plugins.red.ui_program_page_download import Ui_Program
 from brickv.utils import get_resources_path
 import os
 import posixpath
-import stat
 import re
 import sys
 import errno
@@ -63,7 +62,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
         self.remaining_source_size           = None
         self.progress_file_next_update       = None
         self.last_download_size              = None
-        self.replace_help_template           = unicode(self.label_replace_help.text())
+        self.replace_help_template           = self.label_replace_help.text()
         self.canceled                        = False
 
         self.setTitle(title_prefix + 'Download')
@@ -90,7 +89,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
     def initializePage(self):
         self.set_formatted_sub_title(u'Download {0} of the {{language}} program [{{name}}].'.format(self.download_kind))
 
-        self.wizard().rejected.connect(lambda: self.cancel_download())
+        self.wizard().rejected.connect(self.cancel_download)
 
         self.update_ui_state()
 
@@ -100,7 +99,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        rename_new_file = self.check_rename_new_file.checkState() == Qt.Checked
+        rename_new_file = self.check_rename_new_file.isChecked()
 
         self.line1.setVisible(self.conflict_resolution_in_progress)
         self.label_replace_icon.setVisible(self.conflict_resolution_in_progress)
@@ -125,7 +124,6 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
         self.canceled = True
 
     def check_new_name(self, name):
-        name   = unicode(name) # convert QString to unicode
         target = os.path.split(self.download.target)[1]
 
         if len(name) == 0:
@@ -189,7 +187,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
         # download files
         self.next_step(u'Downloading {0}...'.format(self.download_kind), log=False)
 
-        self.root_directory = unicode(self.wizard().program.root_directory)
+        self.root_directory = self.wizard().program.root_directory
 
         self.progress_file.setRange(0, len(self.remaining_downloads))
 
@@ -217,7 +215,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
             self.source_file = REDFile(self.wizard().session).open(self.source_path,
                                                                    REDFile.FLAG_READ_ONLY | REDFile.FLAG_NON_BLOCKING,
                                                                    0, 1000, 1000) # FIXME: async_call
-        except REDError as e:
+        except (Error, REDError) as e:
             self.download_error('...error: Could not open source file {0}: {1}', self.source_path, e)
             return
 
@@ -238,7 +236,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
 
             if target_directory not in self.created_directories:
                 try:
-                    os.makedirs(target_directory, 0755)
+                    os.makedirs(target_directory, 0o755)
                 except OSError as e:
                     if e.errno != errno.EEXIST:
                         self.download_error('...error: Could not create target directory {0}: {1}', target_directory, e)
@@ -299,12 +297,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
                                                  timestamp_to_date_at_time(int(self.source_file.modification_time))))
 
             self.label_replace_help.setText(self.replace_help_template.replace('<FILE>', unicode(Qt.escape(self.download.target))))
-
-            if self.auto_conflict_resolution == ProgramPageDownload.CONFLICT_RESOLUTION_RENAME:
-                self.check_rename_new_file.setCheckState(Qt.Checked)
-            else:
-                self.check_rename_new_file.setCheckState(Qt.Unchecked)
-
+            self.check_rename_new_file.setChecked(self.auto_conflict_resolution == ProgramPageDownload.CONFLICT_RESOLUTION_RENAME)
             self.edit_new_name.setText('') # force a new-name check
             self.edit_new_name.setText(os.path.split(self.download.target)[1])
 
@@ -312,12 +305,12 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
             self.update_ui_state()
 
     def resolve_conflict_by_replace(self):
-        if not self.conflict_resolution_in_progress or self.check_rename_new_file.checkState() != Qt.Unchecked:
+        if not self.conflict_resolution_in_progress or self.check_rename_new_file.isChecked():
             return
 
         self.log(u'...replacing {0}'.format(self.download.target))
 
-        if self.check_remember_decision.checkState() == Qt.Checked:
+        if self.check_remember_decision.isChecked():
             self.auto_conflict_resolution = ProgramPageDownload.CONFLICT_RESOLUTION_REPLACE
         else:
             self.auto_conflict_resolution = None
@@ -335,13 +328,13 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
         self.target_path = os.path.join(self.download_directory, self.download.target)
 
     def resolve_conflict_by_rename(self):
-        if not self.conflict_resolution_in_progress or self.check_rename_new_file.checkState() != Qt.Checked:
+        if not self.conflict_resolution_in_progress or not self.check_rename_new_file.isChecked():
             return
 
-        self.rename_download_target(unicode(self.edit_new_name.text()))
+        self.rename_download_target(self.edit_new_name.text())
         self.log(u'...downloading as {0}'.format(self.download.target))
 
-        if self.check_remember_decision.checkState() == Qt.Checked:
+        if self.check_remember_decision.isChecked():
             self.auto_conflict_resolution = ProgramPageDownload.CONFLICT_RESOLUTION_RENAME
         else:
             self.auto_conflict_resolution = None
@@ -355,7 +348,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
         if not self.conflict_resolution_in_progress:
             return
 
-        if self.check_remember_decision.checkState() == Qt.Checked:
+        if self.check_remember_decision.isChecked():
             self.auto_conflict_resolution = ProgramPageDownload.CONFLICT_RESOLUTION_SKIP
         else:
             self.auto_conflict_resolution = None
@@ -414,7 +407,7 @@ class ProgramPageDownload(ProgramPage, Ui_ProgramPageDownload):
             self.source_file.read_async(min(self.remaining_source_size, 1000*1000*10), # Read 10mb at a time
                                         self.download_read_async_cb_result,
                                         self.download_read_async_cb_status)
-        except REDError as e:
+        except (Error, REDError) as e:
             self.download_error('...error: Could not read from source file {0}: {1}', self.source_path, e)
             return
 

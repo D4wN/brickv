@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-  
+# -*- coding: utf-8 -*-
 """
-brickv (Brick Viewer) 
-Copyright (C) 2013-2014 Matthias Bolte <matthias@tinkerforge.com>
+brickv (Brick Viewer)
 Copyright (C) 2009-2013 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2013-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 main.py: Entry file for Brick Viewer
 
 This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License 
-as published by the Free Software Foundation; either version 2 
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
@@ -23,20 +23,23 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
+import sip
+sip.setapi('QString', 2)
+
 import os
 import sys
 import logging
 
 # from http://www.py2exe.org/index.cgi/WhereAmI
 if hasattr(sys, "frozen"):
-    program_path = str(os.path.dirname(os.path.realpath(unicode(sys.executable, sys.getfilesystemencoding()))))
+    program_path = os.path.dirname(os.path.realpath(unicode(sys.executable, sys.getfilesystemencoding())))
 
     if sys.platform == "darwin":
         resources_path = os.path.join(os.path.split(program_path)[0], 'Resources')
     else:
         resources_path = program_path
 else:
-    program_path = str(os.path.dirname(os.path.realpath(unicode(__file__, sys.getfilesystemencoding()))))
+    program_path = os.path.dirname(os.path.realpath(unicode(__file__, sys.getfilesystemencoding())))
     resources_path = program_path
 
 # add program_path so OpenGL is properly imported
@@ -62,11 +65,9 @@ from brickv import config
 from brickv.mainwindow import MainWindow
 from brickv.async_call import ASYNC_EVENT, async_event_handler
 
-logging.basicConfig( 
-    level = config.LOGGING_LEVEL, 
-    format = config.LOGGING_FORMAT,
-    datefmt = config.LOGGING_DATEFMT
-)
+logging.basicConfig(level=config.LOGGING_LEVEL,
+                    format=config.LOGGING_FORMAT,
+                    datefmt=config.LOGGING_DATEFMT)
 
 class BrickViewer(QApplication):
     object_creator_signal = pyqtSignal(object)
@@ -81,10 +82,10 @@ class BrickViewer(QApplication):
         object_creator.create()
 
     def notify(self, receiver, event):
-        if event.type() > QEvent.User:
-            if event.type() == ASYNC_EVENT:
-                async_event_handler()
-        return super(BrickViewer, self).notify(receiver, event)
+        if event.type() > QEvent.User and event.type() == ASYNC_EVENT:
+            async_event_handler()
+
+        return QApplication.notify(self, receiver, event)
 
 def main():
     argv = sys.argv
