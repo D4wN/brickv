@@ -24,6 +24,7 @@ Boston, MA 02111-1307, USA.
 from array import array
 from brickv.data_logger.event_logger import EventLogger
 import time  # Writer Thread
+from shutil import copyfile
 
 
 '''
@@ -349,25 +350,58 @@ class CSVWriter(object):
     def _rolling_file(self):
         f_size = os.path.getsize(self._file_path)
         if f_size > self._file_size:
-            self.set_file_path(self._create_new_file_name(self._file_path))
-            EventLogger.info("Max Filesize(" + "%.3f" % (self._file_size/1024.0/1024.0) + " MB) reached! Writing in new File(" + self._file_path + ").")
+            # self.set_file_path(self._create_new_file_name(self._file_path))
+            EventLogger.info("Max Filesize(" + "%.3f" % (self._file_size / 1024.0 / 1024.0) + " MB) reached! Rolling Files...")
+            self._roll_files()
+       
+    #FIXME: only files with a . are working!
+    def _roll_files(self):
+        i = self._file_count
+        
+        self.close_file()
+        
+        while True:
+            if i == 0:
+                # first file reached
+                break;
             
-    def _create_new_file_name(self, old_file_name):
-        new_file_name = ""
+            tmp_file_name = Utilities.replace_right(self._file_path, ".", "(" + str(i) + ").", 1)
+            
+            if os.path.exists(tmp_file_name):
+                if i == self._file_count:
+                    # max file count -> delete
+                    os.remove(tmp_file_name)
+                    EventLogger.debug("Rolling Files... removed File(" + str(i)+")")
+                
+                else:
+                    # copy file and remove old
+                    copyfile(tmp_file_name, Utilities.replace_right(self._file_path, ".", "(" + str(i + 1) + ").", 1))   
+                    EventLogger.debug("Rolling Files... copied File(" + str(i) +") into ("+ str(i+1)+")")
+                    os.remove(tmp_file_name)
+            
+            i-=1                 
         
-        if self._file_count == 1:
-            new_file_name = old_file_name;
-        
-        elif self._file_current_counter == 0:
-            self._file_current_counter += 1
-            new_file_name = Utilities.replace_right(old_file_name, ".", "(" + str(self._file_current_counter) + ").", 1)            
-        
-        elif self._file_current_counter >= self._file_count - 1:
-            new_file_name = Utilities.replace_right(old_file_name, "(" + str(self._file_current_counter) + ").", ".", 1)
-            self._file_current_counter = 0
-        
-        else:
-            self._file_current_counter += 1
-            new_file_name = Utilities.replace_right(old_file_name, "(" + str(self._file_current_counter - 1) + ").", "(" + str(self._file_current_counter) + ").", 1) 
-
-        return new_file_name
+        copyfile(self._file_path, Utilities.replace_right(self._file_path, ".", "(" + str(1) + ").", 1)) 
+        EventLogger.debug("Rolling Files... copied original File into File(1)")
+        self._open_file_A() 
+     
+#old rolling file appending system      
+#     def _create_new_file_name(self, old_file_name):
+#         new_file_name = ""
+#         
+#         if self._file_count == 1:
+#             new_file_name = old_file_name;
+#         
+#         elif self._file_current_counter == 0:
+#             self._file_current_counter += 1
+#             new_file_name = Utilities.replace_right(old_file_name, ".", "(" + str(self._file_current_counter) + ").", 1)            
+#         
+#         elif self._file_current_counter >= self._file_count - 1:
+#             new_file_name = Utilities.replace_right(old_file_name, "(" + str(self._file_current_counter) + ").", ".", 1)
+#             self._file_current_counter = 0
+#         
+#         else:
+#             self._file_current_counter += 1
+#             new_file_name = Utilities.replace_right(old_file_name, "(" + str(self._file_current_counter - 1) + ").", "(" + str(self._file_current_counter) + ").", 1) 
+# 
+#         return new_file_name
