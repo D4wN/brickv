@@ -20,7 +20,8 @@ class ConfigurationReader(object):
     GENERAL_SECTION = "GENERAL"
     GENERAL_LOG_TO_FILE = "log_to_file"
     GENERAL_PATH_TO_FILE = "path_to_file"
-    GENERAL_LOG_COUNT = "log_Count"
+    GENERAL_LOG_COUNT = "log_count"
+    GENERAL_LOG_FILE_SIZE = "max_logged_file_size"
     GENERAL_HOST = "host"
     GENERAL_PORT = "port"
 

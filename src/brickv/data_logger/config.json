@@ -265,6 +265,8 @@
     "host": "localhost",
     "log_to_file": true,
     "path_to_file": "logged_data.csv",
+	"log_count": 3,
+	"max_logged_file_size": 4000,
     "port": 4223
   },
   "SimpleDevice": [
@@ -276,12 +278,12 @@
         "Analog Value": {
           "args": null,
           "func_name": "get_analog_value",
-          "interval": 0
+          "interval": 1000
         },
         "Illuminance": {
           "args": null,
           "func_name": "get_illuminance",
-          "interval": 0
+          "interval": 1000
         }
       }
     },
@@ -339,17 +341,17 @@
         "Air Pressure": {
           "args": null,
           "func_name": "get_air_pressure",
-          "interval": 0
+          "interval": 1000
         },
         "Altitude": {
           "args": null,
           "func_name": "get_altitude",
-          "interval": 0
+          "interval": 1000
         },
         "Chip Temperature": {
           "args": null,
           "func_name": "get_chip_temperature",
-          "interval": 0
+          "interval": 1000
         }
       }
     },
