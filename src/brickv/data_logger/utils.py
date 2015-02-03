@@ -235,10 +235,13 @@ class CSVWriter(object):
         if max_file_size < 0:
             max_file_size = 0
         self._file_size = max_file_size
-        if max_file_count < 0:
-            max_file_count = 0
+#         if max_file_count < 0:
+#             max_file_count = 0
+        #FIXME: create always at least 1 backup file!
+        if max_file_count < 1:
+            max_file_count = 1
+
         self._file_count = max_file_count
-        self._file_current_counter = 0
         
         self._open_file_A()    
     
@@ -386,24 +389,3 @@ class CSVWriter(object):
             EventLogger.debug("Rolling Files... copied original File into File(1)")
         os.remove(self._file_path)        
         self._open_file_A() 
-     
-#old rolling file appending system      
-#     def _create_new_file_name(self, old_file_name):
-#         new_file_name = ""
-#         
-#         if self._file_count == 1:
-#             new_file_name = old_file_name;
-#         
-#         elif self._file_current_counter == 0:
-#             self._file_current_counter += 1
-#             new_file_name = Utilities.replace_right(old_file_name, ".", "(" + str(self._file_current_counter) + ").", 1)            
-#         
-#         elif self._file_current_counter >= self._file_count - 1:
-#             new_file_name = Utilities.replace_right(old_file_name, "(" + str(self._file_current_counter) + ").", ".", 1)
-#             self._file_current_counter = 0
-#         
-#         else:
-#             self._file_current_counter += 1
-#             new_file_name = Utilities.replace_right(old_file_name, "(" + str(self._file_current_counter - 1) + ").", "(" + str(self._file_current_counter) + ").", 1) 
-# 
-#         return new_file_name
