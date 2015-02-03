@@ -62,7 +62,7 @@ class CSVWriterJob(AbstractJob):
                 return
     
             EventLogger.debug(self._job_name + " Started")
-            csv_writer = CSVWriter(self._datalogger.default_file_path, 4000, 3) #TODO: temp values!!! read from config later
+            csv_writer = CSVWriter(self._datalogger.default_file_path, self._datalogger.max_file_size, self._datalogger.max_file_count)
                                    
             while (True):
                 if not self._datalogger.data_queue[self.name].empty():

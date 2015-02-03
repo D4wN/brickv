@@ -235,8 +235,8 @@ class CSVWriter(object):
         if max_file_size < 0:
             max_file_size = 0
         self._file_size = max_file_size
-        if max_file_count < 1:
-            max_file_count = 1
+        if max_file_count < 0:
+            max_file_count = 0
         self._file_count = max_file_count
         self._file_current_counter = 0
         
@@ -247,9 +247,9 @@ class CSVWriter(object):
 
         # newline problem solved + import sys
         if sys.version_info >= (3, 0, 0):
-            self._raw_file = open(self._file_path, 'w', newline='')  # FIXME append or write?!
+            self._raw_file = open(self._file_path, 'a', newline='')  # FIXME append or write?!
         else:
-            self._raw_file = open(self._file_path, 'wb')
+            self._raw_file = open(self._file_path, 'ab')
         
         self._csv_file = csv.writer(self._raw_file, delimiter=";", quotechar='"', quoting=csv.QUOTE_MINIMAL)
         
@@ -381,8 +381,10 @@ class CSVWriter(object):
             
             i-=1                 
         
-        copyfile(self._file_path, Utilities.replace_right(self._file_path, ".", "(" + str(1) + ").", 1)) 
-        EventLogger.debug("Rolling Files... copied original File into File(1)")
+        if self._file_count != 0:
+            copyfile(self._file_path, Utilities.replace_right(self._file_path, ".", "(" + str(1) + ").", 1)) 
+            EventLogger.debug("Rolling Files... copied original File into File(1)")
+        os.remove(self._file_path)        
         self._open_file_A() 
      
 #old rolling file appending system      

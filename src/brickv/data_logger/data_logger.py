@@ -69,6 +69,8 @@ class DataLogger():
         self._configuration = config
         
         self.default_file_path = "logged_data.csv"
+        self.max_file_size = 1000 #FIXME read from config!
+        self.max_file_count = 3 #FIXME read fromk cofnig
         self.log_to_file = True
         self.log_to_xively = False
    
