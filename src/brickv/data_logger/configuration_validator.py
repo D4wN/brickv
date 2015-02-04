@@ -71,7 +71,8 @@ class ConfigurationReader(object):
         self._configuration._simple_devices = prevent_key_error(loggable_devices.Identifier.SIMPLE_DEVICE)
         self._configuration._complex_devices = prevent_key_error(loggable_devices.Identifier.COMPLEX_DEVICE)
         self._configuration._special_devices = prevent_key_error(loggable_devices.Identifier.SPECIAL_DEVICE)
-                            
+              
+        # validates the configuration              
         validator = ConfigurationValidator(self._configuration)
         validator.validate()
                 

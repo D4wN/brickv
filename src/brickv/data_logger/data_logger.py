@@ -68,9 +68,8 @@ class DataLogger():
         # Configuration file processing   
         self._configuration = config
         
+        # Set some important default values
         self.default_file_path = "logged_data.csv"
-        self.max_file_size = 1000 #FIXME read from config!
-        self.max_file_count = 3 #FIXME read fromk cofnig
         self.log_to_file = True
         self.log_to_xively = False
    
@@ -81,7 +80,9 @@ class DataLogger():
         '''         
         self.log_to_file = data[ConfigurationReader.GENERAL_LOG_TO_FILE]
         self.default_file_path = data[ConfigurationReader.GENERAL_PATH_TO_FILE]
-        
+        self.max_file_size = data[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
+        self.max_file_count = data[ConfigurationReader.GENERAL_LOG_COUNT]
+                
         EventLogger.debug("Logging output to file: " + str(self.log_to_file)) 
         EventLogger.debug("Output file path: " + str(self.default_file_path)) 
           
