@@ -153,8 +153,9 @@ class ConfigurationValidator(object):
         if not self._is_valid_string(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE], 1):
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PATH_TO_FILE], \
                                                 msg="should be a path to the file where the data will be saved"))
+            
+        # TODO: Check free disk space of the destination 
         
-  
     def validate_xively_section(self, xively_section):
         # TODO: implement xively section validation
         EventLogger.info("Xively validation is not yet supported")
