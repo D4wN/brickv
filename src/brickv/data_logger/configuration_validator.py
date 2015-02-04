@@ -129,27 +129,8 @@ class ConfigurationValidator(object):
             if re.match(pattern, ip_str):
                 return True
             else:
-                return False
+                return False                    
         
-        def validate_logfiles(file_name,count):
-            '''
-            This function checks if already files with
-            special names exists
-            '''     
-            tmp_fileName = ""
-            count = int(count)
-            for i in range(0,count):
-                if i != 0:
-                    tmp_fileName = Utilities.replace_right(file_name , "." ,str(i) + "." , 1)
-                else:
-                    tmp_fileName = file_name  
-                          
-                isAvailable =  os.path.isfile(tmp_fileName)
-                if isAvailable:
-                    EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION,ConfigurationReader.GENERAL_PATH_TO_FILE],
-                                                  msg=tmp_fileName + " already exists. Please delete or move it."))
-                          
-            
         # ConfigurationReader.GENERAL_HOST ip address
         host = global_section[ConfigurationReader.GENERAL_HOST] 
         if not host.lower() == 'localhost' and not is_valid_ip_format(host):
@@ -173,10 +154,6 @@ class ConfigurationValidator(object):
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PATH_TO_FILE], \
                                                 msg="should be a path to the file where the data will be saved"))
         
-        # TODO: check if file name ends with .csv       
-        # Check if log files already exists
-        validate_logfiles(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE] ,
-                          global_section[ConfigurationReader.GENERAL_LOG_COUNT] )
   
     def validate_xively_section(self, xively_section):
         # TODO: implement xively section validation
