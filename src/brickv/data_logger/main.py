@@ -67,7 +67,6 @@ def main(arguments_map):
             validator.validate()
         else:
             # no configuration file was given
-            # FIXME: better description for the error message
             EventLogger.critical("Can not run data logger without a configuration.")
             return
             
