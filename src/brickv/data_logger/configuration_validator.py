@@ -12,6 +12,7 @@ import os
 from ConfigParser import SafeConfigParser  # ConfigurationReader parser class
 from brickv.data_logger.event_logger import EventLogger
 from lib2to3.fixer_util import String
+from __builtin__ import int
 
 class ConfigurationReader(object):
     '''
@@ -43,9 +44,13 @@ class ConfigurationReader(object):
            
         
     def _read_json_config_file(self):
-        with codecs.open(self.filenName, 'r', 'UTF-8') as content_file:       
-            json_structure = json.load(content_file)
-    
+        with codecs.open(self.filenName, 'r', 'UTF-8') as content_file:
+            try:       
+                json_structure = json.load(content_file)
+            except ValueError as e:
+                EventLogger.critical("Cant parse the configuration file: " + str(e) )
+                return
+        
         # Load sections out of the json structure 
         try:
             self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
@@ -92,8 +97,9 @@ class ConfigurationValidator(object):
     def __init__(self, config_file):
         self.json_config = config_file
         self._error_count = 0
-    
-    
+        self._log_space_counter = LogSpaceCounter()
+
+
     def validate(self):
         '''
         This function performs the validation of the various sections of the json
@@ -109,11 +115,13 @@ class ConfigurationValidator(object):
         self.validate_complex_devices(self.json_config._complex_devices)
         
         EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")
+        # FIXME: create a better msg
+        EventLogger.info("Will write " + str( self._log_space_counter.lines_per_second) + " lines per second")
         
         if self._error_count != 0:
             # TODO: shutdown logger due to errors in the configuration file
             pass
-    
+        
     def validate_general_section(self, global_section):
         
         def is_valid_ip_format(ip_str):
@@ -139,7 +147,7 @@ class ConfigurationValidator(object):
         
         # ConfigurationReader.GENERAL_PORT port number
         port = global_section[ConfigurationReader.GENERAL_PORT]
-        if not self._is_valid_string(port, 1) and  not(port > 0 and port <= 65535):
+        if not self._is_valid_string(port, 1) and not(port > 0 and port <= 65535):
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PORT], \
                                                 msg="port should be an integer 0-65535"))
         
@@ -147,13 +155,23 @@ class ConfigurationValidator(object):
         if not type(global_section[ConfigurationReader.GENERAL_LOG_TO_FILE]) == bool:
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_TO_FILE], \
                                                 msg="should be a boolean"))
-        
-        
+
         # ConfigurationReader.GENERAL_PATH_TO_FILE 
         if not self._is_valid_string(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE], 1):
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PATH_TO_FILE], \
                                                 msg="should be a path to the file where the data will be saved"))
-            
+         
+        # ConfigurationReader.GENERAL_LOG_COUNT and GENERAL_LOG_FILE_SIZE
+        count = global_section[ConfigurationReader.GENERAL_LOG_COUNT]
+        if not isinstance(count,int) and (not isinstance(count,float)) :
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_COUNT], \
+                                                msg="should be a int or float" ))
+        size = global_section[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
+        if not isinstance(size,int) and (not isinstance(size,float)):
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_FILE_SIZE], \
+                                                msg="should be a int or float"))
+        
+              
         # TODO: Check free disk space of the destination 
         
     def validate_xively_section(self, xively_section):
@@ -310,10 +328,16 @@ class ConfigurationValidator(object):
                                                             tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_ARGS ], \
                                                             msg="arguments should be either 'None' or a list with length >= 1 "))
         # loggable_devices.Identifier.DEVICE_VALUES_INTERVAL
-        if not self._is_valid_interval(values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]):
+        interval = values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]
+        if not self._is_valid_interval(interval):
                         EventLogger.critical(self._generate_error_message(device=device, \
                                                             tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_INTERVAL], \
                                                             msg="interval should be an integer and >= 0"))
+        else:
+            # calculate lines per second in the logfile for this variable
+            if interval != 0:
+                self._log_space_counter.simple_devices(interval)
+        
         # loggable_devices.Identifier.DEVICE_VALUES_NAME                        
         func_name = values[value][loggable_devices.Identifier.DEVICE_VALUES_NAME]
         class_object = device[loggable_devices.Identifier.DEVICE_CLASS]
@@ -370,8 +394,45 @@ class ConfigurationValidator(object):
         
         self._error_count += 1
         return err_msg + " - " + msg
-        
-          
+   
+    
+""""
+/*---------------------------------------------------------------------------
+                                LogSpaceCounter
+ ---------------------------------------------------------------------------*/
+"""
+
+class LogSpaceCounter(object):
+    '''
+    This class provides functions to count the average lines per second
+    in the log file  
+    '''
+    def __init__(self):
+        self.lines_per_second = 0.0
+
+    
+    def simple_devices(self,interval):
+        '''
+        This function calculates the lines per second for simple devices and 
+        have to be called for every variable
+        '''
+        self.lines_per_second += 1000.0 / interval
+    
+    def special_devices(self):
+        '''
+        This function calculates the lines per second for simple devices and 
+        have to be called for every variable
+        '''
+        pass
+    
+    def complex_devices(self):
+        '''
+            This function calculates the lines per second for simple devices and 
+            have to be called for every variable
+        '''
+        pass
+    
+              
 """"
 /*---------------------------------------------------------------------------
                                 Configuration
