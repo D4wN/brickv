@@ -11,8 +11,6 @@ import os
 
 from ConfigParser import SafeConfigParser  # ConfigurationReader parser class
 from brickv.data_logger.event_logger import EventLogger
-from lib2to3.fixer_util import String
-from __builtin__ import int
 
 class ConfigurationReader(object):
     '''
@@ -97,7 +95,11 @@ class ConfigurationValidator(object):
     def __init__(self, config_file):
         self.json_config = config_file
         self._error_count = 0
-        self._log_space_counter = LogSpaceCounter()
+        
+        file_count = self.json_config._general[ConfigurationReader.GENERAL_LOG_COUNT]
+        file_size = self.json_config._general[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
+         
+        self._log_space_counter = LogSpaceCounter(file_count,file_size)
 
 
     def validate(self):
@@ -114,9 +116,16 @@ class ConfigurationValidator(object):
         self.validate_special_devices(self.json_config._special_devices)
         self.validate_complex_devices(self.json_config._complex_devices)
         
-        EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")
-        # FIXME: create a better msg
-        EventLogger.info("Will write " + str( self._log_space_counter.lines_per_second) + " lines per second")
+        EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")       
+
+        logging_time = self._log_space_counter.calculate_time()
+        EventLogger.info("Logging time until old data will be overwritten")
+        EventLogger.info("Days: " +str(logging_time[0]) +
+                        " Hours: " +str(logging_time[1]) +
+                        " Minutes: " +str(logging_time[2]) +
+                        " Seconds: " +str(logging_time[3]))    
+
+
         
         if self._error_count != 0:
             # TODO: shutdown logger due to errors in the configuration file
@@ -170,8 +179,7 @@ class ConfigurationValidator(object):
         if not isinstance(size,int) and (not isinstance(size,float)):
             EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_FILE_SIZE], \
                                                 msg="should be a int or float"))
-        
-              
+         
         # TODO: Check free disk space of the destination 
         
     def validate_xively_section(self, xively_section):
@@ -205,6 +213,7 @@ class ConfigurationValidator(object):
         Every special device has its own implementation without an super class.
         '''
         self._replace_str_with_class(devices)
+        self._log_space_counter.special_devices()
         
         for i in range(len(devices)):
             device = devices[i]
@@ -239,6 +248,7 @@ class ConfigurationValidator(object):
         This function validates all devices from the configuration file which are of type 'ComplexDevice'.
         '''
         self._replace_str_with_class(devices)
+        self._log_space_counter.complex_devices()
         
         for i in range(len(devices)):
             device = devices[i]
@@ -401,13 +411,15 @@ class ConfigurationValidator(object):
                                 LogSpaceCounter
  ---------------------------------------------------------------------------*/
 """
-
 class LogSpaceCounter(object):
     '''
     This class provides functions to count the average lines per second
     in the log file  
     '''
-    def __init__(self):
+    def __init__(self,file_count,file_size):
+        self.file_count = file_count
+        self.file_size = file_size
+        
         self.lines_per_second = 0.0
 
     
@@ -420,19 +432,40 @@ class LogSpaceCounter(object):
     
     def special_devices(self):
         '''
-        This function calculates the lines per second for simple devices and 
-        have to be called for every variable
+        This function calculates the lines per second for special devices
         '''
         pass
     
     def complex_devices(self):
         '''
-            This function calculates the lines per second for simple devices and 
-            have to be called for every variable
+            This function calculates the lines per second for complex devices
         '''
         pass
     
-              
+    def calculate_time(self):
+        '''
+        This function calculates the time where the logger can 
+        save data without overwriting old ones.
+        
+        18k lines -> 1MB
+        '''
+        max_available_space =  (self.file_count + 1) * ((self.file_size / 1024.0) / 1024.0)       
+        secondsForOneMB = 18000.0 / self.lines_per_second
+        
+        sec = secondsForOneMB * max_available_space * 1.0
+
+        days =  int (sec / 86400.0)
+        sec -= 86400.0*days      
+
+        hrs = int(sec / 3600.0)
+        sec -= 3600.0*hrs
+
+        mins = int(sec / 60.0)
+        sec -= 60.0*mins
+        
+        return days, hrs , mins, int(sec)
+        
+                
 """"
 /*---------------------------------------------------------------------------
                                 Configuration
