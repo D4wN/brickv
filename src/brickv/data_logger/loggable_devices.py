@@ -79,8 +79,17 @@ class Identifier(object):
             return Identifier.CLASS_NAME[device_name]
         return (device_name).replace(" ", "")
     
+    def create_args(device_name, var_name):
+        """
+        Creates the correct arguments for the appropriate device_name and var_name.
+        """
+        if Identifier.VAR_ARGS.has_key(device_name+var_name):
+            return Identifier.VAR_ARGS[device_name+var_name]
+        return None
+    
     create_function_name = staticmethod(create_function_name)
     create_class_name = staticmethod(create_class_name)
+    create_args = staticmethod(create_args)
     
     ###Devices
     #functions got one return value
@@ -109,6 +118,7 @@ class Identifier(object):
     ###Special Identifiers
     FUNCTION_NAME = {}
     CLASS_NAME = {}
+    VAR_ARGS = {}
 
     ###Bricks
     DC_BRICK = "DC Brick"
@@ -230,16 +240,20 @@ class Identifier(object):
     INDUSTRIAL_DUAL_0_20_MA_CURRENT = "Current"
     INDUSTRIAL_DUAL_0_20_MA_SENSOR_0 = "Sensor 0"
     FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = "get_current"
+    VAR_ARGS[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = [0]
     INDUSTRIAL_DUAL_0_20_MA_SENSOR_1 = "Sensor 1"
     FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = "get_current"
+    VAR_ARGS[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = [1]
     
     IO_16 = "IO-16"
     CLASS_NAME[IO_16] = "IO16"
     IO_16_PORTS = "Ports"
     IO_16_PORT_A = "Port A"
     FUNCTION_NAME[IO_16+IO_16_PORT_A] = "get_port"
+    VAR_ARGS[IO_16+IO_16_PORT_A] = ["a"]
     IO_16_PORT_B = "Port B"
     FUNCTION_NAME[IO_16+IO_16_PORT_B] = "get_port"
+    VAR_ARGS[IO_16+IO_16_PORT_B] = ["b"]
     
     IO_4 = "IO-4"
     CLASS_NAME[IO_4] = "IO4"
