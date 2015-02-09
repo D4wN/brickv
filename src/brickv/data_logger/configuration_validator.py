@@ -443,6 +443,8 @@ class LogSpaceCounter(object):
         '''
         This function calculates the lines per second for simple devices and 
         have to be called for every variable
+        
+        interval -- logging interval for a variable 
         '''
         if interval == 0:
             return
@@ -452,6 +454,9 @@ class LogSpaceCounter(object):
     def special_devices(self,variables, interval):
         '''
         This function calculates the lines per second for special devices
+        
+        variables -- Amount of variables
+        interval -- Sum of all interval  
         '''
         if interval == 0:
             return
@@ -461,8 +466,11 @@ class LogSpaceCounter(object):
     def complex_devices(self,interval,bool_values):
         '''
             This function calculates the lines per second for complex devices
-            
             countOfTrue / interval
+            
+            interval -- logging interval 
+            bool_values -- list with True/False values (Amount of True's equals to amount of loggable variables)
+            
         '''
         if interval == 0:
             return
@@ -483,7 +491,6 @@ class LogSpaceCounter(object):
         18k lines -> 1MB
         '''
         if self.lines_per_second <= 0:
-            # FIXME: Which value should be returned ?
             return 0,0,0,0
         
         max_available_space =  (self.file_count + 1) * ((self.file_size / 1024.0) / 1024.0)       
