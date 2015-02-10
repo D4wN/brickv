@@ -119,14 +119,13 @@ class ConfigurationValidator(object):
         EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")       
 
         logging_time = self._log_space_counter.calculate_time()
-        EventLogger.info("Logging time until old data will be overwritten")
+        EventLogger.info("Logging time until old data will be overwritten." )
         EventLogger.info("Days: " +str(logging_time[0]) +
                         " Hours: " +str(logging_time[1]) +
                         " Minutes: " +str(logging_time[2]) +
                         " Seconds: " +str(logging_time[3]))    
+        EventLogger.info("on "+ str(self._log_space_counter.lines_per_second)+" lines per second" )
 
-
-        
         if self._error_count != 0:
             # TODO: shutdown logger due to errors in the configuration file
             pass
@@ -201,7 +200,9 @@ class ConfigurationValidator(object):
                 values = device[loggable_devices.Identifier.DEVICE_VALUES]
                 for value in values:
                     self._check_basic_variables(device, values, value)
-                        
+                    # log space calculation
+                    self._log_space_counter.simple_devices(values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL])
+                           
             except KeyError as k:
                 EventLogger.critical(self._generate_error_message(device=device, \
                                                                   tier_array=["values", value], \
@@ -213,7 +214,6 @@ class ConfigurationValidator(object):
         Every special device has its own implementation without an super class.
         '''
         self._replace_str_with_class(devices)
-        self._log_space_counter.special_devices()
         
         for i in range(len(devices)):
             device = devices[i]
@@ -226,18 +226,34 @@ class ConfigurationValidator(object):
                                                         tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE, loggable_devices.Identifier.SPECIAL_DEVICE_VALUE ], \
                                                         msg="should have the same length"))
     
-                # check types of the entities in the lists            
-                for bool_value_key in device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL]:
-                    if not isinstance(device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL][bool_value_key], bool):
+                # check types of the entities in the lists  
+                variables = device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL] 
+                variables_count = 0     
+                for bool_value_key in variables:
+                    value = device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL][bool_value_key]
+                    if not isinstance(value, bool):
                         EventLogger.critical(self._generate_error_message(device=device, \
                                                             tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL, bool_value_key], \
                                                             msg="is not a boolean"))
+                    else:
+                        if value == True:
+                            variables_count += 1
           
-                for interval_value_key in device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]:
-                    if not self._is_valid_interval(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE][interval_value_key]):
+                interval = device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]
+                interval_summ = 0
+                for interval_value_key in interval:
+                    interval_length = device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE][interval_value_key]
+                    if not self._is_valid_interval(interval_length):
                         EventLogger.critical(self._generate_error_message(device=device, \
                                                             tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE, interval_value_key], \
                                                             msg="is not a valid interval"))
+                    else:
+                        interval_summ += interval_length
+                        
+                # log space calculation
+                interval_summ /= len(interval)
+                self._log_space_counter.special_devices(variables_count, interval_summ)
+                
             except KeyError as k:
                 EventLogger.critical(self._generate_error_message(device=device, \
                                                                   tier_array=[""], \
@@ -248,7 +264,6 @@ class ConfigurationValidator(object):
         This function validates all devices from the configuration file which are of type 'ComplexDevice'.
         '''
         self._replace_str_with_class(devices)
-        self._log_space_counter.complex_devices()
         
         for i in range(len(devices)):
             device = devices[i]
@@ -280,6 +295,11 @@ class ConfigurationValidator(object):
                             EventLogger.critical(self._generate_error_message(device=device, \
                                                                 tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME, str(bool_value)], \
                                                                 msg="should be a string"))
+                            
+                    # log space calculation
+                    interval = values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]
+                    self._log_space_counter.complex_devices(interval,bool_values)
+                    
             except KeyError as k:
                 EventLogger.critical(self._generate_error_message(device=device, \
                                                                   tier_array=["values", value], \
@@ -342,11 +362,7 @@ class ConfigurationValidator(object):
         if not self._is_valid_interval(interval):
                         EventLogger.critical(self._generate_error_message(device=device, \
                                                             tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_INTERVAL], \
-                                                            msg="interval should be an integer and >= 0"))
-        else:
-            # calculate lines per second in the logfile for this variable
-            if interval != 0:
-                self._log_space_counter.simple_devices(interval)
+                                                            msg="interval should be an integer and >= 0"))               
         
         # loggable_devices.Identifier.DEVICE_VALUES_NAME                        
         func_name = values[value][loggable_devices.Identifier.DEVICE_VALUES_NAME]
@@ -427,20 +443,45 @@ class LogSpaceCounter(object):
         '''
         This function calculates the lines per second for simple devices and 
         have to be called for every variable
+        
+        interval -- logging interval for a variable 
         '''
+        if interval == 0:
+            return
+        
         self.lines_per_second += 1000.0 / interval
     
-    def special_devices(self):
+    def special_devices(self,variables, interval):
         '''
         This function calculates the lines per second for special devices
+        
+        variables -- Amount of variables
+        interval -- Sum of all interval  
         '''
-        pass
+        if interval == 0:
+            return
+        
+        self.lines_per_second += ((variables * 1000.0) / interval)
     
-    def complex_devices(self):
+    def complex_devices(self,interval,bool_values):
         '''
             This function calculates the lines per second for complex devices
+            countOfTrue / interval
+            
+            interval -- logging interval 
+            bool_values -- list with True/False values (Amount of True's equals to amount of loggable variables)
+            
         '''
-        pass
+        if interval == 0:
+            return
+        
+        variables = 0
+        for entry in bool_values:
+            if isinstance(entry, bool) and entry == True:
+                variables += 1
+        
+        self.lines_per_second += ((variables * 1000.0) / interval)  
+                
     
     def calculate_time(self):
         '''
@@ -449,6 +490,9 @@ class LogSpaceCounter(object):
         
         18k lines -> 1MB
         '''
+        if self.lines_per_second <= 0:
+            return 0,0,0,0
+        
         max_available_space =  (self.file_count + 1) * ((self.file_size / 1024.0) / 1024.0)       
         secondsForOneMB = 18000.0 / self.lines_per_second
         
