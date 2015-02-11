@@ -25,10 +25,13 @@ Boston, MA 02111-1307, USA.
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_octave import Ui_ProgramPageOctave
+from brickv.plugin_system.plugins.red.script_manager import check_script_result
 
 def get_octave_versions(script_manager, callback):
     def cb_versions(result):
-        if result != None:
+        okay, _ = check_script_result(result)
+
+        if okay:
             try:
                 version = result.stdout.split('\n')[0].split(' ')[-1]
                 callback([ExecutableVersion('/usr/bin/octave', version)])
@@ -126,7 +129,7 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
     # overrides QWizardPage.isComplete
     def isComplete(self):
         executable = self.get_executable()
-        start_mode = self.get_field('octave.start_mode').toInt()[0]
+        start_mode = self.get_field('octave.start_mode')
 
         if len(executable) == 0:
             return False
@@ -139,7 +142,7 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        start_mode             = self.get_field('octave.start_mode').toInt()[0]
+        start_mode             = self.get_field('octave.start_mode')
         start_mode_script_file = start_mode == Constants.OCTAVE_START_MODE_SCRIPT_FILE
         show_advanced_options  = self.check_show_advanced_options.isChecked()
 
@@ -151,13 +154,13 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
-        return self.combo_version.itemData(self.get_field('octave.version').toInt()[0]).toString()
+        return self.combo_version.itemData(self.get_field('octave.version'))
 
     def get_html_summary(self):
-        version           = self.get_field('octave.version').toInt()[0]
-        start_mode        = self.get_field('octave.start_mode').toInt()[0]
-        script_file       = self.get_field('octave.script_file').toString()
-        working_directory = self.get_field('octave.working_directory').toString()
+        version           = self.get_field('octave.version')
+        start_mode        = self.get_field('octave.start_mode')
+        script_file       = self.get_field('octave.script_file')
+        working_directory = self.get_field('octave.working_directory')
         options           = ' '.join(self.option_list_editor.get_items())
 
         html  = u'Octave Version: {0}<br/>'.format(Qt.escape(self.combo_version.itemText(version)))
@@ -173,8 +176,8 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
 
     def get_custom_options(self):
         return {
-            'octave.start_mode':  Constants.octave_start_mode_api_names[self.get_field('octave.start_mode').toInt()[0]],
-            'octave.script_file': self.get_field('octave.script_file').toString(),
+            'octave.start_mode':  Constants.octave_start_mode_api_names[self.get_field('octave.start_mode')],
+            'octave.script_file': self.get_field('octave.script_file'),
             'octave.options':     self.option_list_editor.get_items()
         }
 
@@ -182,15 +185,15 @@ class ProgramPageOctave(ProgramPage, Ui_ProgramPageOctave):
         executable  = self.get_executable()
         arguments   = self.option_list_editor.get_items()
         environment = []
-        start_mode  = self.get_field('octave.start_mode').toInt()[0]
+        start_mode  = self.get_field('octave.start_mode')
 
         if self.is_full_image:
             environment.append('DISPLAY=:0')
 
         if start_mode == Constants.OCTAVE_START_MODE_SCRIPT_FILE:
-            arguments.append(self.get_field('octave.script_file').toString())
+            arguments.append(self.get_field('octave.script_file'))
 
-        working_directory = self.get_field('octave.working_directory').toString()
+        working_directory = self.get_field('octave.working_directory')
 
         return executable, arguments, environment, working_directory
 

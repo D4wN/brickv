@@ -252,14 +252,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         tab_window = device_info.tab_window
         device_info.tab_window = None
 
-        tab_window.hide()
-        tab_window.setParent(None)
+        # If we reboot the RED Brick, the tab_window sometimes is
+        # already None here
+        if tab_window != None:
+            tab_window.hide()
+            tab_window.setParent(None)
 
         plugin = device_info.plugin
         device_info.plugin = None
 
-        plugin.hide()
-        plugin.setParent(None)
+        if plugin != None:
+            plugin.hide()
+            plugin.setParent(None)
 
         infos.infos.pop(uid)
 
@@ -364,7 +368,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         uid_index = index.sibling(index.row(), 1)
 
         if uid_index.isValid():
-            uid_text = uid_index.data().toString()
+            uid_text = uid_index.data()
             self.show_plugin(uid_text)
 
     def create_tab_window(self, device_info, connected_uid, position):

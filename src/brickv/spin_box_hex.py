@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Master Plugin
+brickv (Brick Viewer)
 Copyright (C) 2013 Olaf Lüke <olaf@tinkerforge.com>
 Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
-spin_box_hex.py: SpinBoxHex for Master Plugin implementation
+spin_box_hex.py: SpinBoxHex implementation
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -22,18 +22,17 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtGui import QSpinBox, QRegExpValidator
 from PyQt4.QtCore import QRegExp
+from PyQt4.QtGui import QSpinBox, QRegExpValidator
 
 class SpinBoxHex(QSpinBox):
-    def __init__(self, parent=None):
-        super(SpinBoxHex, self).__init__(parent)
+    def __init__(self, parent=None, default_value=0):
+        QSpinBox.__init__(self, parent)
 
         self.validator = QRegExpValidator(QRegExp("[0-9A-Fa-f]{1,2}"), self)
-        self.setRange(0, 255)
 
-    def fixCase(self, text):
-        self.lineEdit().setText(text.toUpper())
+        self.setRange(0, 255)
+        self.setValue(default_value)
 
     def validate(self, text, pos):
         return self.validator.validate(text, pos)

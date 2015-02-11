@@ -26,6 +26,7 @@ from PyQt4 import QtCore, QtGui
 from brickv.plugin_system.plugins.red.red_tab import REDTab
 from brickv.plugin_system.plugins.red.ui_red_tab_overview import Ui_REDTabOverview
 from brickv.plugin_system.plugins.red.api import *
+from brickv.plugin_system.plugins.red.script_manager import check_script_result
 from operator import itemgetter
 import json
 import time
@@ -44,7 +45,7 @@ class ProcessesProxyModel(QtGui.QSortFilterProxyModel):
     def lessThan(self, left, right):
         # cpu and mem
         if left.column() in [3, 4]:
-            return left.data(QtCore.Qt.UserRole + 1).toInt()[0] < right.data(QtCore.Qt.UserRole + 1).toInt()[0]
+            return left.data(QtCore.Qt.UserRole + 1) < right.data(QtCore.Qt.UserRole + 1)
 
         return QtGui.QSortFilterProxyModel.lessThan(self, left, right)
 
@@ -63,6 +64,8 @@ class REDTabOverview(REDTab, Ui_REDTabOverview):
         self.refresh_counter = 0
         self.nic_time = 0
 
+        self.label_error.hide()
+
         # For MAC progress bar text fix
         self.label_pbar_cpu.hide()
         self.label_pbar_memory.hide()
@@ -79,7 +82,7 @@ class REDTabOverview(REDTab, Ui_REDTabOverview):
         self.button_refresh.setText('Collecting data...')
         self.button_refresh.setDisabled(True)
         self.is_tab_on_focus = True
-        self.script_manager.execute_script('overview', self.cb_state_changed,
+        self.script_manager.execute_script('overview', self.cb_overview,
                                            ["0.1"], max_length=1024*1024,
                                            decode_output_as_utf8=False)
         self.reset_tview_nic()
@@ -110,13 +113,13 @@ class REDTabOverview(REDTab, Ui_REDTabOverview):
             self.refresh_timer.stop()
             self.button_refresh.setText('Collecting data...')
             self.button_refresh.setDisabled(True)
-            self.script_manager.execute_script('overview', self.cb_state_changed,
+            self.script_manager.execute_script('overview', self.cb_overview,
                                                max_length=1024*1024, decode_output_as_utf8=False)
         else:
             self.button_refresh.setDisabled(False)
             self.button_refresh.setText('Refresh in ' + str((REFRESH_TIME/REFRESH_TIMEOUT - self.refresh_counter)/2.0) + "...")
 
-    def cb_state_changed(self, result):
+    def cb_overview(self, result):
         # check if the tab is still on view or not
         if not self.is_tab_on_focus:
             self.refresh_timer.stop()
@@ -125,8 +128,14 @@ class REDTabOverview(REDTab, Ui_REDTabOverview):
         self.refresh_counter = 0
         self.refresh_timer.start(REFRESH_TIMEOUT)
 
-        if result == None or result.exit_code != 0:
+        okay, message = check_script_result(result, decode_stderr=True)
+
+        if not okay:
+            self.label_error.setText('<b>Error:</b> ' + QtCore.Qt.escape(message))
+            self.label_error.show()
             return
+
+        self.label_error.hide()
 
         try:
             data = json.loads(zlib.decompress(buffer(result.stdout)).decode('utf-8'))
@@ -217,7 +226,6 @@ class REDTabOverview(REDTab, Ui_REDTabOverview):
                 self.nic_item_model.setItem(i, 1, QtGui.QStandardItem("Collecting data..."))
                 self.nic_item_model.setItem(i, 2, QtGui.QStandardItem("Collecting data..."))
             else:
-
                 download_rate = _get_nic_transfer_rate(nic_data_dict[key][1],
                                                        self.nic_previous_bytes[key]['received'],
                                                        delta)
@@ -268,12 +276,12 @@ class REDTabOverview(REDTab, Ui_REDTabOverview):
 
             cpu = p['cpu']
             item_cpu = QtGui.QStandardItem(unicode(cpu / 10.0)+'%')
-            item_cpu.setData(QtCore.QVariant(cpu))
+            item_cpu.setData(cpu)
             self.process_item_model.setItem(i, 3, item_cpu)
 
             mem = p['mem']
             item_mem = QtGui.QStandardItem(unicode(mem / 10.0)+'%')
-            item_mem.setData(QtCore.QVariant(mem))
+            item_mem.setData(mem)
             self.process_item_model.setItem(i, 4, item_mem)
 
         self.process_item_model.sort(self.tview_process_previous_sort['column_index'],

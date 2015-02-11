@@ -25,11 +25,14 @@ Boston, MA 02111-1307, USA.
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_c import Ui_ProgramPageC
+from brickv.plugin_system.plugins.red.script_manager import check_script_result
 import posixpath
 
 def get_gcc_versions(script_manager, callback):
     def cb_versions(result):
-        if result != None:
+        okay, _ = check_script_result(result)
+
+        if okay:
             try:
                 versions    = result.stdout.split('\n\n')
                 version_gcc = versions[0].split('\n')[0].split(' ')
@@ -149,7 +152,7 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        start_mode            = self.get_field('c.start_mode').toInt()[0]
+        start_mode            = self.get_field('c.start_mode')
         start_mode_executable = start_mode == Constants.C_START_MODE_EXECUTABLE
         compile_from_source   = self.check_compile_from_source.isChecked()
         show_advanced_options = self.check_show_advanced_options.isChecked()
@@ -170,10 +173,10 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
         return self.make_option_list_editor.get_items()
 
     def get_html_summary(self):
-        start_mode          = self.get_field('c.start_mode').toInt()[0]
-        executable          = self.get_field('c.executable').toString()
-        compile_from_source = self.get_field('c.compile_from_source').toBool()
-        working_directory   = self.get_field('c.working_directory').toString()
+        start_mode          = self.get_field('c.start_mode')
+        executable          = self.get_field('c.executable')
+        compile_from_source = self.get_field('c.compile_from_source')
+        working_directory   = self.get_field('c.working_directory')
         make_options        = ' '.join(self.make_option_list_editor.get_items())
 
         html = u'Start Mode: {0}<br/>'.format(Qt.escape(Constants.c_start_mode_display_names[start_mode]))
@@ -195,17 +198,17 @@ class ProgramPageC(ProgramPage, Ui_ProgramPageC):
 
     def get_custom_options(self):
         return {
-            'c.start_mode':          Constants.c_start_mode_api_names[self.get_field('c.start_mode').toInt()[0]],
-            'c.executable':          self.get_field('c.executable').toString(),
-            'c.compile_from_source': self.get_field('c.compile_from_source').toBool(),
+            'c.start_mode':          Constants.c_start_mode_api_names[self.get_field('c.start_mode')],
+            'c.executable':          self.get_field('c.executable'),
+            'c.compile_from_source': self.get_field('c.compile_from_source'),
             'c.make_options':        self.make_option_list_editor.get_items()
         }
 
     def get_command(self):
-        executable        = self.get_field('c.executable').toString()
+        executable        = self.get_field('c.executable')
         arguments         = []
         environment       = []
-        working_directory = self.get_field('c.working_directory').toString()
+        working_directory = self.get_field('c.working_directory')
 
         if not executable.startswith('/'):
             executable = posixpath.join('./', executable)

@@ -22,8 +22,8 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import Qt, QVariant, QTimer
-from PyQt4.QtGui import QApplication, QWidget, QMessageBox, QListWidgetItem
+from PyQt4.QtCore import Qt, QTimer
+from PyQt4.QtGui import QApplication, QMessageBox, QListWidgetItem
 from brickv.plugin_system.plugins.red.red_tab import REDTab
 from brickv.plugin_system.plugins.red.ui_red_tab_program import Ui_REDTabProgram
 from brickv.plugin_system.plugins.red.api import *
@@ -72,7 +72,6 @@ class REDTabProgram(REDTab, Ui_REDTabProgram):
         self.splitter.setSizes([150, 400])
         self.list_programs.itemSelectionChanged.connect(self.update_ui_state)
         self.button_refresh.clicked.connect(self.refresh_program_list)
-        self.button_refresh.clicked.connect(self.refresh_executable_versions)
         self.button_new.clicked.connect(self.show_new_program_wizard)
         self.button_delete.clicked.connect(self.purge_selected_program)
 
@@ -126,14 +125,14 @@ class REDTabProgram(REDTab, Ui_REDTabProgram):
         program_info.name_changed.connect(self.refresh_program_names)
 
         item = QListWidgetItem(program.cast_custom_option_value('name', unicode, '<unknown>'))
-        item.setData(Qt.UserRole, QVariant(program_info))
+        item.setData(Qt.UserRole, program_info)
 
         self.list_programs.addItem(item)
         self.stacked_container.addWidget(program_info)
 
     def refresh_program_list(self):
         def refresh_async():
-            return get_programs(self.session).items
+            return get_programs(self.session)
 
         def cb_success(programs):
             sorted_programs = {}
@@ -174,7 +173,7 @@ class REDTabProgram(REDTab, Ui_REDTabProgram):
     def refresh_program_names(self):
         for i in range(self.list_programs.count()):
             item = self.list_programs.item(i)
-            program = item.data(Qt.UserRole).toPyObject().program
+            program = item.data(Qt.UserRole).program
             item.setText(program.cast_custom_option_value('name', unicode, '<unknown>'))
 
     def refresh_executable_versions(self):
@@ -207,7 +206,7 @@ class REDTabProgram(REDTab, Ui_REDTabProgram):
         identifiers = []
 
         for i in range(self.list_programs.count()):
-            identifiers.append(self.list_programs.item(i).data(Qt.UserRole).toPyObject().program.identifier)
+            identifiers.append(self.list_programs.item(i).data(Qt.UserRole).program.identifier)
 
         context = ProgramWizardContext(self.session, identifiers, self.script_manager, self.image_version, self.executable_versions)
 
@@ -233,7 +232,7 @@ class REDTabProgram(REDTab, Ui_REDTabProgram):
         if len(selected_items) == 0:
             return
 
-        program_info = selected_items[0].data(Qt.UserRole).toPyObject()
+        program_info = selected_items[0].data(Qt.UserRole)
         program      = program_info.program
         name         = program.cast_custom_option_value('name', unicode, '<unknown>')
         button       = QMessageBox.question(get_main_window(), 'Delete Program',

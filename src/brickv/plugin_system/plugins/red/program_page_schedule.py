@@ -21,7 +21,6 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QMessageBox
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
@@ -74,7 +73,7 @@ class ProgramPageSchedule(ProgramPage, Ui_ProgramPageSchedule):
 
     # overrides QWizardPage.isComplete
     def isComplete(self):
-        start_mode = self.get_field('start_mode').toInt()[0]
+        start_mode = self.get_field('start_mode')
 
         if start_mode == Constants.START_MODE_CRON and \
            not self.edit_start_fields_checker.complete:
@@ -84,7 +83,7 @@ class ProgramPageSchedule(ProgramPage, Ui_ProgramPageSchedule):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        start_mode          = self.get_field('start_mode').toInt()[0]
+        start_mode          = self.get_field('start_mode')
         start_mode_never    = start_mode == Constants.START_MODE_NEVER
         start_mode_always   = start_mode == Constants.START_MODE_ALWAYS
         start_mode_interval = start_mode == Constants.START_MODE_INTERVAL
@@ -114,10 +113,10 @@ class ProgramPageSchedule(ProgramPage, Ui_ProgramPageSchedule):
         if program == None:
             return
 
-        start_mode           = Constants.api_start_modes[self.get_field('start_mode').toInt()[0]]
-        continue_after_error = self.get_field('continue_after_error').toBool()
-        start_interval       = self.get_field('start_interval').toUInt()[0]
-        start_fields         = self.get_field('start_fields').toString()
+        start_mode           = Constants.api_start_modes[self.get_field('start_mode')]
+        continue_after_error = self.get_field('continue_after_error')
+        start_interval       = self.get_field('start_interval')
+        start_fields         = self.get_field('start_fields')
 
         try:
             program.set_schedule(start_mode, continue_after_error, start_interval, start_fields) # FIXME: async_call

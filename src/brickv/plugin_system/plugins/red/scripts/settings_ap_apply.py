@@ -120,9 +120,11 @@ dhcp-authoritative
 listen-address=127.0.0.1
 listen-address={1}
 server=8.8.8.8
-local=/{2}/
+local=/{2}/127.0.0.1
 domain={2}
-address=/{3}/{1}
+host-record={2},192.168.42.1
+address=/{2}/{2}/192.168.42.1
+ptr-record={3}.in-addr.arpa,"{2}"
 dhcp-range={4},{5},72h
 dhcp-option=option:netmask,{6}
 dhcp-option=option:router,{1}
@@ -183,7 +185,7 @@ if len(argv) < 2:
 try:
     apply_dict = json.loads(argv[1])
     
-    if len(apply_dict) != 13:
+    if len(apply_dict) != 12:
         exit(1)
     
     interface        = unicode(apply_dict['interface'])
@@ -194,7 +196,6 @@ try:
     wpa_key          = unicode(apply_dict['wpa_key'])
     channel          = unicode(apply_dict['channel'])
     enabled_dns_dhcp = apply_dict['enabled_dns_dhcp']
-    server_name      = unicode(apply_dict['server_name'])
     domain           = unicode(apply_dict['domain'])
     dhcp_start       = unicode(apply_dict['dhcp_start'])
     dhcp_end         = unicode(apply_dict['dhcp_end'])
@@ -211,13 +212,13 @@ try:
             fd_hostapd_conf.write(HOSTAPD_CONF.format(interface, ssid, channel, '2', wpa_key))
         else:
             fd_hostapd_conf.write(HOSTAPD_CONF.format(interface, ssid, channel, '0', wpa_key))
-    
+
     with open('/etc/dnsmasq.conf', 'w') as fd_dnsmasq_conf:
         if enabled_dns_dhcp:
             fd_dnsmasq_conf.write(DNSMASQ_CONF.format('#Enabled',
                                                       interface_ip,
                                                       domain,
-                                                      server_name,
+                                                      '.'.join(interface_ip.split('.')[::-1]),
                                                       dhcp_start,
                                                       dhcp_end,
                                                       dhcp_mask))
@@ -225,7 +226,7 @@ try:
             fd_dnsmasq_conf.write(DNSMASQ_CONF.format('#Disabled',
                                                       interface_ip,
                                                       domain,
-                                                      server_name,
+                                                      '.'.join(interface_ip.split('.')[::-1]),
                                                       dhcp_start,
                                                       dhcp_end,
                                                       dhcp_mask))

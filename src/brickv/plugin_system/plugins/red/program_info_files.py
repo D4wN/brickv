@@ -22,16 +22,17 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import Qt, QDateTime, QVariant, QDir
+from PyQt4.QtCore import Qt, QDateTime, QDir
 from PyQt4.QtGui import QIcon, QWidget, QStandardItemModel, QStandardItem, \
-                        QSortFilterProxyModel,  QFileDialog, QMessageBox, \
-                        QInputDialog, QApplication, QDialog
+                        QSortFilterProxyModel, QMessageBox, QInputDialog, \
+                        QApplication, QDialog
 from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_utils import Download, ExpandingProgressDialog, \
                                                            ExpandingInputDialog, get_file_display_size
 from brickv.plugin_system.plugins.red.ui_program_info_files import Ui_ProgramInfoFiles
+from brickv.plugin_system.plugins.red.script_manager import check_script_result, report_script_result
 from brickv.async_call import async_call
-from brickv.utils import get_main_window, get_resources_path
+from brickv.utils import get_main_window, get_resources_path, get_home_path, get_existing_directory
 import os
 import posixpath
 import json
@@ -80,7 +81,7 @@ def get_full_item_path(item):
 def expand_directory_walk_to_model(directory_walk, model, folder_icon, file_icon):
     def create_last_modified_item(last_modified):
         item = QStandardItem(QDateTime.fromTime_t(last_modified).toString('yyyy-MM-dd HH:mm:ss'))
-        item.setData(QVariant(last_modified), USER_ROLE_LAST_MODIFIED)
+        item.setData(last_modified, USER_ROLE_LAST_MODIFIED)
 
         return item
 
@@ -93,8 +94,8 @@ def expand_directory_walk_to_model(directory_walk, model, folder_icon, file_icon
                 size_item = None
             else:
                 name_item = QStandardItem(name)
-                name_item.setData(QVariant(folder_icon), Qt.DecorationRole)
-                name_item.setData(QVariant(ITEM_TYPE_DIRECTORY), USER_ROLE_ITEM_TYPE)
+                name_item.setData(folder_icon, Qt.DecorationRole)
+                name_item.setData(ITEM_TYPE_DIRECTORY, USER_ROLE_ITEM_TYPE)
 
                 size_item          = QStandardItem('')
                 last_modified_item = create_last_modified_item(int(dw['l']))
@@ -108,17 +109,17 @@ def expand_directory_walk_to_model(directory_walk, model, folder_icon, file_icon
 
             if size_item != None:
                 size_item.setText(get_file_display_size(size))
-                size_item.setData(QVariant(size), USER_ROLE_SIZE)
+                size_item.setData(size, USER_ROLE_SIZE)
 
             return size
         else:
             name_item = QStandardItem(name)
-            name_item.setData(QVariant(file_icon), Qt.DecorationRole)
-            name_item.setData(QVariant(ITEM_TYPE_FILE), USER_ROLE_ITEM_TYPE)
+            name_item.setData(file_icon, Qt.DecorationRole)
+            name_item.setData(ITEM_TYPE_FILE, USER_ROLE_ITEM_TYPE)
 
             size      = int(dw['s'])
             size_item = QStandardItem(get_file_display_size(size))
-            size_item.setData(QVariant(size), USER_ROLE_SIZE)
+            size_item.setData(size, USER_ROLE_SIZE)
 
             last_modified_item = create_last_modified_item(int(dw['l']))
 
@@ -135,9 +136,9 @@ class FilesProxyModel(QSortFilterProxyModel):
     # overrides QSortFilterProxyModel.lessThan
     def lessThan(self, left, right):
         if left.column() == 1: # size
-            return left.data(USER_ROLE_SIZE).toInt()[0] < right.data(USER_ROLE_SIZE).toInt()[0]
+            return left.data(USER_ROLE_SIZE) < right.data(USER_ROLE_SIZE)
         elif left.column() == 2: # last modified
-            return left.data(USER_ROLE_LAST_MODIFIED).toInt()[0] < right.data(USER_ROLE_LAST_MODIFIED).toInt()[0]
+            return left.data(USER_ROLE_LAST_MODIFIED) < right.data(USER_ROLE_LAST_MODIFIED)
 
         return QSortFilterProxyModel.lessThan(self, left, right)
 
@@ -164,7 +165,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         self.tree_files_model        = QStandardItemModel(self)
         self.tree_files_model_header = ['Name', 'Size', 'Last Modified']
         self.tree_files_proxy_model  = FilesProxyModel(self)
-        self.last_download_directory = QDir.toNativeSeparators(QDir.homePath())
+        self.last_download_directory = get_home_path()
 
         self.tree_files_model.setHorizontalHeaderLabels(self.tree_files_model_header)
         self.tree_files_proxy_model.setSourceModel(self.tree_files_model)
@@ -198,12 +199,10 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
 
     def refresh_files(self):
         def cb_directory_walk(result):
-            if result == None or result.exit_code != 0:
-                if result == None or len(result.stderr) == 0:
-                    self.label_error.setText('<b>Error:</b> Internal script error occurred')
-                else:
-                    self.label_error.setText('<b>Error:</b> ' + Qt.escape(result.stderr.decode('utf-8').strip()))
+            okay, message = check_script_result(result, decode_stderr=True)
 
+            if not okay:
+                self.label_error.setText('<b>Error:</b> ' + Qt.escape(message))
                 self.label_error.setVisible(True)
                 self.refresh_files_done()
                 return
@@ -241,7 +240,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
                 self.refresh_files_done()
 
             def cb_expand_error():
-                self.label_error.setText('<b>Error:</b> Internal async error occurred')
+                self.label_error.setText('<b>Error:</b> Internal async error')
                 self.label_error.setVisible(True)
                 self.refresh_files_done()
 
@@ -282,7 +281,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         downloads = []
 
         def expand(name_item):
-            item_type = name_item.data(USER_ROLE_ITEM_TYPE).toInt()[0]
+            item_type = name_item.data(USER_ROLE_ITEM_TYPE)
 
             if item_type == ITEM_TYPE_DIRECTORY:
                 for i in range(name_item.rowCount()):
@@ -298,19 +297,8 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         if len(downloads) == 0:
             return
 
-        download_directory = QFileDialog.getExistingDirectory(get_main_window(), 'Download Files',
-                                                              self.last_download_directory)
-
-        if len(download_directory) == 0:
-            return
-
-        download_directory = QDir.toNativeSeparators(download_directory)
-
-        # FIXME: on Mac OS X the getExistingDirectory() might return the directory with
-        #        the last part being invalid, try to find the valid part of the directory
-        if sys.platform == 'darwin':
-            while len(download_directory) > 0 and not os.path.isdir(download_directory):
-                download_directory = os.path.split(download_directory)[0]
+        download_directory = get_existing_directory(get_main_window(), 'Download Files',
+                                                    self.last_download_directory)
 
         if len(download_directory) == 0:
             return
@@ -323,7 +311,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         if index.column() == 0:
             mapped_index = self.tree_files_proxy_model.mapToSource(index)
             name_item    = self.tree_files_model.itemFromIndex(mapped_index)
-            item_type    = name_item.data(USER_ROLE_ITEM_TYPE).toInt()[0]
+            item_type    = name_item.data(USER_ROLE_ITEM_TYPE)
 
             # only rename files via activation, because directories are expanded
             if item_type == ITEM_TYPE_FILE:
@@ -343,7 +331,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         self.rename_item(selected_name_items[0])
 
     def rename_item(self, name_item):
-        item_type = name_item.data(USER_ROLE_ITEM_TYPE).toInt()[0]
+        item_type = name_item.data(USER_ROLE_ITEM_TYPE)
 
         if item_type == ITEM_TYPE_FILE:
             title     = 'Rename File'
@@ -375,8 +363,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         if len(new_name) == 0 or new_name == '.' or new_name == '..' or '/' in new_name:
             QMessageBox.critical(get_main_window(), title + ' Error',
                                  'A valid {0} name cannot be empty, cannot be one dot [.], cannot be two dots [..] and cannot contain a forward slash [/].'
-                                 .format(type_name),
-                                 QMessageBox.Ok)
+                                 .format(type_name))
             return
 
         # check that new name is not already in use
@@ -388,25 +375,20 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         for i in range(name_item_parent.rowCount()):
             if new_name == name_item_parent.child(i).text():
                 QMessageBox.critical(get_main_window(), title + ' Error',
-                                     'The new {0} name is already in use.'.format(type_name),
-                                     QMessageBox.Ok)
+                                     'The new {0} name is already in use.'.format(type_name))
                 return
 
         absolute_old_name = posixpath.join(self.bin_directory, get_full_item_path(name_item))
         absolute_new_name = posixpath.join(posixpath.split(absolute_old_name)[0], new_name)
 
         def cb_rename(result):
-            if result == None:
-                QMessageBox.critical(get_main_window(), title + ' Error',
-                                     u'Internal error during {0} rename'.format(type_name))
-            elif result.exit_code != 0:
-                QMessageBox.critical(get_main_window(), title + ' Error',
-                                     u'Could not rename {0}:\n\n{1}'.format(type_name, result.stderr.strip()))
-            else:
-                name_item.setText(new_name)
+            if not report_script_result(result, title + ' Error', u'Could not rename {0}'.format(type_name)):
+                return
 
-                if self.tree_files.header().sortIndicatorSection() == 0:
-                    self.tree_files.header().setSortIndicator(0, self.tree_files.header().sortIndicatorOrder())
+            name_item.setText(new_name)
+
+            if self.tree_files.header().sortIndicatorSection() == 0:
+                self.tree_files.header().setSortIndicator(0, self.tree_files.header().sortIndicatorOrder())
 
         self.script_manager.execute_script('rename', cb_rename,
                                            [absolute_old_name, absolute_new_name])
@@ -424,22 +406,23 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         if len(selected_name_items) == 0:
             return
 
-        def progress_canceled(sd_ref):
-            sd = sd_ref[0]
+        script_instance_ref = [None]
 
-            if sd == None:
+        def progress_canceled():
+            script_instance = script_instance_ref[0]
+
+            if script_instance == None:
                 return
 
-            self.script_manager.abort_script(sd)
+            self.script_manager.abort_script(script_instance)
 
-        sd_ref   = [None]
         progress = ExpandingProgressDialog(self)
-        progress.hide_progress_text()
+        progress.set_progress_text_visible(False)
         progress.setModal(True)
         progress.setWindowTitle('Delete Files')
         progress.setLabelText('Collecting files and directories to delete')
         progress.setRange(0, 0)
-        progress.canceled.connect(lambda: progress_canceled(sd_ref))
+        progress.canceled.connect(progress_canceled)
         progress.show()
 
         files_to_delete = []
@@ -466,7 +449,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
 
         for selected_name_item in selected_name_items:
             path      = get_full_item_path(selected_name_item)
-            item_type = selected_name_item.data(USER_ROLE_ITEM_TYPE).toInt()[0]
+            item_type = selected_name_item.data(USER_ROLE_ITEM_TYPE)
 
             if item_type == ITEM_TYPE_DIRECTORY:
                 dirs_to_delete.append(posixpath.join(self.bin_directory, path))
@@ -493,15 +476,15 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
 
         progress.setLabelText(message)
 
-        def cb_program_delete_files_dirs(sd_ref, result):
-            sd = sd_ref[0]
+        def cb_program_delete_files_dirs(script_instance_ref, result):
+            script_instance = script_instance_ref[0]
 
-            if sd != None:
-                aborted = sd.abort
+            if script_instance != None:
+                aborted = script_instance.abort
             else:
                 aborted = False
 
-            sd_ref[0] = None
+            script_instance_ref[0] = None
 
             progress.cancel()
             self.refresh_files()
@@ -509,14 +492,11 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
             if aborted:
                 QMessageBox.information(get_main_window(), 'Delete Files',
                                         u'Delete operation was aborted.')
-            elif result == None:
-                QMessageBox.critical(get_main_window(), 'Delete Files Error',
-                                     u'Internal error during deletion.')
-            elif result.exit_code != 0:
-                QMessageBox.critical(get_main_window(), 'Delete Files Error',
-                                     u'Could not delete selected files/directories:\n\n{0}'.format(result.stderr.strip()))
+                return
 
-        sd_ref[0] = self.script_manager.execute_script('program_delete_files_dirs',
-                                                       lambda result: cb_program_delete_files_dirs(sd_ref, result),
-                                                       [json.dumps(files_to_delete), json.dumps(dirs_to_delete)],
-                                                       execute_as_user=True)
+            report_script_result(result, 'Delete Files Error', 'Could not delete selected files/directories:')
+
+        script_instance_ref[0] = self.script_manager.execute_script('program_delete_files_dirs',
+                                                                    lambda result: cb_program_delete_files_dirs(script_instance_ref, result),
+                                                                    [json.dumps(files_to_delete), json.dumps(dirs_to_delete)],
+                                                                    execute_as_user=True)

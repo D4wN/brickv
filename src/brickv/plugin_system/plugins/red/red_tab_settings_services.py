@@ -25,6 +25,7 @@ Boston, MA 02111-1307, USA.
 from PyQt4 import QtGui
 from brickv.plugin_system.plugins.red.ui_red_tab_settings_services import Ui_REDTabSettingsServices
 from brickv.plugin_system.plugins.red.api import *
+from brickv.plugin_system.plugins.red.script_manager import report_script_result
 from brickv.utils import get_main_window
 import json
 
@@ -44,6 +45,8 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
         self.chkbox_webserver.stateChanged.connect(self.service_config_changed)
         self.chkbox_splashscreen.stateChanged.connect(self.service_config_changed)
         self.chkbox_ap.stateChanged.connect(self.service_config_changed)
+        self.chkbox_server_monitoring.stateChanged.connect(self.service_config_changed)
+        self.chkbox_openhab.stateChanged.connect(self.service_config_changed)
         self.pbutton_services_save.clicked.connect(self.slot_pbutton_services_save_clicked)
 
     def tab_on_focus(self):
@@ -52,26 +55,43 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
         self.chkbox_webserver.setEnabled(True)
         self.chkbox_splashscreen.setEnabled(True)
         self.chkbox_ap.setEnabled(True)
+        self.chkbox_server_monitoring.setEnabled(True)
+        self.chkbox_openhab.setEnabled(True)
         self.pbutton_services_save.setText('Save')
         self.pbutton_services_save.setEnabled(False)
 
         self.chkbox_gpu.setChecked(self.service_state.gpu)
-
-        if self.image_version.number < (1, 4):
-            self.chkbox_ap.setText('Start Desktop Environment (Image Version >= 1.4 required)')
-            self.chkbox_desktopenv.setChecked(self.image_version.flavor == 'full')
-            self.chkbox_desktopenv.setEnabled(False)
-        else:
-            self.chkbox_desktopenv.setChecked(self.service_state.desktopenv)
-
+        self.chkbox_desktopenv.setChecked(self.service_state.desktopenv)
         self.chkbox_webserver.setChecked(self.service_state.webserver)
         self.chkbox_splashscreen.setChecked(self.service_state.splashscreen)
+        self.chkbox_ap.setChecked(self.service_state.ap)
+        self.chkbox_server_monitoring.setChecked(self.service_state.servermonitoring)
+        self.chkbox_openhab.setChecked(self.service_state.openhab)
 
         if self.image_version.number < (1, 4):
-            self.chkbox_ap.setText('Access Point Mode (Image Version >= 1.4 required)')
+            self.chkbox_gpu.setText('GPU (Image Version >= 1.4 required)')
+            self.chkbox_gpu.setEnabled(False)
+
+            self.chkbox_desktopenv.setText('Desktop Environment (Image Version >= 1.4 required)')
+            self.chkbox_desktopenv.setEnabled(False)
+
+            self.chkbox_webserver.setText('Web Server (Image Version >= 1.4 required)')
+            self.chkbox_webserver.setEnabled(False)
+
+            self.chkbox_splashscreen.setText('Splash Screen (Image Version >= 1.4 required)')
+            self.chkbox_splashscreen.setEnabled(False)
+
+            self.chkbox_ap.setText('Access Point (Image Version >= 1.4 required)')
             self.chkbox_ap.setEnabled(False)
-        else:
-            self.chkbox_ap.setChecked(self.service_state.ap)
+
+            self.pbutton_services_save.setEnabled(False)
+
+        if self.image_version.number < (1, 6):
+            self.chkbox_server_monitoring.setText('Server Monitoring (Image Version >= 1.6 required)')
+            self.chkbox_server_monitoring.setEnabled(False)
+
+            self.chkbox_openhab.setText('openHAB (Image Version >= 1.6 required)')
+            self.chkbox_openhab.setEnabled(False)
 
     def tab_off_focus(self):
         pass
@@ -80,26 +100,29 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
         pass
 
     def cb_settings_services_apply(self, result):
-        if result and result.stdout and not result.stderr and result.exit_code == 0:
-            def cb_restart_reboot_shutdown(result):
-                if result is not None:
-                    if not result.stderr and result.exit_code == 0:
-                        pass
-                    else:
-                        err_msg = 'Error rebooting RED Brick.\n\n'+unicode(result.stderr)
-                        QtGui.QMessageBox.critical(get_main_window(),
-                                                   'Settings | Services',
-                                                   err_msg,
-                                                   QtGui.QMessageBox.Ok)
+        def done():
+            self.chkbox_gpu.setEnabled(True)
+            self.chkbox_desktopenv.setEnabled(True)
+            self.chkbox_webserver.setEnabled(True)
+            self.chkbox_splashscreen.setEnabled(True)
+            self.chkbox_ap.setEnabled(True)
+            self.chkbox_server_monitoring.setEnabled(True)
+            self.chkbox_openhab.setEnabled(True)
 
-            self.script_manager.execute_script('restart_reboot_shutdown',
-                                               cb_restart_reboot_shutdown, ['1'])
-        else:
-            err_msg = 'Error saving services status.\n\n'+unicode(result.stderr)
-            QtGui.QMessageBox.critical(get_main_window(),
-                                       'Settings | Services',
-                                       err_msg,
-                                       QtGui.QMessageBox.Ok)
+            self.pbutton_services_save.setText('Save')
+            self.pbutton_services_save.setEnabled(True)
+
+        if not report_script_result(result, 'Settings | Services', 'Error saving services status'):
+            done()
+            return
+
+        def cb_restart_reboot_shutdown(result):
+            if not report_script_result(result, 'Settings | Services', 'Error rebooting RED Brick'):
+                done()
+                return
+
+        self.script_manager.execute_script('restart_reboot_shutdown',
+                                           cb_restart_reboot_shutdown, ['1'])
 
     def service_config_changed(self, state):
         self.pbutton_services_save.setEnabled(True)
@@ -107,21 +130,25 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
     def slot_pbutton_services_save_clicked(self):
         state = {}
 
-        state['gpu']          = self.chkbox_gpu.isChecked()
-        state['desktopenv']   = self.chkbox_desktopenv.isChecked()
-        state['webserver']    = self.chkbox_webserver.isChecked()
-        state['splashscreen'] = self.chkbox_splashscreen.isChecked()
-        state['ap']           = self.chkbox_ap.isChecked()
+        state['gpu']              = self.chkbox_gpu.isChecked()
+        state['desktopenv']       = self.chkbox_desktopenv.isChecked()
+        state['webserver']        = self.chkbox_webserver.isChecked()
+        state['splashscreen']     = self.chkbox_splashscreen.isChecked()
+        state['ap']               = self.chkbox_ap.isChecked()
+        state['servermonitoring'] = self.chkbox_server_monitoring.isChecked()
+        state['openhab']          = self.chkbox_openhab.isChecked()
 
         self.chkbox_gpu.setEnabled(False)
         self.chkbox_desktopenv.setEnabled(False)
         self.chkbox_webserver.setEnabled(False)
         self.chkbox_splashscreen.setEnabled(False)
         self.chkbox_ap.setEnabled(False)
+        self.chkbox_server_monitoring.setEnabled(False)
+        self.chkbox_openhab.setEnabled(False)
 
         self.pbutton_services_save.setText('Saving...')
         self.pbutton_services_save.setEnabled(False)
 
         self.script_manager.execute_script('settings_services',
                                            self.cb_settings_services_apply,
-                                           ['APPLY', unicode(json.dumps(state))])
+                                           ['APPLY', json.dumps(state)])

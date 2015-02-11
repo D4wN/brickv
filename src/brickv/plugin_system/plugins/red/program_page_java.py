@@ -21,12 +21,13 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import QVariant, QTimer
+from PyQt4.QtCore import QTimer
 from PyQt4.QtGui import QDialog, QMessageBox
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_java import Ui_ProgramPageJava
 from brickv.plugin_system.plugins.red.java_utils import get_jar_file_main_classes, get_class_file_main_classes
+from brickv.plugin_system.plugins.red.script_manager import check_script_result
 from brickv.async_call import async_call
 from brickv.utils import get_main_window
 import posixpath
@@ -35,7 +36,9 @@ import zlib
 
 def get_java_versions(script_manager, callback):
     def cb_versions(result):
-        if result != None:
+        okay, _ = check_script_result(result)
+
+        if okay:
             try:
                 version = result.stderr.split('\n')[1].split(' ')[5].replace(')', '')
                 callback([ExecutableVersion('/usr/bin/java', version)])
@@ -145,7 +148,7 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         if program != None:
             self.bin_directory = posixpath.join(program.root_directory, 'bin')
         else:
-            identifier         = self.get_field('identifier').toString()
+            identifier         = self.get_field('identifier')
             self.bin_directory = posixpath.join('/', 'home', 'tf', 'programs', identifier, 'bin')
 
         # collect class path entries
@@ -177,33 +180,34 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
             self.combo_main_class.setEnabled(False)
 
             def get_main_classes():
-                def progress_canceled(sd_ref):
-                    sd = sd_ref[0]
+                script_instance_ref = [None]
 
-                    if sd == None:
+                def progress_canceled():
+                    script_instance = script_instance_ref[0]
+
+                    if script_instance == None:
                         return
 
-                    self.wizard().script_manager.abort_script(sd)
+                    self.wizard().script_manager.abort_script(script_instance)
 
-                sd_ref   = [None]
                 progress = ExpandingProgressDialog(self.wizard())
-                progress.hide_progress_text()
+                progress.set_progress_text_visible(False)
                 progress.setWindowTitle('Edit Program')
                 progress.setLabelText('Collecting Java main classes')
                 progress.setModal(True)
                 progress.setRange(0, 0)
-                progress.canceled.connect(lambda: progress_canceled(sd_ref))
+                progress.canceled.connect(progress_canceled)
                 progress.show()
 
-                def cb_java_main_classes(sd_ref, result):
-                    sd = sd_ref[0]
+                def cb_java_main_classes(result):
+                    script_instance = script_instance_ref[0]
 
-                    if sd != None:
-                        aborted = sd.abort
+                    if script_instance != None:
+                        aborted = script_instance.abort
                     else:
                         aborted = False
 
-                    sd_ref[0] = None
+                    script_instance_ref[0] = None
 
                     def done():
                         progress.cancel()
@@ -214,12 +218,10 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
                         done()
                         return
 
-                    if result == None or result.exit_code != 0:
-                        if result == None or len(result.stderr) == 0:
-                            self.label_main_class_error.setText('<b>Error:</b> Internal script error occurred')
-                        else:
-                            self.label_main_class_error.setText('<b>Error:</b> ' + Qt.escape(result.stderr.decode('utf-8').strip()))
+                    okay, message = check_script_result(result, decode_stderr=True)
 
+                    if not okay:
+                        self.label_main_class_error.setText('<b>Error:</b> ' + Qt.escape(message))
                         self.label_main_class_error.setVisible(True)
                         done()
                         return
@@ -239,22 +241,21 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
                         self.combo_main_class.clear()
 
                         for cls in sorted(main_classes.keys()):
-                            self.combo_main_class.addItem(cls, QVariant(main_classes[cls]))
+                            self.combo_main_class.addItem(cls, main_classes[cls])
 
                         self.combo_main_class_checker.set_current_text(program.cast_custom_option_value('java.main_class', unicode, ''))
                         done()
 
                     def cb_expand_error():
-                        self.label_main_class_error.setText('<b>Error:</b> Internal async error occurred')
+                        self.label_main_class_error.setText('<b>Error:</b> Internal async error')
                         self.label_main_class_error.setVisible(True)
                         done()
 
                     async_call(expand_async, result.stdout, cb_expand_success, cb_expand_error)
 
-                sd_ref[0] = self.wizard().script_manager.execute_script('java_main_classes',
-                                                                        lambda result: cb_java_main_classes(sd_ref, result),
-                                                                        [self.bin_directory], max_length=1024*1024,
-                                                                        decode_output_as_utf8=False)
+                script_instance_ref[0] = self.wizard().script_manager.execute_script('java_main_classes', cb_java_main_classes,
+                                                                                     [self.bin_directory], max_length=1024*1024,
+                                                                                     decode_output_as_utf8=False)
 
             # need to decouple this with a timer, otherwise it's executed at
             # a time where the progress bar cannot properly enter model state
@@ -264,17 +265,18 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
             uploads = self.wizard().page(Constants.PAGE_FILES).get_uploads()
 
             if len(uploads) > 0:
-                def progress_canceled(abort_ref):
+                abort_ref = [False]
+
+                def progress_canceled():
                     abort_ref[0] = True
 
-                abort_ref = [False]
                 progress = ExpandingProgressDialog(self)
-                progress.hide_progress_text()
+                progress.set_progress_text_visible(False)
                 progress.setWindowTitle('New Program')
                 progress.setLabelText('Collecting Java main classes')
                 progress.setModal(True)
                 progress.setRange(0, 0)
-                progress.canceled.connect(lambda: progress_canceled(abort_ref))
+                progress.canceled.connect(progress_canceled)
                 progress.show()
 
                 def cb_main_classes(main_classes):
@@ -290,7 +292,7 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
                     self.completeChanged.emit()
 
                 def cb_main_classes_error():
-                    self.label_main_class_error.setText('<b>Error:</b> Internal async error occurred')
+                    self.label_main_class_error.setText('<b>Error:</b> Internal async error')
                     self.label_main_class_error.setVisible(True)
 
                     progress.cancel()
@@ -340,7 +342,7 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
     # overrides QWizardPage.isComplete
     def isComplete(self):
         executable = self.get_executable()
-        start_mode = self.get_field('java.start_mode').toInt()[0]
+        start_mode = self.get_field('java.start_mode')
 
         if len(executable) == 0:
             return False
@@ -357,7 +359,7 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        start_mode            = self.get_field('java.start_mode').toInt()[0]
+        start_mode            = self.get_field('java.start_mode')
         start_mode_main_class = start_mode == Constants.JAVA_START_MODE_MAIN_CLASS
         start_mode_jar_file   = start_mode == Constants.JAVA_START_MODE_JAR_FILE
         show_class_path       = self.check_show_class_path.isChecked()
@@ -393,21 +395,20 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
 
         if len(entry) == 0:
             QMessageBox.critical(get_main_window(), 'Add Class Path Entry Error',
-                                 'A valid class path entry cannot be empty.',
-                                 QMessageBox.Ok)
+                                 'A valid class path entry cannot be empty.')
             return
 
         self.class_path_list_editor.add_item(entry, select_item=True)
 
     def get_executable(self):
-        return self.combo_version.itemData(self.get_field('java.version').toInt()[0]).toString()
+        return self.combo_version.itemData(self.get_field('java.version'))
 
     def get_html_summary(self):
-        version           = self.get_field('java.version').toInt()[0]
-        start_mode        = self.get_field('java.start_mode').toInt()[0]
-        main_class        = self.get_field('java.main_class').toString()
-        jar_file          = self.get_field('java.jar_file').toString()
-        working_directory = self.get_field('java.working_directory').toString()
+        version           = self.get_field('java.version')
+        start_mode        = self.get_field('java.start_mode')
+        main_class        = self.get_field('java.main_class')
+        jar_file          = self.get_field('java.jar_file')
+        working_directory = self.get_field('java.working_directory')
         class_path        = ':'.join(self.class_path_list_editor.get_items())
         options           = ' '.join(self.option_list_editor.get_items())
 
@@ -427,9 +428,9 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
 
     def get_custom_options(self):
         return {
-            'java.start_mode': Constants.java_start_mode_api_names[self.get_field('java.start_mode').toInt()[0]],
-            'java.main_class': self.get_field('java.main_class').toString(),
-            'java.jar_file':   self.get_field('java.jar_file').toString(),
+            'java.start_mode': Constants.java_start_mode_api_names[self.get_field('java.start_mode')],
+            'java.main_class': self.get_field('java.main_class'),
+            'java.jar_file':   self.get_field('java.jar_file'),
             'java.class_path': self.class_path_list_editor.get_items(),
             'java.options':    self.option_list_editor.get_items()
         }
@@ -438,7 +439,7 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
         executable         = self.get_executable()
         arguments          = self.option_list_editor.get_items()
         environment        = []
-        start_mode         = self.get_field('java.start_mode').toInt()[0]
+        start_mode         = self.get_field('java.start_mode')
         class_path_entries = self.class_path_list_editor.get_items()
 
         if len(class_path_entries) > 0:
@@ -453,12 +454,12 @@ class ProgramPageJava(ProgramPage, Ui_ProgramPageJava):
             arguments += ['-cp', ':'.join(absolute_entries)]
 
         if start_mode == Constants.JAVA_START_MODE_MAIN_CLASS:
-            arguments.append(self.get_field('java.main_class').toString())
+            arguments.append(self.get_field('java.main_class'))
         elif start_mode == Constants.JAVA_START_MODE_JAR_FILE:
             arguments.append('-jar')
-            arguments.append(self.get_field('java.jar_file').toString())
+            arguments.append(self.get_field('java.jar_file'))
 
-        working_directory = self.get_field('java.working_directory').toString()
+        working_directory = self.get_field('java.working_directory')
 
         return executable, arguments, environment, working_directory
 

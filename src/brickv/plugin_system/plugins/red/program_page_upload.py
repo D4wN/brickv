@@ -34,6 +34,28 @@ import posixpath
 import stat
 import time
 
+class ChunkedUploader(ChunkedUploaderBase):
+    def __init__(self, page):
+        ChunkedUploaderBase.__init__(self, page.wizard().session)
+
+        self.page = page
+
+    def report_error(self, message, *args):
+        self.page.upload_error(u'...error: ' + message, *args)
+
+    def set_progress_maximum(self, maximum):
+        self.page.progress_file.setRange(0, maximum)
+
+    def set_progress_value(self, value, message):
+        self.page.progress_file.setValue(value)
+        self.page.progress_file.setFormat(message)
+
+    def done(self):
+        self.page.chunked_uploader = None
+
+        self.page.log('...done')
+        self.page.upload_next_file()
+
 class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
     CONFLICT_RESOLUTION_REPLACE = 1
     CONFLICT_RESOLUTION_RENAME  = 2
@@ -50,19 +72,14 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.upload_successful               = False
         self.language_api_name               = None
         self.program                         = None
+        self.program_defined                 = False
         self.root_directory                  = None
         self.remaining_uploads               = None
         self.upload                          = None
         self.command                         = None
         self.created_directories             = set()
-        self.target_file                     = None
-        self.source_file                     = None
         self.target_path                     = None # abolsute path on RED Brick in POSIX format
-        self.source_path                     = None # abolsute path on host in host format
-        self.source_stat                     = None
-        self.source_display_size             = None
-        self.last_upload_size                = None
-        self.progress_file_next_update       = 0
+        self.chunked_uploader                = None
         self.replace_help_template           = self.label_replace_help.text()
         self.warnings                        = 0
         self.canceled                        = False
@@ -125,7 +142,17 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.line2.setVisible(self.conflict_resolution_in_progress)
 
     def cancel_upload(self):
-        self.canceled = True
+        self.canceled    = True
+        chunked_uploader = self.chunked_uploader
+
+        if chunked_uploader != None:
+            chunked_uploader.canceled = True
+
+        if not self.edit_mode and self.program_defined:
+            try:
+                self.program.purge() # FIXME: async_call
+            except (Error, REDError):
+                pass # FIXME: report this error?
 
     def check_new_name(self, name):
         target = posixpath.split(self.upload.target)[1]
@@ -160,7 +187,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         if log:
             self.log(message)
 
-    def upload_warning(self, message, *args, **kwargs):
+    def upload_warning(self, message, *args):
         self.warnings += 1
 
         string_args = []
@@ -173,7 +200,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
         self.log(message, bold=True)
 
-    def upload_error(self, message, *args, **kwargs):
+    def upload_error(self, message, *args):
         string_args = []
 
         for arg in args:
@@ -184,12 +211,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
         self.log(message, bold=True)
 
-        if 'defined' in kwargs:
-            defined = kwargs['defined']
-        else:
-            defined = True
-
-        if not self.edit_mode and defined:
+        if not self.edit_mode and self.program_defined:
             try:
                 self.program.purge() # FIXME: async_call
             except (Error, REDError):
@@ -215,7 +237,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         if not self.edit_mode and self.wizard().hasVisitedPage(Constants.PAGE_SCHEDULE):
             count += 1 # set schedule
 
-            if self.get_field('start_mode').toInt()[0] == Constants.START_MODE_ONCE:
+            if self.get_field('start_mode') == Constants.START_MODE_ONCE:
                 count += 1 # start once after upload
 
         count += 1 # upload successful
@@ -229,7 +251,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.remaining_uploads = self.wizard().page(Constants.PAGE_FILES).get_uploads()
 
         if not self.edit_mode:
-            self.language_api_name = Constants.language_api_names[self.get_field('language').toInt()[0]]
+            self.language_api_name = Constants.language_api_names[self.get_field('language')]
             self.command           = self.wizard().page(Constants.get_language_page(self.language_api_name)).get_command()
 
         self.progress_total.setRange(0, self.get_total_step_count())
@@ -238,13 +260,15 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         if not self.edit_mode:
             self.next_step('Defining new program...', increase=0)
 
-            identifier = self.get_field('identifier').toString()
+            identifier = self.get_field('identifier')
 
             try:
                 self.program = REDProgram(self.wizard().session).define(identifier) # FIXME: async_call
             except (Error, REDError) as e:
-                self.upload_error('...error: {0}', e, defined=False)
+                self.upload_error('...error: {0}', e)
                 return
+
+            self.program_defined = True
 
             self.log('...done')
 
@@ -253,7 +277,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
             self.next_step('Setting custom options...')
 
             # set custom option: name
-            name = self.get_field('name').toString()
+            name = self.get_field('name')
 
             try:
                 self.program.set_custom_option_value('name', name) # FIXME: async_call
@@ -269,7 +293,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
                 return
 
             # set custom option: description
-            description = self.get_field('description').toString()
+            description = self.get_field('description')
 
             try:
                 self.program.set_custom_option_value('description', description) # FIXME: async_call
@@ -328,24 +352,21 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
         self.upload            = self.remaining_uploads[0]
         self.remaining_uploads = self.remaining_uploads[1:]
-        self.source_path       = self.upload.source
+        source_path            = self.upload.source
 
-        self.next_step(u'Uploading {0}...'.format(self.source_path))
+        self.next_step(u'Uploading {0}...'.format(source_path))
 
         try:
-            self.source_stat = os.stat(self.source_path)
-            self.source_file = open(self.source_path, 'rb')
+            self.source_stat = os.stat(source_path)
+            self.source_file = open(source_path, 'rb')
         except Exception as e:
-            self.upload_error('...error: Could not open source file {0}: {1}', self.source_path, e)
+            self.upload_error('...error: Could not open source file {0}: {1}', source_path, e)
             return
 
-        self.source_display_size = get_file_display_size(self.source_stat.st_size)
+        self.chunked_uploader = ChunkedUploader(self)
 
-        self.progress_file.setVisible(True)
-        self.progress_file.setRange(0, self.source_stat.st_size)
-        self.progress_file.setFormat(get_file_display_size(0) + ' of ' + self.source_display_size)
-        self.progress_file.setValue(0)
-        self.progress_file_next_update = 0
+        if not self.chunked_uploader.prepare(source_path):
+            return
 
         self.target_path = posixpath.join(self.root_directory, 'bin', self.upload.target)
 
@@ -365,8 +386,6 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.continue_upload_file()
 
     def continue_upload_file(self, replace_existing=False):
-        self.progress_file.setVisible(True)
-
         flags = REDFile.FLAG_WRITE_ONLY | REDFile.FLAG_CREATE | REDFile.FLAG_NON_BLOCKING | REDFile.FLAG_EXCLUSIVE
 
         if replace_existing:
@@ -375,7 +394,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         # FIXME: preserving the executable bit this way only works well on
         #        Linux and Mac OS X hosts. on Windows Python deduces this from
         #        the file extension. this does not work if the executable is
-        #        cross-compiled and doesn't have the typsical Windows file
+        #        cross-compiled and doesn't have the typical Windows file
         #        extensions for executables
         if (self.source_stat.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)) != 0:
             permissions = 0o755
@@ -400,7 +419,8 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
             return
 
-        self.upload_write_async()
+        self.progress_file.setVisible(True)
+        self.chunked_uploader.start(self.target_path, self.target_file)
 
     def start_conflict_resolution(self):
         self.log(u'...target file {0} already exists'.format(self.upload.target))
@@ -426,8 +446,8 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
                 self.label_existing_stats.setText(u'<b>Error</b>: Could not open target file: {0}', Qt.escape(unicode(e)))
 
             self.label_new_stats.setText('{0}, last modified on {1}'
-                                         .format(self.source_display_size,
-                                                 timestamp_to_date_at_time(int(self.source_stat.st_mtime))))
+                                         .format(self.chunked_uploader.source_display_size,
+                                                 timestamp_to_date_at_time(int(self.chunked_uploader.source_stat.st_mtime))))
 
             self.label_replace_help.setText(self.replace_help_template.replace('<FILE>', Qt.escape(self.upload.target)))
             self.check_rename_new_file.setChecked(self.auto_conflict_resolution == ProgramPageUpload.CONFLICT_RESOLUTION_RENAME)
@@ -492,68 +512,6 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.log('...skipped')
         self.upload_next_file()
 
-    def upload_write_async_cb_status(self, upload_size, upload_total):
-        if self.canceled:
-            try:
-                self.target_file.abort_async_write()
-            except:
-                pass
-
-            return
-
-        self.progress_file_next_update += upload_size - self.last_upload_size
-
-        if self.progress_file.value() / (100 * 1024) != self.progress_file_next_update / (100 * 1024):
-            self.progress_file.setValue(self.progress_file_next_update)
-            self.progress_file.setFormat(get_file_display_size(self.progress_file_next_update) + ' of ' + self.source_display_size)
-
-        self.last_upload_size = upload_size
-
-    def upload_write_async_cb_result(self, error):
-        if self.canceled:
-            return
-
-        if error == None:
-            self.upload_write_async()
-        else:
-            self.upload_error('...error: Could not write to target file {0}: {1}', self.target_path, error)
-
-    def upload_write_async(self):
-        if self.canceled:
-            return
-
-        try:
-            data = self.source_file.read(1000*1000*10) # Read 10mb at a time
-        except Exception as e:
-            self.upload_error('...error: Could not read from source file {0}: {1}', self.source_path, e)
-            return
-
-        if len(data) == 0:
-            self.upload_write_async_done()
-            return
-
-        self.last_upload_size = 0
-
-        try:
-            self.target_file.write_async(data, self.upload_write_async_cb_result, self.upload_write_async_cb_status)
-        except (Error, REDError) as e:
-            self.upload_error('...error: Could not write to target file {0}: {1}', self.target_path, e)
-
-    def upload_write_async_done(self):
-        if self.canceled:
-            return
-
-        self.log('...done')
-        self.progress_file.setValue(self.progress_file.maximum())
-
-        self.target_file.release()
-        self.target_file = None
-
-        self.source_file.close()
-        self.source_file = None
-
-        self.upload_next_file()
-
     def set_configuration(self):
         # set command
         if not self.edit_mode and self.command != None:
@@ -599,12 +557,12 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         if not self.edit_mode and self.wizard().hasVisitedPage(Constants.PAGE_STDIO):
             self.next_step('Setting stdio redirection...')
 
-            stdin_redirection  = Constants.api_stdin_redirections[self.get_field('stdin_redirection').toInt()[0]]
-            stdout_redirection = Constants.api_stdout_redirections[self.get_field('stdout_redirection').toInt()[0]]
-            stderr_redirection = Constants.api_stderr_redirections[self.get_field('stderr_redirection').toInt()[0]]
-            stdin_file         = self.get_field('stdin_file').toString()
-            stdout_file        = self.get_field('stdout_file').toString()
-            stderr_file        = self.get_field('stderr_file').toString()
+            stdin_redirection  = Constants.api_stdin_redirections[self.get_field('stdin_redirection')]
+            stdout_redirection = Constants.api_stdout_redirections[self.get_field('stdout_redirection')]
+            stderr_redirection = Constants.api_stderr_redirections[self.get_field('stderr_redirection')]
+            stdin_file         = self.get_field('stdin_file')
+            stdout_file        = self.get_field('stdout_file')
+            stderr_file        = self.get_field('stderr_file')
 
             try:
                 self.program.set_stdio_redirection(stdin_redirection, stdin_file,
@@ -616,10 +574,10 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
             self.log('...done')
 
-        if self.language_api_name == 'c' and self.get_field('c.compile_from_source').toBool():
+        if self.language_api_name == 'c' and self.get_field('c.compile_from_source'):
             self.compile_make()
             return
-        elif self.language_api_name == 'delphi' and self.get_field('delphi.compile_from_source').toBool():
+        elif self.language_api_name == 'delphi' and self.get_field('delphi.compile_from_source'):
             self.compile_fpcmake()
             return
 
@@ -630,7 +588,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         if not self.edit_mode and self.wizard().hasVisitedPage(Constants.PAGE_SCHEDULE):
             self.next_step('Setting schedule...')
 
-            start_mode = self.get_field('start_mode').toInt()[0]
+            start_mode = self.get_field('start_mode')
 
             if start_mode == Constants.START_MODE_ONCE:
                 api_start_mode          = REDProgram.START_MODE_NEVER
@@ -639,9 +597,9 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
                 api_start_mode          = Constants.api_start_modes[start_mode]
                 start_once_after_upload = False
 
-            continue_after_error = self.get_field('continue_after_error').toBool()
-            start_interval       = self.get_field('start_interval').toUInt()[0]
-            start_fields         = self.get_field('start_fields').toString()
+            continue_after_error = self.get_field('continue_after_error')
+            start_interval       = self.get_field('start_interval')
+            start_fields         = self.get_field('start_fields')
 
             try:
                 self.program.set_schedule(api_start_mode, continue_after_error, start_interval, start_fields) # FIXME: async_call
@@ -687,19 +645,25 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
     def compile_make(self):
         def cb_make_helper(result):
-            if result != None:
-                for s in result.stdout.rstrip().split('\n'):
-                    self.log(s, pre=True)
-
-                if result.exit_code != 0:
-                    self.upload_warning('...warning: Could not compile source code')
-                    self.upload_done()
-                else:
-                    self.log('...done')
-                    self.set_schedule()
-            else:
-                self.upload_warning('...warning: Could not execute fpcmake helper script')
+            if result == None:
+                self.upload_warning('...warning: Could not execute make helper script')
                 self.upload_done()
+                return
+
+            if result.stdout == None:
+                self.upload_warning('...warning: Output of make helper script is not UTF-8 encoded')
+                self.upload_done()
+                return
+
+            for s in result.stdout.rstrip().split('\n'):
+                self.log(s, pre=True)
+
+            if result.exit_code != 0:
+                self.upload_warning('...warning: Could not compile source code')
+                self.upload_done()
+            else:
+                self.log('...done')
+                self.set_schedule()
 
         self.next_step('Executing make...')
 
@@ -712,19 +676,25 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
     def compile_fpcmake(self):
         def cb_fpcmake_helper(result):
-            if result != None:
-                for s in result.stdout.rstrip().split('\n'):
-                    self.log(s, pre=True)
-
-                if result.exit_code != 0:
-                    self.upload_warning('...warning: Could not compile source code')
-                    self.upload_done()
-                else:
-                    self.log('...done')
-                    self.set_schedule()
-            else:
+            if result == None:
                 self.upload_warning('...warning: Could not execute fpcmake helper script')
                 self.upload_done()
+                return
+
+            if result.stdout == None:
+                self.upload_warning('...warning: Output of fpcmake helper script is not UTF-8 encoded')
+                self.upload_done()
+                return
+
+            for s in result.stdout.rstrip().split('\n'):
+                self.log(s, pre=True)
+
+            if result.exit_code != 0:
+                self.upload_warning('...warning: Could not compile source code')
+                self.upload_done()
+            else:
+                self.log('...done')
+                self.set_schedule()
 
         self.next_step('Executing fpcmake and make...')
 

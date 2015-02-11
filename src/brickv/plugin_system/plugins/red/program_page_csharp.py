@@ -25,10 +25,13 @@ Boston, MA 02111-1307, USA.
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_csharp import Ui_ProgramPageCSharp
+from brickv.plugin_system.plugins.red.script_manager import check_script_result
 
 def get_mono_versions(script_manager, callback):
     def cb_versions(result):
-        if result != None:
+        okay, _ = check_script_result(result)
+
+        if okay:
             try:
                 version = result.stdout.split('\n')[0].split(' ')[4]
                 callback([ExecutableVersion('/usr/bin/mono', version)])
@@ -119,7 +122,7 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
     # overrides QWizardPage.isComplete
     def isComplete(self):
         executable = self.get_executable()
-        start_mode = self.get_field('csharp.start_mode').toInt()[0]
+        start_mode = self.get_field('csharp.start_mode')
 
         if len(executable) == 0:
             return False
@@ -132,7 +135,7 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
 
     # overrides ProgramPage.update_ui_state
     def update_ui_state(self):
-        start_mode            = self.get_field('csharp.start_mode').toInt()[0]
+        start_mode            = self.get_field('csharp.start_mode')
         start_mode_executable = start_mode == Constants.CSHARP_START_MODE_EXECUTABLE
         show_advanced_options = self.check_show_advanced_options.isChecked()
 
@@ -148,13 +151,13 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
         self.option_list_editor.update_ui_state()
 
     def get_executable(self):
-        return self.combo_version.itemData(self.get_field('csharp.version').toInt()[0]).toString()
+        return self.combo_version.itemData(self.get_field('csharp.version'))
 
     def get_html_summary(self):
-        version           = self.get_field('csharp.version').toInt()[0]
-        start_mode        = self.get_field('csharp.start_mode').toInt()[0]
-        executable        = self.get_field('csharp.executable').toString()
-        working_directory = self.get_field('csharp.working_directory').toString()
+        version           = self.get_field('csharp.version')
+        start_mode        = self.get_field('csharp.start_mode')
+        executable        = self.get_field('csharp.executable')
+        working_directory = self.get_field('csharp.working_directory')
         options           = ' '.join(self.option_list_editor.get_items())
 
         html  = u'Mono Version: {0}<br/>'.format(Qt.escape(self.combo_version.itemText(version)))
@@ -170,8 +173,8 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
 
     def get_custom_options(self):
         return {
-            'csharp.start_mode': Constants.csharp_start_mode_api_names[self.get_field('csharp.start_mode').toInt()[0]],
-            'csharp.executable': self.get_field('csharp.executable').toString(),
+            'csharp.start_mode': Constants.csharp_start_mode_api_names[self.get_field('csharp.start_mode')],
+            'csharp.executable': self.get_field('csharp.executable'),
             'csharp.options':    self.option_list_editor.get_items()
         }
 
@@ -179,12 +182,12 @@ class ProgramPageCSharp(ProgramPage, Ui_ProgramPageCSharp):
         executable  = self.get_executable()
         arguments   = self.option_list_editor.get_items()
         environment = []
-        start_mode  = self.get_field('csharp.start_mode').toInt()[0]
+        start_mode  = self.get_field('csharp.start_mode')
 
         if start_mode == Constants.CSHARP_START_MODE_EXECUTABLE:
-            arguments.append(self.get_field('csharp.executable').toString())
+            arguments.append(self.get_field('csharp.executable'))
 
-        working_directory = self.get_field('csharp.working_directory').toString()
+        working_directory = self.get_field('csharp.working_directory')
 
         return executable, arguments, environment, working_directory
 

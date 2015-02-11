@@ -21,11 +21,14 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtCore import Qt, QDir, QVariant, QDateTime
+from PyQt4.QtCore import Qt, QDir, QDateTime
 from PyQt4.QtGui import QListWidget, QListWidgetItem, QTreeWidgetItem, \
                         QProgressDialog, QProgressBar, QInputDialog
-from brickv.plugin_system.plugins.red.api import REDProgram
+from brickv.plugin_system.plugins.red.api import *
+from brickv.async_call import async_call
 import re
+import os
+import stat
 import posixpath
 from collections import namedtuple
 
@@ -591,10 +594,19 @@ class ExpandingListWidget(QListWidget):
 
 
 class ExpandingProgressDialog(QProgressDialog):
-    def hide_progress_text(self):
-        progress = QProgressBar(self)
-        progress.setTextVisible(False)
-        self.setBar(progress)
+    def __init__(self, parent=None):
+        QProgressDialog.__init__(self, parent)
+
+        self.progress = QProgressBar(self)
+        self.progress.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+        self.setBar(self.progress)
+
+    def set_progress_text_visible(self, visible):
+        self.progress.setTextVisible(visible)
+
+    def set_progress_text(self, text):
+        self.progress.setFormat(text)
 
     # overrides QProgressDialog.sizeHint
     def sizeHint(self):
@@ -1094,17 +1106,326 @@ class ComboBoxFileEndingChecker(object):
             self.combo_file.clearEditText()
 
 
+class ChunkedDownloaderBase(object):
+    def __init__(self, session):
+        self.session               = session
+        self.source_path           = None # abolsute path on RED Brick in POSIX format
+        self.source_file           = None
+        self.target_path           = None # abolsute path on host in host format
+        self.target_file           = None
+        self.source_display_size   = None
+        self.remaining_source_size = None
+        self.current_progress      = None
+        self.next_progress_update  = None
+        self.last_download_size    = None
+        self.canceled              = False
+
+    def download_read_async_cb_result(self, result):
+        if self.canceled:
+            if isinstance(result.error, REDError) and result.error.error_code == REDError.E_OPERATION_ABORTED:
+                self.download_read_async_cleanup()
+
+            return
+
+        if result.error != None:
+            self.report_error('Could not read from source file {0}: {1}', self.source_path, result.error)
+            return
+
+        try:
+            self.target_file.write(result.data)
+        except Exception as e:
+            self.report_error('Could not write to target file {0}: {1}', self.target_path, e)
+            return
+
+        self.remaining_source_size -= len(result.data)
+
+        if self.remaining_source_size > 0:
+            self.download_read_async()
+        else:
+            self.download_read_async_done()
+
+    def download_read_async_cb_status(self, download_size, download_total):
+        if self.canceled:
+            try:
+                self.source_file.abort_async_read()
+            except:
+                pass
+
+            return
+
+        self.next_progress_update += download_size - self.last_download_size
+        self.last_download_size    = download_size
+
+        if self.current_progress / (100 * 1024) != self.next_progress_update / (100 * 1024):
+            self.current_progress = self.next_progress_update
+
+            self.set_progress_value(self.next_progress_update,
+                                    get_file_display_size(self.next_progress_update) + \
+                                    ' of ' + self.source_display_size)
+
+    def download_read_async(self):
+        if self.canceled:
+            return
+
+        self.last_download_size = 0
+
+        try:
+            self.source_file.read_async(min(self.remaining_source_size, 1000*1000*10), # Read 10mb at a time
+                                        self.download_read_async_cb_result,
+                                        self.download_read_async_cb_status)
+        except (Error, REDError) as e:
+            self.report_error('Could not read from source file {0}: {1}', self.source_path, e)
+
+    def download_read_async_cleanup(self):
+        self.target_file.close()
+        self.target_file = None
+
+        if self.canceled:
+            try:
+                os.remove(self.target_path)
+            except:
+                pass
+        else:
+            if (self.source_file.permissions & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)) != 0:
+                permissions = 0o755
+            else:
+                permissions = 0o644
+
+            try:
+                os.chmod(self.target_path, permissions)
+            except:
+                pass
+
+        self.source_file.release()
+        self.source_file = None
+
+    def download_read_async_done(self):
+        if self.canceled:
+            return
+
+        self.set_progress_value(self.source_file.length, self.source_display_size + ' of ' + self.source_display_size)
+
+        self.download_read_async_cleanup()
+        self.done()
+
+    def prepare(self, source_path):
+        self.source_path = source_path
+
+        try:
+            self.source_file = REDFile(self.session).open(self.source_path,
+                                                          REDFile.FLAG_READ_ONLY | REDFile.FLAG_NON_BLOCKING,
+                                                          0, 0, 0) # FIXME: async_call
+        except (Error, REDError) as e:
+            self.report_error('Could not open source file {0}: {1}', self.source_path, e)
+            return False
+
+        self.source_display_size   = get_file_display_size(self.source_file.length)
+        self.remaining_source_size = self.source_file.length
+        self.current_progress      = 0
+        self.next_progress_update  = 0
+
+        self.set_progress_maximum(self.source_file.length)
+        self.set_progress_value(0, get_file_display_size(0) + ' of ' + self.source_display_size)
+
+        return True
+
+    def start(self, target_path):
+        self.target_path = target_path
+
+        try:
+            self.target_file = open(self.target_path, 'wb')
+        except Exception as e:
+            self.report_error('Could not open target file {0}: {1}', self.target_path, e)
+            return
+
+        self.download_read_async()
+
+    def report_error(self, message, *args):
+        pass
+
+    def set_progress_maximum(self, maximum):
+        pass
+
+    def set_progress_value(self, value, message):
+        pass
+
+    def done(self):
+        pass
+
+
+class ChunkedUploaderBase(object):
+    def __init__(self, session):
+        self.session               = session
+        self.source_path           = None # abolsute path on host in host format
+        self.source_file           = None
+        self.target_path           = None # abolsute path on RED Brick in POSIX format
+        self.target_file           = None
+        self.source_stat           = None
+        self.source_display_size   = None
+        self.current_progress      = None
+        self.next_progress_update  = None
+        self.last_download_size    = None
+        self.canceled              = False
+
+    def upload_write_async_cb_status(self, upload_size, upload_total):
+        if self.canceled:
+            try:
+                self.target_file.abort_async_write()
+            except:
+                pass
+
+            return
+
+        self.next_progress_update += upload_size - self.last_upload_size
+        self.last_upload_size = upload_size
+
+        if self.current_progress / (100 * 1024) != self.next_progress_update / (100 * 1024):
+            self.current_progress = self.next_progress_update
+
+            self.set_progress_value(self.next_progress_update,
+                                    get_file_display_size(self.next_progress_update) + \
+                                    ' of ' + self.source_display_size)
+
+    def upload_write_async_cb_result(self, error):
+        if self.canceled:
+            if isinstance(error, REDError) and error.error_code == REDError.E_OPERATION_ABORTED:
+                self.upload_write_async_cleanup()
+
+            return
+
+        if error == None:
+            self.upload_write_async()
+        else:
+            self.report_error('Could not write to target file {0}: {1}', self.target_path, error)
+
+    def upload_write_async(self):
+        if self.canceled:
+            return
+
+        try:
+            data = self.source_file.read(1000*1000*10) # Read 10mb at a time
+        except Exception as e:
+            self.report_error('Could not read from source file {0}: {1}', self.source_path, e)
+            return
+
+        if len(data) == 0:
+            self.upload_write_async_done()
+            return
+
+        self.last_upload_size = 0
+
+        try:
+            self.target_file.write_async(data, self.upload_write_async_cb_result, self.upload_write_async_cb_status)
+        except (Error, REDError) as e:
+            self.report_error('Could not write to target file {0}: {1}', self.target_path, e)
+
+    def upload_write_async_cleanup(self):
+        self.target_file.release()
+        self.target_file = None
+
+        self.source_file.close()
+        self.source_file = None
+
+    def upload_write_async_done(self):
+        if self.canceled:
+            return
+
+        self.set_progress_value(self.source_stat.st_size, self.source_display_size + ' of ' + self.source_display_size)
+
+        self.upload_write_async_cleanup()
+        self.done()
+
+    def prepare(self, source_path):
+        self.source_path = source_path
+
+        try:
+            self.source_stat = os.stat(self.source_path)
+            self.source_file = open(self.source_path, 'rb')
+        except Exception as e:
+            self.report_error('Could not open source file {0}: {1}', self.source_path, e)
+            return False
+
+        self.source_display_size   = get_file_display_size(self.source_stat.st_size)
+        self.remaining_source_size = self.source_stat.st_size
+        self.current_progress      = 0
+        self.next_progress_update  = 0
+
+        self.set_progress_maximum(self.source_stat.st_size)
+        self.set_progress_value(0, get_file_display_size(0) + ' of ' + self.source_display_size)
+
+        return True
+
+    def start(self, target_path, target_file):
+        self.target_path = target_path
+        self.target_file = target_file
+
+        self.upload_write_async()
+
+    def report_error(self, message, *args):
+        pass
+
+    def set_progress_maximum(self, maximum):
+        pass
+
+    def set_progress_value(self, value, message):
+        pass
+
+    def done(self):
+        pass
+
+
+class TextFile(object):
+    ERROR_KIND_OPEN = 1
+    ERROR_KIND_READ = 2
+    ERROR_KIND_UTF8 = 3
+
+    # the content_callback is called with the content of the file decoded as UTF-8.
+    # the error_callback is called with an error kind and Exception object
+    @staticmethod
+    def read_async(session, name, content_callback, error_callback, max_read_length=1024*1024):
+        def cb_open(red_file):
+            def cb_read(result):
+                red_file.release()
+
+                if result.error != None:
+                    if error_callback != None:
+                        error_callback(TextFile.ERROR_KIND_READ, result.error)
+
+                    return
+
+                try:
+                    content = result.data.decode('utf-8')
+                except UnicodeDecodeError as e:
+                    if error_callback != None:
+                        error_callback(TextFile.ERROR_KIND_UTF8, e)
+
+                    return
+
+                if content_callback != None:
+                    content_callback(content)
+
+            red_file.read_async(max_read_length, cb_read)
+
+        def cb_open_error(error):
+            if error_callback != None:
+                error_callback(TextFile.ERROR_KIND_OPEN, error)
+
+        async_call(REDFile(session).open,
+                   (name, REDFile.FLAG_READ_ONLY | REDFile.FLAG_NON_BLOCKING, 0, 0, 0),
+                   cb_open, cb_open_error, report_exception=True)
+
+
 def get_key_from_value(dictionary, value):
     return dictionary.keys()[dictionary.values().index(value)]
 
 
 def set_current_combo_index_from_data(combo, data):
-    i = combo.findData(QVariant(data))
+    i = combo.findData(data)
 
     if i >= 0:
         combo.setCurrentIndex(i)
     else:
-        combo.addItem('<unknown>', QVariant(data))
+        combo.addItem('<unknown>', data)
         combo.setCurrentIndex(combo.count() - 1)
 
 
