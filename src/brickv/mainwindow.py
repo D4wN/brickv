@@ -33,6 +33,7 @@ from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
 from brickv.flashing import FlashingWindow
 from brickv.advanced import AdvancedWindow
+from brickv.logger_setup import LoggerWindow
 from brickv.async_call import async_start_thread, async_next_session
 from brickv.bindings.brick_master import BrickMaster
 from brickv.bindings.brick_red import BrickRED
@@ -92,6 +93,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_device_info = None
         self.flashing_window = None
         self.advanced_window = None
+        self.logger_window = None
         self.delayed_refresh_updates_timer = QTimer()
         self.delayed_refresh_updates_timer.timeout.connect(self.delayed_refresh_updates)
         self.delayed_refresh_updates_timer.setInterval(500)
@@ -105,6 +107,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_connect.clicked.connect(self.connect_clicked)
         self.button_flashing.clicked.connect(self.flashing_clicked)
         self.button_advanced.clicked.connect(self.advanced_clicked)
+        self.button_logger.clicked.connect(self.logger_clicked)
         self.plugin_manager = PluginManager()
 
         # host info
@@ -345,6 +348,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.update_advanced_window()
         self.advanced_window.show()
+        
+    def logger_clicked(self):
+        if self.logger_window is None:
+            self.logger_window = LoggerWindow(self)
+            
 
     def connect_clicked(self):
         if self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_DISCONNECTED:
