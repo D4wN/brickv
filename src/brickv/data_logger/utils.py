@@ -187,7 +187,7 @@ class Utilities(object):
                 ret = 0
             return ret
         except ValueError:
-            EventLogger.debug("DataLogger.parse_to_int(" + string + ") could not be parsed! Return 0 for the Timer.")
+            #EventLogger.debug("DataLogger.parse_to_int(" + string + ") could not be parsed! Return 0 for the Timer.")
             return 0
     
     parse_to_int = staticmethod(parse_to_int) 

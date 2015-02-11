@@ -124,7 +124,7 @@ class ConfigurationValidator(object):
                         " Hours: " +str(logging_time[1]) +
                         " Minutes: " +str(logging_time[2]) +
                         " Seconds: " +str(logging_time[3]))    
-        EventLogger.info("on "+ str(self._log_space_counter.lines_per_second)+" lines per second" )
+        EventLogger.info("About "+ str(self._log_space_counter.lines_per_second)+" lines per second." )
 
         if self._error_count != 0:
             # TODO: shutdown logger due to errors in the configuration file
