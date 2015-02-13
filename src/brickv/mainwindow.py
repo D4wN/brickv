@@ -352,7 +352,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def logger_clicked(self):
         if self.logger_window is None:
             self.logger_window = LoggerWindow(self)
-            
+        
+        self.logger_window.show()
 
     def connect_clicked(self):
         if self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_DISCONNECTED:
