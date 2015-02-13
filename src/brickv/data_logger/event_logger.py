@@ -136,11 +136,14 @@ class GUILogger(logging.Logger):
     _convert_level[logging.CRITICAL] = "CRITIAL"
     _convert_level[logging.ERROR] = "ERROR"
     
-    _output_format = "{asctime} - {levelname:8} - {message}s"
+    _output_format = "{asctime} - <b>{levelname:8}</b> - {message}"
+    _output_format_warning = "<font color=\"orange\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
+    _output_format_critical = "<font color=\"red\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
     
-    def __init(self, name, log_level):        
+    def __init__(self, name, log_level, logger_window = None):        
         logging.Logger.__init__(self, name, log_level)
         
+        self.logger_window_output = logger_window        
         
     def debug(self, msg):   
         self.log(logging.DEBUG, msg)
@@ -161,8 +164,17 @@ class GUILogger(logging.Logger):
         self.log(logging.ERROR, msg)
             
     def log(self, level, msg):
+        if self.logger_window_output == None:
+            return
+        
         if level >= self.level:        
             asctime = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
             levelname = GUILogger._convert_level[level]
-            # TODO: log to textfield
-            print GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg)      
+            
+            if level == logging.WARN or level == logging.WARNING:
+                self.logger_window_output(GUILogger._output_format_warning.format(asctime=asctime, levelname=levelname, message=msg))
+            elif level == logging.CRITICAL or level == logging.ERROR:
+                self.logger_window_output(GUILogger._output_format_critical.format(asctime=asctime, levelname=levelname, message=msg))
+            else:
+                self.logger_window_output(GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg))
+                
