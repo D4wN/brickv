@@ -47,8 +47,7 @@ def main(arguments_map):
     '''
     #initiate the EventLogger
     EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
-    #TODO: re-enable with gui
-    #EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL))
+    
     if EventLogger.EVENT_FILE_LOGGING:
         EventLogger.add_logger(FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
     

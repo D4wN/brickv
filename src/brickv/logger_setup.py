@@ -13,7 +13,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QMessageBox
 from brickv.data_logger.utils import Utilities
 from brickv.data_logger.loggable_devices import Identifier
-from brickv.data_logger.event_logger import EventLogger
+from brickv.data_logger.event_logger import EventLogger, GUILogger
 import codecs
 import json
 import collections
@@ -23,7 +23,9 @@ import os
 class LoggerWindow(QDialog,Ui_Logger):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
-                
+        
+        EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL, self.txt_console_output))
+        
         self.interval_string = "_interval"
         self.interval_show = "interval"
         self.exceptional_interval_string = "special_values"        
@@ -62,23 +64,26 @@ class LoggerWindow(QDialog,Ui_Logger):
         
         if fn == "":
             #cancel
+            EventLogger.debug("Cancelled load Config.")
             return
         
         try:
             with open(fn, 'w') as outfile:
                 json.dump(conf, outfile, sort_keys=True, indent=2)      
         except Exception as e1:
-            print("Load Config - Exception: " + str(e1) )
+            EventLogger.warning("Load Config - Exception: " + str(e1))
             QMessageBox.warning(self, 'Error', 'Could not save the Config-File! Look at the Log-File for further information.', QMessageBox.Ok)
             return
         
-        QMessageBox.information(self, 'Success', 'Config-File saved!', QMessageBox.Ok)            
+        QMessageBox.information(self, 'Success', 'Config-File saved!', QMessageBox.Ok)  
+        EventLogger.info("Config-File saved to: "+str(fn))          
 
     def btn_load_config_clicked(self):
         fn = QtGui.QFileDialog.getOpenFileName(self, "Open Config-File...", os.getcwd(), "JSON-Files (*.json)")
         
         if fn == "":
             #cancel
+            EventLogger.debug("Cancelled save Config.")
             return
         
         config_json = None
@@ -88,11 +93,12 @@ class LoggerWindow(QDialog,Ui_Logger):
                     config_json = json.load(content_file)
                     
                 except ValueError as e:    
-                    print("Load Config - Cant parse the configuration file: " + str(e) )
+                    EventLogger.warning("Load Config - Cant parse the configuration file: " + str(e) )
         except Exception as e1:
-            print("Load Config - Exception: " + str(e1) )
+            EventLogger.warning("Load Config - Exception: " + str(e1) )
             return
          
+        EventLogger.info("Loaded Config-File from: "+str(fn))  
         #TODO: @roland check the file with configuration_validator
          
         config_blueprint = GuiConfigHandler.load_devices(config_json)
@@ -110,8 +116,7 @@ class LoggerWindow(QDialog,Ui_Logger):
             self.path_to_config = fn
     
     def btn_console_clear_clicked(self):
-        QMessageBox.information(self, 'Info', 'btn_save_config was clicked - Does nothing at the moment!', QMessageBox.Ok)
-        #TODO: implement clearing feature
+        self.txt_console.clear()
     
     def cb_xively_changed(self):
         if self.checkbox_xively.isChecked():
@@ -131,12 +136,12 @@ class LoggerWindow(QDialog,Ui_Logger):
                             device_items = json.load(content_file, object_pairs_hook=collections.OrderedDict)
                             
                         except ValueError as e:    
-                            print("DeviceTree - Cant parse the configuration file: " + str(e) )
+                            EventLogger.warning("DeviceTree - Cant parse the configuration file: " + str(e) )
                 except Exception as e1:
-                    print("DeviceTree - Exception: " + str(e1) )
+                    EventLogger.warning("DeviceTree - Exception: " + str(e1) )
             
             if device_items == None:
-                print("DeviceTree - No Devices found? Check your "+os.getcwd()+"\\src\\brickv\\data_logger\\gui_config.json File. ")
+                EventLogger.warning("DeviceTree - No Devices found? Check your "+os.getcwd()+"\\src\\brickv\\data_logger\\gui_config.json File. ")
                 return
                
             #counts topLevelItems
@@ -204,12 +209,11 @@ class LoggerWindow(QDialog,Ui_Logger):
             EventLogger.debug("Divece Tree created.")
             
         except Exception as e:
-            print "DeviceTree - Exception while creating the Tree: " +str(e)
+            EventLogger.warning("DeviceTree - Exception while creating the Tree: " +str(e))
         
         self.tree_devices.sortItems ( 0, QtCore.Qt.AscendingOrder)
         self.tree_devices.setSortingEnabled(True)
         
-    
     def tree_on_change(self, item, column): 
         #check for wrong input number in interval
         if column == 1:
@@ -229,3 +233,6 @@ class LoggerWindow(QDialog,Ui_Logger):
             
         elif item.text(column) != "" or item.text(column) == None:
             item.setFlags(edit_flag)
+
+    def txt_console_output(self, msg):
+        self.txt_console.insertHtml(msg+"<br>")
