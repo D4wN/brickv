@@ -7,13 +7,15 @@ class GuiConfigHandler(object):
     
     def load_devices(device_json):
         GuiConfigHandler.clear_blueprint()
-        GuiConfigHandler.convert_simple_devices(device_json[Identifier.SIMPLE_DEVICE])
-        GuiConfigHandler.convert_complex_devices(device_json[Identifier.COMPLEX_DEVICE])
-        GuiConfigHandler.convert_special_devices(device_json[Identifier.SPECIAL_DEVICE])
+        GuiConfigHandler.simple_device_blueprints(device_json[Identifier.SIMPLE_DEVICE])
+        GuiConfigHandler.complex_device_blueprints(device_json[Identifier.COMPLEX_DEVICE])
+        GuiConfigHandler.special_device_blueprints(device_json[Identifier.SPECIAL_DEVICE])
+        
+        return GuiConfigHandler.device_blueprint
     
     def clear_blueprint():
-        GuiConfigHandler.conv = None
-        GuiConfigHandler.conv = {}
+        GuiConfigHandler.device_blueprint = None
+        GuiConfigHandler.device_blueprint = {}
     
     def complex_device_blueprints(complex_devices):
         #CLASS_NAME=dev[Identifier.DEVICE_NAME]   
@@ -26,17 +28,18 @@ class GuiConfigHandler(object):
             for var in dev[Identifier.DEVICE_VALUES]:
                 interval = dev[Identifier.DEVICE_VALUES][var][Identifier.DEVICE_VALUES_INTERVAL]
                 vars = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_NAME]
+                bools = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_BOOL] 
                                 
                 tmp[var] = {}
-                tmp[var]["_"+Identifier.DEVICE_VALUES_INTERVAL] = interval                
-                for v in vars:
-                    tmp[var][v] = dev[Identifier.DEVICE_VALUES][var][v]
-
+                tmp[var]["_"+Identifier.DEVICE_VALUES_INTERVAL] = interval      
+                 
+                for v in range(0,len(vars)):
+                    tmp[var][vars[v]] = bools[v]
                 
             #add UID
             tmp[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
 
-            GuiConfigHandler.conv[dev_name] = tmp  
+            GuiConfigHandler.device_blueprint[dev_name] = tmp  
     
     def simple_device_blueprints(simple_devices):
         for dev in simple_devices:
@@ -52,7 +55,7 @@ class GuiConfigHandler(object):
                 
             #add UID
             tmp[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
-            GuiConfigHandler.conv[dev_name] = tmp
+            GuiConfigHandler.device_blueprint[dev_name] = tmp
 
     def special_device_blueprints(special_devices):
         for dev in special_devices:
@@ -71,7 +74,7 @@ class GuiConfigHandler(object):
             #add UID
             tmp[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
             
-            GuiConfigHandler.conv[dev_name] = tmp
+            GuiConfigHandler.device_blueprint[dev_name] = tmp
 
     def create_config_file(tree_widget):
         config_root = {}
@@ -178,6 +181,7 @@ class GuiConfigHandler(object):
                 special_dev.append(dev)
             else:
                 EventLogger.debug("gui_config_handler: Unknown device?!: "+str(device_type))
+        
         
         config_root["GENERAL TODO"] = general_section
         config_root[Identifier.SIMPLE_DEVICE] = simple_dev

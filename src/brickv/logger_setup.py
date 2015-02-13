@@ -37,7 +37,9 @@ class LoggerWindow(QDialog,Ui_Logger):
         # Buttons 
         self.btn_start_logging.clicked.connect(self.btn_start_logging_clicked)
         self.btn_save_config.clicked.connect(self.btn_save_config_clicked)
+        self.btn_load_config.clicked.connect(self.btn_load_config_clicked)
         self.btn_set_logfile.clicked.connect(self.btn_set_logfile_clicked)
+        self.btn_console_clear.clicked.connect(self.btn_console_clear_clicked)
         
         self.checkbox_xively.stateChanged.connect(self.cb_xively_changed)
         
@@ -69,16 +71,51 @@ class LoggerWindow(QDialog,Ui_Logger):
             self.data_logger_thread = main.main(arguments_map)
             self.isLogging = True
         
-    def btn_save_config_clicked(self):
-        # TODO: Call Marvs save_config function
-        QMessageBox.information(self, 'Info', 'btn_save_config_clicked was clicked - name dialog?', QMessageBox.Ok)
+    def btn_save_config_clicked(self):        
+        conf = GuiConfigHandler.create_config_file(self.tree_devices)
+        fn = QtGui.QFileDialog.getSaveFileName(self, 'Save  Config-File', os.getcwd(), filter='*.json')
         
-        conf = GuiConfigHandler.create_config_file(self.tree_devices)    
-        try: 
-            with open(os.getcwd()+"\\src\\brickv\\data_logger\\created_config.json", "w") as outfile:
-                json.dump(conf, outfile, sort_keys=True, indent=2)
-        except Exception as e:    
-            print("Save config to File: " + str(e) )    
+        if fn == "":
+            #cancel
+            return
+        
+        try:
+            with open(fn, 'w') as outfile:
+                json.dump(conf, outfile, sort_keys=True, indent=2)      
+        except Exception as e1:
+            print("Load Config - Exception: " + str(e1) )
+            QMessageBox.warning(self, 'Error', 'Could not save the Config-File! Look at the Log-File for further information.', QMessageBox.Ok)
+            return
+        
+        QMessageBox.information(self, 'Success', 'Config-File saved!', QMessageBox.Ok)            
+
+    def btn_load_config_clicked(self):
+        fn = QtGui.QFileDialog.getOpenFileName(self, "Open Config-File...", os.getcwd(), "JSON-Files (*.json)")
+        
+        if fn == "":
+            #cancel
+            return
+        
+        config_json = None
+        try:
+            with codecs.open(fn, 'r', 'UTF-8') as content_file:
+                try:       
+                    config_json = json.load(content_file)
+                    
+                except ValueError as e:    
+                    print("Load Config - Cant parse the configuration file: " + str(e) )
+        except Exception as e1:
+            print("Load Config - Exception: " + str(e1) )
+            return
+         
+        #TODO: @roland check the file with configuration_validator
+         
+        config_blueprint = GuiConfigHandler.load_devices(config_json)
+        self.createTreeItems(config_blueprint, False)
+        
+        #TODO add other informations 
+        #general_section
+        #xively
 
     def btn_set_logfile_clicked(self):
         fn = QtGui.QFileDialog.getOpenFileName(self, "Open File...", os.getcwd(),
@@ -86,6 +123,10 @@ class LoggerWindow(QDialog,Ui_Logger):
         if fn:
             self.lineEdit.setText(fn)
             self.path_to_config = fn
+    
+    def btn_console_clear_clicked(self):
+        QMessageBox.information(self, 'Info', 'btn_save_config was clicked - Does nothing at the moment!', QMessageBox.Ok)
+        #TODO: implement clearing feature
     
     def cb_xively_changed(self):
         if self.checkbox_xively.isChecked():
@@ -161,7 +202,10 @@ class LoggerWindow(QDialog,Ui_Logger):
                         else:
                             item_2.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
                             tmp_item.setText(0, str(var_n)) 
-                            tmp_item.setCheckState (1, QtCore.Qt.Checked)
+                            if device_items[dev_item][variable][var_n]:
+                                tmp_item.setCheckState (1, QtCore.Qt.Checked)
+                            else:
+                                tmp_item.setCheckState (1, QtCore.Qt.Unchecked)
                             tmp_item.setText(1, "") 
                        
                         
