@@ -18,8 +18,6 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.setupUi(self)
         self.signal_initialization()
         
-        self.show()
-        
     def signal_initialization(self):
         # Buttons 
         self.btn_start_logging.clicked.connect(self.btn_start_logging_clicked)
