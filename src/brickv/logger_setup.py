@@ -7,7 +7,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from brickv.ui_logger import Ui_Logger
+from brickv.ui_logger_setup import Ui_Logger
 from PyQt4.QtGui import QDialog
 from PyQt4 import QtGui
 from PyQt4.QtGui import QMessageBox

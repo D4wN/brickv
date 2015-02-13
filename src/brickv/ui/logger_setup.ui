@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>Logger</class>
+ <widget class="QDialog" name="Logger">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>649</width>
-    <height>474</height>
+    <height>483</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -282,6 +282,34 @@
         <attribute name="title">
          <string>Devices</string>
         </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QTreeWidget" name="tree_devices">
+           <property name="uniformRowHeights">
+            <bool>true</bool>
+           </property>
+           <property name="sortingEnabled">
+            <bool>true</bool>
+           </property>
+           <attribute name="headerDefaultSectionSize">
+            <number>200</number>
+           </attribute>
+           <attribute name="headerMinimumSectionSize">
+            <number>100</number>
+           </attribute>
+           <column>
+            <property name="text">
+             <string>Device</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Value</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
        </widget>
        <widget class="QWidget" name="tab_xively">
         <attribute name="title">
