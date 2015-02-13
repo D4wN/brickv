@@ -30,7 +30,7 @@ from brickv.data_logger.configuration_validator import ConfigurationReader
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.job import CSVWriterJob, XivelyJob
 
-class DataLogger():
+class DataLogger(threading.Thread):
     '''
     This class represents the data logger and an object of this class is
     the actual instance of a logging process
@@ -124,7 +124,7 @@ class DataLogger():
             msg = "A critical error occur: " + str(exc)
             EventLogger.critical( msg)
             self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
-                
+                  
     def run(self):
         '''
         This function starts the actual logging process
@@ -155,7 +155,7 @@ class DataLogger():
         EventLogger.info("DataLogger is runninng...")
         # TODO Exit condition ?
     
-    def stop(self,error_code):
+    def stop(self):
         '''
         This function ends the logging process
         '''
@@ -180,6 +180,8 @@ class DataLogger():
         if self.ipcon != None and self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_CONNECTED:
             self.ipcon.disconnect()
         EventLogger.info("Connection closed successfully.")
+        
+        self.stopped = True
        
     def add_to_queue(self,csv):
         '''
