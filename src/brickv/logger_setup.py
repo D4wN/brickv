@@ -21,6 +21,7 @@ import collections
 from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
 
+
 class LoggerWindow(QDialog,Ui_Logger):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
@@ -193,20 +194,15 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.tree_devices.setSortingEnabled(False)
         
         try:
-            if view_all:
-                try:
-                    with codecs.open(os.getcwd()+"\\src\\brickv\\data_logger\\gui_config.json", 'r', 'UTF-8') as content_file:
-                        try:       
-                            device_items = json.load(content_file, object_pairs_hook=collections.OrderedDict)
-                            
-                        except ValueError as e:    
-                            EventLogger.warning("DeviceTree - Cant parse the configuration file: " + str(e) )
-                except Exception as e1:
-                    EventLogger.warning("DeviceTree - Exception: " + str(e1) )
-            
-            if device_items == None:
-                EventLogger.warning("DeviceTree - No Devices found? Check your "+os.getcwd()+"\\src\\brickv\\data_logger\\gui_config.json File. ")
-                return
+            try:
+                try:    
+                    from brickv.data_logger.gui_tree_config import GuiTreeBlueprint   
+                    device_items = json.loads(GuiTreeBlueprint.all_devices_json)
+                         
+                except ValueError as e:    
+                    EventLogger.warning("DeviceTree - Cant parse the Blueprint: " + str(e) )
+            except Exception as e1:
+                EventLogger.warning("DeviceTree - Exception: " + str(e1) )
                
             #counts topLevelItems
             tree_counter = 0;
