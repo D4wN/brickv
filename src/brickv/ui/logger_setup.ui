@@ -11,7 +11,16 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Data Logger</string>
+   <string notr="true">Data Logger</string>
+  </property>
+  <property name="toolTip">
+   <string notr="true"/>
+  </property>
+  <property name="statusTip">
+   <string notr="true"/>
+  </property>
+  <property name="whatsThis">
+   <string notr="true"/>
   </property>
   <layout class="QGridLayout" name="gridLayout_5">
    <item row="1" column="0">
@@ -92,6 +101,9 @@
         <number>0</number>
        </property>
        <widget class="QWidget" name="tab_setup">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <attribute name="title">
          <string>Setup</string>
         </attribute>
