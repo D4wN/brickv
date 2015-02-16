@@ -123,11 +123,14 @@ class LoggerWindow(QDialog,Ui_Logger):
         EventLogger.info("Loaded Config-File from: "+str(fn))  
         #TODO: @roland check the file with configuration_validator
          
+        #devices
         config_blueprint = GuiConfigHandler.load_devices(config_json)
         self.createTreeItems(config_blueprint, False)
+        #general_section
+        from brickv.data_logger.configuration_validator import ConfigurationReader
+        self.updateSetupTab(config_json[ConfigurationReader.GENERAL_SECTION])
         
         #TODO add other informations 
-        #general_section
         #xively
 
     def btn_set_logfile_clicked(self):
@@ -155,20 +158,42 @@ class LoggerWindow(QDialog,Ui_Logger):
         else:
             self.groupBox_xively.setEnabled(False)
     
+    def updateSetupTab(self, general_section):
+        from brickv.data_logger.configuration_validator import ConfigurationReader
+        
+        try:
+            #host            combo_host              setEditText(String)
+            self.combo_host.setEditText(general_section[ConfigurationReader.GENERAL_HOST])
+            #port            spinbox_port            setValue(int) 
+            self.spinbox_port.setValue(general_section[ConfigurationReader.GENERAL_PORT])
+            #file_count      spin_file_count         setValue(int) 
+            self.spin_file_count.setValue(general_section[ConfigurationReader.GENERAL_LOG_COUNT])
+            #file_size       spin_file_size          setValue(int/1024/1024)  (Byte -> MB)            
+            self.spin_file_size.setValue((general_section[ConfigurationReader.GENERAL_LOG_FILE_SIZE] / 1024.0 / 1024.0))
+            #path_to_file    line_path_to_file       setText(string)  
+            self.line_path_to_file.setText(general_section[ConfigurationReader.GENERAL_PATH_TO_FILE])
+            
+        except Exception as e:
+            EventLogger.critical("Could not read the General Section of the Config-File! -> " +str(e))
+            return
+        
+        
+    
     def createTreeItems(self, device_items, view_all=True):
         self.tree_devices.clear()
         self.tree_devices.setSortingEnabled(False)
         
         try:
-            try:
-                try:    
-                    from brickv.data_logger.gui_tree_config import GuiTreeBlueprint   
-                    device_items = json.loads(GuiTreeBlueprint.all_devices_json)
-                         
-                except ValueError as e:    
-                    EventLogger.warning("DeviceTree - Cant parse the Blueprint: " + str(e) )
-            except Exception as e1:
-                EventLogger.warning("DeviceTree - Exception: " + str(e1) )
+            if view_all:                
+                try:
+                    try:    
+                        from brickv.data_logger.gui_tree_config import GuiTreeBlueprint   
+                        device_items = json.loads(GuiTreeBlueprint.all_devices_json)
+                             
+                    except ValueError as e:    
+                        EventLogger.warning("DeviceTree - Cant parse the Blueprint: " + str(e) )
+                except Exception as e1:
+                    EventLogger.warning("DeviceTree - Exception: " + str(e1) )
                
             #counts topLevelItems
             tree_counter = 0;
