@@ -34,12 +34,20 @@ class ConfigurationReader(object):
     __NAME_KEY = "name"
     __UID_KEY = "uid"
 
-    def __init__(self, name):
-        self.filenName = name
+    def __init__(self, name=None, configuration=None):
         self._configuration = Configuration()
         
-        self._read_json_config_file()   
-           
+        if name is not None:
+            self.filenName = name
+            self._read_json_config_file()   
+            
+        if configuration is not None:
+            if isinstance(configuration, Configuration):
+                self._configuration = configuration
+            else:
+                self.map_dict_to_config(configuration)
+         
+        # TODO: exc handling  name and config NONE            
         
     def _read_json_config_file(self):
         with codecs.open(self.filenName, 'r', 'UTF-8') as content_file:
@@ -56,29 +64,22 @@ class ConfigurationReader(object):
             EventLogger.warning("json configuration file has no [" + ConfigurationReader.GENERAL_SECTION + "] section")
             # TODO: Should end the program due to missing the general section
             
-        
-        def prevent_key_error(key):
-            '''
-            This function returns an empty array if there is no such  
-            section in the configuration file
-            key -- section key
-            '''
-            result = [] 
-            try:
-                result = json_structure[key]
-            except KeyError:
-                EventLogger.warning("json configuration file has no [" + key + "] section")
-            return result
-        
-        self._configuration._xively = prevent_key_error(ConfigurationReader.XIVELY_SECTION)
-        self._configuration._simple_devices = prevent_key_error(loggable_devices.Identifier.SIMPLE_DEVICE)
-        self._configuration._complex_devices = prevent_key_error(loggable_devices.Identifier.COMPLEX_DEVICE)
-        self._configuration._special_devices = prevent_key_error(loggable_devices.Identifier.SPECIAL_DEVICE)
+        self._configuration._xively = prevent_key_error(json_structure,ConfigurationReader.XIVELY_SECTION)
+        self._configuration._simple_devices = prevent_key_error(json_structure,loggable_devices.Identifier.SIMPLE_DEVICE)
+        self._configuration._complex_devices = prevent_key_error(json_structure,loggable_devices.Identifier.COMPLEX_DEVICE)
+        self._configuration._special_devices = prevent_key_error(json_structure,loggable_devices.Identifier.SPECIAL_DEVICE)
               
         # validates the configuration              
         validator = ConfigurationValidator(self._configuration)
         validator.validate()
+    
+    def map_dict_to_config(self, json_dict):                        
+        self._configuration._general = prevent_key_error(json_dict, ConfigurationReader.GENERAL_SECTION)
+        self._configuration._xively = prevent_key_error(json_dict, ConfigurationReader.XIVELY_SECTION)
                 
+        self._configuration._simple_devices = prevent_key_error(json_dict,loggable_devices.Identifier.SIMPLE_DEVICE)
+        self._configuration._special_devices = prevent_key_error(json_dict,loggable_devices.Identifier.SPECIAL_DEVICE)
+        self._configuration._complex_devices = prevent_key_error(json_dict,loggable_devices.Identifier.COMPLEX_DEVICE)
 
 """"
 /*---------------------------------------------------------------------------
@@ -94,14 +95,14 @@ class ConfigurationValidator(object):
     '''
     def __init__(self, config_file):
         self.json_config = config_file
+   
         self._error_count = 0
-        
         file_count = self.json_config._general[ConfigurationReader.GENERAL_LOG_COUNT]
         file_size = self.json_config._general[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
          
         self._log_space_counter = LogSpaceCounter(file_count,file_size)
-
-
+                
+        
     def validate(self):
         '''
         This function performs the validation of the various sections of the json
@@ -528,4 +529,16 @@ class Configuration():
         self._complex_devices = []
         self._special_devices = []      
        
-        
+ 
+def prevent_key_error(dict_src , key): 
+    '''
+    This function returns an empty array if there is no such  
+    section in the configuration file
+    key -- section key
+    '''
+    result = [] 
+    try:
+        result = dict_src[key]
+    except KeyError:
+        EventLogger.warning("json configuration file has no [" + key + "] section")
+    return result          
