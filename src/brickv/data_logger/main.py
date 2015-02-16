@@ -9,6 +9,7 @@ from brickv.data_logger.data_logger import DataLogger
 import argparse                             # command line argument parser
 import sys
 import signal
+import threading
 
 # HashMap keywords to store results of the command line arguments 
 CONSOLE_CONFIG_FILE = "config_file"
@@ -21,7 +22,6 @@ def __exit_condition(data_logger):
     '''
     Waits for an 'exit' or 'quit' to stop logging and close the program
     '''
-    # TODO: Need another exit condition for the brickv GUI
     try:
         while True:
             raw_input("") # FIXME: is raw_input the right approach 
@@ -30,7 +30,7 @@ def __exit_condition(data_logger):
             
     except (KeyboardInterrupt,EOFError):
         sys.stdin.close();
-        data_logger.stop(0)
+        data_logger.stop()
      
 def signal_handler(signum, frame):
     '''
@@ -53,6 +53,7 @@ def main(arguments_map):
     
     
     configuration = None
+    guiStart = False
     try:
         if arguments_map.has_key(CONSOLE_CONFIG_FILE) and arguments_map[CONSOLE_CONFIG_FILE] != None:
             # was started via console
@@ -61,6 +62,7 @@ def main(arguments_map):
         elif arguments_map.has_key(GUI_CONFIG) and arguments_map[GUI_CONFIG] != None:
             # was started via gui
             configuration = arguments_map[GUI_CONFIG]
+            guiStart = True
             
             validator = ConfigurationValidator(configuration)
             validator.validate()
@@ -77,14 +79,17 @@ def main(arguments_map):
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
 
     try:
-        data_logger = DataLogger(configuration._configuration)
+        data_logger = DataLogger(configuration._configuration)       
         if data_logger.ipcon != None:
-            data_logger.run()   
-            __exit_condition(data_logger)
+            data_logger.run()
+            if not guiStart:
+                __exit_condition(data_logger)
         else:
             EventLogger.error("DataLogger did not start logging process! Please check for errors.")
     except Exception:
         pass
+    
+    return data_logger
     
 def command_line_start(argv,program_name):
     '''

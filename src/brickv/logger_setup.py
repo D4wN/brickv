@@ -29,10 +29,23 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.interval_string = "_interval"
         self.interval_show = "interval"
         self.exceptional_interval_string = "special_values"        
+        self.isLogging = False
+        self.data_logger_thread = None
         
         self.setupUi(self)
-        self.signal_initialization()
+        self.widget_initialization()
         
+        
+    def widget_initialization(self):
+        # Login data
+        # TODO: get login data out of mainwindow
+        self.combo_host.addItem("localhost")
+
+        # Treeview_Device
+        self.createTreeItems(None, True)
+        
+        self.signal_initialization()
+           
     def signal_initialization(self):
         # Buttons 
         self.btn_start_logging.clicked.connect(self.btn_start_logging_clicked)
@@ -46,17 +59,25 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.tree_devices.itemDoubleClicked.connect(self.tree_on_double_click)
         self.tree_devices.itemChanged.connect(self.tree_on_change)
         
-        #FIXME - find better init position
-        self.createTreeItems(None, True)
-
     def btn_start_logging_clicked(self):
-        # TODO: Start data logger here
-        from data_logger import main
-        
-        arguments_map = {}
-        arguments_map[main.CONSOLE_CONFIG_FILE] = self.path_to_config
-        arguments_map[main.CONSOLE_VALIDATE_ONLY] = False
-        main.main(arguments_map)
+        if self.isLogging:
+            self.btn_start_logging.setText("Start Logging")
+            self.data_logger_thread.stop()
+                
+            self.tab_devices.setEnabled(True)
+            self.isLogging = False
+
+        else:
+            self.btn_start_logging.setText("Stop Logging")
+            self.tab_devices.setEnabled(False)
+            self.tab_widget.setCurrentIndex = 3     #FIXME: dyn. console tabv
+            
+            from data_logger import main
+            arguments_map = {}
+            arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self.tree_devices)
+            
+            self.data_logger_thread = main.main(arguments_map)
+            self.isLogging = True
         
     def btn_save_config_clicked(self):        
         conf = GuiConfigHandler.create_config_file(self)
