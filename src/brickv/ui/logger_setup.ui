@@ -32,6 +32,9 @@
       </item>
       <item row="1" column="0">
        <widget class="QPushButton" name="btn_start_logging">
+        <property name="focusPolicy">
+         <enum>Qt::TabFocus</enum>
+        </property>
         <property name="text">
          <string>Start Logging</string>
         </property>
@@ -39,6 +42,9 @@
       </item>
       <item row="1" column="3">
        <widget class="QPushButton" name="btn_load_config">
+        <property name="focusPolicy">
+         <enum>Qt::TabFocus</enum>
+        </property>
         <property name="text">
          <string>Load Config</string>
         </property>
@@ -46,6 +52,9 @@
       </item>
       <item row="1" column="4">
        <widget class="QPushButton" name="btn_save_config">
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
         <property name="text">
          <string>Save Config</string>
         </property>
@@ -223,7 +232,7 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QSpinBox" name="spinBox">
+               <widget class="QSpinBox" name="spin_file_count">
                 <property name="minimum">
                  <number>1</number>
                 </property>
@@ -247,7 +256,7 @@
                </widget>
               </item>
               <item row="2" column="1">
-               <widget class="QSpinBox" name="spinBox_2"/>
+               <widget class="QSpinBox" name="spin_file_size"/>
               </item>
               <item row="3" column="1">
                <spacer name="verticalSpacer">
@@ -263,7 +272,13 @@
                </spacer>
               </item>
               <item row="0" column="1">
-               <widget class="QLineEdit" name="lineEdit">
+               <widget class="QLineEdit" name="line_path_to_file">
+                <property name="inputMask">
+                 <string notr="true"/>
+                </property>
+                <property name="text">
+                 <string notr="true"/>
+                </property>
                 <property name="readOnly">
                  <bool>true</bool>
                 </property>
@@ -271,6 +286,9 @@
               </item>
               <item row="0" column="2">
                <widget class="QPushButton" name="btn_set_logfile">
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
                 <property name="text">
                  <string>Choose File</string>
                 </property>
@@ -460,6 +478,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="btn_console_clear">
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
+           </property>
            <property name="text">
             <string>Clear Console</string>
            </property>
@@ -473,6 +494,26 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>tab_widget</tabstop>
+  <tabstop>combo_host</tabstop>
+  <tabstop>spinbox_port</tabstop>
+  <tabstop>line_path_to_file</tabstop>
+  <tabstop>btn_set_logfile</tabstop>
+  <tabstop>spin_file_count</tabstop>
+  <tabstop>spin_file_size</tabstop>
+  <tabstop>btn_start_logging</tabstop>
+  <tabstop>btn_load_config</tabstop>
+  <tabstop>btn_save_config</tabstop>
+  <tabstop>tree_devices</tabstop>
+  <tabstop>checkbox_xively</tabstop>
+  <tabstop>lineEdit_2</tabstop>
+  <tabstop>lineEdit_3</tabstop>
+  <tabstop>lineEdit_4</tabstop>
+  <tabstop>spinBox_3</tabstop>
+  <tabstop>txt_console</tabstop>
+  <tabstop>btn_console_clear</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

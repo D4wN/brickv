@@ -76,11 +76,12 @@ class GuiConfigHandler(object):
             
             GuiConfigHandler.device_blueprint[dev_name] = tmp
 
-    def create_config_file(tree_widget):
+    def create_config_file(Ui_Logger):
         config_root = {}
-        #TODO: add general section
-        general_section = {}
+        #add general section
+        general_section = GuiConfigHandler._create_general_section(Ui_Logger)
         #TODO: add xively
+        xively_section = {}
         
         #add simple devices
         simple_dev = []
@@ -90,6 +91,8 @@ class GuiConfigHandler(object):
         special_dev = []
         
                 
+        tree_widget = Ui_Logger.tree_devices
+            
         r0_max =  tree_widget.topLevelItemCount()    
         
         for r0 in range(0, r0_max):
@@ -182,14 +185,39 @@ class GuiConfigHandler(object):
             else:
                 EventLogger.debug("gui_config_handler: Unknown device?!: "+str(device_type))
         
+        from brickv.data_logger.configuration_validator import ConfigurationReader
         
-        config_root["GENERAL TODO"] = general_section
+        config_root[ConfigurationReader.GENERAL_SECTION] = general_section
+        config_root[ConfigurationReader.XIVELY_SECTION] = xively_section
         config_root[Identifier.SIMPLE_DEVICE] = simple_dev
         config_root[Identifier.COMPLEX_DEVICE] = complex_dev
         config_root[Identifier.SPECIAL_DEVICE] = special_dev
         
         return config_root
-    
+
+    def _create_general_section(Ui_Logger):
+        from brickv.data_logger.configuration_validator import ConfigurationReader
+        
+        general_section = {}
+        
+        #host            combo_host              currentText()   : QString
+        general_section[ConfigurationReader.GENERAL_HOST] = str(Ui_Logger.combo_host.currentText())
+        #port            spinbox_port            value()         : int
+        general_section[ConfigurationReader.GENERAL_PORT] = Ui_Logger.spinbox_port.value()
+        #file_count      spin_file_count         value()         : int
+        general_section[ConfigurationReader.GENERAL_LOG_COUNT] = Ui_Logger.spin_file_count.value()
+        #file_size       spin_file_size          value()         : int * 1024 * 1024! (MB -> Byte)
+        general_section[ConfigurationReader.GENERAL_LOG_FILE_SIZE] = (Ui_Logger.spin_file_size.value() * 1024 * 1024)        
+        #path_to_file    line_path_to_file       text()          : QString
+        path_to_file = str(Ui_Logger.line_path_to_file.text())
+        log_to_file = True
+        if path_to_file == None or path_to_file == "":
+            log_to_file = False
+        #log_to_file     (if path_to_file != None || "")
+        general_section[ConfigurationReader.GENERAL_PATH_TO_FILE] = path_to_file
+        general_section[ConfigurationReader.GENERAL_LOG_TO_FILE] = log_to_file
+        
+        return general_section
 
     load_devices = staticmethod(load_devices)
     clear_blueprint = staticmethod(clear_blueprint)
@@ -197,4 +225,5 @@ class GuiConfigHandler(object):
     simple_device_blueprints = staticmethod(simple_device_blueprints)
     special_device_blueprints = staticmethod(special_device_blueprints)
     create_config_file = staticmethod(create_config_file)
+    _create_general_section = staticmethod(_create_general_section)
     

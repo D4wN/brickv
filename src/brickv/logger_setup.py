@@ -74,7 +74,7 @@ class LoggerWindow(QDialog,Ui_Logger):
             
             from data_logger import main
             arguments_map = {}
-            arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self.tree_devices)
+            arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self)
             
             self.data_logger_thread = main.main(arguments_map)
             self.isLogging = True
@@ -130,11 +130,20 @@ class LoggerWindow(QDialog,Ui_Logger):
         #xively
 
     def btn_set_logfile_clicked(self):
-        fn = QtGui.QFileDialog.getOpenFileName(self, "Open File...", os.getcwd(),
-                "CSV-Files (*.csv);;Text-Files (*.txt);;JSON-Files (*.json)")
-        if fn:
-            self.lineEdit.setText(fn)
-            self.path_to_config = fn
+#         fn = QtGui.QFileDialog.getOpenFileName(self, "Open File...", os.getcwd(),
+#                 "CSV-Files (*.csv);;Text-Files (*.txt);;JSON-Files (*.json)")
+#         if fn:
+#             self.lineEdit.setText(fn)
+#             self.path_to_config = fn
+        fn = QtGui.QFileDialog.getSaveFileName(self, 'Choose Config Destination', os.getcwd(), "CSV-Files (*.csv);;Text-Files (*.txt)")
+        
+        if fn == "":
+            #cancel
+            EventLogger.debug("Cancelled select Config-File-Path.")
+            return
+        
+        self.line_path_to_file.setText(fn)
+        #self.path_to_config = fn
     
     def btn_console_clear_clicked(self):
         self.txt_console.clear()
