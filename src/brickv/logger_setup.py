@@ -79,7 +79,8 @@ class LoggerWindow(QDialog,Ui_Logger):
     def btn_start_logging_clicked(self):
         if self.isLogging:
             self.btn_start_logging.setText("Start Logging")
-            self.data_logger_thread.stop()
+            if  self.data_logger_thread is not None:
+                self.data_logger_thread.stop()
                 
             self.tab_devices.setEnabled(True)
             self.isLogging = False

@@ -78,6 +78,10 @@ def main(arguments_map):
         EventLogger.critical("The parsing of the configuration file failed :" + str(io_err) )
         sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
 
+    if configuration._configuration.isEmpty():
+        EventLogger.error("Configuration is empty")
+        return None
+        
     data_logger = DataLogger(configuration._configuration)       
     try:
         if data_logger.ipcon != None:

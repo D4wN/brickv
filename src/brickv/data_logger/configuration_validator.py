@@ -37,6 +37,10 @@ class ConfigurationReader(object):
     def __init__(self, name=None, configuration=None):
         self._configuration = Configuration()
         
+        if name is None and configuration is None:
+            EventLogger.critical("ConfigurationReader needs a path or a config")
+            return
+        
         if name is not None:
             self.filenName = name
             self._read_json_config_file()   
@@ -45,9 +49,8 @@ class ConfigurationReader(object):
             if isinstance(configuration, Configuration):
                 self._configuration = configuration
             else:
-                self.map_dict_to_config(configuration)
-         
-        # TODO: exc handling  name and config NONE            
+                self.map_dict_to_config(configuration)           
+        
         
     def _read_json_config_file(self):
         with codecs.open(self.filenName, 'r', 'UTF-8') as content_file:
@@ -528,7 +531,9 @@ class Configuration():
         self._simple_devices = []
         self._complex_devices = []
         self._special_devices = []      
-       
+      
+    def isEmpty(self):
+        return True if len(self._general) == 0 else False       
  
 def prevent_key_error(dict_src , key): 
     '''
