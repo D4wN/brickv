@@ -99,7 +99,10 @@
          <item>
           <layout class="QGridLayout" name="gridLayout">
            <item row="0" column="0">
-            <widget class="QGroupBox" name="groupBox">
+            <widget class="QGroupBox" name="group_general">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
              <property name="title">
               <string>General</string>
              </property>
@@ -212,7 +215,10 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QGroupBox" name="groupBox_2">
+            <widget class="QGroupBox" name="group_logfile">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
              <property name="title">
               <string>Logfile</string>
              </property>
