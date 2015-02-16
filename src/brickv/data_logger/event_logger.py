@@ -141,6 +141,11 @@ class GUILogger(logging.Logger):
     _output_format_critical = "<font color=\"red\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
     
     def __init__(self, name, log_level, logger_window = None):        
+        #fix for "not responding app"
+        #we cant use debug information atm!
+        if log_level == logging.DEBUG:
+            log_level = logging.INFO
+        
         logging.Logger.__init__(self, name, log_level)
         
         self.logger_window_output = logger_window        
