@@ -3,19 +3,23 @@ from brickv.data_logger.event_logger import EventLogger
 
 class GuiConfigHandler(object):
 
-    device_blueprint = {}
+    device_blueprint = []
     
     def load_devices(device_json):
-        GuiConfigHandler.clear_blueprint()
-        GuiConfigHandler.simple_device_blueprints(device_json[Identifier.SIMPLE_DEVICE])
-        GuiConfigHandler.complex_device_blueprints(device_json[Identifier.COMPLEX_DEVICE])
-        GuiConfigHandler.special_device_blueprints(device_json[Identifier.SPECIAL_DEVICE])
+        try:
+            GuiConfigHandler.clear_blueprint()
+            GuiConfigHandler.simple_device_blueprints(device_json[Identifier.SIMPLE_DEVICE])
+            GuiConfigHandler.complex_device_blueprints(device_json[Identifier.COMPLEX_DEVICE])
+            GuiConfigHandler.special_device_blueprints(device_json[Identifier.SPECIAL_DEVICE])
+            
+        except Exception as e:
+            EventLogger.warning("Devices could be fully loaded! -> "+ str(e))
         
         return GuiConfigHandler.device_blueprint
     
     def clear_blueprint():
         GuiConfigHandler.device_blueprint = None
-        GuiConfigHandler.device_blueprint = {}
+        GuiConfigHandler.device_blueprint = []
     
     def complex_device_blueprints(complex_devices):
         #CLASS_NAME=dev[Identifier.DEVICE_NAME]   
@@ -24,57 +28,61 @@ class GuiConfigHandler(object):
             dev_name = dev[Identifier.DEVICE_NAME]   
             #t1
             tmp = {}
+            tmp[dev_name] = {}
             
             for var in dev[Identifier.DEVICE_VALUES]:
                 interval = dev[Identifier.DEVICE_VALUES][var][Identifier.DEVICE_VALUES_INTERVAL]
                 vars = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_NAME]
                 bools = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_BOOL] 
                                 
-                tmp[var] = {}
-                tmp[var]["_"+Identifier.DEVICE_VALUES_INTERVAL] = interval      
+                tmp[dev_name][var] = {}
+                tmp[dev_name][var]["_"+Identifier.DEVICE_VALUES_INTERVAL] = interval      
                  
                 for v in range(0,len(vars)):
-                    tmp[var][vars[v]] = bools[v]
+                    tmp[dev_name][var][vars[v]] = bools[v]
                 
             #add UID
-            tmp[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
+            tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
 
-            GuiConfigHandler.device_blueprint[dev_name] = tmp  
+            GuiConfigHandler.device_blueprint.append(tmp) 
     
     def simple_device_blueprints(simple_devices):
         for dev in simple_devices:
             dev_name = dev[Identifier.DEVICE_NAME]   
             #t1
             tmp = {}
+            tmp[dev_name] = {}
             
             for var in dev[Identifier.DEVICE_VALUES]:
                 interval = dev[Identifier.DEVICE_VALUES][var][Identifier.DEVICE_VALUES_INTERVAL]
                 
-                tmp[var] = {}
-                tmp[var]["_"+Identifier.DEVICE_VALUES_INTERVAL] = interval  
+                tmp[dev_name][var] = {}
+                tmp[dev_name][var]["_"+Identifier.DEVICE_VALUES_INTERVAL] = interval  
                 
             #add UID
-            tmp[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
-            GuiConfigHandler.device_blueprint[dev_name] = tmp
+            tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
+            
+            GuiConfigHandler.device_blueprint.append(tmp)
 
     def special_device_blueprints(special_devices):
         for dev in special_devices:
             dev_name = dev[Identifier.DEVICE_NAME]   
             #t1
             tmp = {}
-            tmp[Identifier.SPECIAL_DEVICE_BOOL] = {}
-            tmp[Identifier.SPECIAL_DEVICE_VALUE] = {}
+            tmp[dev_name] = {}
+            tmp[dev_name][Identifier.SPECIAL_DEVICE_BOOL] = {}
+            tmp[dev_name][Identifier.SPECIAL_DEVICE_VALUE] = {}
             
             for var in dev[Identifier.SPECIAL_DEVICE_BOOL]:
-                tmp[Identifier.SPECIAL_DEVICE_BOOL][var] = dev[Identifier.SPECIAL_DEVICE_BOOL][var]
+                tmp[dev_name][Identifier.SPECIAL_DEVICE_BOOL][var] = dev[Identifier.SPECIAL_DEVICE_BOOL][var]
              
             for var in dev[Identifier.SPECIAL_DEVICE_VALUE]:
-                tmp[Identifier.SPECIAL_DEVICE_VALUE][var] = dev[Identifier.SPECIAL_DEVICE_VALUE][var]
+                tmp[dev_name][Identifier.SPECIAL_DEVICE_VALUE][var] = dev[Identifier.SPECIAL_DEVICE_VALUE][var]
               
             #add UID
-            tmp[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
+            tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
             
-            GuiConfigHandler.device_blueprint[dev_name] = tmp
+            GuiConfigHandler.device_blueprint.append(tmp)
 
     def create_config_file(Ui_Logger):
         config_root = {}
