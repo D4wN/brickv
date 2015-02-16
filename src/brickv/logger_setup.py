@@ -17,7 +17,7 @@ from brickv.data_logger.event_logger import EventLogger, GUILogger
 import codecs
 import json
 import collections
-from brickv.data_logger.gui_config_handler import GuiConfigHandler
+from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
 
 class LoggerWindow(QDialog,Ui_Logger):
@@ -59,7 +59,7 @@ class LoggerWindow(QDialog,Ui_Logger):
         main.main(arguments_map)
         
     def btn_save_config_clicked(self):        
-        conf = GuiConfigHandler.create_config_file(self.tree_devices)
+        conf = GuiConfigHandler.create_config_file(self)
         fn = QtGui.QFileDialog.getSaveFileName(self, 'Save  Config-File', os.getcwd(), filter='*.json')
         
         if fn == "":
@@ -206,7 +206,7 @@ class LoggerWindow(QDialog,Ui_Logger):
                     self.tree_devices.topLevelItem(tree_counter).setText(1,"Enter UID")
                              
                 tree_counter+=1
-            EventLogger.debug("Divece Tree created.")
+            EventLogger.debug("Device Tree created.")
             
         except Exception as e:
             EventLogger.warning("DeviceTree - Exception while creating the Tree: " +str(e))
