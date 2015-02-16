@@ -18,7 +18,7 @@ CONSOLE_VALIDATE_ONLY ="validate"
 CONSOLE_START = False
 CLOSE = False
 
-def __exit_condition(data_logger,guiStart):
+def __exit_condition(data_logger):
     '''
     Waits for an 'exit' or 'quit' to stop logging and close the program
     '''
@@ -82,8 +82,8 @@ def main(arguments_map):
         data_logger = DataLogger(configuration._configuration)       
         if data_logger.ipcon != None:
             data_logger.run()
-            if guiStart:
-                __exit_condition(data_logger,True) # FIXME: guiStart
+            if not guiStart:
+                __exit_condition(data_logger)
         else:
             EventLogger.error("DataLogger did not start logging process! Please check for errors.")
     except Exception:
