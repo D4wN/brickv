@@ -31,7 +31,6 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.interval_string = "_interval"
         self.interval_show = "interval"
         self.exceptional_interval_string = "special_values"        
-        self.isLogging = False
         self.data_logger_thread = None
         
         self.setupUi(self)
@@ -77,15 +76,18 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.host_index_changing = False
         
     def btn_start_logging_clicked(self):
-        if self.isLogging:
-            self.btn_start_logging.setText("Start Logging")
-            if  self.data_logger_thread is not None:
-                self.data_logger_thread.stop()
-                
+        if  self.data_logger_thread is not None and not self.data_logger_thread.stopped:
+            self.data_logger_thread.stop()
+            
+            while not self.data_logger_thread.stopped:
+                pass
+            
+            self.data_logger_thread = None
+                     
             self.tab_devices.setEnabled(True)
-            self.isLogging = False
-
-        else:
+            self.btn_start_logging.setText("Start Logging")
+            
+        elif self.data_logger_thread is None:
             self.btn_start_logging.setText("Stop Logging")
             self.tab_devices.setEnabled(False)
             self.tab_widget.setCurrentIndex(3)
@@ -95,8 +97,7 @@ class LoggerWindow(QDialog,Ui_Logger):
             arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self)
             
             self.data_logger_thread = main.main(arguments_map)
-            self.isLogging = True
-        
+
     def btn_save_config_clicked(self):        
         conf = GuiConfigHandler.create_config_file(self)
         fn = QtGui.QFileDialog.getSaveFileName(self, 'Save  Config-File', os.getcwd(), filter='*.json')

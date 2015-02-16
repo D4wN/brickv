@@ -72,6 +72,7 @@ class DataLogger(threading.Thread):
         self.default_file_path = "logged_data.csv"
         self.log_to_file = True
         self.log_to_xively = False
+        self.stopped = False
    
     
     def process_general_section(self,data):
@@ -129,6 +130,7 @@ class DataLogger(threading.Thread):
         '''
         This function starts the actual logging process
         '''    
+        self.stopped = False
         self.process_general_section(self._configuration._general)
         self.process_xively_section(self._configuration._xively)
 

@@ -163,6 +163,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         config.set_host_infos(self.host_infos)
 
         self.do_disconnect()
+        if (self.logger_window.data_logger_thread is not None) and (not self.logger_window.data_logger_thread.stopped):
+            self.logger_window.data_logger_thread.stop()
 
         if signl != None and frme != None:
             print("Received SIGINT or SIGTERM, shutting down.")
