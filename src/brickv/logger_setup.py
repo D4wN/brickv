@@ -328,4 +328,6 @@ class LoggerWindow(QDialog,Ui_Logger):
             item.setFlags(edit_flag)
 
     def txt_console_output(self, msg):
-        self.txt_console.insertHtml(msg+"<br>")
+        #self.txt_console.insertHtml(msg+"<br>")
+        self.txt_console.append(msg)
+        QtGui.QApplication.processEvents() #possible "not Responding" fix?
