@@ -8,6 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from brickv.ui_logger_setup import Ui_Logger
+from brickv import config
 from PyQt4.QtGui import QDialog
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QMessageBox
@@ -38,9 +39,8 @@ class LoggerWindow(QDialog,Ui_Logger):
         
     def widget_initialization(self):
         # Login data
-        # TODO: get login data out of mainwindow
-        self.combo_host.addItem("localhost")
-
+        self.host_info_initialization()
+        
         # Treeview_Device
         self.createTreeItems(None, True)
         
@@ -54,10 +54,26 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.btn_set_logfile.clicked.connect(self.btn_set_logfile_clicked)
         self.btn_console_clear.clicked.connect(self.btn_console_clear_clicked)
         
+        # login information
+        self.combo_host.currentIndexChanged.connect(self.host_index_changed)
+        self.spinbox_port.valueChanged.connect(self.port_changed)
+        
         self.checkbox_xively.stateChanged.connect(self.cb_xively_changed)
         
         self.tree_devices.itemDoubleClicked.connect(self.tree_on_double_click)
         self.tree_devices.itemChanged.connect(self.tree_on_change)
+   
+    def host_info_initialization(self):
+        self.host_infos = config.get_host_infos(config.HOST_INFO_COUNT)
+        self.host_index_changing = True
+
+        for host_info in self.host_infos:
+            self.combo_host.addItem(host_info.host)
+
+        self.last_host = None
+        self.combo_host.setCurrentIndex(0)
+        self.spinbox_port.setValue(self.host_infos[0].port)
+        self.host_index_changing = False
         
     def btn_start_logging_clicked(self):
         if self.isLogging:
@@ -139,6 +155,24 @@ class LoggerWindow(QDialog,Ui_Logger):
     def btn_console_clear_clicked(self):
         self.txt_console.clear()
     
+    def host_index_changed(self, i):
+        if i < 0:
+            return
+
+        self.host_index_changing = True
+        self.spinbox_port.setValue(self.host_infos[i].port)
+        self.host_index_changing = False
+
+    def port_changed(self, value):
+        if self.host_index_changing:
+            return
+
+        i = self.combo_host.currentIndex()
+        if i < 0:
+            return
+
+        self.host_infos[i].port = self.spinbox_port.value()
+            
     def cb_xively_changed(self):
         if self.checkbox_xively.isChecked():
             self.groupBox_xively.setEnabled(True)
