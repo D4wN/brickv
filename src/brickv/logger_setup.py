@@ -32,6 +32,7 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.interval_show = "interval"
         self.exceptional_interval_string = "special_values"        
         self.data_logger_thread = None
+        self.__isStopping = False
         
         self.setupUi(self)
         self.widget_initialization()
@@ -77,8 +78,10 @@ class LoggerWindow(QDialog,Ui_Logger):
         
     def btn_start_logging_clicked(self):
         if  self.data_logger_thread is not None and not self.data_logger_thread.stopped:
-            self.data_logger_thread.stop()
+            if self.__isStopping:
+                return
             
+            self.data_logger_thread.stop()
             while not self.data_logger_thread.stopped:
                 pass
             
@@ -88,6 +91,7 @@ class LoggerWindow(QDialog,Ui_Logger):
             self.tab_setup.setEnabled(True)   
             #self.tab_xively.setEnabled(True)#nyi
             self.btn_start_logging.setText("Start Logging")
+            self.__isStopping = False
             
         elif self.data_logger_thread is None:
             self.btn_start_logging.setText("Stop Logging")
