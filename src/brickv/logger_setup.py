@@ -9,7 +9,7 @@
 
 from brickv.ui_logger_setup import Ui_Logger
 from brickv import config
-from PyQt4.QtGui import QDialog
+from PyQt4.QtGui import QDialog, QApplication
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QMessageBox
 from brickv.data_logger.utils import Utilities
@@ -43,7 +43,7 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.host_info_initialization()
         
         # Treeview_Device
-        self.createTreeItems(None, True)
+        self.create_tree_items(None, True)
         
         self.signal_initialization()
            
@@ -88,7 +88,7 @@ class LoggerWindow(QDialog,Ui_Logger):
         else:
             self.btn_start_logging.setText("Stop Logging")
             self.tab_devices.setEnabled(False)
-            self.tab_widget.setCurrentIndex = 3     #FIXME: dyn. console tabv
+            self.tab_widget.setCurrentIndex(3)
             
             from data_logger import main
             arguments_map = {}
@@ -145,10 +145,10 @@ class LoggerWindow(QDialog,Ui_Logger):
         if config_blueprint == None:
             return
         
-        self.createTreeItems(config_blueprint, False)
+        self.create_tree_items(config_blueprint, False)
         #general_section
         from brickv.data_logger.configuration_validator import ConfigurationReader
-        self.updateSetupTab(config_json[ConfigurationReader.GENERAL_SECTION])
+        self.update_setup_tab(config_json[ConfigurationReader.GENERAL_SECTION])
         
         #TODO add other informations 
         #xively
@@ -196,7 +196,7 @@ class LoggerWindow(QDialog,Ui_Logger):
         else:
             self.groupBox_xively.setEnabled(False)
     
-    def updateSetupTab(self, general_section):
+    def update_setup_tab(self, general_section):
         from brickv.data_logger.configuration_validator import ConfigurationReader
         
         try:
@@ -217,7 +217,7 @@ class LoggerWindow(QDialog,Ui_Logger):
         
         
     
-    def createTreeItems(self, blueprint, view_all=True):
+    def create_tree_items(self, blueprint, view_all=True):
         self.tree_devices.clear()
         self.tree_devices.setSortingEnabled(False)
         
@@ -225,7 +225,7 @@ class LoggerWindow(QDialog,Ui_Logger):
             if view_all:                
                 try:
                     try:    
-                        from brickv.data_logger.gui_tree_config import GuiTreeBlueprint   
+                        from brickv.data_logger.gui_tree_config import GuiTreeBlueprint 
                         blueprint = json.loads(GuiTreeBlueprint.all_devices_json)
                              
                     except ValueError as e:    
