@@ -54,6 +54,8 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.btn_load_config.clicked.connect(self.btn_load_config_clicked)
         self.btn_set_logfile.clicked.connect(self.btn_set_logfile_clicked)
         self.btn_console_clear.clicked.connect(self.btn_console_clear_clicked)
+        self.btn_add_device.clicked.connect(self.btn_add_device_clicked)
+        self.btn_remove_device.clicked.connect(self.btn_remove_device_clicked)
         
         self.tab_widget.currentChanged.connect(self.tab_reset_warning)
         
@@ -180,6 +182,12 @@ class LoggerWindow(QDialog,Ui_Logger):
         
         self.line_path_to_file.setText(fn)
         #self.path_to_config = fn
+    
+    def btn_add_device(self):
+        print "ADD_DEVICE_CLICKED"
+    
+    def btn_remove_device(self):
+        print "REMOVE_DEVICE_CLICKED"
     
     def tab_reset_warning(self):
         if not self.tab_console_warning or self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
