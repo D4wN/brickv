@@ -38,6 +38,9 @@ class DataLogger(threading.Thread):
        
     # constructor and other functions
     def __init__(self,config):
+        '''
+        config -- brickv.data_logger.configuration_validator.Configuration
+        '''
         # Thread configuration
         self.jobs = []              # thread hashmap for all running threads/jobs
         self.job_exit_flag = False   # flag for stopping the thread
@@ -75,10 +78,12 @@ class DataLogger(threading.Thread):
         self.stopped = False
    
     
-    def process_general_section(self,data):
+    def process_general_section(self):
         '''
         Information out of the general section will be consumed here
-        '''         
+        '''      
+        data = self._configuration._general
+        
         self.log_to_file = data[ConfigurationReader.GENERAL_LOG_TO_FILE]
         self.default_file_path = data[ConfigurationReader.GENERAL_PATH_TO_FILE]
         self.max_file_size = data[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
@@ -87,10 +92,11 @@ class DataLogger(threading.Thread):
         EventLogger.debug("Logging output to file: " + str(self.log_to_file)) 
         EventLogger.debug("Output file path: " + str(self.default_file_path)) 
           
-    def process_xively_section(self,data):
+    def process_xively_section(self):
         '''
         Information out of the xively section will be consumed here
         '''
+        data = self._configuration._xively
         #TODO: write code for xively handling
         if len(data) == 0:
             return
@@ -102,9 +108,9 @@ class DataLogger(threading.Thread):
         # = data.get(XIVELY_API_KEY)
         #  = DataLogger.parse_to_int(data.get(XIVELY_UPDATE_RATE))
 
-    def initialize_loggable_devices(self,data):
+    def initialize_loggable_devices(self):
         '''
-        This function creates actual objects for each device out of the configuration
+        This function creates the actual objects for each device out of the configuration
         '''
         simple_devices = self._configuration._simple_devices
         complex_devices = self._configuration._complex_devices
@@ -128,13 +134,13 @@ class DataLogger(threading.Thread):
                   
     def run(self):
         '''
-        This function starts the actual logging process
+        This function starts the actual logging process in a new thread
         '''    
         self.stopped = False
-        self.process_general_section(self._configuration._general)
-        self.process_xively_section(self._configuration._xively)
+        self.process_general_section()
+        self.process_xively_section()
 
-        self.initialize_loggable_devices(self._configuration)
+        self.initialize_loggable_devices()
         
         """START-WRITE-THREAD"""       
         #create jobs
@@ -159,7 +165,8 @@ class DataLogger(threading.Thread):
     
     def stop(self):
         '''
-        This function ends the logging process
+        This function ends the logging process. self.stopped will be set to True if 
+        the data logger stops
         '''
         EventLogger.info("Closing Timers and Threads...")    
 
@@ -188,7 +195,8 @@ class DataLogger(threading.Thread):
     def add_to_queue(self,csv):
         '''
         Adds logged data to all queues which are registered in 'self.data_queue'
+        
+        csv --
         '''
         for q in self.data_queue.values():
-            #print "PUT -> " + str(csv)
             q.put(csv)
