@@ -375,9 +375,15 @@ class ConfigurationValidator(object):
         func_name = values[value][loggable_devices.Identifier.DEVICE_VALUES_NAME]
         class_object = device[loggable_devices.Identifier.DEVICE_CLASS]
         if not self._is_valid_function(class_object, func_name):
-                        EventLogger.critical(self._generate_error_message(device=device, \
+            tmp_msg = ""
+            if isinstance(class_object, basestring):
+                tmp_msg = "[" + str(class_object) + "] has no function \"" + func_name + "\""
+            else:
+                tmp_msg = "[" + class_object.__name__ + "] has no function \"" + func_name + "\""
+                
+            EventLogger.critical(self._generate_error_message(device=device, \
                                                                           tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_NAME], \
-                                                                          msg="[" + class_object.__name__ + "] has no function \"" + func_name + "\""))
+                                                                          msg=tmp_msg))
                         
     def _is_valid_string(self, string_value, min_length=0):
         '''
