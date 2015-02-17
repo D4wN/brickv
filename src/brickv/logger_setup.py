@@ -86,6 +86,8 @@ class LoggerWindow(QDialog,Ui_Logger):
         elif self.data_logger_thread is None:
             self.btn_start_logging.setText("Stop Logging")
             self.tab_devices.setEnabled(False)
+            self.tab_setup.setEnabled(False)
+            #self.tab_xively.setEnabled(False)#nyi
             self.tab_widget.setCurrentIndex(3)
             
             from data_logger import main
@@ -96,6 +98,8 @@ class LoggerWindow(QDialog,Ui_Logger):
             
     def reset_stop(self):
         self.tab_devices.setEnabled(True)
+        self.tab_setup.setEnabled(True)
+        #self.tab_xively.setEnabled(True)#nyi
         self.btn_start_logging.setText("Start Logging")
         
         self.data_logger_thread = None
