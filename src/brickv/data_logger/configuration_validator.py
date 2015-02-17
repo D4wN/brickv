@@ -34,22 +34,30 @@ class ConfigurationReader(object):
     __NAME_KEY = "name"
     __UID_KEY = "uid"
 
-    def __init__(self, name=None, configuration=None):
+    def __init__(self, pathToConfig=None, configuration=None):
+        '''
+        pathToConfig -- path to the json configuration file 
+        OR
+        configuration -- the configuration itself
+        '''
         self._configuration = Configuration()
         
-        if name is None and configuration is None:
+        if pathToConfig is None and configuration is None:
             EventLogger.critical("ConfigurationReader needs a path or a config")
             return
         
-        if name is not None:
-            self.filenName = name
+        if pathToConfig is not None:
+            self.filenName = pathToConfig
             self._read_json_config_file()   
             
         if configuration is not None:
             if isinstance(configuration, Configuration):
                 self._configuration = configuration
             else:
-                self.map_dict_to_config(configuration)           
+                self.map_dict_to_config(configuration)   
+                        
+        validator = ConfigurationValidator(self._configuration)
+        validator.validate()
         
         
     def _read_json_config_file(self):
@@ -71,10 +79,6 @@ class ConfigurationReader(object):
         self._configuration._simple_devices = prevent_key_error(json_structure,loggable_devices.Identifier.SIMPLE_DEVICE)
         self._configuration._complex_devices = prevent_key_error(json_structure,loggable_devices.Identifier.COMPLEX_DEVICE)
         self._configuration._special_devices = prevent_key_error(json_structure,loggable_devices.Identifier.SPECIAL_DEVICE)
-              
-        # validates the configuration              
-        validator = ConfigurationValidator(self._configuration)
-        validator.validate()
     
     def map_dict_to_config(self, json_dict):                        
         self._configuration._general = prevent_key_error(json_dict, ConfigurationReader.GENERAL_SECTION)
@@ -90,7 +94,7 @@ class ConfigurationReader(object):
  ---------------------------------------------------------------------------*/
 """
 import re
-from  brickv.data_logger.utils import Utilities
+from  brickv.data_logger.utils import Utilities, DataLoggerException
 
 class ConfigurationValidator(object):
     '''
@@ -131,8 +135,7 @@ class ConfigurationValidator(object):
         EventLogger.info("About "+ str(self._log_space_counter.lines_per_second)+" lines per second." )
 
         if self._error_count != 0:
-            # TODO: shutdown logger due to errors in the configuration file
-            pass
+            raise DataLoggerException(DataLoggerException.DL_FAILED_VALIDATION , "Validation process found some errors")
         
     def validate_general_section(self, global_section):
         

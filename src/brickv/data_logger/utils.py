@@ -36,6 +36,7 @@ class DataLoggerException(Exception):
     
     # Error Codes
     DL_MISSING_ARGUMENT = -1  # Missing Arguments in Config File
+    DL_FAILED_VALIDATION = -2 # Validation found errors in the configuration file 
     DL_CRITICAL_ERROR = -42  # For all other critical errors
     # TODO: More specific error codes from our DataLogger
     

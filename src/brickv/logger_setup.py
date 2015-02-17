@@ -20,7 +20,6 @@ import json
 import collections
 from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
-from threading import Timer
 
 
 
@@ -86,19 +85,20 @@ class LoggerWindow(QDialog,Ui_Logger):
             self.data_logger_thread.stop()
             self.reset_stop()
 
-        elif self.data_logger_thread is None:
-            self.btn_start_logging.setText("Stop Logging")
-            self.tab_devices.setEnabled(False)
-            self.tab_setup.setEnabled(False)
-            #self.tab_xively.setEnabled(False)#nyi
-            self.tab_widget.setCurrentIndex(3)
-            self.tab_reset_warning()
-            
+        elif self.data_logger_thread is None:           
             from data_logger import main
             arguments_map = {}
             arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self)
             
             self.data_logger_thread = main.main(arguments_map)
+            if self.data_logger_thread is not None:
+                self.btn_start_logging.setText("Stop Logging")
+                self.tab_devices.setEnabled(False)
+            	self.tab_setup.setEnabled(False)
+            	#self.tab_xively.setEnabled(False)#nyi
+                self.tab_widget.setCurrentIndex(3)
+				self.tab_reset_warning()
+                
             
     def reset_stop(self):
         self.tab_devices.setEnabled(True)
