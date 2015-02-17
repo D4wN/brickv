@@ -4,6 +4,8 @@ from brickv.data_logger.event_logger import EventLogger
 class GuiConfigHandler(object):
 
     device_blueprint = []
+    all_devices_blueprint = "[{\"Ambient Light\": {\"Analog Value\": {\"_interval\": 0}, \"Illuminance\": {\"_interval\": 0}}, \"Analog In\": {\"Analog Value\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}, \"Analog Out\": {\"Voltage\": {\"_interval\": 0}}, \"Barometer\": {\"Air Pressure\": {\"_interval\": 0}, \"Altitude\": {\"_interval\": 0}, \"Chip Temperature\": {\"_interval\": 0}}, \"Color\": {\"Color Temperature\": {\"Color Temperature\": true, \"_interval\": 0}, \"Illuminance\": {\"Illuminance\": true, \"_interval\": 0}, \"Rgbc\": {\"Blue\": true, \"Clear\": true, \"Green\": true, \"Red\": true, \"_interval\": 0}}, \"Current 12\": {\"Analog Value\": {\"_interval\": 0}, \"Current\": {\"_interval\": 0}}, \"Current 25\": {\"Analog Value\": {\"_interval\": 0}, \"Current\": {\"_interval\": 0}}, \"DC Brick\": {\"Acceleration\": {\"_interval\": 0}, \"Chip Temperature\": {\"_interval\": 0}, \"Current Consumption\": {\"_interval\": 0}, \"Current Velocity\": {\"_interval\": 0}, \"External Input Voltage\": {\"_interval\": 0}, \"Stack Input Voltage\": {\"_interval\": 0}, \"Velocity\": {\"_interval\": 0}}, \"Distance IR\": {\"Analog Value\": {\"_interval\": 0}, \"Distance\": {\"_interval\": 0}}, \"Distance US\": {\"Distance\": {\"_interval\": 0}}, \"Dual Button\": {\"Buttons\": {\"Button_L\": true, \"Button_R\": true, \"_interval\": 0}, \"Leds\": {\"Led_L\": true, \"Led_R\": true, \"_interval\": 0}}, \"Dual Relay\": {\"State\": {\"Relay1\": true, \"Relay2\": true, \"_interval\": 0}}, \"GPS\": {\"special_bool\": {\"Altitude Value\": true, \"Course\": true, \"Date\": true, \"Epe\": true, \"Ew\": true, \"Fix Status\": true, \"Geoidal Seperation\": true, \"Hdop\": true, \"Latitude\": true, \"Longitude\": true, \"Ns\": true, \"Pdop\": true, \"Satellites Used\": true, \"Satellites View\": true, \"Speed\": true, \"Time\": true, \"Vdop\": true}, \"special_values\": {\"Altitude\": 0, \"Coordinates\": 0, \"Date Time\": 0, \"Motion\": 0}}, \"Hall Effect\": {\"Value\": {\"_interval\": 0}}, \"Humidity\": {\"Analog Value\": {\"_interval\": 0}, \"Humidity\": {\"_interval\": 0}}, \"IMU Brick\": {\"Acceleration\": {\"X\": true, \"Y\": true, \"Z\": true, \"_interval\": 0}, \"Angular Velocity\": {\"X\": true, \"Y\": true, \"Z\": true, \"_interval\": 0}, \"Chip Temperature\": {\"Chip Temperature\": true, \"_interval\": 0}, \"IMU Temperature\": {\"IMU Temperature\": true, \"_interval\": 0}, \"Leds\": {\"Leds\": true, \"_interval\": 0}, \"Magnetic Field\": {\"X\": true, \"Y\": true, \"Z\": true, \"_interval\": 0}, \"Orientation\": {\"Pitch\": true, \"Roll\": true, \"Yaw\": true, \"_interval\": 0}, \"Quaternion\": {\"W\": true, \"X\": true, \"Y\": true, \"Z\": true, \"_interval\": 0}}, \"IO-16\": {\"Port A\": {\"_interval\": 0}, \"Port B\": {\"_interval\": 0}}, \"IO-4\": {\"Value\": {\"_interval\": 0}}, \"Industrial Dual 0 20 mA\": {\"Sensor 0\": {\"_interval\": 0}, \"Sensor 1\": {\"_interval\": 0}}, \"Joystick\": {\"Analog Value\": {\"Analog X\": true, \"Analog Y\": true, \"_interval\": 0}, \"Position\": {\"Position X\": true, \"Position Y\": true, \"_interval\": 0}, \"Pressed\": {\"Pressed\": true, \"_interval\": 0}}, \"LED Strip\": {\"Supply Voltage\": {\"_interval\": 0}}, \"Line\": {\"Reflectivity\": {\"_interval\": 0}}, \"Linear Poti\": {\"Analog Value\": {\"_interval\": 0}, \"Position\": {\"_interval\": 0}}, \"Moisture\": {\"Moisture Value\": {\"_interval\": 0}}, \"Motion Detector\": {\"Motion Detected\": {\"_interval\": 0}}, \"Multi Touch\": {\"Touch State\": {\"_interval\": 0}}, \"PTC\": {\"Resistance\": {\"_interval\": 0}, \"Temperature\": {\"_interval\": 0}}, \"Rotary Encoder\": {\"Count\": {\"_interval\": 0}, \"Pressed\": {\"_interval\": 0}}, \"Rotary Poti\": {\"Analog Value\": {\"_interval\": 0}, \"Position\": {\"_interval\": 0}}, \"Segment Display 4x7\": {\"special_bool\": {\"Brightness\": true, \"Colon\": true, \"Segment 1\": true, \"Segment 2\": true, \"Segment 3\": true, \"Segment 4\": true}, \"special_values\": {\"Counter Value\": 0, \"Segments\": 0}}, \"Solid State Relay\": {\"State\": {\"_interval\": 0}}, \"Sound Intensity\": {\"Intensity\": {\"_interval\": 0}}, \"Stepper Brick\": {\"Current Consumption\": {\"_interval\": 0}, \"Current Position\": {\"_interval\": 0}, \"Current Velocity\": {\"_interval\": 0}, \"External Input Voltage\": {\"_interval\": 0}, \"Remaining Steps\": {\"_interval\": 0}, \"Stack Input Voltage\": {\"_interval\": 0}, \"Steps\": {\"_interval\": 0}, \"Sync Rect\": {\"_interval\": 0}}, \"Temperature\": {\"Temperature\": {\"_interval\": 0}}, \"Temperature IR\": {\"Ambient Temperature\": {\"_interval\": 0}, \"Object Temperature\": {\"_interval\": 0}}, \"Tilt\": {\"State\": {\"_interval\": 0}}, \"Voltage\": {\"Analog Value\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}, \"Voltage Current\": {\"Current\": {\"_interval\": 0}, \"Power\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}}]"
+
     
     def load_devices(device_json):
         try:
@@ -87,7 +89,7 @@ class GuiConfigHandler(object):
     def create_config_file(Ui_Logger):
         config_root = {}
         #add general section
-        general_section = GuiConfigHandler._create_general_section(Ui_Logger)
+        general_section = GuiConfigHandler.create_general_section(Ui_Logger)
         #TODO: add xively
         xively_section = {}
         
@@ -203,7 +205,7 @@ class GuiConfigHandler(object):
         
         return config_root
 
-    def _create_general_section(Ui_Logger):
+    def create_general_section(Ui_Logger):
         from brickv.data_logger.configuration_validator import ConfigurationReader
         
         general_section = {}
@@ -233,5 +235,5 @@ class GuiConfigHandler(object):
     simple_device_blueprints = staticmethod(simple_device_blueprints)
     special_device_blueprints = staticmethod(special_device_blueprints)
     create_config_file = staticmethod(create_config_file)
-    _create_general_section = staticmethod(_create_general_section)
+    create_general_section = staticmethod(create_general_section)
     
