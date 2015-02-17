@@ -29,6 +29,7 @@ import brickv.data_logger.utils as utils
 from brickv.data_logger.configuration_validator import ConfigurationReader
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.job import CSVWriterJob, XivelyJob
+from brickv.data_logger.utils import DataLoggerException
 
 class DataLogger(threading.Thread):
     '''
@@ -59,9 +60,8 @@ class DataLogger(threading.Thread):
             self.ipcon.connect(self.host, self.port)  # Connect to brickd
         except Exception as e:
             EventLogger.critical("A critical error occur: " + str(e))
-            #self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
             self.ipcon = None
-            return #None #TODO: better way for no connection return?
+            raise DataLoggerException(DataLoggerException.DL_CRITICAL_ERROR , "A critical error occur: " + str(e) )
         
         # Don't use device before ipcon is connected
         EventLogger.info("Connection to " + self.host + ":" + str(self.port) + " established.")
@@ -127,7 +127,7 @@ class DataLogger(threading.Thread):
             for i in range(0, len(special_devices)):
                 (special_devices[i][loggable_devices.Identifier.DEVICE_CLASS](special_devices[i], self)).start_timer()
 
-        except Exception as exc: # FIXME: Catch-All just for debugging purpose 
+        except Exception as exc:
             msg = "A critical error occur: " + str(exc)
             EventLogger.critical( msg)
             self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)

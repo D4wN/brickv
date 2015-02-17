@@ -83,8 +83,9 @@ def main(arguments_map):
         EventLogger.error("Configuration is empty")
         return None
         
-    data_logger = DataLogger(configuration._configuration)       
+    data_logger = None       
     try:
+        data_logger = DataLogger(configuration._configuration) 
         if data_logger.ipcon != None:
             data_logger.run()
             if not guiStart:
