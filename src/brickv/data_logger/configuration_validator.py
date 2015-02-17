@@ -132,7 +132,7 @@ class ConfigurationValidator(object):
                         " Hours: " +str(logging_time[1]) +
                         " Minutes: " +str(logging_time[2]) +
                         " Seconds: " +str(logging_time[3]))    
-        EventLogger.info("About "+ str(self._log_space_counter.lines_per_second)+" lines per second." )
+        EventLogger.info("About "+ str(int(self._log_space_counter.lines_per_second + 0.5))+" lines per second." )
 
         if self._error_count != 0:
             raise DataLoggerException(DataLoggerException.DL_FAILED_VALIDATION , "Validation process found some errors")
