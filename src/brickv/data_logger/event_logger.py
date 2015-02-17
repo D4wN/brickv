@@ -5,6 +5,7 @@
 """    
 import logging;
 import datetime;
+import os
 
 class EventLogger():
     
@@ -178,8 +179,19 @@ class GUILogger(logging.Logger):
             
             if level == logging.WARN or level == logging.WARNING:
                 self.logger_window_output.txt_console_output(GUILogger._output_format_warning.format(asctime=asctime, levelname=levelname, message=msg))
+                self._highlight_tab()
             elif level == logging.CRITICAL or level == logging.ERROR:
                 self.logger_window_output.txt_console_output(GUILogger._output_format_critical.format(asctime=asctime, levelname=levelname, message=msg))
+                self._highlight_tab()
             else:
                 self.logger_window_output.txt_console_output(GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg))
                 
+    def _highlight_tab(self):
+        if not self.logger_window_output.tab_console_warning and self.logger_window_output.tab_widget.currentWidget().objectName() != self.logger_window_output.tab_console.objectName():
+            self.logger_window_output.tab_console_warning = True        
+            from brickv.utils import get_resources_path
+            from PyQt4.QtGui import QColor
+            self.logger_window_output.tab_set(self.logger_window_output.tab_widget.indexOf(self.logger_window_output.tab_console), QColor(255,0,0), os.path.join(get_resources_path(), "dialog-warning.png"))            
+            
+        
+            

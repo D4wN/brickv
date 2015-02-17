@@ -98,7 +98,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab_setup">
         <property name="enabled">
@@ -340,8 +340,22 @@
         <attribute name="title">
          <string>Devices</string>
         </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
+        <layout class="QGridLayout" name="gridLayout_8">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="btn_add_device">
+           <property name="text">
+            <string>Add Device</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="btn_remove_device">
+           <property name="text">
+            <string>Remove Device</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
           <widget class="QTreeWidget" name="tree_devices">
            <property name="uniformRowHeights">
             <bool>true</bool>
