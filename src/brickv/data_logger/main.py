@@ -61,13 +61,12 @@ def main(arguments_map):
          
         # was started via gui   
         elif arguments_map.has_key(GUI_CONFIG) and arguments_map[GUI_CONFIG] != None:
-            configuration = ConfigurationReader(configuration=arguments_map[GUI_CONFIG])
             guiStart = True
+            configuration = ConfigurationReader(configuration=arguments_map[GUI_CONFIG])
 
         # no configuration file was given
         else:
             raise DataLoggerException("Can not run data logger without a configuration.")
-            return
             
         if arguments_map.has_key(CONSOLE_VALIDATE_ONLY) and arguments_map[CONSOLE_VALIDATE_ONLY]:
             return
