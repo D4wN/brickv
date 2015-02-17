@@ -41,9 +41,10 @@ class ConfigurationReader(object):
         configuration -- the configuration itself
         '''
         self._configuration = Configuration()
+        self._readConfigErr = 0 # Errors which occure during readin
         
         if pathToConfig is None and configuration is None:
-            EventLogger.critical("ConfigurationReader needs a path or a config")
+            EventLogger.critical("ConfigurationReader needs a path to the configuration file or an actual configuration")
             return
         
         if pathToConfig is not None:
@@ -57,6 +58,7 @@ class ConfigurationReader(object):
                 self.map_dict_to_config(configuration)   
                         
         validator = ConfigurationValidator(self._configuration)
+        validator._error_count += self._readConfigErr
         validator.validate()
         
         
@@ -72,8 +74,8 @@ class ConfigurationReader(object):
         try:
             self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
         except KeyError:
-            EventLogger.warning("json configuration file has no [" + ConfigurationReader.GENERAL_SECTION + "] section")
-            # TODO: Should end the program due to missing the general section
+            EventLogger.critical("json configuration file has no [" + ConfigurationReader.GENERAL_SECTION + "] section")
+            self._readConfigErr += 1
             
         self._configuration._xively = prevent_key_error(json_structure,ConfigurationReader.XIVELY_SECTION)
         self._configuration._simple_devices = prevent_key_error(json_structure,loggable_devices.Identifier.SIMPLE_DEVICE)

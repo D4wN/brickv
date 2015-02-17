@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'logger.ui'
-#
-# Created: Tue Feb 10 14:45:20 2015
-#      by: PyQt4 UI code generator 4.11.1
-#
-# WARNING! All changes made in this file will be lost!
-
 from brickv.ui_logger_setup import Ui_Logger
 from brickv import config
 from PyQt4.QtGui import QDialog, QApplication
@@ -20,8 +13,6 @@ import json
 import collections
 from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
-
-
 
 class LoggerWindow(QDialog,Ui_Logger):
     def __init__(self, parent):

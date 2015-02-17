@@ -174,7 +174,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def exit_logger(self):
         exitBrickv = True
-        if (self.logger_window.data_logger_thread is not None) and (not self.logger_window.data_logger_thread.stopped):
+        if (self.logger_window is not None) and (self.logger_window.data_logger_thread is not None) and (not self.logger_window.data_logger_thread.stopped):
             quit_msg = "The Data Logger is running. Are you sure you want to exit the program?"
             reply = QMessageBox.question(self, 'Message', 
                      quit_msg, QMessageBox.Yes, QMessageBox.No)
