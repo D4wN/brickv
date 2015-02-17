@@ -187,7 +187,7 @@ class LoggerWindow(QDialog,Ui_Logger):
         
         self.tab_console_warning = False        
         from PyQt4.QtGui import QColor
-        self.tab_set(3, QColor(0,0,0), None)
+        self.tab_set(self.tab_widget.indexOf(self.tab_console), QColor(0,0,0), None)
     
     def tab_set(self, tab_index , color, icon = None):        
         from PyQt4.QtGui import QIcon
@@ -253,9 +253,8 @@ class LoggerWindow(QDialog,Ui_Logger):
         try:
             if view_all:                
                 try:
-                    try:    
-                        from brickv.data_logger.gui_tree_config import GuiTreeBlueprint 
-                        blueprint = json.loads(GuiTreeBlueprint.all_devices_json)
+                    try:
+                        blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
                              
                     except ValueError as e:    
                         EventLogger.warning("DeviceTree - Cant parse the Blueprint: " + str(e) )
@@ -360,9 +359,3 @@ class LoggerWindow(QDialog,Ui_Logger):
         #self.txt_console.insertHtml(msg+"<br>")
         self.txt_console.append(msg)
         QtGui.QApplication.processEvents() #possible "not Responding" fix?
-        
-        if not self.tab_console_warning and self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
-            self.tab_console_warning = True        
-            from brickv.utils import get_resources_path
-            from PyQt4.QtGui import QColor
-            self.tab_set(3, QColor(255,0,0), os.path.join(get_resources_path(), "dialog-warning.png"))
