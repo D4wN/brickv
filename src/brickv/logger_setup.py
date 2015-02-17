@@ -13,6 +13,7 @@ import json
 import collections
 from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
+from brickv.device_dialog import LoggerDeviceDialog
 
 class LoggerWindow(QDialog,Ui_Logger):
     def __init__(self, parent):
@@ -25,6 +26,8 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.exceptional_interval_string = "special_values"        
         self.data_logger_thread = None
         self.tab_console_warning = False
+        
+        self.logger_device_dialog = None
         
         self.setupUi(self)
         self.widget_initialization()        
@@ -174,11 +177,17 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.line_path_to_file.setText(fn)
         #self.path_to_config = fn
     
-    def btn_add_device(self):
-        print "ADD_DEVICE_CLICKED"
+    def btn_add_device_clicked(self):
+        if self.logger_device_dialog is None:
+            self.logger_device_dialog = LoggerDeviceDialog(self, None, True)#TODO: correct parameters!
+        
+        self.logger_device_dialog.show()
     
-    def btn_remove_device(self):
-        print "REMOVE_DEVICE_CLICKED"
+    def btn_remove_device_clicked(self):
+        if self.logger_device_dialog is None:
+            self.logger_device_dialog = LoggerDeviceDialog(self, None, False)#TODO: correct parameters!
+        
+        self.logger_device_dialog.show()
     
     def tab_reset_warning(self):
         if not self.tab_console_warning or self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
@@ -243,8 +252,6 @@ class LoggerWindow(QDialog,Ui_Logger):
             EventLogger.critical("Could not read the General Section of the Config-File! -> " +str(e))
             return
         
-        
-    
     def create_tree_items(self, blueprint, view_all=True):
         self.tree_devices.clear()
         self.tree_devices.setSortingEnabled(False)

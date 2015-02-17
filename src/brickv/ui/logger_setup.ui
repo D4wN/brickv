@@ -98,7 +98,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_setup">
         <property name="enabled">
@@ -341,6 +341,13 @@
          <string>Devices</string>
         </attribute>
         <layout class="QGridLayout" name="gridLayout_8">
+         <item row="0" column="2">
+          <widget class="QPushButton" name="btn_remove_device">
+           <property name="text">
+            <string>Remove Device</string>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="0">
           <widget class="QPushButton" name="btn_add_device">
            <property name="text">
@@ -348,14 +355,20 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="btn_remove_device">
-           <property name="text">
-            <string>Remove Device</string>
+         <item row="0" column="3">
+          <spacer name="horizontalSpacer_7">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
-          </widget>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
-         <item row="1" column="0" colspan="2">
+         <item row="1" column="0" colspan="4">
           <widget class="QTreeWidget" name="tree_devices">
            <property name="uniformRowHeights">
             <bool>true</bool>
