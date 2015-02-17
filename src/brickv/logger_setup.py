@@ -23,20 +23,21 @@ import os
 from threading import Timer
 
 
+
 class LoggerWindow(QDialog,Ui_Logger):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
         
-        EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL, self.txt_console_output))
+        EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL, self))
         
         self.interval_string = "_interval"
         self.interval_show = "interval"
         self.exceptional_interval_string = "special_values"        
         self.data_logger_thread = None
+        self.tab_console_warning = False
         
         self.setupUi(self)
-        self.widget_initialization()
-        
+        self.widget_initialization()        
         
     def widget_initialization(self):
         # Login data
@@ -54,6 +55,8 @@ class LoggerWindow(QDialog,Ui_Logger):
         self.btn_load_config.clicked.connect(self.btn_load_config_clicked)
         self.btn_set_logfile.clicked.connect(self.btn_set_logfile_clicked)
         self.btn_console_clear.clicked.connect(self.btn_console_clear_clicked)
+        
+        self.tab_widget.currentChanged.connect(self.tab_reset_warning)
         
         # login information
         self.combo_host.currentIndexChanged.connect(self.host_index_changed)
@@ -89,6 +92,7 @@ class LoggerWindow(QDialog,Ui_Logger):
             self.tab_setup.setEnabled(False)
             #self.tab_xively.setEnabled(False)#nyi
             self.tab_widget.setCurrentIndex(3)
+            self.tab_reset_warning()
             
             from data_logger import main
             arguments_map = {}
@@ -177,6 +181,23 @@ class LoggerWindow(QDialog,Ui_Logger):
         
         self.line_path_to_file.setText(fn)
         #self.path_to_config = fn
+    
+    def tab_reset_warning(self):
+        if not self.tab_console_warning or self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
+            return
+        
+        self.tab_console_warning = False        
+        from PyQt4.QtGui import QColor
+        self.tab_set(3, QColor(0,0,0), None)
+    
+    def tab_set(self, tab_index , color, icon = None):        
+        from PyQt4.QtGui import QIcon
+        
+        self.tab_widget.tabBar().setTabTextColor(tab_index, color)        
+        if icon != None:
+            self.tab_widget.setTabIcon(tab_index, QIcon(icon))
+        else:
+            self.tab_widget.setTabIcon(tab_index, QIcon())        
     
     def btn_console_clear_clicked(self):
         self.txt_console.clear()
@@ -340,3 +361,9 @@ class LoggerWindow(QDialog,Ui_Logger):
         #self.txt_console.insertHtml(msg+"<br>")
         self.txt_console.append(msg)
         QtGui.QApplication.processEvents() #possible "not Responding" fix?
+        
+        if not self.tab_console_warning and self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
+            self.tab_console_warning = True        
+            from brickv.utils import get_resources_path
+            from PyQt4.QtGui import QColor
+            self.tab_set(3, QColor(255,0,0), os.path.join(get_resources_path(), "dialog-warning.png"))
