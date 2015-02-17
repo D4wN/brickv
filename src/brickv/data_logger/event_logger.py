@@ -177,9 +177,9 @@ class GUILogger(logging.Logger):
             levelname = GUILogger._convert_level[level]
             
             if level == logging.WARN or level == logging.WARNING:
-                self.logger_window_output(GUILogger._output_format_warning.format(asctime=asctime, levelname=levelname, message=msg))
+                self.logger_window_output.txt_console_output(GUILogger._output_format_warning.format(asctime=asctime, levelname=levelname, message=msg))
             elif level == logging.CRITICAL or level == logging.ERROR:
-                self.logger_window_output(GUILogger._output_format_critical.format(asctime=asctime, levelname=levelname, message=msg))
+                self.logger_window_output.txt_console_output(GUILogger._output_format_critical.format(asctime=asctime, levelname=levelname, message=msg))
             else:
-                self.logger_window_output(GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg))
+                self.logger_window_output.txt_console_output(GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg))
                 
