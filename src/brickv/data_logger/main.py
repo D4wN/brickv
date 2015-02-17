@@ -7,7 +7,7 @@ from brickv.data_logger.event_logger import  EventLogger, ConsoleLogger, FileLog
 from brickv.data_logger.data_logger import DataLogger
 
 import argparse                             # command line argument parser
-import sys
+import sys, traceback
 import signal
 import threading
 
@@ -55,29 +55,31 @@ def main(arguments_map):
     configuration = None
     guiStart = False
     try:
+        # was started via console
         if arguments_map.has_key(CONSOLE_CONFIG_FILE) and arguments_map[CONSOLE_CONFIG_FILE] != None:
-            # was started via console
-            configuration = ConfigurationReader(name=arguments_map[CONSOLE_CONFIG_FILE])
-            
+            configuration = ConfigurationReader(pathToConfig=arguments_map[CONSOLE_CONFIG_FILE])
+         
+        # was started via gui   
         elif arguments_map.has_key(GUI_CONFIG) and arguments_map[GUI_CONFIG] != None:
-            # was started via gui
             configuration = ConfigurationReader(configuration=arguments_map[GUI_CONFIG])
             guiStart = True
-            
-            validator = ConfigurationValidator(configuration._configuration)
-            validator.validate()
+
+        # no configuration file was given
         else:
-            # no configuration file was given
-            EventLogger.critical("Can not run data logger without a configuration.")
+            raise DataLoggerException("Can not run data logger without a configuration.")
             return
             
         if arguments_map.has_key(CONSOLE_VALIDATE_ONLY) and arguments_map[CONSOLE_VALIDATE_ONLY]:
             return
         
-    except IOError as io_err:
-        EventLogger.critical("The parsing of the configuration file failed :" + str(io_err) )
-        sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
-
+    except Exception as exc:
+        EventLogger.critical(str(exc))
+        if guiStart:
+            return None
+        else:
+            sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
+        
+    
     if configuration._configuration.isEmpty():
         EventLogger.error("Configuration is empty")
         return None
@@ -89,9 +91,15 @@ def main(arguments_map):
             if not guiStart:
                 __exit_condition(data_logger)
         else:
-            EventLogger.error("DataLogger did not start logging process! Please check for errors.")
-    except Exception:
-        pass
+            raise DataLoggerException(DataLoggerException.DL_CRITICAL_ERROR, "DataLogger did not start logging process! Please check for errors." )
+        
+    except Exception as exc:
+        EventLogger.critical(str(exc))
+        traceback.print_exc(file=sys.stdout)
+        if guiStart:
+            return None
+        else:
+            sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
     
     return data_logger
     
