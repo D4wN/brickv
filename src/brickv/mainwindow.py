@@ -152,6 +152,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # override QMainWindow.closeEvent
     def closeEvent(self, event):
+        if not self.exit_logger():
+            event.ignore()
+            return
+            
         self.exit_brickv()
 
     def exit_brickv(self, signl=None, frme=None):
@@ -163,13 +167,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         config.set_host_infos(self.host_infos)
 
         self.do_disconnect()
-        if (self.logger_window.data_logger_thread is not None) and (not self.logger_window.data_logger_thread.stopped):
-            self.logger_window.data_logger_thread.stop()
-
+        
         if signl != None and frme != None:
             print("Received SIGINT or SIGTERM, shutting down.")
             sys.exit()
 
+    def exit_logger(self):
+        exitBrickv = True
+        if (self.logger_window.data_logger_thread is not None) and (not self.logger_window.data_logger_thread.stopped):
+            quit_msg = "The Data Logger is running. Are you sure you want to exit the program?"
+            reply = QMessageBox.question(self, 'Message', 
+                     quit_msg, QMessageBox.Yes, QMessageBox.No)
+
+            if reply == QMessageBox.Yes:
+                self.logger_window.data_logger_thread.stop()
+            else:
+                exitBrickv = False
+        
+        return exitBrickv
+                
     def host_index_changed(self, i):
         if i < 0:
             return
