@@ -13,6 +13,7 @@ import json
 from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
 from brickv.device_dialog import LoggerDeviceDialog
+from PyQt4.QtCore import SIGNAL
 
 class LoggerWindow(QDialog,Ui_Logger):
     def __init__(self, parent):
@@ -178,15 +179,20 @@ class LoggerWindow(QDialog,Ui_Logger):
     
     def btn_add_device_clicked(self):
         if self.logger_device_dialog is None:
-            self.logger_device_dialog = LoggerDeviceDialog(self, None, True)#TODO: correct parameters!
+            blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
+            self.logger_device_dialog = LoggerDeviceDialog(self, blueprint, True)#TODO: correct parameters!
         
         self.logger_device_dialog.show()
     
     def btn_remove_device_clicked(self):
         if self.logger_device_dialog is None:
-            self.logger_device_dialog = LoggerDeviceDialog(self, None, False)#TODO: correct parameters!
+            self.logger_device_dialog = LoggerDeviceDialog(self, GuiConfigHandler.get_simple_blueprint(self), False)#TODO: correct parameters!
         
         self.logger_device_dialog.show()
+    
+    def destroy_device_dialog(self):
+        self.logger_device_dialog.destroy(True, True) #FIXME: memory-leak?! dont know if destroy is working as intendet!
+        self.logger_device_dialog = None
     
     def tab_reset_warning(self):
         if not self.tab_console_warning or self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
@@ -265,7 +271,7 @@ class LoggerWindow(QDialog,Ui_Logger):
                         EventLogger.warning("DeviceTree - Cant parse the Blueprint: " + str(e) )
                 except Exception as e1:
                     EventLogger.warning("DeviceTree - Exception: " + str(e1) )
-            
+           
             #counts topLevelItems
             tree_counter = 0;
             
@@ -339,6 +345,86 @@ class LoggerWindow(QDialog,Ui_Logger):
         
         self.tree_devices.sortItems ( 0, QtCore.Qt.AscendingOrder)
         self.tree_devices.setSortingEnabled(True)
+       
+    def add_item_to_tree(self, item_blueprint):
+        self.tree_devices.setSortingEnabled(False)
+        #add device into tree
+        
+        tree_counter = self.tree_devices.topLevelItemCount()
+        
+        for dev_item in item_blueprint:
+            #print str(dev_item) + "@" + str(tree_counter)
+            #counts variables
+            variable_counter = 0
+            
+            #new entry in tree 
+            item_0 = QtGui.QTreeWidgetItem(self.tree_devices) 
+            item_0.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled)
+            self.tree_devices.topLevelItem(tree_counter).setText(0, str(dev_item))
+
+            self.tree_devices.topLevelItem(tree_counter).setText(1,"Enter UID")
+            
+        
+            for variable in item_blueprint[dev_item]:
+                #print "  "+str(variable) + "@" + str(variable_counter)
+                #counts each variable
+                var_n_counter = 0
+                
+                #check if var = uid
+                if variable == Identifier.DEVICE_UID:
+                    self.tree_devices.topLevelItem(tree_counter).setText(1,str(item_blueprint[dev_item][variable]))
+                    continue
+                
+                #new child for the previeous item
+                item_1 = QtGui.QTreeWidgetItem(item_0)
+                self.tree_devices.topLevelItem(tree_counter).child(variable_counter).setText(0, str(variable))
+                
+                
+                for var_n in item_blueprint[dev_item][variable]:
+                    #print "  "+str(var_n) + "@" + str(var_n_counter)
+                    #new child of child
+                    item_2 = QtGui.QTreeWidgetItem(item_1)                    
+                    tmp_item = self.tree_devices.topLevelItem(tree_counter).child(variable_counter).child(var_n_counter);
+                    
+                    if str(var_n) == self.interval_string or str(self.tree_devices.topLevelItem(tree_counter).child(variable_counter).text(0)) == self.exceptional_interval_string:
+                        item_2.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEditable|QtCore.Qt.ItemIsEnabled)
+                        if str(var_n) == self.interval_string:
+                            tmp_item.setText(0, self.interval_show)
+                        else:
+                            tmp_item.setText(0, str(var_n))
+                        tmp_item.setText(1, str(item_blueprint[dev_item][variable][var_n])) 
+                    else:
+                        item_2.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
+                        tmp_item.setText(0, str(var_n)) 
+                        if item_blueprint[dev_item][variable][var_n]:
+                            tmp_item.setCheckState (1, QtCore.Qt.Checked)
+                        else:
+                            tmp_item.setCheckState (1, QtCore.Qt.Unchecked)
+                        tmp_item.setText(1, "")                    
+                    
+                    var_n_counter+=1
+                variable_counter+=1   
+        
+        self.tree_devices.sortItems ( 0, QtCore.Qt.AscendingOrder)
+        self.tree_devices.setSortingEnabled(True)   
+    
+    def remove_item_from_tree(self, item_name, item_uid):
+        #remove first found match!        
+        removed_item = False
+        t0_max = self.tree_devices.topLevelItemCount()
+        
+        for t0 in range(0, t0_max):
+            
+            dev_name = self.tree_devices.topLevelItem(t0).text(0)
+            dev_uid  = self.tree_devices.topLevelItem(t0).text(1)
+            
+            if dev_name == item_name and dev_uid == item_uid:
+                removed_item = True
+                self.tree_devices.takeTopLevelItem(t0)                
+                break;
+          
+        if not removed_item:  
+            QMessageBox.information(self, 'No Device found?', 'No Device was not found and could not be deleted!', QMessageBox.Ok)  
         
     def tree_on_change(self, item, column): 
         #check for wrong input number in interval

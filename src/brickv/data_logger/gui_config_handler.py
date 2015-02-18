@@ -1,5 +1,6 @@
 from brickv.data_logger.loggable_devices import Identifier
 from brickv.data_logger.event_logger import EventLogger
+import json
 
 class GuiConfigHandler(object):
 
@@ -229,6 +230,42 @@ class GuiConfigHandler(object):
         
         return general_section
 
+    def get_simple_blueprint(Ui_Logger):
+        simple_blueprint = []
+        
+        tree_widget = Ui_Logger.tree_devices
+            
+        r0_max =  tree_widget.topLevelItemCount()    
+        
+        for r0 in range(0, r0_max):
+            item = {}
+            
+            tw_root = tree_widget.topLevelItem(r0)
+            item[str(tw_root.text(0))] = str(tw_root.text(1))            
+            
+            simple_blueprint.append(item)
+        
+        return simple_blueprint
+
+    def get_single_device_bluprint(device_name):
+        dev = None
+        
+        blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
+        
+        found = False;
+        for device_item in blueprint:
+            for i in device_item:
+                if device_name == i:
+                    dev = {}
+                    dev[i] = device_item[i]
+                    found = True
+                    break;
+                
+            if found:
+                break;
+        
+        return dev
+
     load_devices = staticmethod(load_devices)
     clear_blueprint = staticmethod(clear_blueprint)
     complex_device_blueprints = staticmethod(complex_device_blueprints)
@@ -236,3 +273,6 @@ class GuiConfigHandler(object):
     special_device_blueprints = staticmethod(special_device_blueprints)
     create_config_file = staticmethod(create_config_file)
     create_general_section = staticmethod(create_general_section)
+    get_simple_blueprint = staticmethod(get_simple_blueprint)
+    get_single_device_bluprint = staticmethod(get_single_device_bluprint)
+    
