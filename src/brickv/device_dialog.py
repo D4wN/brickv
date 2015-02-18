@@ -4,10 +4,13 @@ from PyQt4.QtGui import QDialog, QMessageBox
 from brickv.ui_device_dialog import Ui_DeviceDialog
 from PyQt4 import QtGui, QtCore
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
+from PyQt4.QtCore import Qt
+
 
 class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
     def __init__(self, parent, blueprint, add_data = True, ):
         QDialog.__init__(self, parent)
+        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
         
         self._add_data = add_data
         self._blueprint = blueprint
