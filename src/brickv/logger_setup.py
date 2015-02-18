@@ -180,20 +180,18 @@ class LoggerWindow(QDialog,Ui_Logger):
     
     def btn_add_device_clicked(self):
         if self.logger_device_dialog is None:
-            blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
-            self.logger_device_dialog = LoggerDeviceDialog(self, blueprint, True)#TODO: correct parameters!
-        
+            self.logger_device_dialog = LoggerDeviceDialog(self)
+            
+        blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
+        self.logger_device_dialog.init_dialog(blueprint, True)
         self.logger_device_dialog.show()
     
     def btn_remove_device_clicked(self):
         if self.logger_device_dialog is None:
-            self.logger_device_dialog = LoggerDeviceDialog(self, GuiConfigHandler.get_simple_blueprint(self), False)#TODO: correct parameters!
+            self.logger_device_dialog = LoggerDeviceDialog(self)
         
+        self.logger_device_dialog.init_dialog(GuiConfigHandler.get_simple_blueprint(self), False)
         self.logger_device_dialog.show()
-    
-    def destroy_device_dialog(self):
-        self.logger_device_dialog.destroy(True, True) #FIXME: memory-leak?! dont know if destroy is working as intendet!
-        self.logger_device_dialog = None
     
     def tab_reset_warning(self):
         if not self.tab_console_warning or self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():

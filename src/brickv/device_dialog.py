@@ -8,23 +8,26 @@ from PyQt4.QtCore import Qt
 
 
 class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
-    def __init__(self, parent, blueprint, add_data = True, ):
+    def __init__(self, parent):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
         
-        self._add_data = add_data
-        self._blueprint = blueprint
+        self._add_data = None
+        self._blueprint = None
         self._logger_window = parent
         
         self.setupUi(self)
         self.signal_initialization()
         
-        self._create_tree()
-        
     def signal_initialization(self):
         self.tree_device_list.itemDoubleClicked.connect(self._tree_on_double_click)
         self.btn_action_device.clicked.connect(self._btn_action_device_clicked)
         self.checkbox_fast_mode.stateChanged.connect(self._checkbox_fast_mode_checked)
+        
+    
+    def init_dialog(self, blueprint, add_data = True):
+        self._add_data = add_data
+        self._blueprint = blueprint
         
         if self._add_data:
             self.btn_action_device.setText("Add")
@@ -32,6 +35,8 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         else:
             self.btn_action_device.setText("Remove")
             self._check_mode = "remove"
+            
+        self._create_tree()
     
     def _checkbox_fast_mode_checked(self):
         if self.checkbox_fast_mode.isChecked():
@@ -72,7 +77,12 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         
         if not self._add_data:
             #add second collumn
+            self.tree_device_list.setColumnHidden(1, False)
             self.tree_device_list.headerItem().setText(1, "UID")
+            self.tree_device_list.header().setDefaultSectionSize(200)
+        else:
+            #hide header
+            self.tree_device_list.setColumnHidden(1, True)
         
         tree_counter = 0;
         for dev_item in self._blueprint:
@@ -89,8 +99,3 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         
         self.tree_device_list.sortItems ( 0, QtCore.Qt.AscendingOrder)
         self.tree_device_list.setSortingEnabled(True)
-    
-    def closeEvent(self, event):
-        self._logger_window.destroy_device_dialog()
-        #QDialog.destroy(self)
-        #return QDialog.closeEvent(self, event)
