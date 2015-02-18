@@ -15,7 +15,7 @@ class GuiConfigHandler(object):
             GuiConfigHandler.special_device_blueprints(device_json[Identifier.SPECIAL_DEVICE])
             
         except Exception as e:
-            EventLogger.warning("Devices could be fully loaded! -> "+ str(e))
+            EventLogger.warning("Devices could be fully loaded! -> " + str(e))
         
         return GuiConfigHandler.device_blueprint
     
@@ -24,34 +24,34 @@ class GuiConfigHandler(object):
         GuiConfigHandler.device_blueprint = []
     
     def complex_device_blueprints(complex_devices):
-        #CLASS_NAME=dev[Identifier.DEVICE_NAME]   
+        # CLASS_NAME=dev[Identifier.DEVICE_NAME]
         for dev in complex_devices:
-            tmp = {} #empty list
-            dev_name = dev[Identifier.DEVICE_NAME]   
-            #t1
+            tmp = {}  # empty list
+            dev_name = dev[Identifier.DEVICE_NAME]
+            # t1
             tmp = {}
             tmp[dev_name] = {}
             
             for var in dev[Identifier.DEVICE_VALUES]:
                 interval = dev[Identifier.DEVICE_VALUES][var][Identifier.DEVICE_VALUES_INTERVAL]
                 vars = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_NAME]
-                bools = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_BOOL] 
+                bools = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_BOOL]
                                 
                 tmp[dev_name][var] = {}
-                tmp[dev_name][var]["_"+Identifier.DEVICE_VALUES_INTERVAL] = interval      
+                tmp[dev_name][var]["_" + Identifier.DEVICE_VALUES_INTERVAL] = interval
                  
-                for v in range(0,len(vars)):
+                for v in range(0, len(vars)):
                     tmp[dev_name][var][vars[v]] = bools[v]
                 
-            #add UID
+            # add UID
             tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
 
-            GuiConfigHandler.device_blueprint.append(tmp) 
+            GuiConfigHandler.device_blueprint.append(tmp)
     
     def simple_device_blueprints(simple_devices):
         for dev in simple_devices:
-            dev_name = dev[Identifier.DEVICE_NAME]   
-            #t1
+            dev_name = dev[Identifier.DEVICE_NAME]
+            # t1
             tmp = {}
             tmp[dev_name] = {}
             
@@ -59,17 +59,17 @@ class GuiConfigHandler(object):
                 interval = dev[Identifier.DEVICE_VALUES][var][Identifier.DEVICE_VALUES_INTERVAL]
                 
                 tmp[dev_name][var] = {}
-                tmp[dev_name][var]["_"+Identifier.DEVICE_VALUES_INTERVAL] = interval  
+                tmp[dev_name][var]["_" + Identifier.DEVICE_VALUES_INTERVAL] = interval
                 
-            #add UID
+            # add UID
             tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
             
             GuiConfigHandler.device_blueprint.append(tmp)
 
     def special_device_blueprints(special_devices):
         for dev in special_devices:
-            dev_name = dev[Identifier.DEVICE_NAME]   
-            #t1
+            dev_name = dev[Identifier.DEVICE_NAME]
+            # t1
             tmp = {}
             tmp[dev_name] = {}
             tmp[dev_name][Identifier.SPECIAL_DEVICE_BOOL] = {}
@@ -81,67 +81,67 @@ class GuiConfigHandler(object):
             for var in dev[Identifier.SPECIAL_DEVICE_VALUE]:
                 tmp[dev_name][Identifier.SPECIAL_DEVICE_VALUE][var] = dev[Identifier.SPECIAL_DEVICE_VALUE][var]
               
-            #add UID
+            # add UID
             tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
             
             GuiConfigHandler.device_blueprint.append(tmp)
 
     def create_config_file(Ui_Logger):
         config_root = {}
-        #add general section
+        # add general section
         general_section = GuiConfigHandler.create_general_section(Ui_Logger)
-        #TODO: add xively
+        # TODO: add xively
         xively_section = {}
         
-        #add simple devices
+        # add simple devices
         simple_dev = []
-        #add complex devices
+        # add complex devices
         complex_dev = []
-        #add special devices
+        # add special devices
         special_dev = []
         
                 
         tree_widget = Ui_Logger.tree_devices
             
-        r0_max =  tree_widget.topLevelItemCount()    
+        r0_max = tree_widget.topLevelItemCount()
         
         for r0 in range(0, r0_max):
             device_type = 0
             tw_root = tree_widget.topLevelItem(r0)
-            #create object structure
+            # create object structure
             dev = {}
             dev[Identifier.DEVICE_NAME] = str(tw_root.text(0))
             dev[Identifier.DEVICE_CLASS] = Identifier.create_class_name(dev[Identifier.DEVICE_NAME])
             tmp_uid = str(tw_root.text(1))
-            if tmp_uid == "" or tmp_uid == None:
+            if tmp_uid == "" or tmp_uid is None:
                 dev[Identifier.DEVICE_UID] = "TODO"
             else:
-                dev[Identifier.DEVICE_UID] = tmp_uid            
+                dev[Identifier.DEVICE_UID] = tmp_uid
             
             r1_max = tw_root.childCount()
             
-            #check for special device type
+            # check for special device type
             tmp_sepcial = str(tw_root.child(0).text(0))
                 
             if (tmp_sepcial == Identifier.SPECIAL_DEVICE_BOOL or tmp_sepcial == Identifier.SPECIAL_DEVICE_VALUE):
-                #is special device!
+                # is special device!
 
                 device_type = 2
                 dev[Identifier.SPECIAL_DEVICE_BOOL] = {}
                 dev[Identifier.SPECIAL_DEVICE_VALUE] = {}
                 
                 for r1 in range(0, r1_max):
-                    tw_r1 = tw_root.child(r1)       
+                    tw_r1 = tw_root.child(r1)
                     var_name = str(tw_r1.text(0))
                     
                     r2_max = tw_r1.childCount()
                     for r2 in range(0, r2_max):
-                        tw_r2 = tw_r1.child(r2)       
+                        tw_r2 = tw_r1.child(r2)
                         var_key = str(tw_r2.text(0))
                         
-                        #speicla_bool or special_value
+                        # speicla_bool or special_value
                         if var_name == Identifier.SPECIAL_DEVICE_BOOL:
-                            check_state_num = tw_r2.checkState(1)                        
+                            check_state_num = tw_r2.checkState(1)
                             if check_state_num == 0:
                                 dev[Identifier.SPECIAL_DEVICE_BOOL][var_key] = False
                             else:
@@ -151,12 +151,12 @@ class GuiConfigHandler(object):
                             dev[Identifier.SPECIAL_DEVICE_VALUE][var_key] = int(str(tw_r2.text(1)))
     
             else:
-                #is complex or Simple
+                # is complex or Simple
                 dev[Identifier.DEVICE_VALUES] = {}
                 
                 for r1 in range(0, r1_max):
-                    tw_r1 = tw_root.child(r1)       
-                    var_name = str(tw_r1.text(0))            
+                    tw_r1 = tw_root.child(r1)
+                    var_name = str(tw_r1.text(0))
                     
                     dev[Identifier.DEVICE_VALUES][var_name] = {}
                     dev[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_ARGS] = Identifier.create_args(dev[Identifier.DEVICE_NAME], var_name)
@@ -164,13 +164,13 @@ class GuiConfigHandler(object):
                     
                     r2_max = tw_r1.childCount()
                     if r2_max != 1:
-                        #complex device
+                        # complex device
                         device_type = 1
                         dev[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_BOOL] = []
                         dev[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_NAME] = []
                     
                     for r2 in range(0, r2_max):
-                        tw_r2 = tw_r1.child(r2)       
+                        tw_r2 = tw_r1.child(r2)
                         var_key = str(tw_r2.text(0))
                         if var_key == Identifier.DEVICE_VALUES_INTERVAL:
                             dev[Identifier.DEVICE_VALUES][var_name][var_key] = int(str(tw_r2.text(1)))
@@ -185,15 +185,15 @@ class GuiConfigHandler(object):
                                 dev[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_BOOL].append(True)
             
             
-            #save dev in the right device!
+            # save dev in the right device!
             if device_type == 0:
                 simple_dev.append(dev)
-            elif device_type == 1:    
-                complex_dev.append(dev)         
+            elif device_type == 1:
+                complex_dev.append(dev)
             elif device_type == 2:
                 special_dev.append(dev)
             else:
-                EventLogger.debug("gui_config_handler: Unknown device?!: "+str(device_type))
+                EventLogger.debug("gui_config_handler: Unknown device?!: " + str(device_type))
         
         from brickv.data_logger.configuration_validator import ConfigurationReader
         
@@ -210,20 +210,20 @@ class GuiConfigHandler(object):
         
         general_section = {}
         
-        #host            combo_host              currentText()   : QString
+        # host            combo_host              currentText()   : QString
         general_section[ConfigurationReader.GENERAL_HOST] = str(Ui_Logger.combo_host.currentText())
-        #port            spinbox_port            value()         : int
+        # port            spinbox_port            value()         : int
         general_section[ConfigurationReader.GENERAL_PORT] = Ui_Logger.spinbox_port.value()
-        #file_count      spin_file_count         value()         : int
+        # file_count      spin_file_count         value()         : int
         general_section[ConfigurationReader.GENERAL_LOG_COUNT] = Ui_Logger.spin_file_count.value()
-        #file_size       spin_file_size          value()         : int * 1024 * 1024! (MB -> Byte)
-        general_section[ConfigurationReader.GENERAL_LOG_FILE_SIZE] = (Ui_Logger.spin_file_size.value() * 1024 * 1024)        
-        #path_to_file    line_path_to_file       text()          : QString
+        # file_size       spin_file_size          value()         : int * 1024 * 1024! (MB -> Byte)
+        general_section[ConfigurationReader.GENERAL_LOG_FILE_SIZE] = (Ui_Logger.spin_file_size.value() * 1024 * 1024)
+        # path_to_file    line_path_to_file       text()          : QString
         path_to_file = str(Ui_Logger.line_path_to_file.text())
         log_to_file = True
-        if path_to_file == None or path_to_file == "":
+        if path_to_file is None or path_to_file == "":
             log_to_file = False
-        #log_to_file     (if path_to_file != None || "")
+        # log_to_file     (if path_to_file != None || "")
         general_section[ConfigurationReader.GENERAL_PATH_TO_FILE] = path_to_file
         general_section[ConfigurationReader.GENERAL_LOG_TO_FILE] = log_to_file
         
@@ -236,4 +236,3 @@ class GuiConfigHandler(object):
     special_device_blueprints = staticmethod(special_device_blueprints)
     create_config_file = staticmethod(create_config_file)
     create_general_section = staticmethod(create_general_section)
-    

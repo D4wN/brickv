@@ -3,7 +3,7 @@ import brickv.data_logger.utils as utils
 import brickv.bindings.ip_connection as ip_connection
 from brickv.data_logger.event_logger import EventLogger
 
-#import ALL supported bricklets and bricks
+# import ALL supported bricklets and bricks
 from brickv.bindings.brick_dc import DC
 from brickv.bindings.brick_imu import IMU
 from brickv.bindings.brick_stepper import Stepper
@@ -58,18 +58,18 @@ def string_to_class(string):
 class Identifier(object):
     """
         This class is for all identification strings of the bricklets and bricks.
-        It also has function for creating a correct class and function name for 
+        It also has function for creating a correct class and function name for
         the correct device.
     """
     
-    #creates a function name from device_name and var_name
+    # creates a function name from device_name and var_name
     def create_function_name(device_name, var_name):
         """
         Creates a correct function name(var_name) as String for the appropriate device_name.
         """
-        if Identifier.FUNCTION_NAME.has_key(device_name+var_name):
-            return Identifier.FUNCTION_NAME[device_name+var_name]
-        return ("get_"+var_name).replace(" ", "_").lower()
+        if Identifier.FUNCTION_NAME.has_key(device_name + var_name):
+            return Identifier.FUNCTION_NAME[device_name + var_name]
+        return ("get_" + var_name).replace(" ", "_").lower()
     
     def create_class_name(device_name):
         """
@@ -83,24 +83,24 @@ class Identifier(object):
         """
         Creates the correct arguments for the appropriate device_name and var_name.
         """
-        if Identifier.VAR_ARGS.has_key(device_name+var_name):
-            return Identifier.VAR_ARGS[device_name+var_name]
+        if Identifier.VAR_ARGS.has_key(device_name + var_name):
+            return Identifier.VAR_ARGS[device_name + var_name]
         return None
     
     create_function_name = staticmethod(create_function_name)
     create_class_name = staticmethod(create_class_name)
     create_args = staticmethod(create_args)
     
-    ###Devices
-    #functions got one return value
+    # ##Devices
+    # functions got one return value
     SIMPLE_DEVICE = "SimpleDevice"
-    #function can have tuple return value
+    # function can have tuple return value
     COMPLEX_DEVICE = "ComplexDevice"
-    #array/multiple return values in tuple (e.g. return ([1,2,3],"a","b","c"))
-    #or special rules, e.g. GPS which needs a special FIX value for some functions
+    # array/multiple return values in tuple (e.g. return ([1,2,3],"a","b","c"))
+    # or special rules, e.g. GPS which needs a special FIX value for some functions
     SPECIAL_DEVICE = "SpecialDevice"
     
-    #config list access strings
+    # config list access strings
     DEVICE_NAME = "name"
     DEVICE_CLASS = "class"
     DEVICE_UID = "uid"
@@ -115,12 +115,12 @@ class Identifier(object):
     SPECIAL_DEVICE_VALUE = "special_values"
     SPECIAL_DEVICE_BOOL = "special_bool"
 
-    ###Special Identifiers
+    # ##Special Identifiers
     FUNCTION_NAME = {}
     CLASS_NAME = {}
     VAR_ARGS = {}
 
-    ###Bricks
+    # ##Bricks
     DC_BRICK = "DC Brick"
     CLASS_NAME[DC_BRICK] = "DC"
     DC_BRICK_VELOCITY = "Velocity"
@@ -141,7 +141,7 @@ class Identifier(object):
     IMU_BRICK_QUATERNION_X = "X"
     IMU_BRICK_QUATERNION_Y = "Y"
     IMU_BRICK_QUATERNION_Z = "Z"
-    IMU_BRICK_QUATERNION_W = "W"   
+    IMU_BRICK_QUATERNION_W = "W"
     IMU_BRICK_ACCELERATION = "Acceleration"
     IMU_BRICK_ACCELERATION_X = "X"
     IMU_BRICK_ACCELERATION_Y = "Y"
@@ -156,7 +156,7 @@ class Identifier(object):
     IMU_BRICK_ANGULAR_VELOCITY_Z = "Z"
     IMU_BRICK_IMU_TEMPERATURE = "IMU Temperature"
     IMU_BRICK_LEDS = "Leds"
-    FUNCTION_NAME[IMU_BRICK+IMU_BRICK_LEDS] = "are_leds_on"
+    FUNCTION_NAME[IMU_BRICK + IMU_BRICK_LEDS] = "are_leds_on"
     IMU_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
     
     STEPPER_BRICK = "Stepper Brick"
@@ -169,9 +169,9 @@ class Identifier(object):
     STEPPER_BRICK_EXTERNAL_INPUT_VOLTAGE = "External Input Voltage"
     STEPPER_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
     STEPPER_BRICK_SNYC_RECT = "Sync Rect"
-    FUNCTION_NAME[STEPPER_BRICK+STEPPER_BRICK_SNYC_RECT] = "is_sync_rect"
+    FUNCTION_NAME[STEPPER_BRICK + STEPPER_BRICK_SNYC_RECT] = "is_sync_rect"
 
-    ###Bricklets
+    # ##Bricklets
     AMBIENT_LIGHT = "Ambient Light"
     AMBIENT_LIGHT_ILLUMINANCE = "Illuminance"
     AMBIENT_LIGHT_ANALOG_VALUE = "Analog Value"
@@ -194,7 +194,7 @@ class Identifier(object):
     COLOR_BLUE = "Blue"
     COLOR_CLEAR = "Clear"
     COLOR_COLOR = "Rgbc"
-    FUNCTION_NAME[COLOR+COLOR_COLOR] = "get_color"
+    FUNCTION_NAME[COLOR + COLOR_COLOR] = "get_color"
     COLOR_ILLUMINANCE = "Illuminance"
     COLOR_TEMPERATURE = "Color Temperature"
     
@@ -212,15 +212,15 @@ class Identifier(object):
     
     DISTANCE_US = "Distance US"
     DISTANCE_US_DISTANCE = "Distance"
-    FUNCTION_NAME[DISTANCE_US+DISTANCE_US_DISTANCE] = "get_distance_value"
+    FUNCTION_NAME[DISTANCE_US + DISTANCE_US_DISTANCE] = "get_distance_value"
     
     DUAL_BUTTON = "Dual Button"
     DUAL_BUTTON_BUTTONS = "Buttons"
-    FUNCTION_NAME[DUAL_BUTTON+DUAL_BUTTON_BUTTONS] = "get_button_state"
+    FUNCTION_NAME[DUAL_BUTTON + DUAL_BUTTON_BUTTONS] = "get_button_state"
     DUAL_BUTTON_BUTTON_L = "button_l"
     DUAL_BUTTON_BUTTON_R = "button_r"
     DUAL_BUTTON_LEDS = "Leds"
-    FUNCTION_NAME[DUAL_BUTTON+DUAL_BUTTON_LEDS] = "get_led_state"
+    FUNCTION_NAME[DUAL_BUTTON + DUAL_BUTTON_LEDS] = "get_led_state"
     DUAL_BUTTON_LED_L = "led_l"
     DUAL_BUTTON_LED_R = "led_r"
     
@@ -239,21 +239,21 @@ class Identifier(object):
     INDUSTRIAL_DUAL_0_20_MA = "Industrial Dual 0 20 mA"
     INDUSTRIAL_DUAL_0_20_MA_CURRENT = "Current"
     INDUSTRIAL_DUAL_0_20_MA_SENSOR_0 = "Sensor 0"
-    FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = "get_current"
-    VAR_ARGS[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = [0]
+    FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA + INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = "get_current"
+    VAR_ARGS[INDUSTRIAL_DUAL_0_20_MA + INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = [0]
     INDUSTRIAL_DUAL_0_20_MA_SENSOR_1 = "Sensor 1"
-    FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = "get_current"
-    VAR_ARGS[INDUSTRIAL_DUAL_0_20_MA+INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = [1]
+    FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA + INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = "get_current"
+    VAR_ARGS[INDUSTRIAL_DUAL_0_20_MA + INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = [1]
     
     IO_16 = "IO-16"
     CLASS_NAME[IO_16] = "IO16"
     IO_16_PORTS = "Ports"
     IO_16_PORT_A = "Port A"
-    FUNCTION_NAME[IO_16+IO_16_PORT_A] = "get_port"
-    VAR_ARGS[IO_16+IO_16_PORT_A] = ["a"]
+    FUNCTION_NAME[IO_16 + IO_16_PORT_A] = "get_port"
+    VAR_ARGS[IO_16 + IO_16_PORT_A] = ["a"]
     IO_16_PORT_B = "Port B"
-    FUNCTION_NAME[IO_16+IO_16_PORT_B] = "get_port"
-    VAR_ARGS[IO_16+IO_16_PORT_B] = ["b"]
+    FUNCTION_NAME[IO_16 + IO_16_PORT_B] = "get_port"
+    VAR_ARGS[IO_16 + IO_16_PORT_B] = ["b"]
     
     IO_4 = "IO-4"
     CLASS_NAME[IO_4] = "IO4"
@@ -265,7 +265,7 @@ class Identifier(object):
     JOYSTICK_POSITION_Y = "Position Y"
     JOYSTICK_ANALOG_VALUE = "Analog Value"
     JOYSTICK_PRESSED = "Pressed"
-    FUNCTION_NAME[JOYSTICK+JOYSTICK_PRESSED] = "is_pressed"
+    FUNCTION_NAME[JOYSTICK + JOYSTICK_PRESSED] = "is_pressed"
     
     LED_STRIP = "LED Strip"
     LED_STRIP_SUPPLY_VOLTAGE = "Supply Voltage"
@@ -295,7 +295,7 @@ class Identifier(object):
     ROTARY_ENCODER = "Rotary Encoder"
     ROTARY_ENCODER_COUNT = "Count"
     ROTARY_ENCODER_PRESSED = "Pressed"
-    FUNCTION_NAME[ROTARY_ENCODER+ROTARY_ENCODER_PRESSED] = "is_pressed"
+    FUNCTION_NAME[ROTARY_ENCODER + ROTARY_ENCODER_PRESSED] = "is_pressed"
     
     ROTARY_POTI = "Rotary Poti"
     ROTARY_POTI_POSITION = "Position"
@@ -316,12 +316,12 @@ class Identifier(object):
     TEMPERATURE_IR = "Temperature IR"
     CLASS_NAME[TEMPERATURE_IR] = "BrickletTemperatureIR"
     TEMPERATURE_IR_AMBIENT_TEMPERATURE = "Ambient Temperature"
-    TEMPERATURE_IR_OBJECT_TEMPERATURE ="Object Temperature"
+    TEMPERATURE_IR_OBJECT_TEMPERATURE = "Object Temperature"
     
     TILT = "Tilt"
     CLASS_NAME[TILT] = "BrickletTilt"
     TILT_STATE = "State"
-    FUNCTION_NAME[TILT+TILT_STATE] = "get_tilt_state"
+    FUNCTION_NAME[TILT + TILT_STATE] = "get_tilt_state"
     
     VOLTAGE = "Voltage"
     CLASS_NAME[VOLTAGE] = "BrickletVoltage"
@@ -355,7 +355,7 @@ class Identifier(object):
     GPS_COURSE = "Course"
     GPS_SPEED = "Speed"
     GPS_DATE_TIME = "Date Time"
-    GPS_DATE= "Date"
+    GPS_DATE = "Date"
     GPS_TIME = "Time"
     
     SEGMENT_DISPLAY_4x7 = "Segment Display 4x7"
@@ -376,11 +376,11 @@ class Identifier(object):
  '''
 class AbstractDevice(object):
     """DEBUG and Inheritance only class"""
-    def __init__(self, data, datalogger):             
+    def __init__(self, data, datalogger):
         self.datalogger = datalogger
         self.data = data
-        self.uid = self.data[Identifier.DEVICE_UID] 
-        self.identifier = None 
+        self.uid = self.data[Identifier.DEVICE_UID]
+        self.identifier = None
         self.device = None
         
         self.__name__ = "AbstractDevice"
@@ -398,12 +398,12 @@ class AbstractDevice(object):
         Creates a simple try-catch for a specific funtion.
         """
         value = "[NYI-FAIL-TIMER]"
-        #err = 0
+        # err = 0
         try:
             value = func()
         except Exception as e:
             value = self._exception_msg(e.value, e.description)
-            #err = 1
+            # err = 1
         return value
     
     def _exception_msg(self, value, msg):
@@ -416,7 +416,7 @@ class AbstractDevice(object):
         """
         Representation String of the class. For simple overwiev.
         """
-        return "["+self.__name__+"=" + str(self.data[Identifier.DEVICE_CLASS]) + " | <UID="+ str(self.uid) +"> | <IDENTIEFIER=" + str(self.identifier) + "> | <data="+ str(self.data) + ">]"
+        return "[" + self.__name__ + "=" + str(self.data[Identifier.DEVICE_CLASS]) + " | <UID=" + str(self.uid) + "> | <IDENTIEFIER=" + str(self.identifier) + "> | <data=" + str(self.data) + ">]"
 
 '''
 /*---------------------------------------------------------------------------
@@ -427,35 +427,35 @@ class SimpleDevice(AbstractDevice):
     """
     A SimpleDevice is every device, which only has funtion with one return value.
     """
-    def __init__(self, data, datalogger):  
-        AbstractDevice.__init__(self, data, datalogger)     
+    def __init__(self, data, datalogger):
+        AbstractDevice.__init__(self, data, datalogger)
         self.device = self.data[Identifier.DEVICE_CLASS](self.uid, self.datalogger.ipcon)
-        self.identifier = self.data[Identifier.DEVICE_CLASS].DEVICE_IDENTIFIER  
+        self.identifier = self.data[Identifier.DEVICE_CLASS].DEVICE_IDENTIFIER
 
         self.__name__ = Identifier.SIMPLE_DEVICE
 
-    def start_timer(self):  
+    def start_timer(self):
         AbstractDevice.start_timer(self)
                       
         for value in self.data[Identifier.DEVICE_VALUES]:
             interval = self.data[Identifier.DEVICE_VALUES][value][Identifier.DEVICE_VALUES_INTERVAL]
             func_name = "_timer"
             var_name = value
-            self.datalogger.timers.append(utils.LoggerTimer(interval, func_name, var_name, self)) 
+            self.datalogger.timers.append(utils.LoggerTimer(interval, func_name, var_name, self))
 
-    def _timer(self, var_name):  
+    def _timer(self, var_name):
         """
         This function is used by the LoggerTimer to get the variable values from the brickd.
         In SimpleDevices the get-functions only return one value.
-        """      
-        #CSVDATA=[uid->memeber, name/identety->member, var_name->parameter, raw_data->function]
+        """
+        # CSVDATA=[uid->memeber, name/identety->member, var_name->parameter, raw_data->function]
         value = None
         try:
             getter_name = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_NAME]
             getter_args = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_ARGS]
         
             if getter_args:
-                #FIXME: find better solution for the unicode problem!
+                # FIXME: find better solution for the unicode problem!
                 for i in range(len(getter_args)):
                     if type(getter_args[i]) == unicode:
                         getter_args[i] = str(getter_args[i])
@@ -466,7 +466,7 @@ class SimpleDevice(AbstractDevice):
         except ip_connection.Error as e:
             value = self._exception_msg(e.value, e.description)
         except Exception as ex:
-            value = self._exception_msg(str(self.identifier)+"-"+str(var_name), ex)    
+            value = self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)
         
         self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, var_name, value))
 
@@ -478,35 +478,35 @@ class SimpleDevice(AbstractDevice):
 class ComplexDevice(AbstractDevice):
     
     def __init__(self, data, datalogger):
-        AbstractDevice.__init__(self, data, datalogger)     
+        AbstractDevice.__init__(self, data, datalogger)
         self.device = self.data[Identifier.DEVICE_CLASS](self.uid, self.datalogger.ipcon)
-        self.identifier = self.data[Identifier.DEVICE_CLASS].DEVICE_IDENTIFIER  
+        self.identifier = self.data[Identifier.DEVICE_CLASS].DEVICE_IDENTIFIER
         
         self.__name__ = Identifier.COMPLEX_DEVICE
 
-    def start_timer(self):  
+    def start_timer(self):
         AbstractDevice.start_timer(self)
              
-        #start for each variable a timer         
+        # start for each variable a timer
         for value in self.data[Identifier.DEVICE_VALUES]:
             interval = self.data[Identifier.DEVICE_VALUES][value][Identifier.DEVICE_VALUES_INTERVAL]
             func_name = "_timer"
             var_name = value
-            self.datalogger.timers.append(utils.LoggerTimer(interval, func_name, var_name, self)) 
+            self.datalogger.timers.append(utils.LoggerTimer(interval, func_name, var_name, self))
 
-    def _timer(self, var_name):        
+    def _timer(self, var_name):
         """
         This function is used by the LoggerTimer to get the variable values from the brickd.
         In ComplexDevice the get-functions return one or multiple(as tupel) values.
-        """  
+        """
         values = None
         try:
             getter_name = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_NAME]
             getter_args = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_ARGS]
         
-            #start functions to get values
+            # start functions to get values
             if getter_args:
-                #FIXME: find better solution for the unicode problem!
+                # FIXME: find better solution for the unicode problem!
                 for i in range(len(getter_args)):
                     if type(getter_args[i]) == unicode:
                         getter_args[i] = str(getter_args[i])
@@ -515,18 +515,18 @@ class ComplexDevice(AbstractDevice):
             else:
                 values = getattr(self.device, getter_name)()
              
-            #check for tuples
+            # check for tuples
             if type(values) is tuple:
                 l = list(values)
             else:
                 l = []
                 l.append(values)
 
-            #get bool and variable to check, which data should be logged
+            # get bool and variable to check, which data should be logged
             bools = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_BOOL]
             names = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_NAME]
         
-            #if variable bool is not True, dont log the data
+            # if variable bool is not True, dont log the data
             for i in range(0, len(l)):
                 if bools[i]:
                     self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, names[i], l[i]))
@@ -535,10 +535,10 @@ class ComplexDevice(AbstractDevice):
             values = self._exception_msg(e.value, e.description)
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, var_name, values))
         except Exception as ex:
-            values = self._exception_msg(str(self.identifier)+"-"+str(var_name), ex)    
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, var_name, values))        
+            values = self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)
+            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, var_name, values))
 
-###Special Devices     
+# ##Special Devices
 '''
 /*---------------------------------------------------------------------------
                                 GPSBricklet
@@ -546,15 +546,15 @@ class ComplexDevice(AbstractDevice):
  '''
 class GPSBricklet(AbstractDevice):
     """
-    The GPSBricklet is a special device. Because of the special behavior, that 
-    some values should only be logged if others are at a certain point, the 
-    GPSBricklet needs a own class. 
+    The GPSBricklet is a special device. Because of the special behavior, that
+    some values should only be logged if others are at a certain point, the
+    GPSBricklet needs a own class.
     """
     def __init__(self, data, datalogger):
         AbstractDevice.__init__(self, data, datalogger)
       
         self.device = GPS(self.uid, datalogger.ipcon)
-        self.identifier = GPS.DEVICE_IDENTIFIER 
+        self.identifier = GPS.DEVICE_IDENTIFIER
         
         self.__name__ = Identifier.SPECIAL_DEVICE
 
@@ -562,32 +562,32 @@ class GPSBricklet(AbstractDevice):
         """
         Starts all timer for all loggable variables of the devices.
         """
-        AbstractDevice.start_timer(self) 
+        AbstractDevice.start_timer(self)
         
         value1 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.GPS_COORDINATES]
         value2 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.GPS_ALTITUDE]
         value3 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.GPS_MOTION]
         value4 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.GPS_DATE_TIME]
      
-        self.datalogger.timers.append(utils.LoggerTimer(value1, self._timer_coordinates.__name__, Identifier.GPS_COORDINATES, self))  
-        self.datalogger.timers.append(utils.LoggerTimer(value2, self._timer_altitude.__name__, Identifier.GPS_ALTITUDE, self)) 
-        self.datalogger.timers.append(utils.LoggerTimer(value3, self._timer_motion.__name__, Identifier.GPS_MOTION, self)) 
-        self.datalogger.timers.append(utils.LoggerTimer(value4, self._timer_date_time.__name__, Identifier.GPS_DATE_TIME, self)) 
+        self.datalogger.timers.append(utils.LoggerTimer(value1, self._timer_coordinates.__name__, Identifier.GPS_COORDINATES, self))
+        self.datalogger.timers.append(utils.LoggerTimer(value2, self._timer_altitude.__name__, Identifier.GPS_ALTITUDE, self))
+        self.datalogger.timers.append(utils.LoggerTimer(value3, self._timer_motion.__name__, Identifier.GPS_MOTION, self))
+        self.datalogger.timers.append(utils.LoggerTimer(value4, self._timer_date_time.__name__, Identifier.GPS_DATE_TIME, self))
     
     def _timer_coordinates(self, var_name):
         """
         LoggerTimer function to get the GPS coordinates. Should only log the coordiantes when the GPS.FIX is greater or equal 2.
         """
         try:
-            #check for the FIX Value of get_status()
+            # check for the FIX Value of get_status()
             fix = self._get_fix_status()
                           
             if fix == GPS.FIX_NO_FIX:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was 1, but needs to be 2 or 3 for valid Coordinates.")))
+                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg("Fix-Status=" + fix, "GPS Fix-Status was 1, but needs to be 2 or 3 for valid Coordinates.")))
                 return
 
-            latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.device.get_coordinates()     
-            #latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.__TMP_get_coordinates()  #TODO: TMP ONLY       
+            latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.device.get_coordinates()
+            # latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.__TMP_get_coordinates()  #TODO: TMP ONLY
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_LATITUDE]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_LATITUDE, latitude))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_NS]:
@@ -607,21 +607,21 @@ class GPSBricklet(AbstractDevice):
         except ip_connection.Error as e:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg(e.value, e.description)))
         except Exception as ex:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
+            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)))
 
     def _timer_altitude(self, var_name):
         """
         LoggerTimer function to get the GPS altitude. Should only log the altitude when the GPS.FIX is equal 3.
         """
         try:
-            #check for the FIX Value of get_status()
+            # check for the FIX Value of get_status()
             fix = self._get_fix_status()
                
             if fix != GPS.FIX_3D_FIX:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg("Fix-Status="+str(fix), "GPS Fix-Status was " + str(fix) + ", but needs to be 3 for valid Altitude Values.")))
+                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg("Fix-Status=" + str(fix), "GPS Fix-Status was " + str(fix) + ", but needs to be 3 for valid Altitude Values.")))
                 return
  
-            altitude, geoidal_separation = self.device.get_altitude()            
+            altitude, geoidal_separation = self.device.get_altitude()
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_ALTITUDE_VALUE]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE_VALUE, altitude))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_GEOIDAL_SEPERATION]:
@@ -629,18 +629,18 @@ class GPSBricklet(AbstractDevice):
         except ip_connection.Error as e:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg(e.value, e.description)))
         except Exception as ex:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
+            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)))
 
     def _timer_motion(self, var_name):
         """
         LoggerTimer function to get the GPS motion. Should only log the motion when the GPS.FIX is greater or equal 2.
         """
         try:
-            #check for the FIX Value of get_status()
+            # check for the FIX Value of get_status()
             fix = self._get_fix_status()
                
             if fix == GPS.FIX_NO_FIX:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg("Fix-Status="+fix, "GPS Fix-Status was " + fix + ", but needs to be 2 or 3 for valid Altitude Values.")))
+                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg("Fix-Status=" + fix, "GPS Fix-Status was " + fix + ", but needs to be 2 or 3 for valid Altitude Values.")))
                 return
  
             course, speed = self.device.get_motion()
@@ -651,7 +651,7 @@ class GPSBricklet(AbstractDevice):
         except ip_connection.Error as e:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg(e.value, e.description)))
         except Exception as ex:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
+            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)))
 
     def _timer_date_time(self, var_name):
         """
@@ -671,7 +671,7 @@ class GPSBricklet(AbstractDevice):
         Fix-Status function. Returns the current Fix-Status for other functions
         """
         fix, satellites_view, satellites_used = self.device.get_status()
-        #fix, satellites_view, satellites_used = self.__TMP_get_status()#TODO: TMP ONLY
+        # fix, satellites_view, satellites_used = self.__TMP_get_status()#TODO: TMP ONLY
          
         if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_FIX_STATUS]:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_FIX_STATUS, fix))
@@ -689,14 +689,14 @@ class GPSBricklet(AbstractDevice):
 class SegmentDisplay4x7Bricklet(AbstractDevice):
     """
     The SegmentDisplay4x7Bricklet is a special device. It's function returns a combination of
-    multiple values and a list. Because of this, the device needs special attention and it's 
+    multiple values and a list. Because of this, the device needs special attention and it's
     own class.
-    """    
+    """
     def __init__(self, data, datalogger):
         AbstractDevice.__init__(self, data, datalogger)
     
         self.device = BrickletSegmentDisplay4x7(self.uid, datalogger.ipcon)
-        self.identifier = BrickletSegmentDisplay4x7.DEVICE_IDENTIFIER 
+        self.identifier = BrickletSegmentDisplay4x7.DEVICE_IDENTIFIER
         
         self.__name__ = Identifier.SPECIAL_DEVICE
         
@@ -705,13 +705,13 @@ class SegmentDisplay4x7Bricklet(AbstractDevice):
         """
         Starts all timer for all loggable variables of the devices.
         """
-        AbstractDevice.start_timer(self) 
+        AbstractDevice.start_timer(self)
         
         value1 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS]
         value2 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.SEGMENT_DISPLAY_4x7_COUNTER_VALUE]
         
-        self.datalogger.timers.append(utils.LoggerTimer(value1, self._timer_segments.__name__, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self)) 
-        self.datalogger.timers.append(utils.LoggerTimer(value2, self._timer_counter_value.__name__, Identifier.SEGMENT_DISPLAY_4x7_COUNTER_VALUE, self)) 
+        self.datalogger.timers.append(utils.LoggerTimer(value1, self._timer_segments.__name__, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self))
+        self.datalogger.timers.append(utils.LoggerTimer(value2, self._timer_counter_value.__name__, Identifier.SEGMENT_DISPLAY_4x7_COUNTER_VALUE, self))
 
     def _timer_segments(self, var_name):
         """
@@ -719,7 +719,7 @@ class SegmentDisplay4x7Bricklet(AbstractDevice):
         """
         try:
             segment, brightness, colon = self.device.get_segments()
-            #segment, brightness, colon = self.__TMP_GET_SEGMENTS()#TODO: debug only
+            # segment, brightness, colon = self.__TMP_GET_SEGMENTS()#TODO: debug only
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_1]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_1, segment[0]))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_2]:
@@ -731,11 +731,11 @@ class SegmentDisplay4x7Bricklet(AbstractDevice):
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_BRIGTHNESS]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_BRIGTHNESS, brightness))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_COLON]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_COLON, colon))        
+                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_COLON, colon))
         except ip_connection.Error as e:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(e.value, e.description)))
         except Exception as ex:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(str(self.identifier)+"-"+str(var_name), ex) ))
+            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)))
 
     def _timer_counter_value(self, var_name):
         """
@@ -745,7 +745,7 @@ class SegmentDisplay4x7Bricklet(AbstractDevice):
         self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_COUNTER_VALUE, value))
               
 ############################################################################################
-###NOT SUPPORTED
+# ##NOT SUPPORTED
 # INDUSTRIAL_DIGITAL_IN_4 = "Industrial Digital In 4"
 # INDUSTRIAL_DIGITAL_OUT_4 = "Industrial Digital Out 4"
 # INDUSTRIAL_QUAD_RELAY = "Industrial Quad Relay"

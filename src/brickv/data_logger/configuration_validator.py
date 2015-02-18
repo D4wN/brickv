@@ -12,7 +12,7 @@ from brickv.data_logger.event_logger import EventLogger
 class ConfigurationReader(object):
     '''
     This class provides the read-in functionality for the Data Logger configuration file
-    '''   
+    '''
     GENERAL_SECTION = "GENERAL"
     GENERAL_LOG_TO_FILE = "log_to_file"
     GENERAL_PATH_TO_FILE = "path_to_file"
@@ -33,12 +33,12 @@ class ConfigurationReader(object):
 
     def __init__(self, pathToConfig=None, configuration=None):
         '''
-        pathToConfig -- path to the json configuration file 
+        pathToConfig -- path to the json configuration file
         OR
         configuration -- the configuration itself
         '''
         self._configuration = Configuration()
-        self._readConfigErr = 0 # Errors which occure during readin
+        self._readConfigErr = 0  # Errors which occure during readin
         
         if pathToConfig is None and configuration is None:
             EventLogger.critical("ConfigurationReader needs a path to the configuration file or an actual configuration")
@@ -46,13 +46,13 @@ class ConfigurationReader(object):
         
         if pathToConfig is not None:
             self.filenName = pathToConfig
-            self._read_json_config_file()   
+            self._read_json_config_file()
             
         if configuration is not None:
             if isinstance(configuration, Configuration):
                 self._configuration = configuration
             else:
-                self.map_dict_to_config(configuration)   
+                self.map_dict_to_config(configuration)
                         
         validator = ConfigurationValidator(self._configuration)
         validator._error_count += self._readConfigErr
@@ -61,31 +61,31 @@ class ConfigurationReader(object):
         
     def _read_json_config_file(self):
         with codecs.open(self.filenName, 'r', 'UTF-8') as content_file:
-            try:       
+            try:
                 json_structure = json.load(content_file)
             except ValueError as e:
-                EventLogger.critical("Cant parse the configuration file: " + str(e) )
+                EventLogger.critical("Cant parse the configuration file: " + str(e))
                 return
         
-        # Load sections out of the json structure 
+        # Load sections out of the json structure
         try:
             self._configuration._general = json_structure[ConfigurationReader.GENERAL_SECTION]
         except KeyError:
             EventLogger.critical("json configuration file has no [" + ConfigurationReader.GENERAL_SECTION + "] section")
             self._readConfigErr += 1
             
-        self._configuration._xively = prevent_key_error(json_structure,ConfigurationReader.XIVELY_SECTION)
-        self._configuration._simple_devices = prevent_key_error(json_structure,loggable_devices.Identifier.SIMPLE_DEVICE)
-        self._configuration._complex_devices = prevent_key_error(json_structure,loggable_devices.Identifier.COMPLEX_DEVICE)
-        self._configuration._special_devices = prevent_key_error(json_structure,loggable_devices.Identifier.SPECIAL_DEVICE)
+        self._configuration._xively = prevent_key_error(json_structure, ConfigurationReader.XIVELY_SECTION)
+        self._configuration._simple_devices = prevent_key_error(json_structure, loggable_devices.Identifier.SIMPLE_DEVICE)
+        self._configuration._complex_devices = prevent_key_error(json_structure, loggable_devices.Identifier.COMPLEX_DEVICE)
+        self._configuration._special_devices = prevent_key_error(json_structure, loggable_devices.Identifier.SPECIAL_DEVICE)
     
-    def map_dict_to_config(self, json_dict):                        
+    def map_dict_to_config(self, json_dict):
         self._configuration._general = prevent_key_error(json_dict, ConfigurationReader.GENERAL_SECTION)
         self._configuration._xively = prevent_key_error(json_dict, ConfigurationReader.XIVELY_SECTION)
                 
-        self._configuration._simple_devices = prevent_key_error(json_dict,loggable_devices.Identifier.SIMPLE_DEVICE)
-        self._configuration._special_devices = prevent_key_error(json_dict,loggable_devices.Identifier.SPECIAL_DEVICE)
-        self._configuration._complex_devices = prevent_key_error(json_dict,loggable_devices.Identifier.COMPLEX_DEVICE)
+        self._configuration._simple_devices = prevent_key_error(json_dict, loggable_devices.Identifier.SIMPLE_DEVICE)
+        self._configuration._special_devices = prevent_key_error(json_dict, loggable_devices.Identifier.SPECIAL_DEVICE)
+        self._configuration._complex_devices = prevent_key_error(json_dict, loggable_devices.Identifier.COMPLEX_DEVICE)
 
 """"
 /*---------------------------------------------------------------------------
@@ -93,7 +93,7 @@ class ConfigurationReader(object):
  ---------------------------------------------------------------------------*/
 """
 import re
-from  brickv.data_logger.utils import DataLoggerException
+from brickv.data_logger.utils import DataLoggerException
 
 class ConfigurationValidator(object):
     '''
@@ -106,7 +106,7 @@ class ConfigurationValidator(object):
         file_count = self.json_config._general[ConfigurationReader.GENERAL_LOG_COUNT]
         file_size = self.json_config._general[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
          
-        self._log_space_counter = LogSpaceCounter(file_count,file_size)
+        self._log_space_counter = LogSpaceCounter(file_count, file_size)
                 
         
     def validate(self):
@@ -123,24 +123,24 @@ class ConfigurationValidator(object):
         self.validate_special_devices(self.json_config._special_devices)
         self.validate_complex_devices(self.json_config._complex_devices)
         
-        EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")       
+        EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")
 
         logging_time = self._log_space_counter.calculate_time()
-        EventLogger.info("Logging time until old data will be overwritten." )
-        EventLogger.info("Days: " +str(logging_time[0]) +
-                        " Hours: " +str(logging_time[1]) +
-                        " Minutes: " +str(logging_time[2]) +
-                        " Seconds: " +str(logging_time[3]))    
-        EventLogger.info("About "+ str(int(self._log_space_counter.lines_per_second + 0.5))+" lines per second." )
+        EventLogger.info("Logging time until old data will be overwritten.")
+        EventLogger.info("Days: " + str(logging_time[0]) + 
+                        " Hours: " + str(logging_time[1]) + 
+                        " Minutes: " + str(logging_time[2]) + 
+                        " Seconds: " + str(logging_time[3]))
+        EventLogger.info("About " + str(int(self._log_space_counter.lines_per_second + 0.5)) + " lines per second.")
 
         if self._error_count != 0:
-            raise DataLoggerException(DataLoggerException.DL_FAILED_VALIDATION , "Validation process found some errors")
+            raise DataLoggerException(DataLoggerException.DL_FAILED_VALIDATION, "Validation process found some errors")
         
     def validate_general_section(self, global_section):
         
         def is_valid_ip_format(ip_str):
             '''
-            This function validates the format of an ip-address and returns true 
+            This function validates the format of an ip-address and returns true
             on an valid and false on an invalid format.
             
             This function does not check if the ip-address makes any sense
@@ -151,41 +151,36 @@ class ConfigurationValidator(object):
             if re.match(pattern, ip_str):
                 return True
             else:
-                return False                    
+                return False
         
         # ConfigurationReader.GENERAL_HOST ip address
-        host = global_section[ConfigurationReader.GENERAL_HOST] 
+        host = global_section[ConfigurationReader.GENERAL_HOST]
         if not host.lower() == 'localhost' and not is_valid_ip_format(host):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_HOST], \
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_HOST],
                                                 msg="host should be 'localhost' or an valid ip-address"))
         
         # ConfigurationReader.GENERAL_PORT port number
         port = global_section[ConfigurationReader.GENERAL_PORT]
         if not self._is_valid_string(port, 1) and not(port > 0 and port <= 65535):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PORT], \
-                                                msg="port should be an integer 0-65535"))
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PORT], msg="port should be an integer 0-65535"))
         
-        # ConfigurationReader.GENERAL_LOG_TO_FILE 
+        # ConfigurationReader.GENERAL_LOG_TO_FILE
         if not type(global_section[ConfigurationReader.GENERAL_LOG_TO_FILE]) == bool:
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_TO_FILE], \
-                                                msg="should be a boolean"))
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_TO_FILE], msg="should be a boolean"))
 
-        # ConfigurationReader.GENERAL_PATH_TO_FILE 
+        # ConfigurationReader.GENERAL_PATH_TO_FILE
         if not self._is_valid_string(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE], 1):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PATH_TO_FILE], \
-                                                msg="should be a path to the file where the data will be saved"))
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PATH_TO_FILE], msg="should be a path to the file where the data will be saved"))
          
         # ConfigurationReader.GENERAL_LOG_COUNT and GENERAL_LOG_FILE_SIZE
         count = global_section[ConfigurationReader.GENERAL_LOG_COUNT]
-        if not isinstance(count,int) and (not isinstance(count,float)) :
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_COUNT], \
-                                                msg="should be a int or float" ))
+        if not isinstance(count, int) and (not isinstance(count, float)):
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_COUNT], msg="should be a int or float"))
         size = global_section[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
-        if not isinstance(size,int) and (not isinstance(size,float)):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_FILE_SIZE], \
-                                                msg="should be a int or float"))
+        if not isinstance(size, int) and (not isinstance(size, float)):
+            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_FILE_SIZE], msg="should be a int or float"))
          
-        # TODO: Check free disk space of the destination 
+        # TODO: Check free disk space of the destination
         
     def validate_xively_section(self, xively_section):
         # TODO: implement xively section validation
@@ -210,8 +205,8 @@ class ConfigurationValidator(object):
                     self._log_space_counter.simple_devices(values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL])
                            
             except KeyError as k:
-                EventLogger.critical(self._generate_error_message(device=device, \
-                                                                  tier_array=["values", value], \
+                EventLogger.critical(self._generate_error_message(device=device,
+                                                                  tier_array=["values", value],
                                                                   msg="device has no key " + str(k)))
                 
     def validate_special_devices(self, devices):
@@ -228,21 +223,21 @@ class ConfigurationValidator(object):
             try:
                 # the two lists (device values, device booleans) should have the same length
                 if len(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]) != len(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]):
-                    EventLogger.critical(self._generate_error_message(device=device, \
-                                                        tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE, loggable_devices.Identifier.SPECIAL_DEVICE_VALUE ], \
-                                                        msg="should have the same length"))
+                    EventLogger.critical(self._generate_error_message(device=device,
+                                                                      tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE, loggable_devices.Identifier.SPECIAL_DEVICE_VALUE],
+                                                                      msg="should have the same length"))
     
-                # check types of the entities in the lists  
-                variables = device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL] 
-                variables_count = 0     
+                # check types of the entities in the lists
+                variables = device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL]
+                variables_count = 0
                 for bool_value_key in variables:
                     value = device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL][bool_value_key]
                     if not isinstance(value, bool):
-                        EventLogger.critical(self._generate_error_message(device=device, \
-                                                            tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL, bool_value_key], \
-                                                            msg="is not a boolean"))
+                        EventLogger.critical(self._generate_error_message(device=device,
+                                                                          tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL, bool_value_key],
+                                                                          msg="is not a boolean"))
                     else:
-                        if value == True:
+                        if value is True:
                             variables_count += 1
           
                 interval = device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]
@@ -250,9 +245,9 @@ class ConfigurationValidator(object):
                 for interval_value_key in interval:
                     interval_length = device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE][interval_value_key]
                     if not self._is_valid_interval(interval_length):
-                        EventLogger.critical(self._generate_error_message(device=device, \
-                                                            tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE, interval_value_key], \
-                                                            msg="is not a valid interval"))
+                        EventLogger.critical(self._generate_error_message(device=device,
+                                                                          tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE, interval_value_key],
+                                                                          msg="is not a valid interval"))
                     else:
                         interval_summ += interval_length
                         
@@ -261,8 +256,8 @@ class ConfigurationValidator(object):
                 self._log_space_counter.special_devices(variables_count, interval_summ)
                 
             except KeyError as k:
-                EventLogger.critical(self._generate_error_message(device=device, \
-                                                                  tier_array=[""], \
+                EventLogger.critical(self._generate_error_message(device=device,
+                                                                  tier_array=[""],
                                                                   msg="device has no key " + str(k)))
           
     def validate_complex_devices(self, devices):
@@ -278,49 +273,48 @@ class ConfigurationValidator(object):
             try:
                 values = device[loggable_devices.Identifier.DEVICE_VALUES]
                 for value in values:
-                    self._check_basic_variables(device, values, value)           
+                    self._check_basic_variables(device, values, value)
                     
-                    if len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != \
-                    len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
-                        EventLogger.critical(self._generate_error_message(device=device, \
-                                                            tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME], \
-                                                            msg="should have the same length"))
+                    if len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
+                        EventLogger.critical(self._generate_error_message(device=device,
+                                                                          tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME],
+                                                                          msg="should have the same length"))
                    
                     # loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL
                     bool_values = values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]
                     for bool_value in bool_values:
                         if not isinstance(bool_value, bool):
-                            EventLogger.critical(self._generate_error_message(device=device, \
-                                                                tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL, str(bool_value)], \
-                                                                msg="should be a boolean"))
+                            EventLogger.critical(self._generate_error_message(device=device,
+                                                                              tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL, str(bool_value)],
+                                                                              msg="should be a boolean"))
     
                     # loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME
                     string_values = values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]
                     for string_value in string_values:
                         if not self._is_valid_string(string_value, 1):
-                            EventLogger.critical(self._generate_error_message(device=device, \
-                                                                tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME, str(bool_value)], \
-                                                                msg="should be a string"))
+                            EventLogger.critical(self._generate_error_message(device=device,
+                                                                              tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME, str(bool_value)],
+                                                                              msg="should be a string"))
                             
                     # log space calculation
                     interval = values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]
-                    self._log_space_counter.complex_devices(interval,bool_values)
+                    self._log_space_counter.complex_devices(interval, bool_values)
                     
             except KeyError as k:
-                EventLogger.critical(self._generate_error_message(device=device, \
-                                                                  tier_array=["values", value], \
+                EventLogger.critical(self._generate_error_message(device=device,
+                                                                  tier_array=["values", value],
                                                                   msg="device has no key " + str(k)))
         
     def _replace_str_with_class(self, devices):
         '''
-        This function replaces the entry 'loggable_devices.Identifier.DEVICE_CLASS' which contains 
+        This function replaces the entry 'loggable_devices.Identifier.DEVICE_CLASS' which contains
         the class name as a string with the actual class object
         '''
         class_str = ""
         for i in range(len(devices)):
             try:
                 class_str = devices[i][loggable_devices.Identifier.DEVICE_CLASS]
-                devices[i][loggable_devices.Identifier.DEVICE_CLASS] = loggable_devices.string_to_class(class_str) 
+                devices[i][loggable_devices.Identifier.DEVICE_CLASS] = loggable_devices.string_to_class(class_str)
                  
             except (KeyError, AttributeError):
                 self._error_count += 1
@@ -329,29 +323,29 @@ class ConfigurationValidator(object):
     def _check_basic_data(self, device):
         '''
         This function validates entries which are present in every device type
-        '''           
-        try:    
+        '''
+        try:
             # should be a class not a string
             if isinstance(device[loggable_devices.Identifier.DEVICE_CLASS], basestring):
-                EventLogger.critical(self._generate_error_message(device=device, \
-                                                    tier_array=[loggable_devices.Identifier.DEVICE_CLASS], \
-                                                    msg="should be a class but is a string"))
+                EventLogger.critical(self._generate_error_message(device=device,
+                                                                  tier_array=[loggable_devices.Identifier.DEVICE_CLASS],
+                                                                  msg="should be a class but is a string"))
                 
             # should be a string with length > 0
             if not self._is_valid_string(device[loggable_devices.Identifier.DEVICE_NAME]):
-                EventLogger.critical(self._generate_error_message(device=device, \
-                                                    tier_array=[loggable_devices.Identifier.DEVICE_NAME], \
-                                                    msg="should be a string with length > 0"))
+                EventLogger.critical(self._generate_error_message(device=device,
+                                                                  tier_array=[loggable_devices.Identifier.DEVICE_NAME],
+                                                                  msg="should be a string with length > 0"))
                 
             # should be a string with length >= 3
             if not self._is_valid_string(device[loggable_devices.Identifier.DEVICE_UID]):
-                EventLogger.critical(self._generate_error_message(device=device, \
-                                                    tier_array=[loggable_devices.Identifier.DEVICE_UID], \
-                                                    msg="should be a string with length > 0"))
+                EventLogger.critical(self._generate_error_message(device=device,
+                                                                  tier_array=[loggable_devices.Identifier.DEVICE_UID],
+                                                                  msg="should be a string with length > 0"))
                 
         except KeyError as k:
-            EventLogger.critical(self._generate_error_message(device=device, \
-                                                              tier_array=[""], \
+            EventLogger.critical(self._generate_error_message(device=device,
+                                                              tier_array=[""],
                                                               msg="device has no key " + str(k)))
        
     def _check_basic_variables(self, device, values, value):
@@ -359,18 +353,18 @@ class ConfigurationValidator(object):
         This function checks entries which are present in the simple- and complex devices
         '''
         # loggable_devices.Identifier.DEVICE_VALUES_ARGS
-        if not self._is_valid_arguments(values[value][loggable_devices.Identifier.DEVICE_VALUES_ARGS]):  
-                        EventLogger.critical(self._generate_error_message(device=device, \
-                                                            tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_ARGS ], \
-                                                            msg="arguments should be either 'None' or a list with length >= 1 "))
+        if not self._is_valid_arguments(values[value][loggable_devices.Identifier.DEVICE_VALUES_ARGS]):
+                        EventLogger.critical(self._generate_error_message(device=device,
+                                                                          tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_ARGS],
+                                                                          msg="arguments should be either 'None' or a list with length >= 1 "))
         # loggable_devices.Identifier.DEVICE_VALUES_INTERVAL
         interval = values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]
         if not self._is_valid_interval(interval):
-                        EventLogger.critical(self._generate_error_message(device=device, \
-                                                            tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_INTERVAL], \
-                                                            msg="interval should be an integer and >= 0"))               
+                        EventLogger.critical(self._generate_error_message(device=device,
+                                                                          tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_INTERVAL],
+                                                                          msg="interval should be an integer and >= 0"))
         
-        # loggable_devices.Identifier.DEVICE_VALUES_NAME                        
+        # loggable_devices.Identifier.DEVICE_VALUES_NAME
         func_name = values[value][loggable_devices.Identifier.DEVICE_VALUES_NAME]
         class_object = device[loggable_devices.Identifier.DEVICE_CLASS]
         if not self._is_valid_function(class_object, func_name):
@@ -380,16 +374,16 @@ class ConfigurationValidator(object):
             else:
                 tmp_msg = "[" + class_object.__name__ + "] has no function \"" + func_name + "\""
                 
-            EventLogger.critical(self._generate_error_message(device=device, \
-                                                                          tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_NAME], \
-                                                                          msg=tmp_msg))
+            EventLogger.critical(self._generate_error_message(device=device,
+                                                              tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_NAME],
+                                                              msg=tmp_msg))
                         
     def _is_valid_string(self, string_value, min_length=0):
         '''
         Returns True if 'string_value' is of type basestring and has at least a size of
         'min_length'
         '''
-        if not isinstance(string_value, basestring) or len(string_value) < min_length :
+        if not isinstance(string_value, basestring) or len(string_value) < min_length:
             return False
         return True
     
@@ -405,7 +399,7 @@ class ConfigurationValidator(object):
         '''
         Returns True if the 'arg_value' is 'None' or a list with at least one element
         '''
-        if arg_value == None:
+        if arg_value is None:
             return True
         elif isinstance(arg_value, list) and len(arg_value) >= 1:
             return True
@@ -416,7 +410,7 @@ class ConfigurationValidator(object):
         '''
         Returns True if the class 'class_obj' has an function wit the name 'func_name'
         '''
-        return hasattr(class_obj, func_name)  
+        return hasattr(class_obj, func_name)
  
     def _generate_error_message(self, tier_array, msg, device=None):
         '''
@@ -424,7 +418,7 @@ class ConfigurationValidator(object):
         so that the error can be quickly found in the actual configuration file
         '''
         err_msg = ""
-        if device != None:
+        if device is not None:
             err_msg = "[UID=" + str(device[loggable_devices.Identifier.DEVICE_UID]) + "]"
             
         for tier in tier_array:
@@ -442,45 +436,45 @@ class ConfigurationValidator(object):
 class LogSpaceCounter(object):
     '''
     This class provides functions to count the average lines per second
-    in the log file  
+    in the log file
     '''
-    def __init__(self,file_count,file_size):
+    def __init__(self, file_count, file_size):
         self.file_count = file_count
         self.file_size = file_size
         
         self.lines_per_second = 0.0
 
     
-    def simple_devices(self,interval):
+    def simple_devices(self, interval):
         '''
-        This function calculates the lines per second for simple devices and 
+        This function calculates the lines per second for simple devices and
         have to be called for every variable
         
-        interval -- logging interval for a variable 
+        interval -- logging interval for a variable
         '''
         if interval == 0:
             return
         
         self.lines_per_second += 1000.0 / interval
     
-    def special_devices(self,variables, interval):
+    def special_devices(self, variables, interval):
         '''
         This function calculates the lines per second for special devices
         
         variables -- Amount of variables
-        interval -- Sum of all interval  
+        interval -- Sum of all interval
         '''
         if interval == 0:
             return
         
         self.lines_per_second += ((variables * 1000.0) / interval)
     
-    def complex_devices(self,interval,bool_values):
+    def complex_devices(self, interval, bool_values):
         '''
             This function calculates the lines per second for complex devices
             countOfTrue / interval
             
-            interval -- logging interval 
+            interval -- logging interval
             bool_values -- list with True/False values (Amount of True's equals to amount of loggable variables)
             
         '''
@@ -489,37 +483,37 @@ class LogSpaceCounter(object):
         
         variables = 0
         for entry in bool_values:
-            if isinstance(entry, bool) and entry == True:
+            if isinstance(entry, bool) and entry is True:
                 variables += 1
         
-        self.lines_per_second += ((variables * 1000.0) / interval)  
+        self.lines_per_second += ((variables * 1000.0) / interval)
                 
     
     def calculate_time(self):
         '''
-        This function calculates the time where the logger can 
+        This function calculates the time where the logger can
         save data without overwriting old ones.
         
         18k lines -> 1MB
         '''
         if self.lines_per_second <= 0:
-            return 0,0,0,0
+            return 0, 0, 0, 0
         
-        max_available_space =  (self.file_count + 1) * ((self.file_size / 1024.0) / 1024.0)       
+        max_available_space = (self.file_count + 1) * ((self.file_size / 1024.0) / 1024.0)
         secondsForOneMB = 18000.0 / self.lines_per_second
         
         sec = secondsForOneMB * max_available_space * 1.0
 
-        days =  int (sec / 86400.0)
-        sec -= 86400.0*days      
+        days = int(sec / 86400.0)
+        sec -= 86400.0 * days
 
         hrs = int(sec / 3600.0)
-        sec -= 3600.0*hrs
+        sec -= 3600.0 * hrs
 
         mins = int(sec / 60.0)
-        sec -= 60.0*mins
+        sec -= 60.0 * mins
         
-        return days, hrs , mins, int(sec)
+        return days, hrs, mins, int(sec)
         
                 
 """"
@@ -529,7 +523,7 @@ class LogSpaceCounter(object):
 """
 class Configuration():
     '''
-    This class contains the information out of the json configuration file split by the 
+    This class contains the information out of the json configuration file split by the
     different categories/sections.
     '''
     def __init__(self):
@@ -538,20 +532,20 @@ class Configuration():
         
         self._simple_devices = []
         self._complex_devices = []
-        self._special_devices = []      
+        self._special_devices = []
       
     def isEmpty(self):
-        return True if len(self._general) == 0 else False       
+        return True if len(self._general) == 0 else False
  
-def prevent_key_error(dict_src , key): 
+def prevent_key_error(dict_src, key):
     '''
-    This function returns an empty array if there is no such  
+    This function returns an empty array if there is no such
     section in the configuration file
     key -- section key
     '''
-    result = [] 
+    result = []
     try:
         result = dict_src[key]
     except KeyError:
         EventLogger.warning("json configuration file has no [" + key + "] section")
-    return result          
+    return result

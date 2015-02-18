@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-  
+# -*- coding: utf-8 -*-
 """
-brickv (Brick Viewer) 
+brickv (Brick Viewer)
 Copyright (C) 2012, 2014 Roland Dudko  <roland.dudko@gmail.com>
 Copyright (C) 2012, 2014 Marvin Lutz <marvin.lutz.mail@gmail.com>
 
 data_logger_util.py: Util classes for the data logger
 
 This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License 
-as published by the Free Software Foundation; either version 2 
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
@@ -31,12 +31,12 @@ from shutil import copyfile
 /*---------------------------------------------------------------------------
                                 DataLoggerException
  ---------------------------------------------------------------------------*/
- '''     
+ '''
 class DataLoggerException(Exception):
     
     # Error Codes
     DL_MISSING_ARGUMENT = -1  # Missing Arguments in Config File
-    DL_FAILED_VALIDATION = -2 # Validation found errors in the configuration file 
+    DL_FAILED_VALIDATION = -2  # Validation found errors in the configuration file
     DL_CRITICAL_ERROR = -42  # For all other critical errors
     # TODO: More specific error codes from our DataLogger
     
@@ -58,7 +58,7 @@ import datetime  # CSV_Data
 class CSVData(object):
     '''
     This class is used as a temporary save spot for all csv relevant data.
-    '''    
+    '''
     
     def __init__(self, uid, name, var_name, raw_data):
         '''
@@ -68,9 +68,9 @@ class CSVData(object):
         raw_data -- the logged value
         
         The timestamp is added automatically.
-        '''        
+        '''
         self.uid = uid
-        self.name = name;
+        self.name = name
         self.var_name = var_name
         self.raw_data = raw_data
         self.timestamp = None
@@ -120,7 +120,7 @@ class LoggerTimer(object):
     '''This class provides a timer with a repeat functionality based on a interval'''
         
     def __init__(self, interval, func_name, var_name, device):
-        ''' 
+        '''
         interval -- the repeat interval in ms
         func -- the function which will be called
         '''
@@ -130,8 +130,8 @@ class LoggerTimer(object):
             interval = 0
         
         self._interval = interval
-        self._func_name = func_name     
-        self._var_name = var_name 
+        self._func_name = func_name
+        self._var_name = var_name
         self._device = device
         self._t = Timer(self._interval, self._loop)
    
@@ -146,12 +146,12 @@ class LoggerTimer(object):
         self.start()
            
     def start(self):
-        '''Starts the timer if <self._interval> is not 0 otherwise the 
-           timer will be canceled 
+        '''Starts the timer if <self._interval> is not 0 otherwise the
+           timer will be canceled
         '''
         if self._interval == 0:
             self.cancel()
-            return     
+            return
  
         self._t.start()
     
@@ -164,7 +164,7 @@ class LoggerTimer(object):
     def join(self):
         if self._interval == 0:  # quick fix for no timer.start()
             return
-        self._t.join();
+        self._t.join()
 
 
 """
@@ -188,10 +188,10 @@ class Utilities(object):
                 ret = 0
             return ret
         except ValueError:
-            #EventLogger.debug("DataLogger.parse_to_int(" + string + ") could not be parsed! Return 0 for the Timer.")
+            # EventLogger.debug("DataLogger.parse_to_int(" + string + ") could not be parsed! Return 0 for the Timer.")
             return 0
     
-    parse_to_int = staticmethod(parse_to_int) 
+    parse_to_int = staticmethod(parse_to_int)
 
     def parse_to_bool(bool_string):
         '''
@@ -203,7 +203,7 @@ class Utilities(object):
         else:
             return False
             
-    parse_to_bool = staticmethod(parse_to_bool)       
+    parse_to_bool = staticmethod(parse_to_bool)
 
     def replace_right(source, target, replacement, replacements=None):
         return replacement.join(source.rsplit(target, replacements))
@@ -221,14 +221,14 @@ import csv  # CSV_Writer
 
 class CSVWriter(object):
     '''
-    This class provides the actual open/write functions, which are used by the CSVWriterJob class to write logged data into 
+    This class provides the actual open/write functions, which are used by the CSVWriterJob class to write logged data into
     a CSV formatted file.
-    '''    
+    '''
     
     def __init__(self, file_path, max_file_size=0, max_file_count=1):
         '''
         file_path = Path to the csv file
-        ''' 
+        '''
         self._file_path = file_path
         self._raw_file = None
         self._csv_file = None
@@ -238,13 +238,13 @@ class CSVWriter(object):
         self._file_size = max_file_size
 #         if max_file_count < 0:
 #             max_file_count = 0
-        #FIXME: create always at least 1 backup file!
+        # FIXME: create always at least 1 backup file!
         if max_file_count < 1:
             max_file_count = 1
 
         self._file_count = max_file_count
         
-        self._open_file_A()    
+        self._open_file_A()
     
     def _open_file_A(self):
         """Opens a file in append mode."""
@@ -292,10 +292,10 @@ class CSVWriter(object):
             True  - Row was written into thee file
             False - Row was not written into the File
         """
-        if self._raw_file == None or self._csv_file == None:
+        if self._raw_file is None or self._csv_file is None:
             return False
 
-        self._csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [str(csv_data.raw_data)] + [csv_data.timestamp])        
+        self._csv_file.writerow([csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [str(csv_data.raw_data)] + [csv_data.timestamp])
 
         if self._file_size > 0:
             self._rolling_file()
@@ -327,10 +327,10 @@ class CSVWriter(object):
             True  - File could be reopened
             False - File could not be reopened
         """
-        if self._raw_file != None and self._csv_file != None:
+        if self._raw_file is not None and self._csv_file is not None:
             return False
         
-        self._open_file_A()        
+        self._open_file_A()
         return True
     
     def close_file(self):
@@ -340,7 +340,7 @@ class CSVWriter(object):
             True  - File was close
             False - File could not be closed
         """
-        if self._raw_file == None or self._csv_file == None:
+        if self._raw_file is None or self._csv_file is None:
             return False
         try:
             self._raw_file.close()
@@ -358,7 +358,7 @@ class CSVWriter(object):
             EventLogger.info("Max Filesize(" + "%.3f" % (self._file_size / 1024.0 / 1024.0) + " MB) reached! Rolling Files...")
             self._roll_files()
        
-    #FIXME: only files with a . are working!
+    # FIXME: only files with a . are working!
     def _roll_files(self):
         i = self._file_count
         
@@ -367,7 +367,7 @@ class CSVWriter(object):
         while True:
             if i == 0:
                 # first file reached
-                break;
+                break
             
             tmp_file_name = Utilities.replace_right(self._file_path, ".", "(" + str(i) + ").", 1)
             
@@ -375,18 +375,18 @@ class CSVWriter(object):
                 if i == self._file_count:
                     # max file count -> delete
                     os.remove(tmp_file_name)
-                    EventLogger.debug("Rolling Files... removed File(" + str(i)+")")
+                    EventLogger.debug("Rolling Files... removed File(" + str(i) + ")")
                 
                 else:
                     # copy file and remove old
-                    copyfile(tmp_file_name, Utilities.replace_right(self._file_path, ".", "(" + str(i + 1) + ").", 1))   
-                    EventLogger.debug("Rolling Files... copied File(" + str(i) +") into ("+ str(i+1)+")")
+                    copyfile(tmp_file_name, Utilities.replace_right(self._file_path, ".", "(" + str(i + 1) + ").", 1))
+                    EventLogger.debug("Rolling Files... copied File(" + str(i) + ") into (" + str(i + 1) + ")")
                     os.remove(tmp_file_name)
             
-            i-=1                 
+            i -= 1
         
         if self._file_count != 0:
-            copyfile(self._file_path, Utilities.replace_right(self._file_path, ".", "(" + str(1) + ").", 1)) 
+            copyfile(self._file_path, Utilities.replace_right(self._file_path, ".", "(" + str(1) + ").", 1))
             EventLogger.debug("Rolling Files... copied original File into File(1)")
-        os.remove(self._file_path)        
-        self._open_file_A() 
+        os.remove(self._file_path)
+        self._open_file_A()

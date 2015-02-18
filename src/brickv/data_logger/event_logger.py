@@ -2,9 +2,9 @@
 /*---------------------------------------------------------------------------
                                 Event Logger
  ---------------------------------------------------------------------------*/
-"""    
-import logging;
-import datetime;
+"""
+import logging
+import datetime
 import os
 
 class EventLogger():
@@ -18,7 +18,7 @@ class EventLogger():
     __loggers = {}
     
     def add_logger(logger):
-        if logger.name == None or logger.name == "":
+        if logger.name is None or logger.name == "":
             raise Exception("Logger has no Attribute called 'name'!")
 
         EventLogger.__loggers[logger.name] = logger
@@ -58,7 +58,7 @@ class EventLogger():
         EventLogger._send_message(level, msg, logger_name)
     
     def _send_message(level, msg, logger_name):
-        if logger_name != None:
+        if logger_name is not None:
             if EventLogger.__loggers.has_key(logger_name):
                 EventLogger.__loggers[logger_name].log(level, msg)
         else:
@@ -67,15 +67,15 @@ class EventLogger():
     
     
     # static methods
-    add_logger = staticmethod(add_logger) 
+    add_logger = staticmethod(add_logger)
     remove_logger = staticmethod(remove_logger)
-    debug = staticmethod(debug) 
-    info = staticmethod(info) 
-    warn = staticmethod(warn) 
-    warning = staticmethod(warning) 
-    error = staticmethod(error) 
-    critical = staticmethod(critical) 
-    log = staticmethod(log) 
+    debug = staticmethod(debug)
+    info = staticmethod(info)
+    warn = staticmethod(warn)
+    warning = staticmethod(warning)
+    error = staticmethod(error)
+    critical = staticmethod(critical)
+    log = staticmethod(log)
     _send_message = staticmethod(_send_message)
       
 class ConsoleLogger(logging.Logger):
@@ -105,7 +105,7 @@ class FileLogger(logging.Logger):
     This class writes the logged events to an LOG file (EventLogger.EVENT_FILE_LOGGING_PATH)
     '''
     
-    def __init__(self, name, log_level, filename):        
+    def __init__(self, name, log_level, filename):
         logging.Logger.__init__(self, name, log_level)
         
         ch = logging.FileHandler(filename, mode="a")
@@ -141,39 +141,39 @@ class GUILogger(logging.Logger):
     _output_format_warning = "<font color=\"orange\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
     _output_format_critical = "<font color=\"red\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
     
-    def __init__(self, name, log_level, logger_window = None):        
-        #fix for "not responding app"
-        #we cant use debug information atm!
+    def __init__(self, name, log_level, logger_window=None):
+        # fix for "not responding app"
+        # we cant use debug information atm!
         if log_level == logging.DEBUG:
             log_level = logging.INFO
         
         logging.Logger.__init__(self, name, log_level)
         
-        self.logger_window_output = logger_window        
+        self.logger_window_output = logger_window
         
-    def debug(self, msg):   
+    def debug(self, msg):
         self.log(logging.DEBUG, msg)
     
-    def info(self, msg):              
+    def info(self, msg):
         self.log(logging.INFO, msg)
         
-    def warn(self, msg):              
+    def warn(self, msg):
         self.log(logging.WARN, msg)
         
-    def warning(self, msg):              
+    def warning(self, msg):
         self.log(logging.WARNING, msg)
         
-    def critical(self, msg):              
+    def critical(self, msg):
         self.log(logging.CRITICAL, msg)
     
-    def error(self, msg):              
+    def error(self, msg):
         self.log(logging.ERROR, msg)
             
     def log(self, level, msg):
-        if self.logger_window_output == None:
+        if self.logger_window_output is None:
             return
         
-        if level >= self.level:        
+        if level >= self.level:
             asctime = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
             levelname = GUILogger._convert_level[level]
             
@@ -188,10 +188,7 @@ class GUILogger(logging.Logger):
                 
     def _highlight_tab(self):
         if not self.logger_window_output.tab_console_warning and self.logger_window_output.tab_widget.currentWidget().objectName() != self.logger_window_output.tab_console.objectName():
-            self.logger_window_output.tab_console_warning = True        
+            self.logger_window_output.tab_console_warning = True
             from brickv.utils import get_resources_path
             from PyQt4.QtGui import QColor
-            self.logger_window_output.tab_set(self.logger_window_output.tab_widget.indexOf(self.logger_window_output.tab_console), QColor(255,0,0), os.path.join(get_resources_path(), "dialog-warning.png"))            
-            
-        
-            
+            self.logger_window_output.tab_set(self.logger_window_output.tab_widget.indexOf(self.logger_window_output.tab_console), QColor(255, 0, 0), os.path.join(get_resources_path(), "dialog-warning.png"))
