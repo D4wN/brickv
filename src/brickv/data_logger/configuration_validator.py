@@ -116,12 +116,12 @@ class ConfigurationValidator(object):
         '''
         EventLogger.info("Started configuration file validation")
         
-        self.validate_general_section(self.json_config._general)
-        self.validate_xively_section(self.json_config._xively)
+        self.validate_general_section()
+        self.validate_xively_section()
         
-        self.validate_simple_devices(self.json_config._simple_devices)
-        self.validate_special_devices(self.json_config._special_devices)
-        self.validate_complex_devices(self.json_config._complex_devices)
+        self.validate_simple_devices()
+        self.validate_special_devices()
+        self.validate_complex_devices()
         
         EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")
 
@@ -136,7 +136,11 @@ class ConfigurationValidator(object):
         if self._error_count != 0:
             raise DataLoggerException(DataLoggerException.DL_FAILED_VALIDATION, "Validation process found some errors")
         
-    def validate_general_section(self, global_section):
+    def validate_general_section(self):
+        '''
+        This function validates the general section out of the configuration
+        '''
+        global_section = self.json_config._general
         
         def is_valid_ip_format(ip_str):
             '''
@@ -182,15 +186,20 @@ class ConfigurationValidator(object):
          
         # TODO: Check free disk space of the destination
         
-    def validate_xively_section(self, xively_section):
+    def validate_xively_section(self):
+        '''
+        This function validates the xively section out of the configuration
+        '''
+        xively_section = self.json_config._xively
         # TODO: implement xively section validation
         EventLogger.info("Xively validation is not yet supported")
         pass
     
-    def validate_simple_devices(self, devices):
+    def validate_simple_devices(self):
         '''
         This function validates all devices from the configuration file which are of type 'SimpleDevice'
         '''
+        devices = self.json_config._simple_devices
         self._replace_str_with_class(devices)
         
         for i in range(len(devices)):
@@ -209,11 +218,12 @@ class ConfigurationValidator(object):
                                                                   tier_array=["values", value],
                                                                   msg="device has no key " + str(k)))
                 
-    def validate_special_devices(self, devices):
+    def validate_special_devices(self):
         '''
         This function validates all devices from the configuration file which are of type 'SpecialDevices'.
         Every special device has its own implementation without an super class.
         '''
+        devices = self.json_config._special_devices
         self._replace_str_with_class(devices)
         
         for i in range(len(devices)):
@@ -260,10 +270,11 @@ class ConfigurationValidator(object):
                                                                   tier_array=[""],
                                                                   msg="device has no key " + str(k)))
           
-    def validate_complex_devices(self, devices):
+    def validate_complex_devices(self):
         '''
         This function validates all devices from the configuration file which are of type 'ComplexDevice'.
         '''
+        devices = self.json_config._complex_devices
         self._replace_str_with_class(devices)
         
         for i in range(len(devices)):
@@ -439,6 +450,10 @@ class LogSpaceCounter(object):
     in the log file
     '''
     def __init__(self, file_count, file_size):
+        '''
+        file_count -- the amount of logfiles
+        file_size -- the size of each file
+        '''
         self.file_count = file_count
         self.file_size = file_size
         
