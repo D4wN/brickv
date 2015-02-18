@@ -2,7 +2,7 @@
 
 from brickv.ui_logger_setup import Ui_Logger
 from brickv import config
-from PyQt4.QtGui import QDialog, QApplication
+from PyQt4.QtGui import QDialog
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QMessageBox
 from brickv.data_logger.utils import Utilities
@@ -10,7 +10,6 @@ from brickv.data_logger.loggable_devices import Identifier
 from brickv.data_logger.event_logger import EventLogger, GUILogger
 import codecs
 import json
-import collections
 from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
 from brickv.device_dialog import LoggerDeviceDialog
