@@ -7,9 +7,6 @@
 import codecs  # ConfigurationReader to read the file in correct encoding
 import json
 import loggable_devices
-import os
-
-from ConfigParser import SafeConfigParser  # ConfigurationReader parser class
 from brickv.data_logger.event_logger import EventLogger
 
 class ConfigurationReader(object):
@@ -96,7 +93,7 @@ class ConfigurationReader(object):
  ---------------------------------------------------------------------------*/
 """
 import re
-from  brickv.data_logger.utils import Utilities, DataLoggerException
+from  brickv.data_logger.utils import DataLoggerException
 
 class ConfigurationValidator(object):
     '''
