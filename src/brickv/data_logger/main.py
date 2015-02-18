@@ -1,15 +1,13 @@
 #MAIN DATA_LOGGER PROGRAMM
-from brickv.data_logger.loggable_devices import *
-
 from brickv.data_logger.utils import DataLoggerException
-from brickv.data_logger.configuration_validator import ConfigurationReader, ConfigurationValidator
-from brickv.data_logger.event_logger import  EventLogger, ConsoleLogger, FileLogger, GUILogger
+from brickv.data_logger.configuration_validator import ConfigurationReader
+from brickv.data_logger.event_logger import ConsoleLogger, FileLogger , EventLogger
 from brickv.data_logger.data_logger import DataLogger
 
 import argparse                             # command line argument parser
-import sys, traceback
+import traceback
 import signal
-import threading
+import sys
 
 # HashMap keywords to store results of the command line arguments 
 CONSOLE_CONFIG_FILE = "config_file"
@@ -121,8 +119,6 @@ def command_line_start(argv,program_name):
     
     return arguments_map
 
-
-from tinkerforge.ip_connection import IPConnection
 ###main###
 if __name__ == '__main__':      
     arguments_map = command_line_start(sys.argv[1:], sys.argv[0]) 

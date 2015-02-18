@@ -22,7 +22,7 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-import Queue, logging, threading, sys
+import logging, threading
 from brickv.bindings.ip_connection import IPConnection
 import brickv.data_logger.loggable_devices as loggable_devices
 import brickv.data_logger.utils as utils
