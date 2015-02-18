@@ -14,6 +14,7 @@ import collections
 from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
 from brickv.device_dialog import LoggerDeviceDialog
+from PyQt4.QtCore import SIGNAL
 
 class LoggerWindow(QDialog,Ui_Logger):
     def __init__(self, parent):
@@ -179,15 +180,19 @@ class LoggerWindow(QDialog,Ui_Logger):
     
     def btn_add_device_clicked(self):
         if self.logger_device_dialog is None:
-            self.logger_device_dialog = LoggerDeviceDialog(self, None, True)#TODO: correct parameters!
+            self.logger_device_dialog = LoggerDeviceDialog(self, GuiConfigHandler.get_simple_blueprint(self), True)#TODO: correct parameters!
         
         self.logger_device_dialog.show()
     
     def btn_remove_device_clicked(self):
         if self.logger_device_dialog is None:
-            self.logger_device_dialog = LoggerDeviceDialog(self, None, False)#TODO: correct parameters!
+            self.logger_device_dialog = LoggerDeviceDialog(self, GuiConfigHandler.get_simple_blueprint(self), False)#TODO: correct parameters!
         
         self.logger_device_dialog.show()
+    
+    def destroy_device_dialog(self):
+        self.logger_device_dialog.destroy(True, True) #FIXME: memory-leak?! dont know if destroy is working as intendet!
+        self.logger_device_dialog = None
     
     def tab_reset_warning(self):
         if not self.tab_console_warning or self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
