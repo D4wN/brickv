@@ -13,11 +13,12 @@ import json
 from brickv.data_logger.gui_config_handler import GuiConfigHandler 
 import os
 from brickv.device_dialog import LoggerDeviceDialog
-from PyQt4.QtCore import SIGNAL
+from PyQt4.QtCore import SIGNAL, Qt
 
 class LoggerWindow(QDialog,Ui_Logger):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
+        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
         
         EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL, self))
         

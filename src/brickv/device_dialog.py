@@ -4,10 +4,13 @@ from PyQt4.QtGui import QDialog, QMessageBox
 from brickv.ui_device_dialog import Ui_DeviceDialog
 from PyQt4 import QtGui, QtCore
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
+from PyQt4.QtCore import Qt
+
 
 class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
     def __init__(self, parent, blueprint, add_data = True, ):
         QDialog.__init__(self, parent)
+        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
         
         self._add_data = add_data
         self._blueprint = blueprint
@@ -21,14 +24,24 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
     def signal_initialization(self):
         self.tree_device_list.itemDoubleClicked.connect(self._tree_on_double_click)
         self.btn_action_device.clicked.connect(self._btn_action_device_clicked)
+        self.checkbox_fast_mode.stateChanged.connect(self._checkbox_fast_mode_checked)
         
         if self._add_data:
             self.btn_action_device.setText("Add")
+            self._check_mode = "add"
         else:
             self.btn_action_device.setText("Remove")
+            self._check_mode = "remove"
     
-    def _tree_on_double_click(self, item, column):
-        print "TODO - check combo_box and do shit!"
+    def _checkbox_fast_mode_checked(self):
+        if self.checkbox_fast_mode.isChecked():
+            QMessageBox.information(self, 'Fast Mode Enabled', 'Fast Mode is now Enabled! You can now '+self._check_mode+' Devices with a DoubleClick.', QMessageBox.Ok)
+    
+    def _tree_on_double_click(self): #, item, column
+        if not self.checkbox_fast_mode.isChecked():
+            return
+        
+        self._btn_action_device_clicked()
     
     def _btn_action_device_clicked(self):
         focused_item = self.tree_device_list.currentItem()
