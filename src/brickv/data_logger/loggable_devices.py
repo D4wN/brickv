@@ -1,13 +1,8 @@
 import sys
-import brickv.data_logger.utils as utils
-import brickv.bindings.ip_connection as ip_connection
-from brickv.data_logger.event_logger import EventLogger
 
-# import ALL supported bricklets and bricks
 from brickv.bindings.brick_dc import DC
 from brickv.bindings.brick_imu import IMU
 from brickv.bindings.brick_stepper import Stepper
-
 from brickv.bindings.bricklet_ambient_light import AmbientLight
 from brickv.bindings.bricklet_analog_in import AnalogIn
 from brickv.bindings.bricklet_analog_out import AnalogOut
@@ -19,6 +14,7 @@ from brickv.bindings.bricklet_distance_ir import DistanceIR
 from brickv.bindings.bricklet_distance_us import DistanceUS
 from brickv.bindings.bricklet_dual_button import DualButton
 from brickv.bindings.bricklet_dual_relay import DualRelay
+from brickv.bindings.bricklet_gps import GPS
 from brickv.bindings.bricklet_hall_effect import HallEffect
 from brickv.bindings.bricklet_humidity import Humidity
 from brickv.bindings.bricklet_industrial_dual_0_20ma import IndustrialDual020mA
@@ -34,6 +30,7 @@ from brickv.bindings.bricklet_multi_touch import MultiTouch
 from brickv.bindings.bricklet_ptc import PTC
 from brickv.bindings.bricklet_rotary_encoder import RotaryEncoder
 from brickv.bindings.bricklet_rotary_poti import RotaryPoti
+from brickv.bindings.bricklet_segment_display_4x7 import BrickletSegmentDisplay4x7
 from brickv.bindings.bricklet_solid_state_relay import BrickletSolidStateRelay
 from brickv.bindings.bricklet_sound_intensity import BrickletSoundIntensity
 from brickv.bindings.bricklet_temperature import BrickletTemperature
@@ -41,9 +38,12 @@ from brickv.bindings.bricklet_temperature_ir import BrickletTemperatureIR
 from brickv.bindings.bricklet_tilt import BrickletTilt
 from brickv.bindings.bricklet_voltage import BrickletVoltage
 from brickv.bindings.bricklet_voltage_current import BrickletVoltageCurrent
-from brickv.bindings.bricklet_gps import GPS
-from brickv.bindings.bricklet_segment_display_4x7 import BrickletSegmentDisplay4x7
+import brickv.bindings.ip_connection as ip_connection
+from brickv.data_logger.event_logger import EventLogger
+import brickv.data_logger.utils as utils
 
+
+# import ALL supported bricklets and bricks
 def string_to_class(string):
     """
     Parses the correct class from a String.
@@ -392,7 +392,6 @@ class AbstractDevice(object):
         """
         EventLogger.debug(self.__str__())
                 
-        
     def _try_catch(self, func):
         """
         Creates a simple try-catch for a specific funtion.
@@ -587,7 +586,6 @@ class GPSBricklet(AbstractDevice):
                 return
 
             latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.device.get_coordinates()
-            # latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.__TMP_get_coordinates()  #TODO: TMP ONLY
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_LATITUDE]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_LATITUDE, latitude))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_NS]:
@@ -671,7 +669,6 @@ class GPSBricklet(AbstractDevice):
         Fix-Status function. Returns the current Fix-Status for other functions
         """
         fix, satellites_view, satellites_used = self.device.get_status()
-        # fix, satellites_view, satellites_used = self.__TMP_get_status()#TODO: TMP ONLY
          
         if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_FIX_STATUS]:
             self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_FIX_STATUS, fix))
@@ -719,7 +716,7 @@ class SegmentDisplay4x7Bricklet(AbstractDevice):
         """
         try:
             segment, brightness, colon = self.device.get_segments()
-            # segment, brightness, colon = self.__TMP_GET_SEGMENTS()#TODO: debug only
+
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_1]:
                 self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_1, segment[0]))
             if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_2]:

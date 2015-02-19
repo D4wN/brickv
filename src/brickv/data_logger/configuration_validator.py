@@ -6,8 +6,12 @@
  '''
 import codecs  # ConfigurationReader to read the file in correct encoding
 import json
-import loggable_devices
+import re
+
 from brickv.data_logger.event_logger import EventLogger
+from brickv.data_logger.utils import DataLoggerException
+import loggable_devices
+
 
 class ConfigurationReader(object):
     '''
@@ -92,8 +96,6 @@ class ConfigurationReader(object):
                                 ConfigurationValidator
  ---------------------------------------------------------------------------*/
 """
-import re
-from brickv.data_logger.utils import DataLoggerException
 
 class ConfigurationValidator(object):
     '''
@@ -190,8 +192,8 @@ class ConfigurationValidator(object):
         '''
         This function validates the xively section out of the configuration
         '''
-        xively_section = self.json_config._xively
         # TODO: implement xively section validation
+        # xively_section = self.json_config._xively
         EventLogger.info("Xively validation is not yet supported")
         pass
     
@@ -503,7 +505,6 @@ class LogSpaceCounter(object):
         
         self.lines_per_second += ((variables * 1000.0) / interval)
                 
-    
     def calculate_time(self):
         '''
         This function calculates the time where the logger can

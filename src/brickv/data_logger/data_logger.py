@@ -22,14 +22,17 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-import logging, threading
+import logging
+import threading
+
 from brickv.bindings.ip_connection import IPConnection
-import brickv.data_logger.loggable_devices as loggable_devices
-import brickv.data_logger.utils as utils
 from brickv.data_logger.configuration_validator import ConfigurationReader
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.job import CSVWriterJob, XivelyJob
+import brickv.data_logger.loggable_devices as loggable_devices
 from brickv.data_logger.utils import DataLoggerException
+import brickv.data_logger.utils as utils
+
 
 class DataLogger(threading.Thread):
     '''

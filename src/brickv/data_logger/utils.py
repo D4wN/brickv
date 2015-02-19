@@ -21,17 +21,24 @@ License along with this program; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
-from array import array
-from brickv.data_logger.event_logger import EventLogger
-import time  # Writer Thread
-from shutil import copyfile
-
-
 '''
 /*---------------------------------------------------------------------------
                                 DataLoggerException
  ---------------------------------------------------------------------------*/
  '''
+
+from array import array
+import csv  # CSV_Writer
+import datetime  # CSV_Data
+import os  # CSV_Writer
+from shutil import copyfile
+import sys  # CSV_Writer
+from threading import Timer
+import time  # Writer Thread
+
+from brickv.data_logger.event_logger import EventLogger
+
+
 class DataLoggerException(Exception):
     
     # Error Codes
@@ -53,7 +60,6 @@ class DataLoggerException(Exception):
                                 CSVData
  ---------------------------------------------------------------------------*/
  '''
-import datetime  # CSV_Data
 
 class CSVData(object):
     '''
@@ -114,7 +120,6 @@ class CSVData(object):
                                 LoggerTimer
  ---------------------------------------------------------------------------*/
  '''
-from threading import Timer
 
 class LoggerTimer(object):
     '''This class provides a timer with a repeat functionality based on a interval'''
@@ -215,9 +220,6 @@ class Utilities(object):
                                 CSVWriter
  ---------------------------------------------------------------------------*/
  '''
-import os  # CSV_Writer
-import sys  # CSV_Writer
-import csv  # CSV_Writer
 
 class CSVWriter(object):
     '''
@@ -236,9 +238,8 @@ class CSVWriter(object):
         if max_file_size < 0:
             max_file_size = 0
         self._file_size = max_file_size
-#         if max_file_count < 0:
-#             max_file_count = 0
-        # FIXME: create always at least 1 backup file!
+
+        # HINT: create always at least 1 backup file!
         if max_file_count < 1:
             max_file_count = 1
 
@@ -309,10 +310,6 @@ class CSVWriter(object):
             True  - File path was updated and successfully opened
             False - File path could not be updated or opened
         """
-        # FIXME: deleting file
-        # if self._file_path == new_file_path:
-        #    return True
-        
         if not self.close_file():
             return False
         
