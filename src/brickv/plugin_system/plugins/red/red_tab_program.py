@@ -114,6 +114,10 @@ class REDTabProgram(REDTab, Ui_REDTabProgram):
 
             has_selection = len(self.list_programs.selectedItems()) > 0
 
+            if not has_selection and self.list_programs.count() > 0:
+                self.list_programs.item(0).setSelected(True)
+                has_selection = True
+
             if has_selection:
                 row = self.list_programs.row(self.list_programs.selectedItems()[0])
                 self.stacked_container.setCurrentIndex(row + 1)
@@ -248,7 +252,7 @@ class REDTabProgram(REDTab, Ui_REDTabProgram):
             program.purge() # FIXME: async_call
         except (Error, REDError) as e:
             QMessageBox.critical(get_main_window(), 'Delete Program Error',
-                                 u'Could not delete program [{0}]:\n\n{1}'.format(name, unicode(e)))
+                                 u'Could not delete program [{0}]:\n\n{1}'.format(name, e))
             return
 
         self.stacked_container.removeWidget(program_info)

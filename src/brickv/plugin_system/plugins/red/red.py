@@ -46,7 +46,7 @@ class RED(PluginBase, Ui_RED):
         except Exception as e:
             self.session = None
 
-            label = QLabel('Could not create session. There seems to be a problem with the RED Brick API Daemon:\n\n' + unicode(e))
+            label = QLabel('Could not create session:\n\n{0}'.format(e))
             label.setAlignment(Qt.AlignHCenter)
 
             layout = QVBoxLayout(self)
@@ -167,7 +167,7 @@ class RED(PluginBase, Ui_RED):
 
         self.label_version = label_version
 
-        if self.image_version.string != None:
+        if hasattr(self, 'image_version') and self.image_version.string != None:
             self.label_version.setText(self.image_version.string)
 
         return True

@@ -239,37 +239,37 @@ try:
             continue
 
         if intf == interface:
-            if os.system('/sbin/ifconfig '+intf+' up'):
+            if os.system('/sbin/ifconfig '+intf+' up') != 0:
                 exit(1)
 
             continue
             
-        if os.system('/sbin/ifconfig '+intf+' down'):
+        if os.system('/sbin/ifconfig '+intf+' down') != 0:
             exit(1)
 
-    if os.system('/usr/sbin/service wicd stop'):
+    if os.system('/bin/systemctl stop wicd') != 0:
         exit(1)
 
-    if os.system('/usr/sbin/update-rc.d -f wicd remove'):
+    if os.system('/bin/systemctl disable wicd') != 0:
         exit(1)
         
     if enabled_dns_dhcp:
-        if os.system('/usr/sbin/update-rc.d dnsmasq defaults'):
+        if os.system('/bin/systemctl enable dnsmasq') != 0:
             exit(1)
         
-        if os.system('/usr/sbin/service dnsmasq restart'):
+        if os.system('/bin/systemctl restart dnsmasq') != 0:
             exit(1)
     else:
-        if os.system('/usr/sbin/update-rc.d -f dnsmasq remove'):
+        if os.system('/bin/systemctl disable dnsmasq') != 0:
             exit(1)
         
-        if os.system('/usr/sbin/service dnsmasq stop'):
+        if os.system('/bin/systemctl stop dnsmasq') != 0:
             exit(1)
 
-    if os.system('/usr/sbin/update-rc.d hostapd defaults'):
+    if os.system('/bin/systemctl enable hostapd') != 0:
         exit(1)
 
-    if os.system('/usr/sbin/service networking restart; /usr/sbin/service hostapd restart'):
+    if os.system('/bin/systemctl restart networking; /bin/systemctl restart hostapd'):
         exit(1)
 
 except Exception as e:
