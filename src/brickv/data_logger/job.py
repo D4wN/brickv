@@ -43,8 +43,7 @@ class AbstractJob(threading.Thread):
         try:
             self._datalogger.data_queue.pop(self.name)
         except KeyError as key_err:
-        # TODO: key_err usen?
-            pass
+            EventLogger.warning("Job:"+self.name+" was not ine the DataQueue! -> "+ str(key_err))
     
 
 class CSVWriterJob(AbstractJob):
