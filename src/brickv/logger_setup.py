@@ -144,7 +144,6 @@ class LoggerWindow(QDialog,Ui_Logger):
             return
          
         EventLogger.info("Loaded Config-File from: "+str(fn))  
-        #TODO: @roland check the file with configuration_validator
          
         #devices
         config_blueprint = GuiConfigHandler.load_devices(config_json)
