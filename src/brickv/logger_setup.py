@@ -170,7 +170,6 @@ class LoggerWindow(QDialog, Ui_Logger):
             return
         
         self.line_path_to_file.setText(fn)
-        # self.path_to_config = fn
     
     def btn_add_device_clicked(self):
         if self.logger_device_dialog is None:
@@ -272,7 +271,6 @@ class LoggerWindow(QDialog, Ui_Logger):
                 device_items = blueprint[i]
             
                 for dev_item in device_items:
-                    # print str(dev_item) + "@" + str(tree_counter)
                     # counts variables
                     variable_counter = 0
                     
@@ -286,7 +284,6 @@ class LoggerWindow(QDialog, Ui_Logger):
                         self.tree_devices.topLevelItem(tree_counter).setText(1, "Enter UID")
                     
                     for variable in device_items[dev_item]:
-                        # print "  "+str(variable) + "@" + str(variable_counter)
                         # counts each variable
                         var_n_counter = 0
                         
@@ -301,7 +298,6 @@ class LoggerWindow(QDialog, Ui_Logger):
                         
                         
                         for var_n in device_items[dev_item][variable]:
-                            # print "  "+str(var_n) + "@" + str(var_n_counter)
                             # new child of child
                             item_2 = QtGui.QTreeWidgetItem(item_1)
                             tmp_item = self.tree_devices.topLevelItem(tree_counter).child(variable_counter).child(var_n_counter)
@@ -346,7 +342,6 @@ class LoggerWindow(QDialog, Ui_Logger):
         tree_counter = self.tree_devices.topLevelItemCount()
         
         for dev_item in item_blueprint:
-            # print str(dev_item) + "@" + str(tree_counter)
             # counts variables
             variable_counter = 0
             
@@ -359,7 +354,6 @@ class LoggerWindow(QDialog, Ui_Logger):
             
         
             for variable in item_blueprint[dev_item]:
-                # print "  "+str(variable) + "@" + str(variable_counter)
                 # counts each variable
                 var_n_counter = 0
                 
@@ -374,7 +368,6 @@ class LoggerWindow(QDialog, Ui_Logger):
                 
                 
                 for var_n in item_blueprint[dev_item][variable]:
-                    # print "  "+str(var_n) + "@" + str(var_n_counter)
                     # new child of child
                     item_2 = QtGui.QTreeWidgetItem(item_1)
                     tmp_item = self.tree_devices.topLevelItem(tree_counter).child(variable_counter).child(var_n_counter)
@@ -424,10 +417,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         if column == 1:
             if str(item.text(0)).lower() == self.interval_show:
                 # check for string and value lower 0
-                # Utilities.parse_to_int(string) FIXME
                 item.setText(1, str(Utilities.parse_to_int(str(item.text(1)))))
-                
-        # checkState 0 = False; 1 = PartialSelected; 2 = True
   
     def tree_on_double_click(self, item, column):
         edit_flag = (QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
