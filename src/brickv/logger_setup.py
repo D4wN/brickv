@@ -37,9 +37,6 @@ class LoggerWindow(QDialog,Ui_Logger):
         # Login data
         self.host_info_initialization()
         
-        # Treeview_Device
-        self.create_tree_items(None, True)
-        
         self.signal_initialization()
            
     def signal_initialization(self):
