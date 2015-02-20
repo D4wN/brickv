@@ -3,13 +3,28 @@ import json
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.loggable_devices import Identifier
 
-
+'''
+/*---------------------------------------------------------------------------
+                                GuiConfigHandler
+ ---------------------------------------------------------------------------*/
+ '''
 class GuiConfigHandler(object):
+    """
+        This static class is used to convert a config into a blueprint for the gui and vice versa.
+        It also holds a blueprint with all supported diveces. If a new device should be supported,
+        this string should be updatetd, too.
+    """
 
     device_blueprint = []
+    #blueprint for all supported devices
     all_devices_blueprint = "[{\"Ambient Light\": {\"Analog Value\": {\"_interval\": 0}, \"Illuminance\": {\"_interval\": 0}}, \"Analog In\": {\"Analog Value\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}, \"Analog Out\": {\"Voltage\": {\"_interval\": 0}}, \"Barometer\": {\"Air Pressure\": {\"_interval\": 0}, \"Altitude\": {\"_interval\": 0}, \"Chip Temperature\": {\"_interval\": 0}}, \"Color\": {\"Color Temperature\": {\"Color Temperature\": true, \"_interval\": 0}, \"Illuminance\": {\"Illuminance\": true, \"_interval\": 0}, \"Rgbc\": {\"Blue\": true, \"Clear\": true, \"Green\": true, \"Red\": true, \"_interval\": 0}}, \"Current 12\": {\"Analog Value\": {\"_interval\": 0}, \"Current\": {\"_interval\": 0}}, \"Current 25\": {\"Analog Value\": {\"_interval\": 0}, \"Current\": {\"_interval\": 0}}, \"DC Brick\": {\"Acceleration\": {\"_interval\": 0}, \"Chip Temperature\": {\"_interval\": 0}, \"Current Consumption\": {\"_interval\": 0}, \"Current Velocity\": {\"_interval\": 0}, \"External Input Voltage\": {\"_interval\": 0}, \"Stack Input Voltage\": {\"_interval\": 0}, \"Velocity\": {\"_interval\": 0}}, \"Distance IR\": {\"Analog Value\": {\"_interval\": 0}, \"Distance\": {\"_interval\": 0}}, \"Distance US\": {\"Distance\": {\"_interval\": 0}}, \"Dual Button\": {\"Buttons\": {\"Button_L\": true, \"Button_R\": true, \"_interval\": 0}, \"Leds\": {\"Led_L\": true, \"Led_R\": true, \"_interval\": 0}}, \"Dual Relay\": {\"State\": {\"Relay1\": true, \"Relay2\": true, \"_interval\": 0}}, \"GPS\": {\"special_bool\": {\"Altitude Value\": true, \"Course\": true, \"Date\": true, \"Epe\": true, \"Ew\": true, \"Fix Status\": true, \"Geoidal Seperation\": true, \"Hdop\": true, \"Latitude\": true, \"Longitude\": true, \"Ns\": true, \"Pdop\": true, \"Satellites Used\": true, \"Satellites View\": true, \"Speed\": true, \"Time\": true, \"Vdop\": true}, \"special_values\": {\"Altitude\": 0, \"Coordinates\": 0, \"Date Time\": 0, \"Motion\": 0}}, \"Hall Effect\": {\"Value\": {\"_interval\": 0}}, \"Humidity\": {\"Analog Value\": {\"_interval\": 0}, \"Humidity\": {\"_interval\": 0}}, \"IMU Brick\": {\"Acceleration\": {\"X\": true, \"Y\": true, \"Z\": true, \"_interval\": 0}, \"Angular Velocity\": {\"X\": true, \"Y\": true, \"Z\": true, \"_interval\": 0}, \"Chip Temperature\": {\"Chip Temperature\": true, \"_interval\": 0}, \"IMU Temperature\": {\"IMU Temperature\": true, \"_interval\": 0}, \"Leds\": {\"Leds\": true, \"_interval\": 0}, \"Magnetic Field\": {\"X\": true, \"Y\": true, \"Z\": true, \"_interval\": 0}, \"Orientation\": {\"Pitch\": true, \"Roll\": true, \"Yaw\": true, \"_interval\": 0}, \"Quaternion\": {\"W\": true, \"X\": true, \"Y\": true, \"Z\": true, \"_interval\": 0}}, \"IO-16\": {\"Port A\": {\"_interval\": 0}, \"Port B\": {\"_interval\": 0}}, \"IO-4\": {\"Value\": {\"_interval\": 0}}, \"Industrial Dual 0 20 mA\": {\"Sensor 0\": {\"_interval\": 0}, \"Sensor 1\": {\"_interval\": 0}}, \"Joystick\": {\"Analog Value\": {\"Analog X\": true, \"Analog Y\": true, \"_interval\": 0}, \"Position\": {\"Position X\": true, \"Position Y\": true, \"_interval\": 0}, \"Pressed\": {\"Pressed\": true, \"_interval\": 0}}, \"LED Strip\": {\"Supply Voltage\": {\"_interval\": 0}}, \"Line\": {\"Reflectivity\": {\"_interval\": 0}}, \"Linear Poti\": {\"Analog Value\": {\"_interval\": 0}, \"Position\": {\"_interval\": 0}}, \"Moisture\": {\"Moisture Value\": {\"_interval\": 0}}, \"Motion Detector\": {\"Motion Detected\": {\"_interval\": 0}}, \"Multi Touch\": {\"Touch State\": {\"_interval\": 0}}, \"PTC\": {\"Resistance\": {\"_interval\": 0}, \"Temperature\": {\"_interval\": 0}}, \"Rotary Encoder\": {\"Count\": {\"_interval\": 0}, \"Pressed\": {\"_interval\": 0}}, \"Rotary Poti\": {\"Analog Value\": {\"_interval\": 0}, \"Position\": {\"_interval\": 0}}, \"Segment Display 4x7\": {\"special_bool\": {\"Brightness\": true, \"Colon\": true, \"Segment 1\": true, \"Segment 2\": true, \"Segment 3\": true, \"Segment 4\": true}, \"special_values\": {\"Counter Value\": 0, \"Segments\": 0}}, \"Solid State Relay\": {\"State\": {\"_interval\": 0}}, \"Sound Intensity\": {\"Intensity\": {\"_interval\": 0}}, \"Stepper Brick\": {\"Current Consumption\": {\"_interval\": 0}, \"Current Position\": {\"_interval\": 0}, \"Current Velocity\": {\"_interval\": 0}, \"External Input Voltage\": {\"_interval\": 0}, \"Remaining Steps\": {\"_interval\": 0}, \"Stack Input Voltage\": {\"_interval\": 0}, \"Steps\": {\"_interval\": 0}, \"Sync Rect\": {\"_interval\": 0}}, \"Temperature\": {\"Temperature\": {\"_interval\": 0}}, \"Temperature IR\": {\"Ambient Temperature\": {\"_interval\": 0}, \"Object Temperature\": {\"_interval\": 0}}, \"Tilt\": {\"State\": {\"_interval\": 0}}, \"Voltage\": {\"Analog Value\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}, \"Voltage Current\": {\"Current\": {\"_interval\": 0}, \"Power\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}}]"
 
+
     def load_devices(device_json):
+        """
+        Loads the config as json and converts all devices into the blueprint part.
+        Returns the blueprint of the devices.
+        """
         try:
             GuiConfigHandler.clear_blueprint()
             GuiConfigHandler.simple_device_blueprints(device_json[Identifier.SIMPLE_DEVICE])
@@ -22,10 +37,16 @@ class GuiConfigHandler(object):
         return GuiConfigHandler.device_blueprint
     
     def clear_blueprint():
+        """
+        Resets the current blueprints save in device_blueprint.
+        """
         GuiConfigHandler.device_blueprint = None
         GuiConfigHandler.device_blueprint = []
     
     def complex_device_blueprints(complex_devices):
+        """
+        Converts complex devices into their blueprint couterpart.
+        """
         # CLASS_NAME=dev[Identifier.DEVICE_NAME]
         for dev in complex_devices:
             tmp = {}  # empty list
@@ -51,6 +72,9 @@ class GuiConfigHandler(object):
             GuiConfigHandler.device_blueprint.append(tmp)
     
     def simple_device_blueprints(simple_devices):
+        """
+        Converts simple devices into their blueprint couterpart.
+        """
         for dev in simple_devices:
             dev_name = dev[Identifier.DEVICE_NAME]
             # t1
@@ -69,6 +93,9 @@ class GuiConfigHandler(object):
             GuiConfigHandler.device_blueprint.append(tmp)
 
     def special_device_blueprints(special_devices):
+        """
+        Converts special devices into their blueprint couterpart.
+        """
         for dev in special_devices:
             dev_name = dev[Identifier.DEVICE_NAME]
             # t1
@@ -89,6 +116,11 @@ class GuiConfigHandler(object):
             GuiConfigHandler.device_blueprint.append(tmp)
 
     def create_config_file(Ui_Logger):
+        """
+        Creates a config file. Converst all devices from the tree_widget and
+        fetches the GENERAL_SECTION information.
+        Returns the config as dictonary.
+        """
         config_root = {}
         # add general section
         general_section = GuiConfigHandler.create_general_section(Ui_Logger)
@@ -208,6 +240,10 @@ class GuiConfigHandler(object):
         return config_root
 
     def create_general_section(Ui_Logger):
+        """
+        Creates the GENERAL_SECTION part of the config file 
+        and returns it as a dictonary.
+        """
         from brickv.data_logger.configuration_validator import ConfigurationReader
         
         general_section = {}
@@ -232,6 +268,11 @@ class GuiConfigHandler(object):
         return general_section
 
     def get_simple_blueprint(Ui_Logger):
+        """
+        Returns a very simple bluepirnt version of the current 
+        devices in the tree_widget. Is used for the DeviceDialog.
+        This blueprint only contains the name and uid of a device.
+        """
         simple_blueprint = []
         
         tree_widget = Ui_Logger.tree_devices
@@ -249,6 +290,10 @@ class GuiConfigHandler(object):
         return simple_blueprint
 
     def get_single_device_bluprint(device_name):
+        """
+        Returns a singel blueprint for a given device_name.
+        Used to add a device from the DeviceDialog.
+        """
         dev = None
         
         blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)

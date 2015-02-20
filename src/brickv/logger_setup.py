@@ -19,6 +19,9 @@ from brickv.ui_logger_setup import Ui_Logger
 
 
 class LoggerWindow(QDialog, Ui_Logger):
+    """
+        Function and Event handling class for the Ui_Logger.
+    """
     def __init__(self, parent):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
@@ -43,6 +46,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.signal_initialization()
            
     def signal_initialization(self):
+        """
+            Init of all important Signals and connections.
+        """
         # Buttons
         self.btn_start_logging.clicked.connect(self.btn_start_logging_clicked)
         self.btn_save_config.clicked.connect(self.btn_save_config_clicked)
@@ -107,6 +113,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.btn_start_logging.clicked.connect(self.btn_start_logging_clicked)
 
     def btn_save_config_clicked(self):
+        """
+            Opens a FileSelectionDialog and saves the current config.
+        """
         conf = GuiConfigHandler.create_config_file(self)
         fn = QtGui.QFileDialog.getSaveFileName(self, 'Save  Config-File', os.getcwd(), filter='*.json')
         
@@ -127,6 +136,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         EventLogger.info("Config-File saved to: " + str(fn))
 
     def btn_load_config_clicked(self):
+        """
+            Opens a FileSelectionDialog and loads the selected config.
+        """
         fn = QtGui.QFileDialog.getOpenFileName(self, "Open Config-File...", os.getcwd(), "JSON-Files (*.json)")
         
         if fn == "":
@@ -162,6 +174,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         # xively
 
     def btn_set_logfile_clicked(self):
+        """
+            Opens a FileSelectionDialog and sets the selected path for the data output file.
+        """
         fn = QtGui.QFileDialog.getSaveFileName(self, 'Choose Config Destination', os.getcwd(), "CSV-Files (*.csv);;Text-Files (*.txt)")
         
         if fn == "":
@@ -172,6 +187,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.line_path_to_file.setText(fn)
     
     def btn_add_device_clicked(self):
+        """
+            Opens the DeviceDialog in Add-Mode.
+        """
         if self.logger_device_dialog is None:
             self.logger_device_dialog = LoggerDeviceDialog(self)
             
@@ -180,6 +198,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.logger_device_dialog.show()
     
     def btn_remove_device_clicked(self):
+        """
+            Opens the DeviceDialog in Remove-Mode.
+        """
         if self.logger_device_dialog is None:
             self.logger_device_dialog = LoggerDeviceDialog(self)
         
@@ -187,6 +208,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.logger_device_dialog.show()
     
     def tab_reset_warning(self):
+        """
+            Resets the Warning @ the console tab.
+        """
         if not self.tab_console_warning or self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
             return
         
@@ -195,6 +219,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tab_set(self.tab_widget.indexOf(self.tab_console), QColor(0, 0, 0), None)
     
     def tab_set(self, tab_index, color, icon=None):
+        """
+            Sets the font Color and an icon, if given, at a specific tab.
+        """
         from PyQt4.QtGui import QIcon
         
         self.tab_widget.tabBar().setTabTextColor(tab_index, color)
@@ -204,6 +231,9 @@ class LoggerWindow(QDialog, Ui_Logger):
             self.tab_widget.setTabIcon(tab_index, QIcon())
     
     def btn_console_clear_clicked(self):
+        """
+            Clears the gui console tab.
+        """
         self.txt_console.clear()
     
     def host_index_changed(self, i):
@@ -231,6 +261,9 @@ class LoggerWindow(QDialog, Ui_Logger):
             self.groupBox_xively.setEnabled(False)
     
     def update_setup_tab(self, general_section):
+        """
+            Update the information of the setup tab with the given general_section.
+        """
         from brickv.data_logger.configuration_validator import ConfigurationReader
         
         try:
@@ -249,7 +282,11 @@ class LoggerWindow(QDialog, Ui_Logger):
             EventLogger.critical("Could not read the General Section of the Config-File! -> " + str(e))
             return
         
-    def create_tree_items(self, blueprint, view_all=True):
+    def create_tree_items(self, blueprint, view_all=False):
+        """
+            Create the device tree with the given blueprint.
+            Shows all possible devices, if the view_all Flag is True.
+        """
         self.tree_devices.clear()
         self.tree_devices.setSortingEnabled(False)
         
@@ -336,6 +373,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tree_devices.setSortingEnabled(True)
        
     def add_item_to_tree(self, item_blueprint):
+        """
+            Adds an item to the device tree. Needs the correct blueprint.
+        """
         self.tree_devices.setSortingEnabled(False)
         # add device into tree
         
@@ -395,6 +435,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tree_devices.setSortingEnabled(True)
     
     def remove_item_from_tree(self, item_name, item_uid):
+        """
+            Removes an item from the device tree. The first match is removed!
+        """
         # remove first found match!
         removed_item = False
         t0_max = self.tree_devices.topLevelItemCount()
@@ -413,6 +456,12 @@ class LoggerWindow(QDialog, Ui_Logger):
             QMessageBox.information(self, 'No Device found?', 'No Device was not found and could not be deleted!', QMessageBox.Ok)
         
     def tree_on_change(self, item, column):
+        """
+            Tries to parse the input of a tree cell into an
+            integer. if its not possible, or below a certain
+            treshhold, it will be set to 0. Only checks cells
+            where the first collumn is interval!
+        """
         # check for wrong input number in interval
         if column == 1:
             if str(item.text(0)).lower() == self.interval_show:
@@ -420,6 +469,11 @@ class LoggerWindow(QDialog, Ui_Logger):
                 item.setText(1, str(Utilities.parse_to_int(str(item.text(1)))))
   
     def tree_on_double_click(self, item, column):
+        """
+            Is called, when a cell in the tree was doubleclicked.
+            Is used to allow the changeing of the interval 
+            numbers and UID's but not empty cells.
+        """
         edit_flag = (QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
         non_edit_flag = (QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
         
@@ -430,5 +484,8 @@ class LoggerWindow(QDialog, Ui_Logger):
             item.setFlags(edit_flag)
 
     def txt_console_output(self, msg):
+        """
+            Function to write text on the gui console tab.
+        """
         self.txt_console.append(msg)
         QtGui.QApplication.processEvents()  # possible "not Responding" fix?

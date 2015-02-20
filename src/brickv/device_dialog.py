@@ -8,6 +8,9 @@ from PyQt4.QtCore import Qt
 
 
 class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
+    """
+        Function and Event handling class for the Ui_DeviceDialog.
+    """
     def __init__(self, parent):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
@@ -20,12 +23,20 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         self.signal_initialization()
         
     def signal_initialization(self):
+        """
+            Init of all important Signals and connections.
+        """
         self.tree_device_list.itemDoubleClicked.connect(self._tree_on_double_click)
         self.btn_action_device.clicked.connect(self._btn_action_device_clicked)
         self.checkbox_fast_mode.stateChanged.connect(self._checkbox_fast_mode_checked)
         
     
     def init_dialog(self, blueprint, add_data = True):
+        """
+            Set the current Dialog. Add or Remove are the two
+            possible Dialog Types.
+            Needs to be called before the .show() Function!
+        """
         self._add_data = add_data
         self._blueprint = blueprint
         
@@ -39,16 +50,25 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         self._create_tree()
     
     def _checkbox_fast_mode_checked(self):
+        """
+            Function to display the Fast Mode selection.
+        """
         if self.checkbox_fast_mode.isChecked():
             QMessageBox.information(self, 'Fast Mode Enabled', 'Fast Mode is now Enabled! You can now '+self._check_mode+' Devices with a DoubleClick.', QMessageBox.Ok)
     
     def _tree_on_double_click(self): #, item, column
+        """
+            Enabling DoubleClick to add and remove devices from the list.
+        """
         if not self.checkbox_fast_mode.isChecked():
             return
         
         self._btn_action_device_clicked()
     
     def _btn_action_device_clicked(self):
+        """
+            Add or remove the selected device from the list/DataLogger-Config.
+        """
         focused_item = self.tree_device_list.currentItem()
         if focused_item is None:
             QMessageBox.information(self, 'No Device', 'No Device selected! Please select a Device first.', QMessageBox.Ok)          
@@ -72,6 +92,9 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
             self._logger_window.remove_item_from_tree(dev, dev_uid)
     
     def _create_tree(self):
+        """
+            Create the tree in the corresponding Dialog Mode(Add/Remove).
+        """
         self.tree_device_list.clear()
         self.tree_device_list.setSortingEnabled(False)
         

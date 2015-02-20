@@ -8,11 +8,14 @@ import datetime
 import os
 
 class EventLogger():
+    """
+        Basic EventLogger class.
+    """
     
     # Logger Options
     EVENT_FILE_LOGGING = True  # for event logging in to a file
     EVENT_FILE_LOGGING_PATH = "data_logger.log"  # default file path for logging events
-    EVENT_LOG_LEVEL = logging.INFO
+    EVENT_LOG_LEVEL = logging.DEBUG
     
     format = "%(asctime)s - %(levelname)8s - %(message)s"
     __loggers = {}
