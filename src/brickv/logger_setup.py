@@ -40,6 +40,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.widget_initialization()
         
     def widget_initialization(self):
+        '''
+            Sets default values for some widgets
+        '''
         # Login data
         self.host_info_initialization()
         
@@ -61,8 +64,8 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tab_widget.currentChanged.connect(self.tab_reset_warning)
         
         # login information
-        self.combo_host.currentIndexChanged.connect(self.host_index_changed)
-        self.spinbox_port.valueChanged.connect(self.port_changed)
+        self.combo_host.currentIndexChanged.connect(self._host_index_changed)
+        self.spinbox_port.valueChanged.connect(self._port_changed)
         
         self.checkbox_xively.stateChanged.connect(self.cb_xively_changed)
         
@@ -70,6 +73,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tree_devices.itemChanged.connect(self.tree_on_change)
    
     def host_info_initialization(self):
+        '''
+            initialize host by getting information out of brickv.config
+        '''
         self.host_infos = config.get_host_infos(config.HOST_INFO_COUNT)
         self.host_index_changing = True
 
@@ -82,11 +88,14 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.host_index_changing = False
         
     def btn_start_logging_clicked(self):
+        '''
+            Start/Stop of the logging process
+        '''
         if (self.data_logger_thread is not None) and (not self.data_logger_thread.stopped):
             self.btn_start_logging.clicked.disconnect()
             
             self.data_logger_thread.stop()
-            self.reset_stop()
+            self._reset_stop()
 
         elif self.data_logger_thread is None:
             from data_logger import main
@@ -102,7 +111,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                 self.tab_widget.setCurrentIndex(3)
                 self.tab_reset_warning()
             
-    def reset_stop(self):
+    def _reset_stop(self):
         self.tab_devices.setEnabled(True)
         self.tab_setup.setEnabled(True)
         # self.tab_xively.setEnabled(True)#nyi
@@ -158,7 +167,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             EventLogger.warning("Load Config - Exception: " + str(e1))
             return
          
-        EventLogger.info("Loaded Config-File from: "+str(fn))  
+        EventLogger.info("Loaded Config-File from: " + str(fn))
          
         # devices
         config_blueprint = GuiConfigHandler.load_devices(config_json)
@@ -236,7 +245,11 @@ class LoggerWindow(QDialog, Ui_Logger):
         """
         self.txt_console.clear()
     
-    def host_index_changed(self, i):
+    def _host_index_changed(self, i):
+        '''
+            Persists host information changes like in brickv.mainwindow
+            Changes port if the host was changed
+        '''
         if i < 0:
             return
 
@@ -244,7 +257,10 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.spinbox_port.setValue(self.host_infos[i].port)
         self.host_index_changing = False
 
-    def port_changed(self, value):
+    def _port_changed(self, value):
+        '''
+            Persists host information changes like in brickv.mainwindow
+        '''
         if self.host_index_changing:
             return
 
@@ -255,6 +271,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.host_infos[i].port = self.spinbox_port.value()
             
     def cb_xively_changed(self):
+        '''
+            Enables/Disables widgets for xively configuration
+        '''
         if self.checkbox_xively.isChecked():
             self.groupBox_xively.setEnabled(True)
         else:
@@ -471,7 +490,7 @@ class LoggerWindow(QDialog, Ui_Logger):
     def tree_on_double_click(self, item, column):
         """
             Is called, when a cell in the tree was doubleclicked.
-            Is used to allow the changeing of the interval 
+            Is used to allow the changeing of the interval
             numbers and UID's but not empty cells.
         """
         edit_flag = (QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
