@@ -23,38 +23,66 @@ SCRIPT_TINKERFORGE_CHECK = '''#!/usr/bin/env python
 
 import argparse 
 from tinkerforge.ip_connection import IPConnection
-from tinkerforge.bricklet_temperature import Temperature
-from tinkerforge.bricklet_humidity import Humidity
+from tinkerforge.bricklet_ptc import BrickletPTC
+from tinkerforge.bricklet_temperature import BrickletTemperature
+from tinkerforge.bricklet_humidity import BrickletHumidity
+from tinkerforge.bricklet_ambient_light import BrickletAmbientLight
 
 OK       = 0
 WARNING  = 1
 CRITICAL = 2
 UNKNOWN  = -1
 
-BRICKLET_TEMPERATURE = 'temperature'
-BRICKLET_HUMIDITY    = 'humidity'
+BRICKLET_PTC           = 'ptc'
+BRICKLET_TEMPERATURE   = 'temperature'
+BRICKLET_HUMIDITY      = 'humidity'
+BRICKLET_AMBIENT_LIGHT = 'ambient_light'
 
-class TinkerforgeNagiosService(object):
-    def __init__(self, host = 'localhost', port = 4223):
-        self.host = host
-        self.port = port
-        self.ipcon = IPConnection()
- 
+class CheckTinkerforge(object):
+    def __init__(self, args):
+        self.args   = args
+        self.ipcon  = IPConnection()
+
+    def cb_connect(self, connect_reason):
+        try:
+            self.ipcon.authenticate(self.args.secret)
+            self.read(self.args.bricklet,
+                      self.args.uid,
+                      self.args.warning,
+                      self.args.critical,
+                      self.args.mode,
+                      self.args.warning2,
+                      self.args.critical2)
+        except:
+            print 'CRITICAL - Connection Authentication failed'
+            raise SystemExit, CRITICAL
+
     def connect(self):
-        self.ipcon.connect(self.host, self.port)
- 
+        if self.args.secret:
+            self.ipcon.register_callback(IPConnection.CALLBACK_CONNECTED, self.cb_connect)
+
+        self.ipcon.connect(self.args.host, self.args.port)
+
     def disconnect(self):
         self.ipcon.disconnect()
- 
+
     def read(self, bricklet, uid, warning, critical, mode = 'high', warning2 = 0, critical2 = 0):
 
-        if bricklet == BRICKLET_TEMPERATURE:
-            bricklet_temperature = Temperature(uid, self.ipcon)
+        if bricklet == BRICKLET_PTC:
+            bricklet_ptc = BrickletPTC(uid, self.ipcon)
+            reading = bricklet_ptc.get_temperature() / 100.0
+
+        elif bricklet == BRICKLET_TEMPERATURE:
+            bricklet_temperature = BrickletTemperature(uid, self.ipcon)
             reading = bricklet_temperature.get_temperature() / 100.0
 
         elif bricklet == BRICKLET_HUMIDITY:
-            bricklet_humidity = Humidity(uid, self.ipcon)
+            bricklet_humidity = BrickletHumidity(uid, self.ipcon)
             reading = bricklet_humidity.get_humidity() / 10.0
+
+        elif bricklet == BRICKLET_AMBIENT_LIGHT:
+            bricklet_ambient_light = BrickletAmbientLight(uid, self.ipcon)
+            reading = bricklet_ambient_light.get_illuminance() / 10.0
 
         if mode == 'high':
             if reading >= critical:
@@ -112,19 +140,25 @@ if __name__ == '__main__':
                        '--host',
                        help = 'Host (default = localhost)',
                        default = 'localhost')
-    
+
     parse.add_argument('-P',
                        '--port',
                        help = 'Port (default = 4223)',
                        type = int,
                        default = 4223)
-    
+
+    parse.add_argument('-S',
+                       '--secret',
+                       help = 'Secret (default = None)',
+                       type = str,
+                       default = None)
+
     parse.add_argument('-b',
                        '--bricklet',
                        help = 'Type of bricklet',
                        type = str,
                        required = True,
-                       choices = ['temperature', 'humidity'])
+                       choices = ['ptc', 'temperature', 'humidity', 'ambient_light'])
 
     parse.add_argument('-u',
                        '--uid',
@@ -171,17 +205,18 @@ if __name__ == '__main__':
  
     args = parse.parse_args()
 
-    service = TinkerforgeNagiosService(args.host, args.port)
+    service = CheckTinkerforge(args)
 
     service.connect()
 
-    service.read(args.bricklet,
-                 args.uid,
-                 args.warning,
-                 args.critical,
-                 args.mode,
-                 args.warning2,
-                 args.critical2)
+    if not args.secret:
+        service.read(args.bricklet,
+                     args.uid,
+                     args.warning,
+                     args.critical,
+                     args.mode,
+                     args.warning2,
+                     args.critical2)
 '''
 
 TEMPLATE_COMMAND_LINE_NOTIFY_HOST = '''/usr/bin/printf "%b" "***** Nagios *****\\n\\n \
