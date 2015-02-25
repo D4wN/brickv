@@ -1,7 +1,6 @@
 import sys
 
 from brickv.bindings.brick_dc import DC
-from brickv.bindings.brick_imu import IMU
 from brickv.bindings.brick_stepper import Stepper
 from brickv.bindings.bricklet_ambient_light import AmbientLight
 from brickv.bindings.bricklet_analog_in import AnalogIn
@@ -41,6 +40,7 @@ from brickv.bindings.bricklet_voltage_current import BrickletVoltageCurrent
 import brickv.bindings.ip_connection as ip_connection
 from brickv.data_logger.event_logger import EventLogger
 import brickv.data_logger.utils as utils
+from collections import namedtuple
 
 
 # import ALL supported bricklets and bricks
@@ -131,33 +131,34 @@ class Identifier(object):
     DC_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
     DC_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
     
-    IMU_BRICK = "IMU Brick"
-    CLASS_NAME[IMU_BRICK] = "IMU"
-    IMU_BRICK_ORIENTATION = "Orientation"
-    IMU_BRICK_ORIENTATION_ROLL = "Roll"
-    IMU_BRICK_ORIENTATION_YAW = "Yaw"
-    IMU_BRICK_ORIENTATION_PITCH = "Pitch"
-    IMU_BRICK_QUATERNION = "Quaternion"
-    IMU_BRICK_QUATERNION_X = "X"
-    IMU_BRICK_QUATERNION_Y = "Y"
-    IMU_BRICK_QUATERNION_Z = "Z"
-    IMU_BRICK_QUATERNION_W = "W"
-    IMU_BRICK_ACCELERATION = "Acceleration"
-    IMU_BRICK_ACCELERATION_X = "X"
-    IMU_BRICK_ACCELERATION_Y = "Y"
-    IMU_BRICK_ACCELERATION_Z = "Z"
-    IMU_BRICK_MAGNETIC_FIELD = "Magnetic Field"
-    IMU_BRICK_MAGNETIC_FIELD_X = "X"
-    IMU_BRICK_MAGNETIC_FIELD_Y = "Y"
-    IMU_BRICK_MAGNETIC_FIELD_Z = "Z"
-    IMU_BRICK_ANGULAR_VELOCITY = "Angular Velocity"
-    IMU_BRICK_ANGULAR_VELOCITY_X = "X"
-    IMU_BRICK_ANGULAR_VELOCITY_Y = "Y"
-    IMU_BRICK_ANGULAR_VELOCITY_Z = "Z"
-    IMU_BRICK_IMU_TEMPERATURE = "IMU Temperature"
-    IMU_BRICK_LEDS = "Leds"
-    FUNCTION_NAME[IMU_BRICK + IMU_BRICK_LEDS] = "are_leds_on"
-    IMU_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
+    #needs refactoring for namedtuples and api changes!
+#     IMU_BRICK = "IMU Brick"
+#     CLASS_NAME[IMU_BRICK] = "IMU"
+#     IMU_BRICK_ORIENTATION = "Orientation"
+#     IMU_BRICK_ORIENTATION_ROLL = "Roll"
+#     IMU_BRICK_ORIENTATION_YAW = "Yaw"
+#     IMU_BRICK_ORIENTATION_PITCH = "Pitch"
+#     IMU_BRICK_QUATERNION = "Quaternion"
+#     IMU_BRICK_QUATERNION_X = "X"
+#     IMU_BRICK_QUATERNION_Y = "Y"
+#     IMU_BRICK_QUATERNION_Z = "Z"
+#     IMU_BRICK_QUATERNION_W = "W"
+#     IMU_BRICK_ACCELERATION = "Acceleration"
+#     IMU_BRICK_ACCELERATION_X = "X"
+#     IMU_BRICK_ACCELERATION_Y = "Y"
+#     IMU_BRICK_ACCELERATION_Z = "Z"
+#     IMU_BRICK_MAGNETIC_FIELD = "Magnetic Field"
+#     IMU_BRICK_MAGNETIC_FIELD_X = "X"
+#     IMU_BRICK_MAGNETIC_FIELD_Y = "Y"
+#     IMU_BRICK_MAGNETIC_FIELD_Z = "Z"
+#     IMU_BRICK_ANGULAR_VELOCITY = "Angular Velocity"
+#     IMU_BRICK_ANGULAR_VELOCITY_X = "X"
+#     IMU_BRICK_ANGULAR_VELOCITY_Y = "Y"
+#     IMU_BRICK_ANGULAR_VELOCITY_Z = "Z"
+#     IMU_BRICK_IMU_TEMPERATURE = "IMU Temperature"
+#     IMU_BRICK_LEDS = "Leds"
+#     FUNCTION_NAME[IMU_BRICK + IMU_BRICK_LEDS] = "are_leds_on"
+#     IMU_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
     
     STEPPER_BRICK = "Stepper Brick"
     CLASS_NAME[STEPPER_BRICK] = "Stepper"
@@ -189,10 +190,10 @@ class Identifier(object):
     BAROMETER_CHIP_TEMPERATURE = "Chip Temperature"
     
     COLOR = "Color"
-    COLOR_RED = "Red"
-    COLOR_GREEN = "Green"
-    COLOR_BLUE = "Blue"
-    COLOR_CLEAR = "Clear"
+    COLOR_RED = "r"
+    COLOR_GREEN = "g"
+    COLOR_BLUE = "b"
+    COLOR_CLEAR = "c"
     COLOR_COLOR = "Rgbc"
     FUNCTION_NAME[COLOR + COLOR_COLOR] = "get_color"
     COLOR_ILLUMINANCE = "Illuminance"
@@ -261,8 +262,8 @@ class Identifier(object):
     
     JOYSTICK = "Joystick"
     JOYSTICK_POSITION = "Position"
-    JOYSTICK_POSITION_X = "Position X"
-    JOYSTICK_POSITION_Y = "Position Y"
+    JOYSTICK_POSITION_X = "x"
+    JOYSTICK_POSITION_Y = "y"
     JOYSTICK_ANALOG_VALUE = "Analog Value"
     JOYSTICK_PRESSED = "Pressed"
     FUNCTION_NAME[JOYSTICK + JOYSTICK_PRESSED] = "is_pressed"
@@ -513,22 +514,27 @@ class ComplexDevice(AbstractDevice):
                 values = getattr(self.device, getter_name)(*getter_args)
             else:
                 values = getattr(self.device, getter_name)()
-             
-            # check for tuples
-            if type(values) is tuple:
-                l = list(values)
-            else:
-                l = []
-                l.append(values)
-
+            
             # get bool and variable to check, which data should be logged
             bools = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_BOOL]
             names = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_NAME]
-        
-            # if variable bool is not True, dont log the data
-            for i in range(0, len(l)):
-                if bools[i]:
-                    self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, names[i], l[i]))
+            
+            l = [] #values
+            n = [] #identifeir of the namedtuple
+            if type(values) is not int or type(values) is not bool or type(values) is not float or type(values) is not long:
+                for v_name in values._fields:
+                    l.append(getattr(values, v_name))
+                    n.append(v_name)
+            else:                
+                l.append(values)
+                n.append(names[0])
+
+            #check, which variable should be logged
+            for j in range(0, len(n)):
+                for i in range(0, len(names)):
+                    if n[j] == names[i]:
+                        if bools[i]:
+                            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, names[i], l[j]))
             
         except ip_connection.Error as e:
             values = self._exception_msg(e.value, e.description)
@@ -582,7 +588,7 @@ class GPSBricklet(AbstractDevice):
             fix = self._get_fix_status()
                           
             if fix == GPS.FIX_NO_FIX:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg("Fix-Status=" + fix, "GPS Fix-Status was 1, but needs to be 2 or 3 for valid Coordinates.")))
+                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg("Fix-Status=" + str(fix), "GPS Fix-Status was 1, but needs to be 2 or 3 for valid Coordinates.")))
                 return
 
             latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.device.get_coordinates()
@@ -638,7 +644,7 @@ class GPSBricklet(AbstractDevice):
             fix = self._get_fix_status()
                
             if fix == GPS.FIX_NO_FIX:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg("Fix-Status=" + fix, "GPS Fix-Status was " + fix + ", but needs to be 2 or 3 for valid Altitude Values.")))
+                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg("Fix-Status=" + str(fix), "GPS Fix-Status was " + str(fix) + ", but needs to be 2 or 3 for valid Altitude Values.")))
                 return
  
             course, speed = self.device.get_motion()
@@ -752,3 +758,4 @@ class SegmentDisplay4x7Bricklet(AbstractDevice):
 # PIEZO_BUZZER = "Pirezo Buzzer"
 # PIEZO_SPEAKER = "Piezo Speaker"
 # REMOTE_SWITCH = "Remote Switch"
+# from brickv.bindings.brick_imu import IMU #API changes not supported at the moment!
