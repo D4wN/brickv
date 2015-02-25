@@ -1,4 +1,32 @@
 # MAIN DATA_LOGGER PROGRAMM
+import os, sys
+if hasattr(sys, "frozen"):
+    program_path = os.path.dirname(os.path.realpath(unicode(sys.executable, sys.getfilesystemencoding())))
+
+    if sys.platform == "darwin":
+        resources_path = os.path.join(os.path.split(program_path)[0], 'Resources')
+    else:
+        resources_path = program_path
+else:
+    program_path = os.path.dirname(os.path.realpath(unicode(__file__, sys.getfilesystemencoding())))
+    resources_path = program_path
+
+# add program_path so OpenGL is properly imported
+sys.path.insert(0, program_path)
+
+# Allow brickv to be directly started by calling "main.py"
+# without "brickv" being in the path already
+if not 'brickv' in sys.modules:
+    head, tail = os.path.split(program_path)
+
+    if not head in sys.path:
+        sys.path.insert(0, head)
+
+    if not hasattr(sys, "frozen"):
+        # load and inject in modules list, this allows to have the source in a
+        # directory named differently than 'brickv'
+        sys.modules['brickv'] = __import__(tail, globals(), locals(), [], -1)
+
 from brickv.data_logger.utils import DataLoggerException
 from brickv.data_logger.configuration_validator import ConfigurationReader
 from brickv.data_logger.event_logger import ConsoleLogger, FileLogger, EventLogger
@@ -7,7 +35,6 @@ from brickv.data_logger.data_logger import DataLogger
 import argparse  # command line argument parser
 import traceback
 import signal
-import sys
 
 # HashMap keywords to store results of the command line arguments
 CONSOLE_CONFIG_FILE = "config_file"
