@@ -4,10 +4,6 @@ __init__.py: package initialization
 data_logger
 
 Roland Dudko
-Marviin Lutz
+Marvin Lutz
 
-
-Example class
-
-class Example_Class():
 """
