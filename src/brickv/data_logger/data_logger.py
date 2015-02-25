@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.
 import logging
 import threading
 
-from brickv.bindings.ip_connection import IPConnection
+from tinkerforge.ip_connection import IPConnection
 from brickv.data_logger.configuration_validator import ConfigurationReader
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.job import CSVWriterJob, XivelyJob
