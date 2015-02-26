@@ -521,7 +521,7 @@ class ComplexDevice(AbstractDevice):
             
             l = [] #values
             n = [] #identifeir of the namedtuple
-            if type(values) is not int or type(values) is not bool or type(values) is not float or type(values) is not long:
+            if type(values) is not int and type(values) is not bool and type(values) is not float and type(values) is not long:
                 for v_name in values._fields:
                     l.append(getattr(values, v_name))
                     n.append(v_name)
