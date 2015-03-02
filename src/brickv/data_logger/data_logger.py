@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.
 import logging
 import threading
 
-from tinkerforge.ip_connection import IPConnection
+from brickv.bindings.ip_connection import IPConnection
 from brickv.data_logger.configuration_validator import ConfigurationReader
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.job import CSVWriterJob, XivelyJob
@@ -133,7 +133,8 @@ class DataLogger(threading.Thread):
         except Exception as exc:
             msg = "A critical error occur: " + str(exc)
             EventLogger.critical(msg)
-            self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR)
+            #self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR) #TODO: Check this roland
+			self.stop()
                   
     def run(self):
         '''
