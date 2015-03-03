@@ -409,7 +409,7 @@ class ConfigurationValidator(object):
         '''
         Returns True if the 'integer_value' is of type integer and is not negative
         '''
-        if not isinstance(integer_value, int) or integer_value < min_value:
+        if not isinstance(integer_value, int) or integer_value < min_value and integer_value != 0:
             return False
         return True
     
