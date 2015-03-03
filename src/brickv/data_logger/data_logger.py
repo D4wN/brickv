@@ -133,8 +133,7 @@ class DataLogger(threading.Thread):
         except Exception as exc:
             msg = "A critical error occur: " + str(exc)
             EventLogger.critical(msg)
-            #self.stop(utils.DataLoggerException.DL_CRITICAL_ERROR) #TODO: Check this roland
-			self.stop()
+            self.stop()
                   
     def run(self):
         '''
