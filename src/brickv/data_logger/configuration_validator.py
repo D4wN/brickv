@@ -102,11 +102,14 @@ class ConfigurationValidator(object):
     This class validates the (json) configuration file
     '''
     def __init__(self, config_file):
+        self.CR = ConfigurationReader  # alias for the ConfigurationReader
+        self.ldi = loggable_devices.Identifier  # alias for the loggable_devices.Identifier
+        
         self.json_config = config_file
    
         self._error_count = 0
-        file_count = self.json_config._general[ConfigurationReader.GENERAL_LOG_COUNT]
-        file_size = self.json_config._general[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
+        file_count = self.json_config._general[self.CR.GENERAL_LOG_COUNT]
+        file_size = self.json_config._general[self.CR.GENERAL_LOG_FILE_SIZE]
          
         self._log_space_counter = LogSpaceCounter(file_count, file_size)
                 
@@ -160,31 +163,31 @@ class ConfigurationValidator(object):
                 return False
         
         # ConfigurationReader.GENERAL_HOST ip address
-        host = global_section[ConfigurationReader.GENERAL_HOST]
+        host = global_section[self.CR.GENERAL_HOST]
         if not host.lower() == 'localhost' and not is_valid_ip_format(host):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_HOST],
+            EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_HOST],
                                                 msg="host should be 'localhost' or an valid ip-address"))
         
         # ConfigurationReader.GENERAL_PORT port number
-        port = global_section[ConfigurationReader.GENERAL_PORT]
+        port = global_section[self.CR.GENERAL_PORT]
         if not self._is_valid_string(port, 1) and not(port > 0 and port <= 65535):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PORT], msg="port should be an integer 0-65535"))
+            EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PORT], msg="port should be an integer 0-65535"))
         
         # ConfigurationReader.GENERAL_LOG_TO_FILE
-        if not type(global_section[ConfigurationReader.GENERAL_LOG_TO_FILE]) == bool:
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_TO_FILE], msg="should be a boolean"))
+        if not type(global_section[self.CR.GENERAL_LOG_TO_FILE]) == bool:
+            EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_TO_FILE], msg="should be a boolean"))
 
         # ConfigurationReader.GENERAL_PATH_TO_FILE
-        if not self._is_valid_string(global_section[ConfigurationReader.GENERAL_PATH_TO_FILE], 1):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_PATH_TO_FILE], msg="should be a path to the file where the data will be saved"))
+        if not self._is_valid_string(global_section[self.CR.GENERAL_PATH_TO_FILE], 1):
+            EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PATH_TO_FILE], msg="should be a path to the file where the data will be saved"))
          
         # ConfigurationReader.GENERAL_LOG_COUNT and GENERAL_LOG_FILE_SIZE
-        count = global_section[ConfigurationReader.GENERAL_LOG_COUNT]
+        count = global_section[self.CR.GENERAL_LOG_COUNT]
         if not isinstance(count, int) and (not isinstance(count, float)):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_COUNT], msg="should be a int or float"))
-        size = global_section[ConfigurationReader.GENERAL_LOG_FILE_SIZE]
+            EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_COUNT], msg="should be a int or float"))
+        size = global_section[self.CR.GENERAL_LOG_FILE_SIZE]
         if not isinstance(size, int) and (not isinstance(size, float)):
-            EventLogger.critical(self._generate_error_message(tier_array=[ConfigurationReader.GENERAL_SECTION, ConfigurationReader.GENERAL_LOG_FILE_SIZE], msg="should be a int or float"))
+            EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_FILE_SIZE], msg="should be a int or float"))
          
         # TODO: Check free disk space of the destination
         
@@ -209,11 +212,11 @@ class ConfigurationValidator(object):
             self._check_basic_data(device)
             
             try:
-                values = device[loggable_devices.Identifier.DEVICE_VALUES]
+                values = device[self.ldi.DEVICE_VALUES]
                 for value in values:
                     self._check_basic_variables(device, values, value)
                     # log space calculation
-                    self._log_space_counter.simple_devices(values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL])
+                    self._log_space_counter.simple_devices(values[value][self.ldi.DEVICE_VALUES_INTERVAL])
                            
             except KeyError as k:
                 EventLogger.critical(self._generate_error_message(device=device,
@@ -234,31 +237,31 @@ class ConfigurationValidator(object):
             
             try:
                 # the two lists (device values, device booleans) should have the same length
-                if len(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]) != len(device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]):
+                if len(device[self.ldi.SPECIAL_DEVICE_VALUE]) != len(device[self.ldi.SPECIAL_DEVICE_VALUE]):
                     EventLogger.critical(self._generate_error_message(device=device,
-                                                                      tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE, loggable_devices.Identifier.SPECIAL_DEVICE_VALUE],
+                                                                      tier_array=[self.ldi.SPECIAL_DEVICE_VALUE, self.ldi.SPECIAL_DEVICE_VALUE],
                                                                       msg="should have the same length"))
     
                 # check types of the entities in the lists
-                variables = device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL]
+                variables = device[self.ldi.SPECIAL_DEVICE_BOOL]
                 variables_count = 0
                 for bool_value_key in variables:
-                    value = device[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL][bool_value_key]
+                    value = device[self.ldi.SPECIAL_DEVICE_BOOL][bool_value_key]
                     if not isinstance(value, bool):
                         EventLogger.critical(self._generate_error_message(device=device,
-                                                                          tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_BOOL, bool_value_key],
+                                                                          tier_array=[self.ldi.SPECIAL_DEVICE_BOOL, bool_value_key],
                                                                           msg="is not a boolean"))
                     else:
                         if value is True:
                             variables_count += 1
           
-                interval = device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE]
+                interval = device[self.ldi.SPECIAL_DEVICE_VALUE]
                 interval_summ = 0
                 for interval_value_key in interval:
-                    interval_length = device[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE][interval_value_key]
+                    interval_length = device[self.ldi.SPECIAL_DEVICE_VALUE][interval_value_key]
                     if not self._is_valid_interval(interval_length):
                         EventLogger.critical(self._generate_error_message(device=device,
-                                                                          tier_array=[loggable_devices.Identifier.SPECIAL_DEVICE_VALUE, interval_value_key],
+                                                                          tier_array=[self.ldi.SPECIAL_DEVICE_VALUE, interval_value_key],
                                                                           msg="is not a valid interval"))
                     else:
                         interval_summ += interval_length
@@ -284,33 +287,33 @@ class ConfigurationValidator(object):
             self._check_basic_data(device)
             
             try:
-                values = device[loggable_devices.Identifier.DEVICE_VALUES]
+                values = device[self.ldi.DEVICE_VALUES]
                 for value in values:
                     self._check_basic_variables(device, values, value)
                     
-                    if len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]) != len(values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]):
+                    if len(values[value][self.ldi.COMPLEX_DEVICE_VALUES_BOOL]) != len(values[value][self.ldi.COMPLEX_DEVICE_VALUES_NAME]):
                         EventLogger.critical(self._generate_error_message(device=device,
-                                                                          tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME],
+                                                                          tier_array=["values", value, self.ldi.COMPLEX_DEVICE_VALUES_BOOL, self.ldi.COMPLEX_DEVICE_VALUES_NAME],
                                                                           msg="should have the same length"))
                    
                     # loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL
-                    bool_values = values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL]
+                    bool_values = values[value][self.ldi.COMPLEX_DEVICE_VALUES_BOOL]
                     for bool_value in bool_values:
                         if not isinstance(bool_value, bool):
                             EventLogger.critical(self._generate_error_message(device=device,
-                                                                              tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_BOOL, str(bool_value)],
+                                                                              tier_array=["values", value, self.ldi.COMPLEX_DEVICE_VALUES_BOOL, str(bool_value)],
                                                                               msg="should be a boolean"))
     
                     # loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME
-                    string_values = values[value][loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME]
+                    string_values = values[value][self.ldi.COMPLEX_DEVICE_VALUES_NAME]
                     for string_value in string_values:
                         if not self._is_valid_string(string_value, 1):
                             EventLogger.critical(self._generate_error_message(device=device,
-                                                                              tier_array=["values", value, loggable_devices.Identifier.COMPLEX_DEVICE_VALUES_NAME, str(bool_value)],
+                                                                              tier_array=["values", value, self.ldi.COMPLEX_DEVICE_VALUES_NAME, str(bool_value)],
                                                                               msg="should be a string"))
                             
                     # log space calculation
-                    interval = values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]
+                    interval = values[value][self.ldi.DEVICE_VALUES_INTERVAL]
                     self._log_space_counter.complex_devices(interval, bool_values)
                     
             except KeyError as k:
@@ -326,8 +329,8 @@ class ConfigurationValidator(object):
         class_str = ""
         for i in range(len(devices)):
             try:
-                class_str = devices[i][loggable_devices.Identifier.DEVICE_CLASS]
-                devices[i][loggable_devices.Identifier.DEVICE_CLASS] = loggable_devices.string_to_class(class_str)
+                class_str = devices[i][self.ldi.DEVICE_CLASS]
+                devices[i][self.ldi.DEVICE_CLASS] = loggable_devices.string_to_class(class_str)
                  
             except (KeyError, AttributeError):
                 self._error_count += 1
@@ -339,21 +342,21 @@ class ConfigurationValidator(object):
         '''
         try:
             # should be a class not a string
-            if isinstance(device[loggable_devices.Identifier.DEVICE_CLASS], basestring):
+            if isinstance(device[self.ldi.DEVICE_CLASS], basestring):
                 EventLogger.critical(self._generate_error_message(device=device,
-                                                                  tier_array=[loggable_devices.Identifier.DEVICE_CLASS],
+                                                                  tier_array=[self.ldi.DEVICE_CLASS],
                                                                   msg="should be a class but is a string"))
                 
             # should be a string with length > 0
-            if not self._is_valid_string(device[loggable_devices.Identifier.DEVICE_NAME]):
+            if not self._is_valid_string(device[self.ldi.DEVICE_NAME]):
                 EventLogger.critical(self._generate_error_message(device=device,
-                                                                  tier_array=[loggable_devices.Identifier.DEVICE_NAME],
+                                                                  tier_array=[self.ldi.DEVICE_NAME],
                                                                   msg="should be a string with length > 0"))
                 
             # should be a string with length >= 3
-            if not self._is_valid_string(device[loggable_devices.Identifier.DEVICE_UID]):
+            if not self._is_valid_string(device[self.ldi.DEVICE_UID]):
                 EventLogger.critical(self._generate_error_message(device=device,
-                                                                  tier_array=[loggable_devices.Identifier.DEVICE_UID],
+                                                                  tier_array=[self.ldi.DEVICE_UID],
                                                                   msg="should be a string with length > 0"))
                 
         except KeyError as k:
@@ -366,20 +369,20 @@ class ConfigurationValidator(object):
         This function checks entries which are present in the simple- and complex devices
         '''
         # loggable_devices.Identifier.DEVICE_VALUES_ARGS
-        if not self._is_valid_arguments(values[value][loggable_devices.Identifier.DEVICE_VALUES_ARGS]):
+        if not self._is_valid_arguments(values[value][self.ldi.DEVICE_VALUES_ARGS]):
                         EventLogger.critical(self._generate_error_message(device=device,
-                                                                          tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_ARGS],
+                                                                          tier_array=[str(value), self.ldi.DEVICE_VALUES_ARGS],
                                                                           msg="arguments should be either 'None' or a list with length >= 1 "))
         # loggable_devices.Identifier.DEVICE_VALUES_INTERVAL
-        interval = values[value][loggable_devices.Identifier.DEVICE_VALUES_INTERVAL]
+        interval = values[value][self.ldi.DEVICE_VALUES_INTERVAL]
         if not self._is_valid_interval(interval):
                         EventLogger.critical(self._generate_error_message(device=device,
-                                                                          tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_INTERVAL],
+                                                                          tier_array=[str(value), self.ldi.DEVICE_VALUES_INTERVAL],
                                                                           msg="interval should be an integer and >= 0"))
         
         # loggable_devices.Identifier.DEVICE_VALUES_NAME
-        func_name = values[value][loggable_devices.Identifier.DEVICE_VALUES_NAME]
-        class_object = device[loggable_devices.Identifier.DEVICE_CLASS]
+        func_name = values[value][self.ldi.DEVICE_VALUES_NAME]
+        class_object = device[self.ldi.DEVICE_CLASS]
         if not self._is_valid_function(class_object, func_name):
             tmp_msg = ""
             if isinstance(class_object, basestring):
@@ -388,7 +391,7 @@ class ConfigurationValidator(object):
                 tmp_msg = "[" + class_object.__name__ + "] has no function \"" + func_name + "\""
                 
             EventLogger.critical(self._generate_error_message(device=device,
-                                                              tier_array=[str(value), loggable_devices.Identifier.DEVICE_VALUES_NAME],
+                                                              tier_array=[str(value), self.ldi.DEVICE_VALUES_NAME],
                                                               msg=tmp_msg))
                         
     def _is_valid_string(self, string_value, min_length=0):
@@ -432,7 +435,7 @@ class ConfigurationValidator(object):
         '''
         err_msg = ""
         if device is not None:
-            err_msg = "[UID=" + str(device[loggable_devices.Identifier.DEVICE_UID]) + "]"
+            err_msg = "[UID=" + str(device[self.ldi.DEVICE_UID]) + "]"
             
         for tier in tier_array:
             err_msg += "[" + tier + "]"
