@@ -131,6 +131,9 @@ class DataLogger(threading.Thread):
                 (special_devices[i][loggable_devices.Identifier.DEVICE_CLASS](special_devices[i], self)).start_timer()
 
         except Exception as exc:
+            if str(exc) == "substring not found":
+                #wrong UID -> TODO which device?
+                exc = "Wrong UID! Please check your UID's."
             msg = "A critical error occur: " + str(exc)
             self.stop()
             raise DataLoggerException(DataLoggerException.DL_CRITICAL_ERROR, msg)
