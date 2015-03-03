@@ -350,16 +350,16 @@ class ConfigurationValidator(object):
                                                                   msg="should be a class but is a string"))
                 
             # should be a string with length > 0
-            if not self._is_valid_string(device[self.ldi.DEVICE_NAME]):
+            if not self._is_valid_string(device[self.ldi.DEVICE_NAME], min_length=1):
                 EventLogger.critical(self._generate_error_message(device=device,
                                                                   tier_array=[self.ldi.DEVICE_NAME],
                                                                   msg="should be a string with length > 0"))
                 
             # should be a string with length >= 3
-            if not self._is_valid_string(device[self.ldi.DEVICE_UID]):
+            if not self._is_valid_string(device[self.ldi.DEVICE_UID], min_length=3):
                 EventLogger.critical(self._generate_error_message(device=device,
                                                                   tier_array=[self.ldi.DEVICE_UID],
-                                                                  msg="the UID should be a string with length > 0"))
+                                                                  msg="the UID should be a string with length >= 3"))
                 
         except KeyError as k:
             EventLogger.critical(self._generate_error_message(device=device,
