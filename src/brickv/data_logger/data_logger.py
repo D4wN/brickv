@@ -135,8 +135,8 @@ class DataLogger(threading.Thread):
                 #wrong UID -> TODO which device?
                 exc = "Wrong UID! Please check your UID's."
             msg = "A critical error occur: " + str(exc)
-            EventLogger.critical(msg)
             self.stop()
+            raise DataLoggerException(DataLoggerException.DL_CRITICAL_ERROR, msg)
                   
     def run(self):
         '''
@@ -147,6 +147,7 @@ class DataLogger(threading.Thread):
         self.process_xively_section()
 
         self.initialize_loggable_devices()
+
         
         """START-WRITE-THREAD"""
         # create jobs
