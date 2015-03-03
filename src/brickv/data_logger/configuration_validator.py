@@ -101,6 +101,8 @@ class ConfigurationValidator(object):
     '''
     This class validates the (json) configuration file
     '''
+    MIN_INTERVAL = 1000
+    
     def __init__(self, config_file):
         self.CR = ConfigurationReader  # alias for the ConfigurationReader
         self.ldi = loggable_devices.Identifier  # alias for the loggable_devices.Identifier
@@ -259,10 +261,10 @@ class ConfigurationValidator(object):
                 interval_summ = 0
                 for interval_value_key in interval:
                     interval_length = device[self.ldi.SPECIAL_DEVICE_VALUE][interval_value_key]
-                    if not self._is_valid_interval(interval_length):
+                    if not self._is_valid_interval(interval_length, min_value=ConfigurationValidator.MIN_INTERVAL):
                         EventLogger.critical(self._generate_error_message(device=device,
                                                                           tier_array=[self.ldi.SPECIAL_DEVICE_VALUE, interval_value_key],
-                                                                          msg="is not a valid interval"))
+                                                                          msg="interval (in milliseconds) should be an integer and at least " + str(ConfigurationValidator.MIN_INTERVAL)))
                     else:
                         interval_summ += interval_length
                         
@@ -357,7 +359,7 @@ class ConfigurationValidator(object):
             if not self._is_valid_string(device[self.ldi.DEVICE_UID]):
                 EventLogger.critical(self._generate_error_message(device=device,
                                                                   tier_array=[self.ldi.DEVICE_UID],
-                                                                  msg="should be a string with length > 0"))
+                                                                  msg="the UID should be a string with length > 0"))
                 
         except KeyError as k:
             EventLogger.critical(self._generate_error_message(device=device,
@@ -375,10 +377,10 @@ class ConfigurationValidator(object):
                                                                           msg="arguments should be either 'None' or a list with length >= 1 "))
         # loggable_devices.Identifier.DEVICE_VALUES_INTERVAL
         interval = values[value][self.ldi.DEVICE_VALUES_INTERVAL]
-        if not self._is_valid_interval(interval):
+        if not self._is_valid_interval(interval, min_value=ConfigurationValidator.MIN_INTERVAL):
                         EventLogger.critical(self._generate_error_message(device=device,
                                                                           tier_array=[str(value), self.ldi.DEVICE_VALUES_INTERVAL],
-                                                                          msg="interval should be an integer and >= 0"))
+                                                                          msg="interval (in milliseconds) should be an integer and at least " + str(ConfigurationValidator.MIN_INTERVAL)))
         
         # loggable_devices.Identifier.DEVICE_VALUES_NAME
         func_name = values[value][self.ldi.DEVICE_VALUES_NAME]
@@ -403,11 +405,11 @@ class ConfigurationValidator(object):
             return False
         return True
     
-    def _is_valid_interval(self, integer_value):
+    def _is_valid_interval(self, integer_value, min_value=0):
         '''
         Returns True if the 'integer_value' is of type integer and is not negative
         '''
-        if not isinstance(integer_value, int) or integer_value < 0:
+        if not isinstance(integer_value, int) or integer_value < min_value:
             return False
         return True
     
