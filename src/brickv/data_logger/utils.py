@@ -130,7 +130,7 @@ class LoggerTimer(object):
         func -- the function which will be called
         '''
         self.exit_flag = False
-        interval /= 1000  # for ms
+        interval /= 1000.0  # for seconds
         if interval < 0:
             interval = 0
         
@@ -139,8 +139,7 @@ class LoggerTimer(object):
         self._var_name = var_name
         self._device = device
         self._t = Timer(self._interval, self._loop)
-   
-    
+
     def _loop(self):
         '''Runs the <self._func_name> function every <self._interval> seconds'''
         getattr(self._device, self._func_name)(self._var_name)

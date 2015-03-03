@@ -101,7 +101,7 @@ class ConfigurationValidator(object):
     '''
     This class validates the (json) configuration file
     '''
-    MIN_INTERVAL = 1000
+    MIN_INTERVAL = 0
     
     def __init__(self, config_file):
         self.CR = ConfigurationReader  # alias for the ConfigurationReader
