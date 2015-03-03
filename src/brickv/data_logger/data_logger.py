@@ -132,8 +132,8 @@ class DataLogger(threading.Thread):
 
         except Exception as exc:
             msg = "A critical error occur: " + str(exc)
-            EventLogger.critical(msg)
             self.stop()
+            raise DataLoggerException(DataLoggerException.DL_CRITICAL_ERROR, msg)
                   
     def run(self):
         '''
@@ -144,6 +144,7 @@ class DataLogger(threading.Thread):
         self.process_xively_section()
 
         self.initialize_loggable_devices()
+
         
         """START-WRITE-THREAD"""
         # create jobs
