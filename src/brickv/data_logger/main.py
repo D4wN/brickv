@@ -1,5 +1,16 @@
 # MAIN DATA_LOGGER PROGRAMM
-import os, sys
+import argparse  # command line argument parser
+import os
+import signal
+import sys
+import traceback
+
+from brickv.data_logger.configuration_validator import ConfigurationReader
+from brickv.data_logger.data_logger import DataLogger
+from brickv.data_logger.event_logger import ConsoleLogger, FileLogger, EventLogger
+from brickv.data_logger.utils import DataLoggerException
+
+
 if hasattr(sys, "frozen"):
     program_path = os.path.dirname(os.path.realpath(unicode(sys.executable, sys.getfilesystemencoding())))
 
@@ -27,14 +38,7 @@ if not 'brickv' in sys.modules:
         # directory named differently than 'brickv'
         sys.modules['brickv'] = __import__(tail, globals(), locals(), [], -1)
 
-from brickv.data_logger.utils import DataLoggerException
-from brickv.data_logger.configuration_validator import ConfigurationReader
-from brickv.data_logger.event_logger import ConsoleLogger, FileLogger, EventLogger
-from brickv.data_logger.data_logger import DataLogger
 
-import argparse  # command line argument parser
-import traceback
-import signal
 
 # HashMap keywords to store results of the command line arguments
 CONSOLE_CONFIG_FILE = "config_file"
@@ -80,11 +84,11 @@ def main(arguments_map):
     guiStart = False
     try:
         # was started via console
-        if arguments_map.has_key(CONSOLE_CONFIG_FILE) and arguments_map[CONSOLE_CONFIG_FILE] is not None:
+        if CONSOLE_CONFIG_FILE in arguments_map and arguments_map[CONSOLE_CONFIG_FILE] is not None:
             configuration = ConfigurationReader(pathToConfig=arguments_map[CONSOLE_CONFIG_FILE])
          
         # was started via gui
-        elif arguments_map.has_key(GUI_CONFIG) and arguments_map[GUI_CONFIG] is not None:
+        elif GUI_CONFIG in arguments_map and arguments_map[GUI_CONFIG] is not None:
             guiStart = True
             configuration = ConfigurationReader(configuration=arguments_map[GUI_CONFIG])
 
@@ -92,7 +96,7 @@ def main(arguments_map):
         else:
             raise DataLoggerException("Can not run data logger without a configuration.")
             
-        if arguments_map.has_key(CONSOLE_VALIDATE_ONLY) and arguments_map[CONSOLE_VALIDATE_ONLY]:
+        if CONSOLE_VALIDATE_ONLY in arguments_map and arguments_map[CONSOLE_VALIDATE_ONLY]:
             return
         
     except Exception as exc:
