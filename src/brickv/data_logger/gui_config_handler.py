@@ -49,7 +49,6 @@ class GuiConfigHandler(object):
         """
         # CLASS_NAME=dev[Identifier.DEVICE_NAME]
         for dev in complex_devices:
-            tmp = {}  # empty list
             dev_name = dev[Identifier.DEVICE_NAME]
             # t1
             tmp = {}

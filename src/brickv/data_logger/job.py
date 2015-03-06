@@ -44,7 +44,6 @@ class AbstractJob(threading.Thread):
             self._datalogger.data_queue.pop(self.name)
         except KeyError as key_err:
             EventLogger.warning("Job:"+self.name+" was not ine the DataQueue! -> "+ str(key_err))
-    
 
 class CSVWriterJob(AbstractJob):
     '''
@@ -87,7 +86,64 @@ class CSVWriterJob(AbstractJob):
         except Exception as e:
             EventLogger.critical(self._job_name + " " + str(e))
             self.stop()
-                      
+
+class GuiDataJob(AbstractJob):
+    '''
+    This class enables the data logger to upload logged data to the Xively platform
+    '''
+
+    def __init__(self, datalogger=None, table_widget=None, group=None, name="GuiDataJob", args=(), kwargs=None, verbose=None):
+        target = self._job
+        AbstractJob.__init__(self, datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+        # TODO: implement xively logger
+        EventLogger.warning(self._job_name + " Is not supported!")
+        self._table_widget = table_widget
+
+    def _job(self):
+        try:
+            # check for datalogger object
+            if AbstractJob._job(self) or self._table_widget is None:
+                return
+
+            EventLogger.debug(self._job_name + " Started")
+            #csv_writer = CSVWriter(self._datalogger.default_file_path, self._datalogger.max_file_size, self._datalogger.max_file_count)
+
+            while (True):
+                if not self._datalogger.data_queue[self.name].empty():
+                    csv_data = self._get_data_from_queue()
+                    EventLogger.debug(self._job_name + " -> " + str(csv_data))
+                    self.__add_data_to_table(csv_data)
+                    #schreib daten raus
+                    #if not csv_writer.write_data_row(csv_data):
+                    #    EventLogger.warning(self._job_name + " Could not write csv row!")
+
+                if not self._exit_flag and self._datalogger.data_queue[self.name].empty():
+                    time.sleep(self._datalogger.job_sleep)
+
+                if self._exit_flag and self._datalogger.data_queue[self.name].empty():
+                    #exit_return_Value = csv_writer.close_file()
+                    #if exit_return_Value:
+                    #    EventLogger.debug(self._job_name + " Closed his csv_writer")
+                    #else:
+                    #    EventLogger.debug(self._job_name + " Could NOT close his csv_writer! EXIT_RETURN_VALUE=" + str(exit))
+                    #EventLogger.debug(self._job_name + " Finished")
+
+                    self._remove_from_data_queue()
+                    break
+
+        except Exception as e:
+            EventLogger.critical(self._job_name + " " + str(e))
+            self.stop()
+
+    def __add_data_to_table(self, csv_data):
+        row = self.table_widget.rowCount()
+        self.table_widget.insertRow(row)
+        self.table_widget.setItem(row, 0, str(csv_data.uid))
+        self.table_widget.setItem(row, 1, str(csv_data.name))
+        self.table_widget.setItem(row, 2, str(csv_data.var_name))
+        self.table_widget.setItem(row, 3, str(csv_data.raw_data))
+        self.table_widget.setItem(row, 4, str(csv_data.timestamp))
+
 class XivelyJob(AbstractJob):
     '''
     This class enables the data logger to upload logged data to the Xively platform
