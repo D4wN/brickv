@@ -26,7 +26,8 @@ class LoggerWindow(QDialog, Ui_Logger):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
         
-        EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL, self))
+        EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL, logger_window=self.txt_console_output,
+                                         logger_tab_hightlight=self.txt_console_highlight_tab))
         
         self.interval_string = "_interval"
         self.interval_show = "interval"
@@ -101,7 +102,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             from data_logger import main
             arguments_map = {}
             arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self)
-            arguments_map[main.GUI_ELEMENT] = None # TODO: MARV put the gui element here
+            arguments_map[main.GUI_ELEMENT] = self.table_widget
             
             self.data_logger_thread = main.main(arguments_map)
             if self.data_logger_thread is not None:
@@ -507,5 +508,11 @@ class LoggerWindow(QDialog, Ui_Logger):
         """
             Function to write text on the gui console tab.
         """
-        self.txt_console.append(msg)
-        QtGui.QApplication.processEvents()  # possible "not Responding" fix?
+        self.txt_console.append(str(msg))
+
+    def txt_console_highlight_tab(self):
+        if not self.tab_console_warning and self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
+            self.tab_console_warning = True
+            from brickv.utils import get_resources_path
+            from PyQt4.QtGui import QColor
+            self.tab_set(self.tab_widget.indexOf(self.tab_console), QColor(255, 0, 0), os.path.join(get_resources_path(), "dialog-warning.png"))

@@ -95,8 +95,6 @@ class GuiDataJob(AbstractJob):
     def __init__(self, datalogger=None, table_widget=None, group=None, name="GuiDataJob", args=(), kwargs=None, verbose=None):
         target = self._job
         AbstractJob.__init__(self, datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
-        # TODO: implement xively logger
-        EventLogger.warning(self._job_name + " Is not supported!")
         self._table_widget = table_widget
 
     def _job(self):
@@ -136,13 +134,14 @@ class GuiDataJob(AbstractJob):
             self.stop()
 
     def __add_data_to_table(self, csv_data):
-        row = self.table_widget.rowCount()
-        self.table_widget.insertRow(row)
-        self.table_widget.setItem(row, 0, str(csv_data.uid))
-        self.table_widget.setItem(row, 1, str(csv_data.name))
-        self.table_widget.setItem(row, 2, str(csv_data.var_name))
-        self.table_widget.setItem(row, 3, str(csv_data.raw_data))
-        self.table_widget.setItem(row, 4, str(csv_data.timestamp))
+        """row = self._table_widget.rowCount()
+        self._table_widget.insertRow(row)
+        self._table_widget.setItem(row, 0, str(csv_data.uid))
+        self._table_widget.setItem(row, 1, str(csv_data.name))
+        self._table_widget.setItem(row, 2, str(csv_data.var_name))
+        self._table_widget.setItem(row, 3, str(csv_data.raw_data))
+        self._table_widget.setItem(row, 4, str(csv_data.timestamp))"""
+        print str("Table Data here")
 
 class XivelyJob(AbstractJob):
     '''

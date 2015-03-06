@@ -144,15 +144,11 @@ class GUILogger(logging.Logger):
     _output_format_warning = "<font color=\"orange\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
     _output_format_critical = "<font color=\"red\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
     
-    def __init__(self, name, log_level, logger_window=None):
-        # fix for "not responding app"
-        # we cant use debug information atm!
-        if log_level == logging.DEBUG:
-            log_level = logging.INFO
-        
+    def __init__(self, name, log_level, logger_window=None, logger_tab_hightlight=None):
         logging.Logger.__init__(self, name, log_level)
         
         self.logger_window_output = logger_window
+        self._highlight_tab = logger_tab_hightlight
         
     def debug(self, msg):
         self.log(logging.DEBUG, msg)
@@ -181,17 +177,10 @@ class GUILogger(logging.Logger):
             levelname = GUILogger._convert_level[level]
             
             if level == logging.WARN or level == logging.WARNING:
-                self.logger_window_output.txt_console_output(GUILogger._output_format_warning.format(asctime=asctime, levelname=levelname, message=msg))
+                self.logger_window_output(GUILogger._output_format_warning.format(asctime=asctime, levelname=levelname, message=msg))
                 self._highlight_tab()
             elif level == logging.CRITICAL or level == logging.ERROR:
-                self.logger_window_output.txt_console_output(GUILogger._output_format_critical.format(asctime=asctime, levelname=levelname, message=msg))
+                self.logger_window_output(GUILogger._output_format_critical.format(asctime=asctime, levelname=levelname, message=msg))
                 self._highlight_tab()
             else:
-                self.logger_window_output.txt_console_output(GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg))
-                
-    def _highlight_tab(self):
-        if not self.logger_window_output.tab_console_warning and self.logger_window_output.tab_widget.currentWidget().objectName() != self.logger_window_output.tab_console.objectName():
-            self.logger_window_output.tab_console_warning = True
-            from brickv.utils import get_resources_path
-            from PyQt4.QtGui import QColor
-            self.logger_window_output.tab_set(self.logger_window_output.tab_widget.indexOf(self.logger_window_output.tab_console), QColor(255, 0, 0), os.path.join(get_resources_path(), "dialog-warning.png"))
+                self.logger_window_output(GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg))
