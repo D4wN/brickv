@@ -26,6 +26,16 @@
    <item row="1" column="0">
     <widget class="QWidget" name="widget" native="true">
      <layout class="QGridLayout" name="gridLayout_6">
+      <item row="1" column="0">
+       <widget class="QPushButton" name="btn_start_logging">
+        <property name="focusPolicy">
+         <enum>Qt::TabFocus</enum>
+        </property>
+        <property name="text">
+         <string>Start Logging</string>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="1">
        <spacer name="horizontalSpacer_5">
         <property name="orientation">
@@ -38,16 +48,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="btn_start_logging">
-        <property name="focusPolicy">
-         <enum>Qt::TabFocus</enum>
-        </property>
-        <property name="text">
-         <string>Start Logging</string>
-        </property>
-       </widget>
       </item>
       <item row="1" column="3">
        <widget class="QPushButton" name="btn_load_config">
@@ -98,7 +98,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_setup">
         <property name="enabled">
@@ -519,7 +519,7 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <widget class="QCheckBox" name="checkbox_auto_scroll">
+          <widget class="QCheckBox" name="checkbox_data_auto_scroll">
            <property name="text">
             <string>Auto Scroll</string>
            </property>
@@ -588,15 +588,58 @@
         <attribute name="title">
          <string>Messages</string>
         </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QTextEdit" name="txt_console">
-           <property name="readOnly">
-            <bool>true</bool>
+        <layout class="QGridLayout" name="gridLayout_10">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="checkbox_console_auto_scroll">
+           <property name="text">
+            <string>Auto Scroll</string>
            </property>
           </widget>
          </item>
-         <item>
+         <item row="0" column="2">
+          <spacer name="horizontalSpacer_8">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="3">
+          <widget class="QComboBox" name="combo_console_level">
+           <property name="currentIndex">
+            <number>1</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>Debug</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Info</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Warning</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Error / Critical</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="4">
+          <widget class="QTextBrowser" name="txt_console"/>
+         </item>
+         <item row="2" column="0" colspan="4">
           <widget class="QPushButton" name="btn_console_clear">
            <property name="focusPolicy">
             <enum>Qt::TabFocus</enum>
@@ -631,7 +674,6 @@
   <tabstop>lineEdit_3</tabstop>
   <tabstop>lineEdit_4</tabstop>
   <tabstop>spinBox_3</tabstop>
-  <tabstop>txt_console</tabstop>
   <tabstop>btn_console_clear</tabstop>
  </tabstops>
  <resources/>
