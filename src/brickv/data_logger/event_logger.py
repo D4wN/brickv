@@ -3,9 +3,12 @@
                                 Event Logger
  ---------------------------------------------------------------------------*/
 """
+from PyQt4 import QtCore
 import logging
 import datetime
 import os
+from PyQt4.QtCore import SIGNAL
+
 
 class EventLogger():
     """
@@ -126,11 +129,11 @@ class FileLogger(logging.Logger):
         
         self.info("###### NEW LOGGING SESSION STARTED ######")
 
-class GUILogger(logging.Logger):
+class GUILogger(logging.Logger, QtCore.QObject):
     '''
     This class outputs the logged data to the brickv gui
     '''
-    
+
     # for level as string
     _convert_level = {}
     _convert_level[logging.DEBUG] = "DEBUG"
@@ -143,12 +146,13 @@ class GUILogger(logging.Logger):
     _output_format = "{asctime} - <b>{levelname:8}</b> - {message}"
     _output_format_warning = "<font color=\"orange\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
     _output_format_critical = "<font color=\"red\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
+
+    SIGNAL_NEW_MESSAGE = "newEventMessage"
+    SIGNAL_NEW_MESSAGE_TAB_HIGHLIGHT = "newEventTabHighlight"
     
-    def __init__(self, name, log_level, logger_window=None, logger_tab_hightlight=None):
+    def __init__(self, name, log_level):
         logging.Logger.__init__(self, name, log_level)
-        
-        self.logger_window_output = logger_window
-        self._highlight_tab = logger_tab_hightlight
+        QtCore.QObject.__init__(self)
         
     def debug(self, msg):
         self.log(logging.DEBUG, msg)
@@ -169,18 +173,16 @@ class GUILogger(logging.Logger):
         self.log(logging.ERROR, msg)
             
     def log(self, level, msg):
-        if self.logger_window_output is None:
-            return
         
         if level >= self.level:
             asctime = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
             levelname = GUILogger._convert_level[level]
-            
+
             if level == logging.WARN or level == logging.WARNING:
-                self.logger_window_output(GUILogger._output_format_warning.format(asctime=asctime, levelname=levelname, message=msg))
-                self._highlight_tab()
+                self.emit(QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE),GUILogger._output_format_warning.format(asctime=asctime, levelname=levelname, message=msg))
+                self.emit(QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE_TAB_HIGHLIGHT))
             elif level == logging.CRITICAL or level == logging.ERROR:
-                self.logger_window_output(GUILogger._output_format_critical.format(asctime=asctime, levelname=levelname, message=msg))
-                self._highlight_tab()
+                self.emit(QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE),GUILogger._output_format_critical.format(asctime=asctime, levelname=levelname, message=msg))
+                self.emit(QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE_TAB_HIGHLIGHT))
             else:
-                self.logger_window_output(GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg))
+                self.emit(QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE),GUILogger._output_format.format(asctime=asctime, levelname=levelname, message=msg))

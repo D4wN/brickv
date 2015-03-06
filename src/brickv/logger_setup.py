@@ -5,7 +5,7 @@ import json
 import os
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import QDialog
 from PyQt4.QtGui import QMessageBox
 
@@ -25,9 +25,9 @@ class LoggerWindow(QDialog, Ui_Logger):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
         self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
-        
-        EventLogger.add_logger(GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL, logger_window=self.txt_console_output,
-                                         logger_tab_hightlight=self.txt_console_highlight_tab))
+
+        self._gui_logger = GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL)
+        EventLogger.add_logger(self._gui_logger)
         
         self.interval_string = "_interval"
         self.interval_show = "interval"
@@ -63,6 +63,10 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.btn_remove_device.clicked.connect(self.btn_remove_device_clicked)
         
         self.tab_widget.currentChanged.connect(self.tab_reset_warning)
+
+        self.connect(self._gui_logger, QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE), self.txt_console_output)
+        self.connect(self._gui_logger, QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE_TAB_HIGHLIGHT), self.txt_console_highlight_tab)
+        #TODO add GuiData Signals and Handling
         
         # login information
         self.combo_host.currentIndexChanged.connect(self._host_index_changed)
@@ -72,7 +76,10 @@ class LoggerWindow(QDialog, Ui_Logger):
         
         self.tree_devices.itemDoubleClicked.connect(self.tree_on_double_click)
         self.tree_devices.itemChanged.connect(self.tree_on_change)
-   
+
+    def TEST(self):
+        print "...RECIEVED SIGNAL!"
+
     def host_info_initialization(self):
         '''
             initialize host by getting information out of brickv.config
