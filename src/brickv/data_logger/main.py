@@ -74,11 +74,13 @@ def main(arguments_map):
     '''
     This function initialize the data logger and starts the logging process
     '''
-    # initiate the EventLogger
-    EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
+    # output to console and file only if logger was not started via gui
+    if not GUI_CONFIG in arguments_map:        
+        # initiate the EventLogger
+        EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
     
-    if EventLogger.EVENT_FILE_LOGGING:
-        EventLogger.add_logger(FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
+        if EventLogger.EVENT_FILE_LOGGING:
+            EventLogger.add_logger(FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
      
     configuration = None
     guiStart = False
@@ -95,7 +97,7 @@ def main(arguments_map):
         # no configuration file was given
         else:
             raise DataLoggerException("Can not run data logger without a configuration.")
-            
+           
         if CONSOLE_VALIDATE_ONLY in arguments_map and arguments_map[CONSOLE_VALIDATE_ONLY]:
             return
         
