@@ -101,6 +101,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             from data_logger import main
             arguments_map = {}
             arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self)
+            arguments_map[main.GUI_ELEMENT] = None # TODO: MARV put the gui element here
             
             self.data_logger_thread = main.main(arguments_map)
             if self.data_logger_thread is not None:
