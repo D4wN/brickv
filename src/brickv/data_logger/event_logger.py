@@ -137,7 +137,7 @@ class GUILogger(logging.Logger):
     _convert_level[logging.INFO] = "INFO"
     _convert_level[logging.WARN] = "WARNING"
     _convert_level[logging.WARNING] = "WARNING"
-    _convert_level[logging.CRITICAL] = "CRITIAL"
+    _convert_level[logging.CRITICAL] = "CRITICAL"
     _convert_level[logging.ERROR] = "ERROR"
     
     _output_format = "{asctime} - <b>{levelname:8}</b> - {message}"
