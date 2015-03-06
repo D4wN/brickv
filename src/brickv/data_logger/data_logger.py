@@ -183,7 +183,7 @@ class DataLogger(threading.Thread):
             t.stop()
         for t in self.timers:
             t.join()
-        EventLogger.debug("Get-Timers stopped.")
+        EventLogger.debug("Get-Timers["+str(len(self.timers))+"] stopped.")
     
         # set THREAD_EXIT_FLAG for all work threads
         for job in self.jobs:
@@ -191,7 +191,7 @@ class DataLogger(threading.Thread):
         # wait for all threads to stop
         for job in self.jobs:
             job.join()
-        EventLogger.debug("Jobs stopped.")
+        EventLogger.debug("Jobs["+str(len(self.jobs))+"] stopped.")
     
         if self.ipcon is not None and self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_CONNECTED:
             self.ipcon.disconnect()

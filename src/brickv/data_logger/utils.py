@@ -138,6 +138,7 @@ class LoggerTimer(object):
         self._func_name = func_name
         self._var_name = var_name
         self._device = device
+        self._was_started = False
         self._t = Timer(self._interval, self._loop)
 
     def _loop(self):
@@ -158,9 +159,11 @@ class LoggerTimer(object):
             return
  
         self._t.start()
+        self._was_started = True
     
     def stop(self):
         self.exit_flag = True
+        self._was_started = False
     
     def cancel(self):
         self._t.cancel()
@@ -168,7 +171,9 @@ class LoggerTimer(object):
     def join(self):
         if self._interval == 0:  # quick fix for no timer.start()
             return
-        self._t.join()
+
+        if self._was_started:
+            self._t.join()
 
 
 """
