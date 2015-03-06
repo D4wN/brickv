@@ -41,7 +41,7 @@ class DataLogger(threading.Thread):
     '''
        
     # constructor and other functions
-    def __init__(self, config):
+    def __init__(self, config,gui_element=None):
         '''
         config -- brickv.data_logger.configuration_validator.Configuration
         '''

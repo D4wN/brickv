@@ -43,6 +43,7 @@ if not 'brickv' in sys.modules:
 # HashMap keywords to store results of the command line arguments
 CONSOLE_CONFIG_FILE = "config_file"
 GUI_CONFIG = "configuration"
+GUI_ELEMENT = "gui_element"
 CONSOLE_VALIDATE_ONLY = "validate"
 CONSOLE_START = False
 CLOSE = False
@@ -114,7 +115,11 @@ def main(arguments_map):
         
     data_logger = None
     try:
-        data_logger = DataLogger(configuration._configuration)
+        if guiStart:
+            data_logger = DataLogger(configuration._configuration,arguments_map[GUI_ELEMENT])
+        else:
+            data_logger = DataLogger(configuration._configuration)
+            
         if data_logger.ipcon is not None:
             data_logger.run()
             if not guiStart:
