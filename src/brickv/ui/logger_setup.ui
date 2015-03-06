@@ -98,7 +98,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tab_setup">
         <property name="enabled">
@@ -513,9 +513,80 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="tab_csv_data">
+        <attribute name="title">
+         <string>Data</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QCheckBox" name="checkbox_auto_scroll">
+           <property name="text">
+            <string>Auto Scroll</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="table_widget">
+           <property name="showDropIndicator" stdset="0">
+            <bool>true</bool>
+           </property>
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <property name="gridStyle">
+            <enum>Qt::SolidLine</enum>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+           <property name="cornerButtonEnabled">
+            <bool>true</bool>
+           </property>
+           <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+            <bool>true</bool>
+           </attribute>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string>UID</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Device</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Var</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Value</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Timestamp</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_clear_tabel">
+           <property name="text">
+            <string>Clear Table</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="tab_console">
         <attribute name="title">
-         <string>Console</string>
+         <string>Messages</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
@@ -531,7 +602,7 @@
             <enum>Qt::TabFocus</enum>
            </property>
            <property name="text">
-            <string>Clear Console</string>
+            <string>Clear Messages</string>
            </property>
           </widget>
          </item>
