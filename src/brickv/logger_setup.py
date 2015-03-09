@@ -431,7 +431,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tree_devices.sortItems(0, QtCore.Qt.AscendingOrder)
         self.tree_devices.setSortingEnabled(True)
        
-    def add_item_to_tree(self, item_blueprint):
+    def add_item_to_tree(self, item_blueprint,uid=""):
         """
             Adds an item to the device tree. Needs the correct blueprint.
         """
@@ -449,7 +449,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             item_0.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.tree_devices.topLevelItem(tree_counter).setText(0, str(dev_item))
 
-            self.tree_devices.topLevelItem(tree_counter).setText(1, "Enter UID")
+            self.tree_devices.topLevelItem(tree_counter).setText(1, uid)
             
         
             for variable in item_blueprint[dev_item]:
@@ -475,6 +475,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                         item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
                         if str(var_n) == self.interval_string:
                             tmp_item.setText(0, self.interval_show)
+                            tmp_item.setToolTip(1,"Interval in milliseconds")
                         else:
                             tmp_item.setText(0, str(var_n))
                         tmp_item.setText(1, str(item_blueprint[dev_item][variable][var_n]))
