@@ -405,6 +405,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                                 else:
                                     tmp_item.setText(0, str(var_n))
                                 tmp_item.setText(1, str(device_items[dev_item][variable][var_n]))
+                                tmp_item.setToolTip(1,"Interval in milliseconds")
                             else:
                                 item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
                                 tmp_item.setText(0, str(var_n))
