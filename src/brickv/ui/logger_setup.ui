@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>649</width>
-    <height>499</height>
+    <height>517</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -571,6 +571,9 @@
          </item>
          <item>
           <widget class="QTableWidget" name="table_widget">
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
            <property name="showDropIndicator" stdset="0">
             <bool>true</bool>
            </property>
@@ -579,6 +582,9 @@
            </property>
            <property name="gridStyle">
             <enum>Qt::SolidLine</enum>
+           </property>
+           <property name="sortingEnabled">
+            <bool>true</bool>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
