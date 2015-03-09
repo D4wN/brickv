@@ -577,5 +577,5 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.table_widget.setItem(row, 3, QtGui.QTableWidgetItem(str(csv_data.raw_data)))
         self.table_widget.setItem(row, 4, QtGui.QTableWidgetItem(str(csv_data.timestamp)))
 
-        #if self.checkbox_data_auto_scroll:
-        #    self.table_widget.moveCursor(QtGui.QAbstractItemView.MoveEnd)
+        if self.checkbox_data_auto_scroll.isChecked():
+            self.table_widget.scrollToBottom()
