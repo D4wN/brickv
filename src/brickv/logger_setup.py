@@ -17,6 +17,7 @@ from brickv.data_logger.loggable_devices import Identifier
 from brickv.data_logger.utils import Utilities
 from brickv.device_dialog import LoggerDeviceDialog
 from brickv.ui_logger_setup import Ui_Logger
+import logging
 
 
 class LoggerWindow(QDialog, Ui_Logger):
@@ -52,6 +53,13 @@ class LoggerWindow(QDialog, Ui_Logger):
         # Login data
         self.host_info_initialization()
         
+        # FIXME: Marv convert this to a loop
+        self.combo_loglevel.addItem(logging._levelNames.get(logging.CRITICAL))
+        self.combo_loglevel.addItem(logging._levelNames.get(logging.ERROR))
+        self.combo_loglevel.addItem(logging._levelNames.get(logging.WARNING))
+        self.combo_loglevel.addItem(logging._levelNames.get(logging.INFO))
+        self.combo_loglevel.addItem(logging._levelNames.get(logging.DEBUG))
+        
         self.signal_initialization()
            
     def signal_initialization(self):
@@ -63,6 +71,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.btn_save_config.clicked.connect(self.btn_save_config_clicked)
         self.btn_load_config.clicked.connect(self.btn_load_config_clicked)
         self.btn_set_logfile.clicked.connect(self.btn_set_logfile_clicked)
+        self.btn_set_eventfile.clicked.connect(self.btn_set_eventfile_clicked)  
         self.btn_console_clear.clicked.connect(self.btn_console_clear_clicked)
         self.combo_console_level.currentIndexChanged.connect(self.combo_console_level_changed)
         self.btn_add_device.clicked.connect(self.btn_add_device_clicked)
@@ -204,14 +213,31 @@ class LoggerWindow(QDialog, Ui_Logger):
         """
             Opens a FileSelectionDialog and sets the selected path for the data output file.
         """
-        fn = QtGui.QFileDialog.getSaveFileName(self, 'Choose Config Destination', os.getcwd(), "CSV-Files (*.csv);;Text-Files (*.txt)")
-        
+        fn = self.__choose_file_dialog('Choose Config Destination',"CSV-Files (*.csv);;Text-Files (*.txt)")
+                
         if fn == "":
             # cancel
             EventLogger.debug("Cancelled select Config-File-Path.")
             return
         
         self.line_path_to_file.setText(fn)
+        
+    def btn_set_eventfile_clicked(self):
+        """
+            Opens a FileSelectionDialog and sets the selected path for the event output file.
+        """
+        fn = self.__choose_file_dialog('Choose Eventfile destination',"Log-Files (*.log)")
+                
+        if fn == "":
+            # cancel
+            EventLogger.debug("Cancelled select Eventfile-Path.")
+            return
+        
+        self.line_path_to_eventfile.setText(fn)
+        
+    def __choose_file_dialog(self,msg, filter_string):
+        return QtGui.QFileDialog.getSaveFileName(self, msg, os.getcwd(), filter_string)
+        
     
     def btn_add_device_clicked(self):
         """
