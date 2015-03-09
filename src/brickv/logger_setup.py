@@ -59,6 +59,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.btn_load_config.clicked.connect(self.btn_load_config_clicked)
         self.btn_set_logfile.clicked.connect(self.btn_set_logfile_clicked)
         self.btn_console_clear.clicked.connect(self.btn_console_clear_clicked)
+        self.combo_console_level.currentIndexChanged.connect(self.combo_console_level_changed)
         self.btn_add_device.clicked.connect(self.btn_add_device_clicked)
         self.btn_remove_device.clicked.connect(self.btn_remove_device_clicked)
         
@@ -66,6 +67,7 @@ class LoggerWindow(QDialog, Ui_Logger):
 
         self.connect(self._gui_logger, QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE), self.txt_console_output)
         self.connect(self._gui_logger, QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE_TAB_HIGHLIGHT), self.txt_console_highlight_tab)
+
         #TODO add GuiData Signals and Handling
         
         # login information
@@ -76,9 +78,6 @@ class LoggerWindow(QDialog, Ui_Logger):
         
         self.tree_devices.itemDoubleClicked.connect(self.tree_on_double_click)
         self.tree_devices.itemChanged.connect(self.tree_on_change)
-
-    def TEST(self):
-        print "...RECIEVED SIGNAL!"
 
     def host_info_initialization(self):
         '''
@@ -224,18 +223,42 @@ class LoggerWindow(QDialog, Ui_Logger):
         
         self.logger_device_dialog.init_dialog(GuiConfigHandler.get_simple_blueprint(self), False)
         self.logger_device_dialog.show()
-    
+
+    def btn_clear_table_clicked(self):
+        """
+            Clears the Data table.
+        """
+        self.table_widget.clear()
+
     def tab_reset_warning(self):
         """
             Resets the Warning @ the console tab.
         """
         if not self.tab_console_warning or self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
             return
-        
+
         self.tab_console_warning = False
         from PyQt4.QtGui import QColor
         self.tab_set(self.tab_widget.indexOf(self.tab_console), QColor(0, 0, 0), None)
-    
+
+    def combo_console_level_changed(self):
+        """
+            Changes the log level dynamically.
+        """
+        import logging
+        print "changed"
+        ll = self.combo_console_level.currentText()
+
+        print ll
+        if ll == "Debug":
+            self._gui_logger.level = logging.DEBUG
+        elif ll == "Info":
+            self._gui_logger.level = logging.INFO
+        elif ll == "Warning":
+            self._gui_logger.level = logging.WARNING
+        elif ll == "Error / Critical":
+            self._gui_logger.level = logging.ERROR
+
     def tab_set(self, tab_index, color, icon=None):
         """
             Sets the font Color and an icon, if given, at a specific tab.
@@ -513,13 +536,25 @@ class LoggerWindow(QDialog, Ui_Logger):
 
     def txt_console_output(self, msg):
         """
+            SIGNAL function:
             Function to write text on the gui console tab.
         """
         self.txt_console.append(str(msg))
+        if self.checkbox_console_auto_scroll.isChecked():
+            self.txt_console.moveCursor(QtGui.QTextCursor.End)
+
 
     def txt_console_highlight_tab(self):
+        """
+            SIGNAL function:
+            Highlight the console/message tab when an error occurs.
+        """
         if not self.tab_console_warning and self.tab_widget.currentWidget().objectName() != self.tab_console.objectName():
             self.tab_console_warning = True
             from brickv.utils import get_resources_path
             from PyQt4.QtGui import QColor
             self.tab_set(self.tab_widget.indexOf(self.tab_console), QColor(255, 0, 0), os.path.join(get_resources_path(), "dialog-warning.png"))
+
+    def table_add_row(self, csv_data):
+        print "table_add_row"
+        pass
