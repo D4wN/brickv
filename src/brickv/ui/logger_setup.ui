@@ -110,6 +110,73 @@
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <layout class="QGridLayout" name="gridLayout">
+           <item row="2" column="0">
+            <widget class="QGroupBox" name="groupBox">
+             <property name="title">
+              <string>Eventfile</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_9">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_13">
+                <property name="text">
+                 <string>Path to Eventfile</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="4">
+               <spacer name="horizontalSpacer_10">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="2">
+               <widget class="QComboBox" name="combo_loglevel"/>
+              </item>
+              <item row="0" column="3">
+               <widget class="QPushButton" name="btn_set_eventfile">
+                <property name="text">
+                 <string>Choose File</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QLineEdit" name="line_path_to_eventfile">
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_14">
+                <property name="text">
+                 <string>Log level</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QCheckBox" name="checkbox_to_file">
+                <property name="text">
+                 <string>Output to file</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QCheckBox" name="checkbox_to_console">
+                <property name="text">
+                 <string>Output to console</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
            <item row="0" column="0">
             <widget class="QGroupBox" name="group_general">
              <property name="enabled">
@@ -119,6 +186,19 @@
               <string>General</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_2">
+              <item row="1" column="1">
+               <widget class="QSpinBox" name="spinbox_port">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>65535</number>
+                </property>
+                <property name="value">
+                 <number>4223</number>
+                </property>
+               </widget>
+              </item>
               <item row="1" column="2">
                <spacer name="horizontalSpacer_4">
                 <property name="orientation">
@@ -131,6 +211,19 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_2">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Port:</string>
+                </property>
+               </widget>
               </item>
               <item row="0" column="3">
                <spacer name="horizontalSpacer">
@@ -158,29 +251,16 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QSpinBox" name="spinbox_port">
-                <property name="minimum">
-                 <number>1</number>
+              <item row="0" column="1" colspan="2">
+               <widget class="QComboBox" name="combo_host">
+                <property name="editable">
+                 <bool>true</bool>
                 </property>
-                <property name="maximum">
-                 <number>65535</number>
+                <property name="insertPolicy">
+                 <enum>QComboBox::InsertAtTop</enum>
                 </property>
-                <property name="value">
-                 <number>4223</number>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_2">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Port:</string>
+                <property name="sizeAdjustPolicy">
+                 <enum>QComboBox::AdjustToMinimumContentsLength</enum>
                 </property>
                </widget>
               </item>
@@ -197,32 +277,6 @@
                 </property>
                </spacer>
               </item>
-              <item row="0" column="1" colspan="2">
-               <widget class="QComboBox" name="combo_host">
-                <property name="editable">
-                 <bool>true</bool>
-                </property>
-                <property name="insertPolicy">
-                 <enum>QComboBox::InsertAtTop</enum>
-                </property>
-                <property name="sizeAdjustPolicy">
-                 <enum>QComboBox::AdjustToMinimumContentsLength</enum>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <spacer name="verticalSpacer_3">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
              </layout>
             </widget>
            </item>
@@ -235,20 +289,6 @@
               <string>Datafile</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_3">
-              <item row="2" column="2">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>MB</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_3">
-                <property name="text">
-                 <string>Path to Datafile</string>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="1">
                <widget class="QSpinBox" name="spin_file_count">
                 <property name="minimum">
@@ -259,20 +299,6 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_4">
-                <property name="text">
-                 <string>File Count:</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="label_5">
-                <property name="text">
-                 <string>File Size</string>
-                </property>
-               </widget>
-              </item>
               <item row="2" column="1">
                <widget class="QSpinBox" name="spin_file_size">
                 <property name="maximum">
@@ -280,39 +306,10 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <spacer name="verticalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item row="0" column="1">
-               <widget class="QLineEdit" name="line_path_to_file">
-                <property name="inputMask">
-                 <string notr="true"/>
-                </property>
+              <item row="2" column="2">
+               <widget class="QLabel" name="label_6">
                 <property name="text">
-                 <string notr="true"/>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="2">
-               <widget class="QPushButton" name="btn_set_logfile">
-                <property name="focusPolicy">
-                 <enum>Qt::TabFocus</enum>
-                </property>
-                <property name="text">
-                 <string>Choose File</string>
+                 <string>MB</string>
                 </property>
                </widget>
               </item>
@@ -328,6 +325,50 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>Path to Datafile</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QPushButton" name="btn_set_logfile">
+                <property name="focusPolicy">
+                 <enum>Qt::TabFocus</enum>
+                </property>
+                <property name="text">
+                 <string>Choose File</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>File Size</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="line_path_to_file">
+                <property name="inputMask">
+                 <string notr="true"/>
+                </property>
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>File Count:</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </widget>
