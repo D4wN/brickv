@@ -24,6 +24,10 @@ class ConfigurationReader(object):
     GENERAL_LOG_FILE_SIZE = "max_logged_file_size"
     GENERAL_HOST = "host"
     GENERAL_PORT = "port"
+    GENERAL_EVENTLOG_PATH = "path_to_eventfile"
+    GENERAL_EVENTLOG_TO_CONSOLE ="log_to_console"
+    GENERAL_EVENTLOG_TO_FILE ="log_to_file"
+    GENERAL_EVENTLOG_LEVEL ="log_level"
 
     XIVELY_SECTION = "XIVELY"
     XIVELY_ACTIVE = "active"
@@ -190,7 +194,8 @@ class ConfigurationValidator(object):
         size = global_section[self.CR.GENERAL_LOG_FILE_SIZE]
         if not isinstance(size, int) and (not isinstance(size, float)):
             EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_FILE_SIZE], msg="should be a int or float"))
-         
+        
+        
         # TODO: Check free disk space of the destination
         
     def validate_xively_section(self):
