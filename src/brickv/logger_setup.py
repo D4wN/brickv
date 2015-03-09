@@ -444,6 +444,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                         item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
                         if str(var_n) == self.interval_string:
                             tmp_item.setText(0, self.interval_show)
+                            tmp_item.setToolTip(1,"Interval in milliseconds")
                         else:
                             tmp_item.setText(0, str(var_n))
                         tmp_item.setText(1, str(item_blueprint[dev_item][variable][var_n]))

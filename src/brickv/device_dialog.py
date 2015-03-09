@@ -83,7 +83,6 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
             if dev is None:
                 return
             
-            # FIXME: problems could occur with some names by checking with "in"
             suggested_uid = "Enter UID"
             for device_info in infos.get_device_infos():
                 if focused_item.text(0) in device_info.name:
