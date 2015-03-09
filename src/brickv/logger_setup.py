@@ -375,14 +375,20 @@ class LoggerWindow(QDialog, Ui_Logger):
             counter = 0 #TODO better way to set the combo box index?
             for k in od.keys():
                 if ll == k:
-                    log_level_num = od.keys[k]
                     break;
                 counter += 1
             self.combo_loglevel.setCurrentIndex(counter)
+
             #log_to_console
-            self.checkbox_to_file.setChecked(general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_FILE])
+            def __checkbox_bool_setter(bool_value):
+                if bool_value:
+                    return 2
+                else:
+                    return 0
+
+            self.checkbox_to_file.setChecked(__checkbox_bool_setter(general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_FILE]))
             #log_to_file
-            self.checkbox_to_console.setCheckState(general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_CONSOLE])
+            self.checkbox_to_console.setCheckState(__checkbox_bool_setter(general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_CONSOLE]))
 
         except Exception as e:
             EventLogger.critical("Could not read the General Section of the Config-File! -> " + str(e))
