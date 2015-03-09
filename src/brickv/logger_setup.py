@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import codecs
+import collections
 import json
 import os
 
@@ -51,6 +52,8 @@ class LoggerWindow(QDialog, Ui_Logger):
         '''
         # Login data
         self.host_info_initialization()
+        self.combo_log_level_init(self.combo_console_level)
+        self.combo_console_level.setCurrentIndex(1) #INFO LEVEL
         
         self.signal_initialization()
            
@@ -69,6 +72,8 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.btn_remove_device.clicked.connect(self.btn_remove_device_clicked)
         
         self.tab_widget.currentChanged.connect(self.tab_reset_warning)
+        self.btn_clear_tabel.clicked.connect(self.btn_clear_table_clicked)
+
 
         self.connect(self._gui_logger, QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE), self.txt_console_output)
         self.connect(self._gui_logger, QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE_TAB_HIGHLIGHT), self.txt_console_highlight_tab)
@@ -81,6 +86,12 @@ class LoggerWindow(QDialog, Ui_Logger):
         
         self.tree_devices.itemDoubleClicked.connect(self.tree_on_double_click)
         self.tree_devices.itemChanged.connect(self.tree_on_change)
+
+    def combo_log_level_init(self, combo_widget):
+        combo_widget.clear()
+        od = collections.OrderedDict(sorted(self._gui_logger._convert_level.items()))
+        for k in od.keys():
+            combo_widget.addItem(od[k])
 
     def host_info_initialization(self):
         '''
@@ -238,7 +249,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         """
             Clears the Data table.
         """
-        self.table_widget.clear()
+        self.table_widget.setRow(0)
 
     def tab_reset_warning(self):
         """
@@ -258,14 +269,11 @@ class LoggerWindow(QDialog, Ui_Logger):
         import logging
         ll = self.combo_console_level.currentText()
 
-        if ll == "Debug":
-            self._gui_logger.level = logging.DEBUG
-        elif ll == "Info":
-            self._gui_logger.level = logging.INFO
-        elif ll == "Warning":
-            self._gui_logger.level = logging.WARNING
-        elif ll == "Error / Critical":
-            self._gui_logger.level = logging.ERROR
+        od = collections.OrderedDict(sorted(self._gui_logger._convert_level.items()))
+        for k in od.keys():
+            if ll == od[k]:
+                self._gui_logger.level = k
+                break;
 
     def tab_set(self, tab_index, color, icon=None):
         """

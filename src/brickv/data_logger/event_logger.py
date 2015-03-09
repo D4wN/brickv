@@ -137,12 +137,12 @@ class GUILogger(logging.Logger, QtCore.QObject):
 
     # for level as string
     _convert_level = {}
-    _convert_level[logging.DEBUG] = "DEBUG"
-    _convert_level[logging.INFO] = "INFO"
-    _convert_level[logging.WARN] = "WARNING"
-    _convert_level[logging.WARNING] = "WARNING"
-    _convert_level[logging.CRITICAL] = "CRITICAL"
-    _convert_level[logging.ERROR] = "ERROR"
+    _convert_level[logging.DEBUG] = logging._levelNames.get(logging.DEBUG)       #"DEBUG"
+    _convert_level[logging.INFO] = logging._levelNames.get(logging.INFO)        #"INFO"
+    _convert_level[logging.WARN] = logging._levelNames.get(logging.WARN)        #"WARNING"
+    _convert_level[logging.WARNING] = logging._levelNames.get(logging.WARNING)     #"WARNING"
+    _convert_level[logging.CRITICAL] = logging._levelNames.get(logging.CRITICAL)    #"CRITICAL"
+    _convert_level[logging.ERROR] = logging._levelNames.get(logging.ERROR)       #"ERROR"
     
     _output_format = "{asctime} - <b>{levelname:8}</b> - {message}"
     _output_format_warning = "<font color=\"orange\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
