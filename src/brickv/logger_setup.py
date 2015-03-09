@@ -12,6 +12,7 @@ from PyQt4.QtGui import QMessageBox
 from brickv import config
 from brickv.data_logger.event_logger import EventLogger, GUILogger
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
+from brickv.data_logger.job import GuiDataJob
 from brickv.data_logger.loggable_devices import Identifier
 from brickv.data_logger.utils import Utilities
 from brickv.device_dialog import LoggerDeviceDialog
@@ -27,6 +28,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
 
         self._gui_logger = GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL)
+        self._gui_job = None
         EventLogger.add_logger(self._gui_logger)
         
         self.interval_string = "_interval"
@@ -36,7 +38,10 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tab_console_warning = False
         
         self.logger_device_dialog = None
-        
+
+        #if self._table_widget is not None:#FIXME rework this like the console_tab
+        #    self.jobs.append()
+
         self.setupUi(self)
         self.widget_initialization()
         
@@ -67,8 +72,6 @@ class LoggerWindow(QDialog, Ui_Logger):
 
         self.connect(self._gui_logger, QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE), self.txt_console_output)
         self.connect(self._gui_logger, QtCore.SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE_TAB_HIGHLIGHT), self.txt_console_highlight_tab)
-
-        #TODO add GuiData Signals and Handling
         
         # login information
         self.combo_host.currentIndexChanged.connect(self._host_index_changed)
@@ -108,9 +111,14 @@ class LoggerWindow(QDialog, Ui_Logger):
             from data_logger import main
             arguments_map = {}
             arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self)
-            arguments_map[main.GUI_ELEMENT] = self.table_widget
-            
+            from brickv.data_logger.job import GuiDataJob
+            self._gui_job = GuiDataJob(name="GuiData-Writer")
+            self.connect(self._gui_job, QtCore.SIGNAL(GuiDataJob.SIGNAL_NEW_DATA), self.table_add_row)
+            arguments_map[main.GUI_ELEMENT] = self._gui_job
+
             self.data_logger_thread = main.main(arguments_map)
+
+
             if self.data_logger_thread is not None:
                 self.btn_start_logging.setText("Stop Logging")
                 self.tab_devices.setEnabled(False)
@@ -124,8 +132,10 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tab_setup.setEnabled(True)
         # self.tab_xively.setEnabled(True)#nyi
         self.btn_start_logging.setText("Start Logging")
-        
+
+        self.disconnect(self._gui_job, QtCore.SIGNAL(GuiDataJob.SIGNAL_NEW_DATA), self.table_add_row)
         self.data_logger_thread = None
+        self._gui_job = None
         
         self.btn_start_logging.clicked.connect(self.btn_start_logging_clicked)
 
@@ -246,10 +256,8 @@ class LoggerWindow(QDialog, Ui_Logger):
             Changes the log level dynamically.
         """
         import logging
-        print "changed"
         ll = self.combo_console_level.currentText()
 
-        print ll
         if ll == "Debug":
             self._gui_logger.level = logging.DEBUG
         elif ll == "Info":
@@ -556,5 +564,17 @@ class LoggerWindow(QDialog, Ui_Logger):
             self.tab_set(self.tab_widget.indexOf(self.tab_console), QColor(255, 0, 0), os.path.join(get_resources_path(), "dialog-warning.png"))
 
     def table_add_row(self, csv_data):
-        print "table_add_row"
-        pass
+        """
+            SIGNAL function:
+            Adds new CSV Data into the Table.
+        """
+        row = self.table_widget.rowCount()
+        self.table_widget.insertRow(row)
+        self.table_widget.setItem(row, 0, QtGui.QTableWidgetItem(str(csv_data.uid)))
+        self.table_widget.setItem(row, 1, QtGui.QTableWidgetItem(str(csv_data.name)))
+        self.table_widget.setItem(row, 2, QtGui.QTableWidgetItem(str(csv_data.var_name)))
+        self.table_widget.setItem(row, 3, QtGui.QTableWidgetItem(str(csv_data.raw_data)))
+        self.table_widget.setItem(row, 4, QtGui.QTableWidgetItem(str(csv_data.timestamp)))
+
+        #if self.checkbox_data_auto_scroll:
+        #    self.table_widget.moveCursor(QtGui.QAbstractItemView.MoveEnd)

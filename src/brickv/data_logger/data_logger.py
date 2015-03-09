@@ -41,7 +41,7 @@ class DataLogger(threading.Thread):
     '''
        
     # constructor and other functions
-    def __init__(self, config,gui_element=None):
+    def __init__(self, config, gui_job=None):
         '''
         config -- brickv.data_logger.configuration_validator.Configuration
         '''
@@ -50,7 +50,7 @@ class DataLogger(threading.Thread):
         self.job_exit_flag = False  # flag for stopping the thread
         self.job_sleep = 1  # FIXME: quick testing fix (Enahncement -> use condition objects)
         self.timers = []
-        self._table_widget = gui_element
+        self._gui_job = gui_job
 
         self.data_queue = {}  # universal data_queue hash map
           
@@ -157,8 +157,9 @@ class DataLogger(threading.Thread):
             self.jobs.append(CSVWriterJob(name="CSV-Writer", datalogger=self))
         if self.log_to_xively:
             self.jobs.append(XivelyJob(name="Xively-Writer", datalogger=self))
-        #if self._table_widget is not None:#FIXME rework this like the console_tab
-        #    self.jobs.append(GuiDataJob(name="GuiData-Writer", datalogger=self, table_widget=self._table_widget))
+        if self._gui_job is not None:
+            self._gui_job.set_datalogger(self)
+            self.jobs.append(self._gui_job)
         
         for t in self.jobs:
             t.start()
