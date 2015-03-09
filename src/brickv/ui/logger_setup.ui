@@ -232,7 +232,7 @@
               <bool>true</bool>
              </property>
              <property name="title">
-              <string>Logfile</string>
+              <string>Datafile</string>
              </property>
              <layout class="QGridLayout" name="gridLayout_3">
               <item row="2" column="2">
@@ -245,7 +245,7 @@
               <item row="0" column="0">
                <widget class="QLabel" name="label_3">
                 <property name="text">
-                 <string>Path to Logfile:</string>
+                 <string>Path to Datafile</string>
                 </property>
                </widget>
               </item>

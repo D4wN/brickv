@@ -16,6 +16,7 @@ class EventLogger():
     """
     
     # Logger Options
+    EVENT_CONSOLE_LOGGING = True # for logging to the console
     EVENT_FILE_LOGGING = True  # for event logging in to a file
     EVENT_FILE_LOGGING_PATH = "data_logger.log"  # default file path for logging events
     EVENT_LOG_LEVEL = logging.DEBUG
