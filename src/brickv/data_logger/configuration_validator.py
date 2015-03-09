@@ -179,6 +179,7 @@ class ConfigurationValidator(object):
         if not self._is_valid_string(port, 1) and not(port > 0 and port <= 65535):
             EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PORT], msg="port should be an integer 0-65535"))
         
+        # --- Datalog file ---------------------------------------------  
         # ConfigurationReader.GENERAL_LOG_TO_FILE
         if not type(global_section[self.CR.GENERAL_LOG_TO_FILE]) == bool:
             EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_TO_FILE], msg="should be a boolean"))
@@ -195,6 +196,16 @@ class ConfigurationValidator(object):
         if not isinstance(size, int) and (not isinstance(size, float)):
             EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_FILE_SIZE], msg="should be a int or float"))
         
+        # --- Eventlog file ---------------------------------------------        
+        if not type(global_section[self.CR.GENERAL_EVENTLOG_TO_FILE]) == bool:
+            EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_FILE], msg="should be a boolean"))
+        else:
+            if global_section[self.CR.GENERAL_EVENTLOG_TO_FILE] == True:
+                if not self._is_valid_string(global_section[self.CR.GENERAL_EVENTLOG_PATH], 1):
+                    EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_PATH], msg="should be a path to the event file"))
+        
+        if not type(global_section[self.CR.GENERAL_EVENTLOG_TO_CONSOLE]) == bool:
+            EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_CONSOLE], msg="should be a boolean"))
         
         # TODO: Check free disk space of the destination
         
