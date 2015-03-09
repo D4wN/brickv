@@ -275,7 +275,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         """
             Clears the Data table.
         """
-        self.table_widget.setRow(0)
+        self.table_widget.setRowCount(0)
 
     def tab_reset_warning(self):
         """
