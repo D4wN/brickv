@@ -5,6 +5,8 @@ from brickv.ui_device_dialog import Ui_DeviceDialog
 from PyQt4 import QtGui, QtCore
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
 from PyQt4.QtCore import Qt
+from brickv import infos
+from brickv.data_logger.loggable_devices import Identifier
 
 
 class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
@@ -81,7 +83,14 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
             if dev is None:
                 return
             
-            self._logger_window.add_item_to_tree(dev)
+            # FIXME: problems could occur with some names by checking with "in"
+            suggested_uid = "Enter UID"
+            for device_info in infos.get_device_infos():
+                if focused_item.text(0) in device_info.name:
+                    suggested_uid = device_info.uid
+                    break
+                
+            self._logger_window.add_item_to_tree(dev,uid=suggested_uid)
             
         else:
             #remove device
