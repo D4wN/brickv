@@ -1,6 +1,7 @@
+import collections
 import json
 
-from brickv.data_logger.event_logger import EventLogger
+from brickv.data_logger.event_logger import EventLogger, GUILogger
 from brickv.data_logger.loggable_devices import Identifier
 
 '''
@@ -263,7 +264,23 @@ class GuiConfigHandler(object):
         # log_to_file     (if path_to_file != None || "")
         general_section[ConfigurationReader.GENERAL_PATH_TO_FILE] = path_to_file
         general_section[ConfigurationReader.GENERAL_LOG_TO_FILE] = log_to_file
-        
+
+        #logfile path
+        general_section[ConfigurationReader.GENERAL_EVENTLOG_PATH] = str(Ui_Logger.line_path_to_eventfile.text())
+        #loglevel
+        ll = Ui_Logger.combo_loglevel.currentText()
+        log_level_num = 0
+        od = collections.OrderedDict(sorted(GUILogger._convert_level.items()))
+        for k in od.keys():
+            if ll == od[k]:
+                log_level_num = k
+                break;
+        general_section[ConfigurationReader.GENERAL_EVENTLOG_LEVEL] = log_level_num
+        #log_to_console
+        general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_FILE] = Ui_Logger.checkbox_to_file.isChecked()
+        #log_to_file
+        general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_CONSOLE] = Ui_Logger.checkbox_to_console.isChecked()
+
         return general_section
 
     def get_simple_blueprint(Ui_Logger):

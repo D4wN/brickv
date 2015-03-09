@@ -55,13 +55,8 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.host_info_initialization()
         self.combo_log_level_init(self.combo_console_level)
         self.combo_console_level.setCurrentIndex(1) #INFO LEVEL
-        
-        # FIXME: Marv convert this to a loop
-        self.combo_loglevel.addItem(logging._levelNames.get(logging.CRITICAL))
-        self.combo_loglevel.addItem(logging._levelNames.get(logging.ERROR))
-        self.combo_loglevel.addItem(logging._levelNames.get(logging.WARNING))
-        self.combo_loglevel.addItem(logging._levelNames.get(logging.INFO))
-        self.combo_loglevel.addItem(logging._levelNames.get(logging.DEBUG))
+        self.combo_log_level_init(self.combo_loglevel)
+        self.combo_console_level.setCurrentIndex(0) #DEBUG LEVEL
         
         self.signal_initialization()
            
@@ -98,7 +93,7 @@ class LoggerWindow(QDialog, Ui_Logger):
 
     def combo_log_level_init(self, combo_widget):
         combo_widget.clear()
-        od = collections.OrderedDict(sorted(self._gui_logger._convert_level.items()))
+        od = collections.OrderedDict(sorted(GUILogger._convert_level.items()))
         for k in od.keys():
             combo_widget.addItem(od[k])
 
@@ -370,7 +365,25 @@ class LoggerWindow(QDialog, Ui_Logger):
             self.spin_file_size.setValue((general_section[ConfigurationReader.GENERAL_LOG_FILE_SIZE] / 1024.0 / 1024.0))
             # path_to_file    line_path_to_file       setText(string)
             self.line_path_to_file.setText(general_section[ConfigurationReader.GENERAL_PATH_TO_FILE])
-            
+
+            #logfile path
+            self.line_path_to_eventfile.setText(general_section[ConfigurationReader.GENERAL_EVENTLOG_PATH])
+            #loglevel
+            ll = general_section[ConfigurationReader.GENERAL_EVENTLOG_LEVEL]
+            od = collections.OrderedDict(sorted(GUILogger._convert_level.items()))
+
+            counter = 0 #TODO better way to set the combo box index?
+            for k in od.keys():
+                if ll == k:
+                    log_level_num = od.keys[k]
+                    break;
+                counter += 1
+            self.combo_loglevel.setCurrentIndex(counter)
+            #log_to_console
+            self.checkbox_to_file.setChecked(general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_FILE])
+            #log_to_file
+            self.checkbox_to_console.setCheckState(general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_CONSOLE])
+
         except Exception as e:
             EventLogger.critical("Could not read the General Section of the Config-File! -> " + str(e))
             return
