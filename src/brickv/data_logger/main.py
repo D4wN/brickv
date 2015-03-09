@@ -70,7 +70,7 @@ def signal_handler(signum, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 
-def __manage_eventlog(arguments_map):
+def __manage_eventlog(arguments_map):    
     EventLogger.EVENT_CONSOLE_LOGGING = arguments_map[ConfigurationReader.GENERAL_EVENTLOG_TO_CONSOLE]
     EventLogger.EVENT_FILE_LOGGING = arguments_map[ConfigurationReader.GENERAL_EVENTLOG_TO_FILE]
     EventLogger.EVENT_FILE_LOGGING_PATH = arguments_map[ConfigurationReader.GENERAL_EVENTLOG_PATH]
@@ -78,15 +78,15 @@ def __manage_eventlog(arguments_map):
     
     if EventLogger.EVENT_FILE_LOGGING:
         EventLogger.add_logger(FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
-    if EventLogger.EVENT_CONSOLE_LOGGING:
-        EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
+    if EventLogger.EVENT_CONSOLE_LOGGING == False:
+        EventLogger.remove_logger("ConsoleLogger")
         
 def main(arguments_map):
     '''
     This function initialize the data logger and starts the logging process
     '''
-    __manage_eventlog(arguments_map)
-     
+    EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
+    
     configuration = None
     guiStart = False
     try:
@@ -105,6 +105,9 @@ def main(arguments_map):
            
         if CONSOLE_VALIDATE_ONLY in arguments_map and arguments_map[CONSOLE_VALIDATE_ONLY]:
             return
+        
+        # activate eventlogger
+        __manage_eventlog(configuration._configuration._general)
         
     except Exception as exc:
         EventLogger.critical(str(exc))
