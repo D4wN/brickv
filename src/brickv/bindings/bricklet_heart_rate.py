@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2014-12-10.      #
+# This file was automatically generated on 2015-03-06.      #
 #                                                           #
 # Bindings Version 2.1.4                                    #
 #                                                           #
@@ -8,6 +8,8 @@
 # please fix the bug in the generator. You can find a link  #
 # to the generator git on tinkerforge.com                   #
 #############################################################
+
+#### __DEVICE_IS_NOT_RELEASED__ ####
 
 try:
     from collections import namedtuple
@@ -31,6 +33,7 @@ class BrickletHeartRate(Device):
     """
 
     DEVICE_IDENTIFIER = 245
+    DEVICE_DISPLAY_NAME = 'Heart Rate Bricklet'
 
     CALLBACK_HEART_RATE = 8
     CALLBACK_HEART_RATE_REACHED = 9

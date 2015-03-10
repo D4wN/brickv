@@ -153,7 +153,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
         okay = True
 
         try:
-            response = urllib2.urlopen(LATEST_VERSIONS_URL)
+            response = urllib2.urlopen(LATEST_VERSIONS_URL, timeout=10)
             latest_versions_data = response.read()
             response.close()
         except urllib2.URLError:
@@ -267,7 +267,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
         elif name.startswith('lcd_'):
             name = name.replace('lcd_', 'LCD_')
             if url_part.startswith('lcd_20x4_'):
-                name = name.replace('v11', '1.1').replace('v12', '1.2')
+                name = name.replace('_v11', '_1.1').replace('_v12', '_1.2')
         elif name.startswith('io'):
             name = name.replace('io', 'IO-')
         elif name.endswith('_ir'):
@@ -276,6 +276,8 @@ class FlashingWindow(QDialog, Ui_Flashing):
             name = name.replace('_us', '_US')
         elif name.startswith('led_'):
             name = name.replace('led_', 'LED_')
+        elif name.endswith('_v2'):
+            name = name.replace('_v2', '_2.0')
 
         words = name.split('_')
         parts = []
@@ -380,7 +382,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
         has_bricklet_ports = self.combo_port.count() > 0
         self.combo_serial_port.setEnabled(not is_no_bootloader)
         self.combo_port.setEnabled(has_bricklet_ports)
-        self.combo_plugin.setEnabled(has_bricklet_ports)
+        self.combo_plugin.setEnabled(has_bricklet_ports and self.combo_plugin.count() > 1)
         self.button_firmware_save.setEnabled(not is_firmware_select and not is_no_bootloader)
         self.edit_custom_firmware.setEnabled(is_firmware_custom)
         self.button_firmware_browse.setEnabled(is_firmware_custom)
@@ -460,7 +462,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
             response = None
 
             try:
-                response = urllib2.urlopen(FIRMWARE_URL + 'bricks/{0}/brick_{0}_firmware_{1}_{2}_{3}.bin'.format(url_part, *version))
+                response = urllib2.urlopen(FIRMWARE_URL + 'bricks/{0}/brick_{0}_firmware_{1}_{2}_{3}.bin'.format(url_part, *version), timeout=10)
             except urllib2.URLError:
                 pass
 
@@ -468,7 +470,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
 
             while response is None and beta > 0:
                 try:
-                    response = urllib2.urlopen(FIRMWARE_URL + 'bricks/{0}/brick_{0}_firmware_{2}_{3}_{4}_beta{1}.bin'.format(url_part, beta, *version))
+                    response = urllib2.urlopen(FIRMWARE_URL + 'bricks/{0}/brick_{0}_firmware_{2}_{3}_{4}_beta{1}.bin'.format(url_part, beta, *version), timeout=10)
                 except urllib2.URLError:
                     beta -= 1
 
@@ -529,7 +531,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
 
                 try:
                     imu_calibration_text = ''
-                    response = urllib2.urlopen(IMU_CALIBRATION_URL + '{0}.txt'.format(imu_uid))
+                    response = urllib2.urlopen(IMU_CALIBRATION_URL + '{0}.txt'.format(imu_uid), timeout=10)
                     chunk = response.read(1024)
 
                     while len(chunk) > 0:
@@ -734,7 +736,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
         response = None
 
         try:
-            response = urllib2.urlopen(FIRMWARE_URL + 'bricklets/{0}/bricklet_{0}_firmware_{1}_{2}_{3}.bin'.format(url_part, *version))
+            response = urllib2.urlopen(FIRMWARE_URL + 'bricklets/{0}/bricklet_{0}_firmware_{1}_{2}_{3}.bin'.format(url_part, *version), timeout=10)
         except urllib2.URLError:
             pass
 
@@ -742,7 +744,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
 
         while response is None and beta > 0:
             try:
-                response = urllib2.urlopen(FIRMWARE_URL + 'bricklets/{0}/bricklet_{0}_firmware_{2}_{3}_{4}_beta{1}.bin'.format(url_part, beta, *version))
+                response = urllib2.urlopen(FIRMWARE_URL + 'bricklets/{0}/bricklet_{0}_firmware_{2}_{3}_{4}_beta{1}.bin'.format(url_part, beta, *version), timeout=10)
             except urllib2.URLError:
                 beta -= 1
 
@@ -1029,7 +1031,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
         okay = True
 
         try:
-            urllib2.urlopen(FIRMWARE_URL).read()
+            urllib2.urlopen(FIRMWARE_URL, timeout=10).read()
             self.no_connection_label.hide()
         except urllib2.URLError:
             okay = False

@@ -362,7 +362,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         # check that new name is valid
         if len(new_name) == 0 or new_name == '.' or new_name == '..' or '/' in new_name:
             QMessageBox.critical(get_main_window(), title + ' Error',
-                                 'A valid {0} name cannot be empty, cannot be one dot [.], cannot be two dots [..] and cannot contain a forward slash [/].'
+                                 'A {0} name cannot be empty, cannot be one dot [.], cannot be two dots [..] and cannot contain a forward slash [/].'
                                  .format(type_name))
             return
 
@@ -476,7 +476,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
 
         progress.setLabelText(message)
 
-        def cb_delete(script_instance_ref, result):
+        def cb_delete(result):
             script_instance = script_instance_ref[0]
 
             if script_instance != None:
@@ -496,7 +496,6 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
 
             report_script_result(result, 'Delete Files Error', 'Could not delete selected files/directories:')
 
-        script_instance_ref[0] = self.script_manager.execute_script('delete',
-                                                                    lambda result: cb_delete(script_instance_ref, result),
+        script_instance_ref[0] = self.script_manager.execute_script('delete', cb_delete,
                                                                     [json.dumps(files_to_delete), json.dumps(dirs_to_delete)],
                                                                     execute_as_user=True)
