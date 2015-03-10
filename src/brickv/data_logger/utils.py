@@ -221,10 +221,18 @@ class Utilities(object):
 
     def check_file_path_exists(file_path):
         dir_path = os.path.dirname(file_path)
-        if dir_path != "" and dir_path != None:
-            if not os.path.isdir(dir_path):
+        if dir_path == "" or dir_path == None:
+            if file_path == "" or file_path == None:
+                #no filename - dir
                 return False
-        return True
+            else:
+                #filename - but no dir
+                return True
+        elif os.path.isdir(dir_path):
+            #dir found
+            return True
+
+        return False
 
     check_file_path_exists = staticmethod(check_file_path_exists)
 
