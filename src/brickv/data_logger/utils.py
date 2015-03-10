@@ -219,6 +219,16 @@ class Utilities(object):
     
     replace_right = staticmethod(replace_right)
 
+    def check_file_path_exists(file_path):
+        dir_path = os.path.dirname(file_path)
+        if dir_path != "" and dir_path != None:
+            if not os.path.isdir(dir_path):
+                return False
+        return True
+
+    check_file_path_exists = staticmethod(check_file_path_exists)
+
+
 '''
 /*---------------------------------------------------------------------------
                                 CSVWriter
@@ -236,6 +246,10 @@ class CSVWriter(object):
         file_path = Path to the csv file
         '''
         self._file_path = file_path
+        #check if file path exists
+        if not Utilities.check_file_path_exists(self._file_path):
+            raise Exception("File Path not found! -> "+str(self._file_path))
+
         self._raw_file = None
         self._csv_file = None
         
@@ -250,7 +264,7 @@ class CSVWriter(object):
         self._file_count = max_file_count
         
         self._open_file_A()
-    
+
     def _open_file_A(self):
         """Opens a file in append mode."""
 
