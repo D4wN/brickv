@@ -45,7 +45,6 @@ CONSOLE_CONFIG_FILE = "config_file"
 GUI_CONFIG = "configuration"
 GUI_ELEMENT = "gui_element"
 CONSOLE_VALIDATE_ONLY = "validate"
-CONSOLE_START = False
 CLOSE = False
 
 def __exit_condition(data_logger):
@@ -70,19 +69,24 @@ def signal_handler(signum, frame):
     main.CLOSE = True
 
 signal.signal(signal.SIGINT, signal_handler)
-      
+
+def __manage_eventlog(arguments_map):    
+    EventLogger.EVENT_CONSOLE_LOGGING = arguments_map[ConfigurationReader.GENERAL_EVENTLOG_TO_CONSOLE]
+    EventLogger.EVENT_FILE_LOGGING = arguments_map[ConfigurationReader.GENERAL_EVENTLOG_TO_FILE]
+    EventLogger.EVENT_FILE_LOGGING_PATH = arguments_map[ConfigurationReader.GENERAL_EVENTLOG_PATH]
+    EventLogger.EVENT_LOG_LEVEL =  arguments_map[ConfigurationReader.GENERAL_EVENTLOG_LEVEL]
+    
+    if EventLogger.EVENT_FILE_LOGGING:
+        EventLogger.add_logger(FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
+    if EventLogger.EVENT_CONSOLE_LOGGING == False:
+        EventLogger.remove_logger("ConsoleLogger")
+        
 def main(arguments_map):
     '''
     This function initialize the data logger and starts the logging process
     '''
-    # output to console and file only if logger was not started via gui
-    if not GUI_CONFIG in arguments_map:        
-        # initiate the EventLogger
-        EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
+    EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
     
-        if EventLogger.EVENT_FILE_LOGGING:
-            EventLogger.add_logger(FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
-     
     configuration = None
     guiStart = False
     try:
@@ -101,6 +105,9 @@ def main(arguments_map):
            
         if CONSOLE_VALIDATE_ONLY in arguments_map and arguments_map[CONSOLE_VALIDATE_ONLY]:
             return
+        
+        # activate eventlogger
+        __manage_eventlog(configuration._configuration._general)
         
     except Exception as exc:
         EventLogger.critical(str(exc))
@@ -141,7 +148,6 @@ def command_line_start(argv, program_name):
     '''
     This function processes the command line arguments, if it was started via the console.
     '''
-    main.CONSOLE_START = True
     cl_parser = argparse.ArgumentParser(description='Tinkerforge Data Logger')
     
     cl_parser.add_argument('config_file', help="Path to the configuration file")
