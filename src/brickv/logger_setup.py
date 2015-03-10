@@ -18,7 +18,6 @@ from brickv.data_logger.loggable_devices import Identifier
 from brickv.data_logger.utils import Utilities
 from brickv.device_dialog import LoggerDeviceDialog
 from brickv.ui_logger_setup import Ui_Logger
-import logging
 
 
 class LoggerWindow(QDialog, Ui_Logger):
@@ -126,7 +125,6 @@ class LoggerWindow(QDialog, Ui_Logger):
             from data_logger import main
             arguments_map = {}
             arguments_map[main.GUI_CONFIG] = GuiConfigHandler.create_config_file(self)
-            from brickv.data_logger.job import GuiDataJob
             self._gui_job = GuiDataJob(name="GuiData-Writer")
             self.connect(self._gui_job, QtCore.SIGNAL(GuiDataJob.SIGNAL_NEW_DATA), self.table_add_row)
             arguments_map[main.GUI_ELEMENT] = self._gui_job
@@ -223,6 +221,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                 
         if fn == "":
             # cancel
+            self.line_path_to_file.setText("")
             EventLogger.debug("Cancelled select Config-File-Path.")
             return
         
@@ -287,7 +286,6 @@ class LoggerWindow(QDialog, Ui_Logger):
         """
             Changes the log level dynamically.
         """
-        import logging
         ll = self.combo_console_level.currentText()
 
         od = collections.OrderedDict(sorted(self._gui_logger._convert_level.items()))

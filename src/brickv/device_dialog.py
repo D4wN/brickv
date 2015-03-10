@@ -6,7 +6,6 @@ from PyQt4 import QtGui, QtCore
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
 from PyQt4.QtCore import Qt
 from brickv import infos
-from brickv.data_logger.loggable_devices import Identifier
 
 
 class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
