@@ -220,19 +220,21 @@ class Utilities(object):
     replace_right = staticmethod(replace_right)
 
     def check_file_path_exists(file_path):
-        dir_path = os.path.dirname(file_path)
-        if dir_path == "" or dir_path == None:
-            if file_path == "" or file_path == None:
-                #no filename - dir
-                return False
-            else:
-                #filename - but no dir
+        try:
+            dir_path = os.path.dirname(file_path)
+            if dir_path == "" or dir_path == None:
+                if file_path == "" or file_path == None:
+                    #no filename - dir
+                    return False
+                else:
+                    #filename - but no dir
+                    return True
+            elif os.path.isdir(dir_path):
+                #dir found
                 return True
-        elif os.path.isdir(dir_path):
-            #dir found
-            return True
-
-        return False
+            return False
+        except Exception as e:
+            return False
 
     check_file_path_exists = staticmethod(check_file_path_exists)
 
