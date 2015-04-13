@@ -389,9 +389,7 @@ class AbstractDevice(object):
     def __init__(self, data, datalogger):
         self.datalogger = datalogger
         self.data = data
-        self.uid = self.data[Identifier.DEVICE_UID]
         self.identifier = None
-        self.device = None
         
         self.__name__ = "AbstractDevice"
         
@@ -425,31 +423,37 @@ class AbstractDevice(object):
         """
         Representation String of the class. For simple overwiev.
         """
-        return "[" + self.__name__ + "=" + str(self.data[Identifier.DEVICE_CLASS]) + " | <UID=" + str(self.uid) + "> | <IDENTIEFIER=" + str(self.identifier) + "> | <data=" + str(self.data) + ">]"
+        return "["+str(self.__name__)+"TODO NEW DEBUG STRING]"
 
 '''
 /*---------------------------------------------------------------------------
                                 SimpleDevice
  ---------------------------------------------------------------------------*/
  '''
-class SimpleDevice(AbstractDevice):
+class DeviceImpl(AbstractDevice):
     """
     A SimpleDevice is every device, which only has funtion with one return value.
     """
     def __init__(self, data, datalogger):
         AbstractDevice.__init__(self, data, datalogger)
-        self.device = self.data[Identifier.DEVICE_CLASS](self.uid, self.datalogger.ipcon)
-        self.identifier = self.data[Identifier.DEVICE_CLASS].DEVICE_IDENTIFIER
 
-        self.__name__ = Identifier.SIMPLE_DEVICE
+        self.device_name = self.data[Identifier.DEVICE_NAME]
+        self.device_uid = self.data[Identifier.DEVICE_UID]
+        self.device_definition = Identifier.DEVICE_DEFINITIONS[self.device_name]
+        device_class = self.device_definition[Identifier.DEVICE_CLASS]
+        self.device = device_class(self.datalogger.ipcon, self.device_uid)
+        self.identifier = self.device_name #TODO change to number?
+
+        self.__name__ = Identifier.DEVICES+":"+str(self.device_name)
 
     def start_timer(self):
         AbstractDevice.start_timer(self)
-                      
+
         for value in self.data[Identifier.DEVICE_VALUES]:
             interval = self.data[Identifier.DEVICE_VALUES][value][Identifier.DEVICE_VALUES_INTERVAL]
             func_name = "_timer"
             var_name = value
+
             self.datalogger.timers.append(utils.LoggerTimer(interval, func_name, var_name, self))
 
     def _timer(self, var_name):
@@ -457,27 +461,35 @@ class SimpleDevice(AbstractDevice):
         This function is used by the LoggerTimer to get the variable values from the brickd.
         In SimpleDevices the get-functions only return one value.
         """
-        # CSVDATA=[uid->memeber, name/identety->member, var_name->parameter, raw_data->function]
-        value = None
+
+        getter = self.device_definition[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_DEFINITIONS_GETTER]
+        subvalue_names = self.device_definition[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+        timestamp = utils.CSVData._get_timestamp()
+
         try:
-            getter_name = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_NAME]
-            getter_args = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_ARGS]
-        
-            if getter_args:
-                # FIXME: find better solution for the unicode problem!
-                for i in range(len(getter_args)):
-                    if type(getter_args[i]) == unicode:
-                        getter_args[i] = str(getter_args[i])
-                
-                value = getattr(self.device, getter_name)(*getter_args)
+            value = getter(self.device)
+        except Exception as e:
+            value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
+            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
+            #log_exception(timestamp, value_name, e)
+            return
+
+        try:
+            if subvalue_names == None:
+                #log_value(value_name, value)
+                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
             else:
-                value = getattr(self.device, getter_name)()
-        except ip_connection.Error as e:
-            value = self._exception_msg(e.value, e.description)
-        except Exception as ex:
-            value = self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)
-        
-        self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, var_name, value))
+                for i in range(len(subvalue_names)):
+                    if not isinstance(subvalue_names[i], list):
+                        #log_value(timestamp, value_name + ' - ' + subvalue_names[i], value[i])
+                        self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name+" - "+subvalue_names[i]), value, timestamp))#TODO check the names
+                    else:
+                        for k in range(len(subvalue_names[i])):
+                            #log_value(timestamp, value_name + ' - ' + subvalue_names[i][k], value[i])
+                            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name+" - "+subvalue_names[i][k]), value, timestamp))#TODO check the names
+        except Exception as e:
+            value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
+            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
 
 '''
 /*---------------------------------------------------------------------------
