@@ -1,0 +1,126 @@
+{
+  "ComplexDevice": [
+    {
+      "class": "Color", 
+      "name": "Color", 
+      "uid": "oxv", 
+      "values": {
+        "Color Temperature": {
+          "args": null, 
+          "func_name": "get_color_temperature", 
+          "interval": 500, 
+          "var_bool": [
+            true
+          ], 
+          "var_name": [
+            "Color Temperature"
+          ]
+        }, 
+        "Illuminance": {
+          "args": null, 
+          "func_name": "get_illuminance", 
+          "interval": 500, 
+          "var_bool": [
+            true
+          ], 
+          "var_name": [
+            "Illuminance"
+          ]
+        }, 
+        "Rgbc": {
+          "args": null, 
+          "func_name": "get_color", 
+          "interval": 500, 
+          "var_bool": [
+            true, 
+            true, 
+            true, 
+            true
+          ], 
+          "var_name": [
+            "b", 
+            "c", 
+            "g", 
+            "r"
+          ]
+        }
+      }
+    }
+  ], 
+  "GENERAL": {
+    "event_log_level": 10, 
+    "event_log_to_console": false, 
+    "event_log_to_file": false, 
+    "event_path_to_eventfile": "C:/Programmierung/GitHub/brickv/src/brickv/log_file.log", 
+    "host": "localhost", 
+    "log_count": 1, 
+    "log_to_file": true, 
+    "max_logged_file_size": 0, 
+    "path_to_file": "C:/Programmierung/GitHub/brickv/src/brickv/data.csv", 
+    "port": 4223
+  }, 
+  "SimpleDevice": [
+    {
+      "class": "DistanceIR", 
+      "name": "Distance IR", 
+      "uid": "gzp", 
+      "values": {
+        "Analog Value": {
+          "args": null, 
+          "func_name": "get_analog_value", 
+          "interval": 500
+        }, 
+        "Distance": {
+          "args": null, 
+          "func_name": "get_distance", 
+          "interval": 500
+        }
+      }
+    }, 
+    {
+      "class": "BrickletTemperature", 
+      "name": "Temperature", 
+      "uid": "nki", 
+      "values": {
+        "Temperature": {
+          "args": null, 
+          "func_name": "get_temperature", 
+          "interval": 500
+        }
+      }
+    }
+  ], 
+  "SpecialDevice": [
+    {
+      "class": "GPSBricklet", 
+      "name": "GPS", 
+      "special_bool": {
+        "Altitude Value": true, 
+        "Course": true, 
+        "Date": true, 
+        "Epe": true, 
+        "Ew": true, 
+        "Fix Status": true, 
+        "Geoidal Seperation": true, 
+        "Hdop": true, 
+        "Latitude": true, 
+        "Longitude": true, 
+        "Ns": true, 
+        "Pdop": true, 
+        "Satellites Used": true, 
+        "Satellites View": true, 
+        "Speed": true, 
+        "Time": true, 
+        "Vdop": true
+      }, 
+      "special_values": {
+        "Altitude": 500, 
+        "Coordinates": 500, 
+        "Date Time": 500, 
+        "Motion": 500
+      }, 
+      "uid": "fa1"
+    }
+  ], 
+  "XIVELY": {}
+}
