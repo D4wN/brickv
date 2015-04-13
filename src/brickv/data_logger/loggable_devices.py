@@ -99,6 +99,8 @@ class Identifier(object):
     # array/multiple return values in tuple (e.g. return ([1,2,3],"a","b","c"))
     # or special rules, e.g. GPS which needs a special FIX value for some functions
     SPECIAL_DEVICE = "SpecialDevice"
+    # core 2.0 new identifier
+    DEVICES = "Devices"
     
     # config list access strings
     DEVICE_NAME = "name"

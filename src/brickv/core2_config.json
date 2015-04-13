@@ -1,0 +1,29 @@
+{
+  "Devices": [
+    {
+      "name": "Ambient Light Bricklet",
+      "uid": "amb",
+      "values": {
+        "Analog Value": {
+        "interval": 0
+      },
+        "Illuminance": {
+        "interval": 1000
+        }
+      }
+    }
+  ],
+  "GENERAL": {
+    "event_log_level": 10, 
+    "event_log_to_console": true,
+    "event_log_to_file": false, 
+    "event_path_to_eventfile": "./log_file.log",
+    "host": "localhost", 
+    "log_count": 1, 
+    "log_to_file": true, 
+    "max_logged_file_size": 0, 
+    "path_to_file": "./data.csv",
+    "port": 4223
+  },
+  "XIVELY": {}
+}
