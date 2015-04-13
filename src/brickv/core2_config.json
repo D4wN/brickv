@@ -1,5 +1,5 @@
 {
-  "Devices": [
+  "DEVICES": [
     {
       "name": "Ambient Light Bricklet",
       "uid": "amb",
