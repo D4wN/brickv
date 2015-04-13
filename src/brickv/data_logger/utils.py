@@ -66,7 +66,7 @@ class CSVData(object):
     This class is used as a temporary save spot for all csv relevant data.
     '''
     
-    def __init__(self, uid, name, var_name, raw_data):
+    def __init__(self, uid, name, var_name, raw_data, time_stamp=None):
         '''
         uid      -- uid of the bricklet
         name     -- DEVICE_IDENTIFIER of the bricklet
@@ -80,17 +80,20 @@ class CSVData(object):
         self.var_name = var_name
         self.raw_data = raw_data
         self.timestamp = None
-        self._set_timestamp()
+        if time_stamp == None:
+            self.timestamp = CSVData._get_timestamp()
+        else:
+            self.timestamp = time_stamp
         
-        
-    def _set_timestamp(self):
+    @staticmethod
+    def _get_timestamp():
         """
         Adds a timestamp in ISO 8601 standard, with ms
         ISO 8061 =  YYYY-MM-DDThh:mm:ss+tz:tz
                     2014-09-10T14:12:05+02:00
         """
         t = datetime.datetime.now()
-        utc = self._time_utc_offset()
+        utc = CSVData._time_utc_offset()
         utc_string = ""
         if utc < 0:
             utc *= -1
@@ -98,11 +101,13 @@ class CSVData(object):
         else:
             utc_string = "+%02d:00" % (utc,)
             
-        self.timestamp = '{:%Y-%m-%dT%H:%M:%S}'.format(t)
-        self.timestamp += utc_string
+        ts = '{:%Y-%m-%dT%H:%M:%S}'.format(t)
+        ts += utc_string
+
+        return ts
         
-    
-    def _time_utc_offset(self):
+    @staticmethod
+    def _time_utc_offset():
         if time.localtime(time.time()).tm_isdst and time.daylight:
             return -time.altzone / (60 * 60)
    
@@ -115,6 +120,8 @@ class CSVData(object):
         return "[UID=" + str(self.uid) + ";NAME=" + str(self.name) + ";VAR=" + str(self.var_name) + ";RAW=" + str(self.raw_data) + ";TIME=" + str(self.timestamp) + "]"
 
 
+    _get_timestamp = staticmethod(_get_timestamp)
+    _time_utc_offset = staticmethod(_time_utc_offset)
 '''
 /*---------------------------------------------------------------------------
                                 LoggerTimer
