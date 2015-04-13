@@ -35,6 +35,8 @@ class ConfigurationReader(object):
     XIVELY_FEED = "feed"
     XIVELY_API_KEY = "api_key"
     XIVELY_UPLOAD_RATE = "upload_rate"
+
+    DEVICES_SECTION = "DEVICES"
     
     __NAME_KEY = "name"
     __UID_KEY = "uid"
@@ -83,17 +85,13 @@ class ConfigurationReader(object):
             self._readConfigErr += 1
             
         self._configuration._xively = prevent_key_error(json_structure, ConfigurationReader.XIVELY_SECTION)
-        self._configuration._simple_devices = prevent_key_error(json_structure, loggable_devices.Identifier.SIMPLE_DEVICE)
-        self._configuration._complex_devices = prevent_key_error(json_structure, loggable_devices.Identifier.COMPLEX_DEVICE)
-        self._configuration._special_devices = prevent_key_error(json_structure, loggable_devices.Identifier.SPECIAL_DEVICE)
+        self._configuration._devices = prevent_key_error(json_structure, ConfigurationReader.DEVICES_SECTION)
     
     def map_dict_to_config(self, json_dict):
         self._configuration._general = prevent_key_error(json_dict, ConfigurationReader.GENERAL_SECTION)
         self._configuration._xively = prevent_key_error(json_dict, ConfigurationReader.XIVELY_SECTION)
-                
-        self._configuration._simple_devices = prevent_key_error(json_dict, loggable_devices.Identifier.SIMPLE_DEVICE)
-        self._configuration._special_devices = prevent_key_error(json_dict, loggable_devices.Identifier.SPECIAL_DEVICE)
-        self._configuration._complex_devices = prevent_key_error(json_dict, loggable_devices.Identifier.COMPLEX_DEVICE)
+        self._configuration._devices = prevent_key_error(json_dict, ConfigurationReader.DEVICES_SECTION)
+
 
 """"
 /*---------------------------------------------------------------------------
@@ -129,11 +127,8 @@ class ConfigurationValidator(object):
         
         self.validate_general_section()
         self.validate_xively_section()
-        
-        self.validate_simple_devices()
-        self.validate_special_devices()
-        self.validate_complex_devices()
-        
+        self.validate_devices_section()
+
         EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")
 
         logging_time = self._log_space_counter.calculate_time()
@@ -219,7 +214,28 @@ class ConfigurationValidator(object):
             EventLogger.critical(self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_CONSOLE], msg="should be a boolean"))
         
         # TODO: Check free disk space of the destination
-        
+
+    def validate_devices_section(self):
+        '''
+            This function validates the devices out of the configuration file
+        :return:
+        '''
+        ldi = loggable_devices.Identifier   # alias
+        device_definitions = ldi.DEVICE_DEFINITIONS
+
+        for device in self.json_config._devices:
+            # name
+            prototype = device_definitions[device[ldi.DEVICE_NAME]]
+            if prototype is None:
+                EventLogger.critical(self. _generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],tier_array=["general"],msg="no such device available"))
+                continue # next device
+
+            # uid
+            # values
+                # lambda
+                # interval
+
+
     def validate_xively_section(self):
         '''
         This function validates the xively section out of the configuration
@@ -233,6 +249,7 @@ class ConfigurationValidator(object):
         '''
         This function validates all devices from the configuration file which are of type 'SimpleDevice'
         '''
+        #FIXME: Dead-Code
         devices = self.json_config._simple_devices
         self._replace_str_with_class(devices)
         
@@ -257,6 +274,7 @@ class ConfigurationValidator(object):
         This function validates all devices from the configuration file which are of type 'SpecialDevices'.
         Every special device has its own implementation without an super class.
         '''
+        #FIXME: Dead-Code
         devices = self.json_config._special_devices
         self._replace_str_with_class(devices)
         
@@ -308,6 +326,7 @@ class ConfigurationValidator(object):
         '''
         This function validates all devices from the configuration file which are of type 'ComplexDevice'.
         '''
+        #FIXME: Dead-Code
         devices = self.json_config._complex_devices
         self._replace_str_with_class(devices)
         
@@ -355,6 +374,7 @@ class ConfigurationValidator(object):
         This function replaces the entry 'loggable_devices.Identifier.DEVICE_CLASS' which contains
         the class name as a string with the actual class object
         '''
+        #FIXME: Dead-Code
         class_str = ""
         for i in range(len(devices)):
             try:
@@ -471,6 +491,15 @@ class ConfigurationValidator(object):
         
         self._error_count += 1
         return err_msg + " - " + msg
+
+    def _generate_device_error_message(self, uid,tier_array, msg):
+        err_msg = "[UID=" + uid + "]"
+        for tier in tier_array:
+            err_msg += "[" + tier + "]"
+
+        self._error_count += 1
+        return err_msg + " - " + msg
+
    
     
 """"
@@ -577,10 +606,12 @@ class Configuration():
     def __init__(self):
         self._general = {}
         self._xively = {}
-        
-        self._simple_devices = []
-        self._complex_devices = []
-        self._special_devices = []
+
+        self._devices = []
+        # FIXME: delete this arrays
+        # self._simple_devices = []
+        # self._complex_devices = []
+        # self._special_devices = []
       
     def isEmpty(self):
         return True if len(self._general) == 0 else False
