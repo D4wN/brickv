@@ -92,30 +92,37 @@ class Identifier(object):
     create_args = staticmethod(create_args)
     
     # ##Devices
-    # functions got one return value
-    SIMPLE_DEVICE = "SimpleDevice"
-    # function can have tuple return value
-    COMPLEX_DEVICE = "ComplexDevice"
-    # array/multiple return values in tuple (e.g. return ([1,2,3],"a","b","c"))
-    # or special rules, e.g. GPS which needs a special FIX value for some functions
-    SPECIAL_DEVICE = "SpecialDevice"
     # core 2.0 new identifier
-    DEVICES = "Devices"
+    DEVICES = "DEVICES"
+
     
     # config list access strings
     DEVICE_NAME = "name"
     DEVICE_CLASS = "class"
     DEVICE_UID = "uid"
     DEVICE_VALUES = "values"
-    DEVICE_VALUES_NAME = "func_name"
-    DEVICE_VALUES_ARGS = "args"
     DEVICE_VALUES_INTERVAL = "interval"
-    
-    COMPLEX_DEVICE_VALUES_NAME = "var_name"
-    COMPLEX_DEVICE_VALUES_BOOL = "var_bool"
-    
-    SPECIAL_DEVICE_VALUE = "special_values"
-    SPECIAL_DEVICE_BOOL = "special_bool"
+    #Device Definitions Keys
+    DEVICE_DEFINITIONS_GETTER = "getter"
+    DEVICE_DEFINITIONS_SUBVALUES = "subvalues"
+
+    #Device Definitons
+    DEVICE_DEFINITIONS = {
+        AmbientLight.DEVICE_DISPLAY_NAME: {
+            'class': AmbientLight,
+            'values': {
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': None
+                },
+                'Illuminance': {
+                    'getter': lambda device: device.get_illuminance(),
+                    'subvalues': None
+                }
+            }
+        }
+    }
+
 
     # ##Special Identifiers
     FUNCTION_NAME = {}
