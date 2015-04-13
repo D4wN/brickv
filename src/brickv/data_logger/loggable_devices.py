@@ -50,6 +50,36 @@ def string_to_class(string):
     """
     return reduce(getattr, string.split("."), sys.modules[__name__])
 
+class SpecialDevices(object):
+
+    def get_gps_coordinates(device):
+        if device.get_status()[0] == GPS.FIX_NO_FIX:
+            raise Exception('No fix')
+        else:
+            return device.get_coordinates()
+    get_gps_coordinates = staticmethod(get_gps_coordinates)
+
+    def get_gps_altitude(device):
+        if device.get_status()[0] != GPS.FIX_3D_FIX:
+            raise Exception('No 3D fix')
+        else:
+            return device.get_altitude()
+    get_gps_altitude = staticmethod(get_gps_altitude)
+
+    def get_gps_motion(device):
+        if device.get_status()[0] == GPS.FIX_NO_FIX:
+            raise Exception('No fix')
+        else:
+            return device.get_motion()
+    get_gps_motion = staticmethod(get_gps_motion)
+
+    def get_ptc_temperature(device):
+        if not device.is_sensor_connected():
+            raise Exception('No sensor')
+        else:
+            return device.get_temperature()
+    get_ptc_temperature = staticmethod(get_ptc_temperature)
+
 '''
 /*---------------------------------------------------------------------------
                                 Identifier
@@ -165,7 +195,7 @@ class Identifier(object):
             'values': {
                 'Color': {
                     'getter': lambda device: device.get_color(),
-                    'subvalues': ['R', 'G', 'B', 'C']
+                    'subvalues': ['Red', 'Green', 'Blue', 'Clear']
                 },
                 'Illuminance': {
                     'getter': lambda device: device.get_illuminance(),
@@ -230,11 +260,50 @@ class Identifier(object):
             'values': {
                 'Button State': {
                     'getter': lambda device: device.get_button_state(),
-                    'subvalues': ['Left', 'Right']#TODO Check this!
+                    'subvalues': ['Left', 'Right']
                 },
                 'Led State': {
                     'getter': lambda device: device.get_led_state(),
                     'subvalues': ['Left', 'Right']
+                }
+            }
+        },
+        GPS.DEVICE_DISPLAY_NAME: {
+            'class': GPS,
+            'values': {
+                'Altitude': {
+                    'getter': SpecialDevices.get_gps_altitude,
+                    'subvalues': ['Altitude', 'Geoidal Separation']
+                },
+                'Coordinates': {
+                    'getter': SpecialDevices.get_gps_coordinates,
+                    'subvalues': ['Latitude', 'NS', 'Longitude', 'EW', 'PDOP', 'HDOP', 'VDOP', 'EPE']
+                },
+                'Date Time': {
+                    'getter': lambda device: device.get_date_time(),
+                    'subvalues': ['Date', 'Time']
+                },
+                'Motion': {
+                    'getter': SpecialDevices.get_gps_motion,
+                    'subvalues': ['Course', 'Speed']
+                },
+                'Status': {
+                    'getter': lambda device: device.get_status(),
+                    'subvalues': ['Fix', 'Satellites View', 'Satellites Used']
+                }
+            }
+        },
+
+        BrickletSegmentDisplay4x7.DEVICE_DISPLAY_NAME: {
+            'class': BrickletSegmentDisplay4x7,
+            'values': {
+                'Counter Value': {
+                    'getter': lambda device: device.get_counter_value(),
+                    'subvalues': None
+                },
+                'Segments': {
+                    'getter': lambda device: device.get_segments(),
+                    'subvalues': [['Segm1','Segm2','Segm3','Segm4'],'Brightness','Colon']
                 }
             }
         }
@@ -244,8 +313,6 @@ class Identifier(object):
     CLASS_NAME = {}
     VAR_ARGS = {}
     # ##Bricklets
-
-    
     DUAL_RELAY = "Dual Relay"
     DUAL_RELAY_STATE = "State"
     DUAL_RELAY_1 = "relay1"
@@ -355,41 +422,6 @@ class Identifier(object):
     VOLTAGE_CURRENT_CURRENT = "Current"
     VOLTAGE_CURRENT_VOLTAGE = "Voltage"
     VOLTAGE_CURRENT_POWER = "Power"
-
-    GPS_BRICKLET = "GPS"
-    CLASS_NAME[GPS_BRICKLET] = "GPSBricklet"
-    GPS_FIX_STATUS = "Fix Status"
-    GPS_SATELLITES_VIEW = "Satellites View"
-    GPS_SATELLITES_USED = "Satellites Used"
-    GPS_COORDINATES = "Coordinates"
-    GPS_LATITUDE = "Latitude"
-    GPS_NS = "Ns"
-    GPS_LONGITUDE = "Longitude"
-    GPS_EW = "Ew"
-    GPS_PDOP = "Pdop"
-    GPS_HDOP = "Hdop"
-    GPS_VDOP = "Vdop"
-    GPS_EPE = "Epe"
-    GPS_ALTITUDE = "Altitude"
-    GPS_ALTITUDE_VALUE = "Altitude Value"
-    GPS_GEOIDAL_SEPERATION = "Geoidal Seperation"
-    GPS_MOTION = "Motion"
-    GPS_COURSE = "Course"
-    GPS_SPEED = "Speed"
-    GPS_DATE_TIME = "Date Time"
-    GPS_DATE = "Date"
-    GPS_TIME = "Time"
-    
-    SEGMENT_DISPLAY_4x7 = "Segment Display 4x7"
-    CLASS_NAME[SEGMENT_DISPLAY_4x7] = "SegmentDisplay4x7Bricklet"
-    SEGMENT_DISPLAY_4x7_SEGMENTS = "Segments"
-    SEGMENT_DISPLAY_4x7_SEGMENT_1 = "Segment 1"
-    SEGMENT_DISPLAY_4x7_SEGMENT_2 = "Segment 2"
-    SEGMENT_DISPLAY_4x7_SEGMENT_3 = "Segment 3"
-    SEGMENT_DISPLAY_4x7_SEGMENT_4 = "Segment 4"
-    SEGMENT_DISPLAY_4x7_BRIGTHNESS = "Brightness"
-    SEGMENT_DISPLAY_4x7_COLON = "Colon"
-    SEGMENT_DISPLAY_4x7_COUNTER_VALUE = "Counter Value"
 
     #TODO needs attention -> check device definition
     DUAL_BUTTON = "Dual Button"
@@ -516,7 +548,7 @@ class DeviceImpl(AbstractDevice):
         self.device_uid = self.data[Identifier.DEVICE_UID]
         self.device_definition = Identifier.DEVICE_DEFINITIONS[self.device_name]
         device_class = self.device_definition[Identifier.DEVICE_CLASS]
-        self.device = device_class(self.datalogger.ipcon, self.device_uid)
+        self.device = device_class(self.device_uid, self.datalogger.ipcon)
         self.identifier = self.device_name #TODO change to number?
 
         self.__name__ = Identifier.DEVICES+":"+str(self.device_name)
@@ -554,295 +586,33 @@ class DeviceImpl(AbstractDevice):
                 #log_value(value_name, value)
                 self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
             else:
+                subvalue_bool = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
                 for i in range(len(subvalue_names)):
                     if not isinstance(subvalue_names[i], list):
-                        #log_value(timestamp, value_name + ' - ' + subvalue_names[i], value[i])
-                        self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name+" - "+subvalue_names[i]), value, timestamp))#TODO check the names
+                        try:
+                            if subvalue_bool[subvalue_names[i]]:
+                                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i]), value[i], timestamp))
+                        except Exception as e:
+                            value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
+                            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i][k]), value[i][k], timestamp))
+                            return
                     else:
                         for k in range(len(subvalue_names[i])):
-                            #log_value(timestamp, value_name + ' - ' + subvalue_names[i][k], value[i])
-                            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name+" - "+subvalue_names[i][k]), value, timestamp))#TODO check the names
+                            try:
+                                if subvalue_bool[subvalue_names[i][k]]:
+                                    self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i][k]), value[i][k], timestamp))
+                            except Exception as e:
+                                value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
+                                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i][k]), value[i][k], timestamp))
+                                return
         except Exception as e:
             value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
             self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
 
-'''
-/*---------------------------------------------------------------------------
-                                SimpleDevice
- ---------------------------------------------------------------------------*/
- '''
-class ComplexDevice(AbstractDevice):
-    
-    def __init__(self, data, datalogger):
-        AbstractDevice.__init__(self, data, datalogger)
-        self.device = self.data[Identifier.DEVICE_CLASS](self.uid, self.datalogger.ipcon)
-        self.identifier = self.data[Identifier.DEVICE_CLASS].DEVICE_IDENTIFIER
-        
-        self.__name__ = Identifier.COMPLEX_DEVICE
-
-    def start_timer(self):
-        AbstractDevice.start_timer(self)
-             
-        # start for each variable a timer
-        for value in self.data[Identifier.DEVICE_VALUES]:
-            interval = self.data[Identifier.DEVICE_VALUES][value][Identifier.DEVICE_VALUES_INTERVAL]
-            func_name = "_timer"
-            var_name = value
-            self.datalogger.timers.append(utils.LoggerTimer(interval, func_name, var_name, self))
-
-    def _timer(self, var_name):
-        """
-        This function is used by the LoggerTimer to get the variable values from the brickd.
-        In ComplexDevice the get-functions return one or multiple(as tupel) values.
-        """
-        values = None
-        try:
-            getter_name = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_NAME]
-            getter_args = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_VALUES_ARGS]
-        
-            # start functions to get values
-            if getter_args:
-                # FIXME: find better solution for the unicode problem!
-                for i in range(len(getter_args)):
-                    if type(getter_args[i]) == unicode:
-                        getter_args[i] = str(getter_args[i])
-                
-                values = getattr(self.device, getter_name)(*getter_args)
-            else:
-                values = getattr(self.device, getter_name)()
-            
-            # get bool and variable to check, which data should be logged
-            bools = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_BOOL]
-            names = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.COMPLEX_DEVICE_VALUES_NAME]
-            
-            l = [] #values
-            n = [] #identifeir of the namedtuple
-            if type(values) is not int and type(values) is not bool and type(values) is not float and type(values) is not long:
-                for v_name in values._fields:
-                    l.append(getattr(values, v_name))
-                    n.append(v_name)
-            else:                
-                l.append(values)
-                n.append(names[0])
-
-            #check, which variable should be logged
-            for j in range(0, len(n)):
-                for i in range(0, len(names)):
-                    if n[j] == names[i]:
-                        if bools[i]:
-                            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, names[i], l[j]))
-            
-        except ip_connection.Error as e:
-            values = self._exception_msg(e.value, e.description)
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, var_name, values))
-        except Exception as ex:
-            values = self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, var_name, values))
 
 # ##Special Devices
-'''
-/*---------------------------------------------------------------------------
-                                GPSBricklet
- ---------------------------------------------------------------------------*/
- '''
-class GPSBricklet(AbstractDevice):
-    """
-    The GPSBricklet is a special device. Because of the special behavior, that
-    some values should only be logged if others are at a certain point, the
-    GPSBricklet needs a own class.
-    """
-    def __init__(self, data, datalogger):
-        AbstractDevice.__init__(self, data, datalogger)
-      
-        self.device = GPS(self.uid, datalogger.ipcon)
-        self.identifier = GPS.DEVICE_IDENTIFIER
-        
-        self.__name__ = Identifier.SPECIAL_DEVICE
 
-    def start_timer(self):
-        """
-        Starts all timer for all loggable variables of the devices.
-        """
-        AbstractDevice.start_timer(self)
-        
-        value1 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.GPS_COORDINATES]
-        value2 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.GPS_ALTITUDE]
-        value3 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.GPS_MOTION]
-        value4 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.GPS_DATE_TIME]
-     
-        self.datalogger.timers.append(utils.LoggerTimer(value1, self._timer_coordinates.__name__, Identifier.GPS_COORDINATES, self))
-        self.datalogger.timers.append(utils.LoggerTimer(value2, self._timer_altitude.__name__, Identifier.GPS_ALTITUDE, self))
-        self.datalogger.timers.append(utils.LoggerTimer(value3, self._timer_motion.__name__, Identifier.GPS_MOTION, self))
-        self.datalogger.timers.append(utils.LoggerTimer(value4, self._timer_date_time.__name__, Identifier.GPS_DATE_TIME, self))
-    
-    def _timer_coordinates(self, var_name):
-        """
-        LoggerTimer function to get the GPS coordinates. Should only log the coordiantes when the GPS.FIX is greater or equal 2.
-        """
-        try:
-            # check for the FIX Value of get_status()
-            fix = self._get_fix_status()
-                          
-            if fix == GPS.FIX_NO_FIX:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg("Fix-Status=" + str(fix), "GPS Fix-Status was 1, but needs to be 2 or 3 for valid Coordinates.")))
-                return
 
-            latitude, ns, longitude, ew, pdop, hdop, vdop, epe = self.device.get_coordinates()
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_LATITUDE]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_LATITUDE, latitude))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_NS]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_NS, ns))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_LONGITUDE]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_LONGITUDE, longitude))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_EW]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_EW, ew))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_PDOP]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_PDOP, pdop))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_HDOP]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_HDOP, hdop))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_VDOP]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_VDOP, vdop))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_EPE]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_EPE, epe))
-        except ip_connection.Error as e:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg(e.value, e.description)))
-        except Exception as ex:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COORDINATES, self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)))
-
-    def _timer_altitude(self, var_name):
-        """
-        LoggerTimer function to get the GPS altitude. Should only log the altitude when the GPS.FIX is equal 3.
-        """
-        try:
-            # check for the FIX Value of get_status()
-            fix = self._get_fix_status()
-               
-            if fix != GPS.FIX_3D_FIX:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg("Fix-Status=" + str(fix), "GPS Fix-Status was " + str(fix) + ", but needs to be 3 for valid Altitude Values.")))
-                return
- 
-            altitude, geoidal_separation = self.device.get_altitude()
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_ALTITUDE_VALUE]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE_VALUE, altitude))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_GEOIDAL_SEPERATION]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_GEOIDAL_SEPERATION, geoidal_separation))
-        except ip_connection.Error as e:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg(e.value, e.description)))
-        except Exception as ex:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_ALTITUDE, self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)))
-
-    def _timer_motion(self, var_name):
-        """
-        LoggerTimer function to get the GPS motion. Should only log the motion when the GPS.FIX is greater or equal 2.
-        """
-        try:
-            # check for the FIX Value of get_status()
-            fix = self._get_fix_status()
-               
-            if fix == GPS.FIX_NO_FIX:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg("Fix-Status=" + str(fix), "GPS Fix-Status was " + str(fix) + ", but needs to be 2 or 3 for valid Altitude Values.")))
-                return
- 
-            course, speed = self.device.get_motion()
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_COURSE]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_COURSE, course))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_SPEED]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_SPEED, speed))
-        except ip_connection.Error as e:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg(e.value, e.description)))
-        except Exception as ex:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_MOTION, self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)))
-
-    def _timer_date_time(self, var_name):
-        """
-        LoggerTimer function to get the GPS date.
-        """
-        try:
-            date, time = self.device.get_date_time()
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_DATE]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_DATE, date))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_TIME]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_TIME, time))
-        except Exception as e:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_DATE_TIME, self._exception_msg(e.value, e.description)))
-
-    def _get_fix_status(self):
-        """
-        Fix-Status function. Returns the current Fix-Status for other functions
-        """
-        fix, satellites_view, satellites_used = self.device.get_status()
-         
-        if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_FIX_STATUS]:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_FIX_STATUS, fix))
-        if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_SATELLITES_VIEW]:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_SATELLITES_VIEW, satellites_view))
-        if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.GPS_SATELLITES_USED]:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.GPS_SATELLITES_USED, satellites_used))
-        return fix
-
-'''
-/*---------------------------------------------------------------------------
-                                SegmentDisplay4x7Bricklet
- ---------------------------------------------------------------------------*/
- '''
-class SegmentDisplay4x7Bricklet(AbstractDevice):
-    """
-    The SegmentDisplay4x7Bricklet is a special device. It's function returns a combination of
-    multiple values and a list. Because of this, the device needs special attention and it's
-    own class.
-    """
-    def __init__(self, data, datalogger):
-        AbstractDevice.__init__(self, data, datalogger)
-    
-        self.device = BrickletSegmentDisplay4x7(self.uid, datalogger.ipcon)
-        self.identifier = BrickletSegmentDisplay4x7.DEVICE_IDENTIFIER
-        
-        self.__name__ = Identifier.SPECIAL_DEVICE
-        
-
-    def start_timer(self):
-        """
-        Starts all timer for all loggable variables of the devices.
-        """
-        AbstractDevice.start_timer(self)
-        
-        value1 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS]
-        value2 = self.data[Identifier.SPECIAL_DEVICE_VALUE][Identifier.SEGMENT_DISPLAY_4x7_COUNTER_VALUE]
-        
-        self.datalogger.timers.append(utils.LoggerTimer(value1, self._timer_segments.__name__, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self))
-        self.datalogger.timers.append(utils.LoggerTimer(value2, self._timer_counter_value.__name__, Identifier.SEGMENT_DISPLAY_4x7_COUNTER_VALUE, self))
-
-    def _timer_segments(self, var_name):
-        """
-        LoggerTimer function to log some variables of SegmentDisplay4x7Bricklet.
-        """
-        try:
-            segment, brightness, colon = self.device.get_segments()
-
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_1]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_1, segment[0]))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_2]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_2, segment[1]))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_3]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_3, segment[2]))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_4]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_Identifier.SEGMENT_4, segment[3]))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_BRIGTHNESS]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_BRIGTHNESS, brightness))
-            if self.data[Identifier.SPECIAL_DEVICE_BOOL][Identifier.SEGMENT_DISPLAY_4x7_COLON]:
-                self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_COLON, colon))
-        except ip_connection.Error as e:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(e.value, e.description)))
-        except Exception as ex:
-            self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_SEGMENTS, self._exception_msg(str(self.identifier) + "-" + str(var_name), ex)))
-
-    def _timer_counter_value(self, var_name):
-        """
-        LoggerTimer function to log the counter value of SegmentDisplay4x7Bricklet.
-        """
-        value = self._try_catch(self.device.get_counter_value)
-        self.datalogger.add_to_queue(utils.CSVData(self.uid, self.identifier, Identifier.SEGMENT_DISPLAY_4x7_COUNTER_VALUE, value))
-              
 ############################################################################################
 # ##NOT SUPPORTED
 # INDUSTRIAL_DIGITAL_IN_4 = "Industrial Digital In 4"
