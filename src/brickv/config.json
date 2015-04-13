@@ -1,126 +1,118 @@
 {
-  "ComplexDevice": [
+  "DEVICES": [
     {
-      "class": "Color", 
-      "name": "Color", 
-      "uid": "oxv", 
+      "name": "Ambient Light Bricklet",
+      "uid": "mbk",
       "values": {
-        "Color Temperature": {
-          "args": null, 
-          "func_name": "get_color_temperature", 
-          "interval": 500, 
-          "var_bool": [
-            true
-          ], 
-          "var_name": [
-            "Color Temperature"
-          ]
-        }, 
+        "Analog Value": {
+            "interval": 0
+      },
         "Illuminance": {
-          "args": null, 
-          "func_name": "get_illuminance", 
-          "interval": 500, 
-          "var_bool": [
-            true
-          ], 
-          "var_name": [
-            "Illuminance"
-          ]
-        }, 
-        "Rgbc": {
-          "args": null, 
-          "func_name": "get_color", 
-          "interval": 500, 
-          "var_bool": [
-            true, 
-            true, 
-            true, 
-            true
-          ], 
-          "var_name": [
-            "b", 
-            "c", 
-            "g", 
-            "r"
-          ]
+            "interval": 0
+        }
+      }
+    },
+    {
+      "name": "Color Bricklet",
+      "uid": "oxv",
+      "values": {
+        "Color": {
+            "interval": 0,
+            "subvalues": {
+                "Red" : true,
+                "Green" : false,
+                "Blue" : true,
+                "Clear" : false
+            }
+        },
+        "Illuminance": {
+        "interval": 0
+        },
+        "Color Temperature": {
+        "interval": 0
+        }
+      }
+    },
+    {
+      "name": "Segment Display 4x7 Bricklet",
+      "uid": "kSN",
+      "values": {
+        "Segments": {
+            "interval": 0,
+            "subvalues": {
+                "Segm1" : true,
+                "Segm2" : true,
+                "Segm3" : false,
+                "Segm4" : false,
+                "Brightness" : true,
+                "Colon" : false
+            }
+        },
+        "Counter Value": {
+            "interval": 0
+        }
+      }
+    },
+    {
+      "name": "GPS Bricklet",
+      "uid": "fa1",
+      "values": {
+        "Altitude": {
+            "interval": 1000,
+            "subvalues": {
+                "Altitude" : true,
+                "Geoidal Separation" : true
+            }
+        },
+        "Coordinates": {
+            "interval": 0,
+            "subvalues": {
+                "Latitude" : true,
+                "NS" : true,
+                "Longitude" : true,
+                "EW" : true,
+                "PDOP" : true,
+                "HDOP" : true,
+                "VDOP" : true,
+                "EPE" : true                
+            }
+        },
+        "Date Time": {
+            "interval": 0,
+            "subvalues": {
+                "Date" : true,
+                "Time" : true
+            }
+        },
+        "Motion": {
+            "interval": 0,
+            "subvalues": {
+                "Course" : true,
+                "Speed" : true
+            }
+        },
+        "Status": {
+            "interval": 1000,
+            "subvalues": {
+                "Fix" : true,
+                "Satellites View" : true,
+                "Satellites Used" : true
+            }
         }
       }
     }
-  ], 
+  ],
   "GENERAL": {
     "event_log_level": 10, 
-    "event_log_to_console": false, 
+    "event_log_to_console": true,
     "event_log_to_file": false, 
-    "event_path_to_eventfile": "C:/Programmierung/GitHub/brickv/src/brickv/log_file.log", 
+    "event_path_to_eventfile": "./log_file.log",
     "host": "localhost", 
     "log_count": 1, 
     "log_to_file": true, 
     "max_logged_file_size": 0, 
-    "path_to_file": "C:/Programmierung/GitHub/brickv/src/brickv/data.csv", 
+    "path_to_file": "./data.csv",
     "port": 4223
-  }, 
-  "SimpleDevice": [
-    {
-      "class": "DistanceIR", 
-      "name": "Distance IR", 
-      "uid": "gzp", 
-      "values": {
-        "Analog Value": {
-          "args": null, 
-          "func_name": "get_analog_value", 
-          "interval": 500
-        }, 
-        "Distance": {
-          "args": null, 
-          "func_name": "get_distance", 
-          "interval": 500
-        }
-      }
-    }, 
-    {
-      "class": "BrickletTemperature", 
-      "name": "Temperature", 
-      "uid": "nki", 
-      "values": {
-        "Temperature": {
-          "args": null, 
-          "func_name": "get_temperature", 
-          "interval": 500
-        }
-      }
-    }
-  ], 
-  "SpecialDevice": [
-    {
-      "class": "GPSBricklet", 
-      "name": "GPS", 
-      "special_bool": {
-        "Altitude Value": true, 
-        "Course": true, 
-        "Date": true, 
-        "Epe": true, 
-        "Ew": true, 
-        "Fix Status": true, 
-        "Geoidal Seperation": true, 
-        "Hdop": true, 
-        "Latitude": true, 
-        "Longitude": true, 
-        "Ns": true, 
-        "Pdop": true, 
-        "Satellites Used": true, 
-        "Satellites View": true, 
-        "Speed": true, 
-        "Time": true, 
-        "Vdop": true
-      }, 
-      "special_values": {
-        "Altitude": 500, 
-        "Coordinates": 500, 
-        "Date Time": 500, 
-        "Motion": 500
-      }, 
-      "uid": "fa1"
-    }
-  ], 
+  },
   "XIVELY": {}
 }
