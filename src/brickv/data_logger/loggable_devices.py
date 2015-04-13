@@ -120,119 +120,131 @@ class Identifier(object):
                     'subvalues': None
                 }
             }
+        },
+        AnalogIn.DEVICE_DISPLAY_NAME: {
+            'class': AnalogIn,
+            'values': {
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': None
+                },
+                'Voltage': {
+                    'getter': lambda device: device.get_voltage(),
+                    'subvalues': None
+                }
+            }
+        },
+        AnalogOut.DEVICE_DISPLAY_NAME: {
+            'class': AnalogOut,
+            'values': {
+                'Voltage': {
+                    'getter': lambda device: device.get_voltage(),
+                    'subvalues': None
+                }
+            }
+        },
+        Barometer.DEVICE_DISPLAY_NAME: {
+            'class': Barometer,
+            'values': {
+                'Air Pressure': {
+                    'getter': lambda device: device.get_air_pressure(),
+                    'subvalues': None
+                },
+                'Altitude': {
+                    'getter': lambda device: device.get_altitude(),
+                    'subvalues': None
+                },
+                'Chip Temperature': {
+                    'getter': lambda device: device.get_chip_temperature(),
+                    'subvalues': None
+                }
+            }
+        },
+        Color.DEVICE_DISPLAY_NAME: {
+            'class': Color,
+            'values': {
+                'Color': {
+                    'getter': lambda device: device.get_color(),
+                    'subvalues': ['R', 'G', 'B', 'C']
+                },
+                'Illuminance': {
+                    'getter': lambda device: device.get_illuminance(),
+                    'subvalues': None
+                },
+                'Color Temperature': {
+                    'getter': lambda device: device.get_color_temperature(),
+                    'subvalues': None
+                }
+            }
+        },
+        Current12.DEVICE_DISPLAY_NAME: {
+            'class': Current12,
+            'values': {
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': None
+                },
+                'Current': {
+                    'getter': lambda device: device.get_current(),
+                    'subvalues': None
+                }
+            }
+        },
+        Current25.DEVICE_DISPLAY_NAME: {
+            'class': Current25,
+            'values': {
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': None
+                },
+                'Current': {
+                    'getter': lambda device: device.get_current(),
+                    'subvalues': None
+                }
+            }
+        },
+        DistanceIR.DEVICE_DISPLAY_NAME: {
+            'class': DistanceIR,
+            'values': {
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': None
+                },
+                'Distance': {
+                    'getter': lambda device: device.get_distance(),
+                    'subvalues': None
+                }
+            }
+        },
+        DistanceUS.DEVICE_DISPLAY_NAME: {
+            'class': DistanceUS,
+            'values': {
+                'Distance': {
+                    'getter': lambda device: device.get_distance_value(),
+                    'subvalues': None
+                }
+            }
+        },
+        DualButton.DEVICE_DISPLAY_NAME: {
+            'class': DualButton,
+            'values': {
+                'Button State': {
+                    'getter': lambda device: device.get_button_state(),
+                    'subvalues': ['Left', 'Right']#TODO Check this!
+                },
+                'Led State': {
+                    'getter': lambda device: device.get_led_state(),
+                    'subvalues': ['Left', 'Right']
+                }
+            }
         }
     }
-
-
     # ##Special Identifiers
     FUNCTION_NAME = {}
     CLASS_NAME = {}
     VAR_ARGS = {}
-
-    # ##Bricks
-    DC_BRICK = "DC Brick"
-    CLASS_NAME[DC_BRICK] = "DC"
-    DC_BRICK_VELOCITY = "Velocity"
-    DC_BRICK_CURRENT_VELOCITY = "Current Velocity"
-    DC_BRICK_ACCELERATION = "Acceleration"
-    DC_BRICK_STACK_INPUT_VOLTAGE = "Stack Input Voltage"
-    DC_BRICK_EXTERNAL_INTPU_VOLTAGE = "External Input Voltage"
-    DC_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
-    DC_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
-    
-    #needs refactoring for namedtuples and api changes!
-#     IMU_BRICK = "IMU Brick"
-#     CLASS_NAME[IMU_BRICK] = "IMU"
-#     IMU_BRICK_ORIENTATION = "Orientation"
-#     IMU_BRICK_ORIENTATION_ROLL = "Roll"
-#     IMU_BRICK_ORIENTATION_YAW = "Yaw"
-#     IMU_BRICK_ORIENTATION_PITCH = "Pitch"
-#     IMU_BRICK_QUATERNION = "Quaternion"
-#     IMU_BRICK_QUATERNION_X = "X"
-#     IMU_BRICK_QUATERNION_Y = "Y"
-#     IMU_BRICK_QUATERNION_Z = "Z"
-#     IMU_BRICK_QUATERNION_W = "W"
-#     IMU_BRICK_ACCELERATION = "Acceleration"
-#     IMU_BRICK_ACCELERATION_X = "X"
-#     IMU_BRICK_ACCELERATION_Y = "Y"
-#     IMU_BRICK_ACCELERATION_Z = "Z"
-#     IMU_BRICK_MAGNETIC_FIELD = "Magnetic Field"
-#     IMU_BRICK_MAGNETIC_FIELD_X = "X"
-#     IMU_BRICK_MAGNETIC_FIELD_Y = "Y"
-#     IMU_BRICK_MAGNETIC_FIELD_Z = "Z"
-#     IMU_BRICK_ANGULAR_VELOCITY = "Angular Velocity"
-#     IMU_BRICK_ANGULAR_VELOCITY_X = "X"
-#     IMU_BRICK_ANGULAR_VELOCITY_Y = "Y"
-#     IMU_BRICK_ANGULAR_VELOCITY_Z = "Z"
-#     IMU_BRICK_IMU_TEMPERATURE = "IMU Temperature"
-#     IMU_BRICK_LEDS = "Leds"
-#     FUNCTION_NAME[IMU_BRICK + IMU_BRICK_LEDS] = "are_leds_on"
-#     IMU_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
-    
-    STEPPER_BRICK = "Stepper Brick"
-    CLASS_NAME[STEPPER_BRICK] = "Stepper"
-    STEPPER_BRICK_CURRENT_VELOCITY = "Current Velocity"
-    STEPPER_BRICK_STEPS = "Steps"
-    STEPPER_BRICK_REMAINING_STEPS = "Remaining Steps"
-    STEPPER_BRICK_CURRENT_POSITION = "Current Position"
-    STEPPER_BRICK_STACK_INPUT_VOLTAGE = "Stack Input Voltage"
-    STEPPER_BRICK_EXTERNAL_INPUT_VOLTAGE = "External Input Voltage"
-    STEPPER_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
-    STEPPER_BRICK_SNYC_RECT = "Sync Rect"
-    FUNCTION_NAME[STEPPER_BRICK + STEPPER_BRICK_SNYC_RECT] = "is_sync_rect"
-
     # ##Bricklets
-    AMBIENT_LIGHT = "Ambient Light"
-    AMBIENT_LIGHT_ILLUMINANCE = "Illuminance"
-    AMBIENT_LIGHT_ANALOG_VALUE = "Analog Value"
-    
-    ANALOG_IN = "Analog In"
-    ANALOG_IN_VOLTAGE = "Voltage"
-    ANALOG_IN_ANALOG_VALUE = "Analog Value"
-    
-    ANALOG_OUT = "Analog Out"
-    ANALOG_OUT_VOLTAGE = "Voltage"
-    
-    BAROMETER = "Barometer"
-    BAROMETER_AIR_PRESSURE = "Air Pressure"
-    BAROMETER_ALTITUDE = "Altitude"
-    BAROMETER_CHIP_TEMPERATURE = "Chip Temperature"
-    
-    COLOR = "Color"
-    COLOR_RED = "r"
-    COLOR_GREEN = "g"
-    COLOR_BLUE = "b"
-    COLOR_CLEAR = "c"
-    COLOR_COLOR = "Rgbc"
-    FUNCTION_NAME[COLOR + COLOR_COLOR] = "get_color"
-    COLOR_ILLUMINANCE = "Illuminance"
-    COLOR_TEMPERATURE = "Color Temperature"
-    
-    CURRENT_12 = "Current 12"
-    CURRENT_12_CURRENT = "Current"
-    CURRENT_12_ANALOG_VALUE = "Analog Value"
-    
-    CURRENT_25 = "Current 25"
-    CURRENT_25_CURRENT = "Current"
-    CURRENT_25_ANALOG_VALUE = "Analog Value"
-    
-    DISTANCE_IR = "Distance IR"
-    DISTANCE_IR_DISTANCE = "Distance"
-    DISTANCE_IR_ANALOG_VALUE = "Analog Value"
-    
-    DISTANCE_US = "Distance US"
-    DISTANCE_US_DISTANCE = "Distance"
-    FUNCTION_NAME[DISTANCE_US + DISTANCE_US_DISTANCE] = "get_distance_value"
-    
-    DUAL_BUTTON = "Dual Button"
-    DUAL_BUTTON_BUTTONS = "Buttons"
-    FUNCTION_NAME[DUAL_BUTTON + DUAL_BUTTON_BUTTONS] = "get_button_state"
-    DUAL_BUTTON_BUTTON_L = "button_l"
-    DUAL_BUTTON_BUTTON_R = "button_r"
-    DUAL_BUTTON_LEDS = "Leds"
-    FUNCTION_NAME[DUAL_BUTTON + DUAL_BUTTON_LEDS] = "get_led_state"
-    DUAL_BUTTON_LED_L = "led_l"
-    DUAL_BUTTON_LED_R = "led_r"
+
     
     DUAL_RELAY = "Dual Relay"
     DUAL_RELAY_STATE = "State"
@@ -378,6 +390,69 @@ class Identifier(object):
     SEGMENT_DISPLAY_4x7_BRIGTHNESS = "Brightness"
     SEGMENT_DISPLAY_4x7_COLON = "Colon"
     SEGMENT_DISPLAY_4x7_COUNTER_VALUE = "Counter Value"
+
+    #TODO needs attention -> check device definition
+    DUAL_BUTTON = "Dual Button"
+    DUAL_BUTTON_BUTTONS = "Buttons"
+    FUNCTION_NAME[DUAL_BUTTON + DUAL_BUTTON_BUTTONS] = "get_button_state"
+    DUAL_BUTTON_BUTTON_L = "button_l"
+    DUAL_BUTTON_BUTTON_R = "button_r"
+    DUAL_BUTTON_LEDS = "Leds"
+    FUNCTION_NAME[DUAL_BUTTON + DUAL_BUTTON_LEDS] = "get_led_state"
+    DUAL_BUTTON_LED_L = "led_l"
+    DUAL_BUTTON_LED_R = "led_r"
+
+    # ##Bricks
+    DC_BRICK = "DC Brick"
+    CLASS_NAME[DC_BRICK] = "DC"
+    DC_BRICK_VELOCITY = "Velocity"
+    DC_BRICK_CURRENT_VELOCITY = "Current Velocity"
+    DC_BRICK_ACCELERATION = "Acceleration"
+    DC_BRICK_STACK_INPUT_VOLTAGE = "Stack Input Voltage"
+    DC_BRICK_EXTERNAL_INTPU_VOLTAGE = "External Input Voltage"
+    DC_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
+    DC_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
+
+    #needs refactoring for namedtuples and api changes!
+#     IMU_BRICK = "IMU Brick"
+#     CLASS_NAME[IMU_BRICK] = "IMU"
+#     IMU_BRICK_ORIENTATION = "Orientation"
+#     IMU_BRICK_ORIENTATION_ROLL = "Roll"
+#     IMU_BRICK_ORIENTATION_YAW = "Yaw"
+#     IMU_BRICK_ORIENTATION_PITCH = "Pitch"
+#     IMU_BRICK_QUATERNION = "Quaternion"
+#     IMU_BRICK_QUATERNION_X = "X"
+#     IMU_BRICK_QUATERNION_Y = "Y"
+#     IMU_BRICK_QUATERNION_Z = "Z"
+#     IMU_BRICK_QUATERNION_W = "W"
+#     IMU_BRICK_ACCELERATION = "Acceleration"
+#     IMU_BRICK_ACCELERATION_X = "X"
+#     IMU_BRICK_ACCELERATION_Y = "Y"
+#     IMU_BRICK_ACCELERATION_Z = "Z"
+#     IMU_BRICK_MAGNETIC_FIELD = "Magnetic Field"
+#     IMU_BRICK_MAGNETIC_FIELD_X = "X"
+#     IMU_BRICK_MAGNETIC_FIELD_Y = "Y"
+#     IMU_BRICK_MAGNETIC_FIELD_Z = "Z"
+#     IMU_BRICK_ANGULAR_VELOCITY = "Angular Velocity"
+#     IMU_BRICK_ANGULAR_VELOCITY_X = "X"
+#     IMU_BRICK_ANGULAR_VELOCITY_Y = "Y"
+#     IMU_BRICK_ANGULAR_VELOCITY_Z = "Z"
+#     IMU_BRICK_IMU_TEMPERATURE = "IMU Temperature"
+#     IMU_BRICK_LEDS = "Leds"
+#     FUNCTION_NAME[IMU_BRICK + IMU_BRICK_LEDS] = "are_leds_on"
+#     IMU_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
+
+    STEPPER_BRICK = "Stepper Brick"
+    CLASS_NAME[STEPPER_BRICK] = "Stepper"
+    STEPPER_BRICK_CURRENT_VELOCITY = "Current Velocity"
+    STEPPER_BRICK_STEPS = "Steps"
+    STEPPER_BRICK_REMAINING_STEPS = "Remaining Steps"
+    STEPPER_BRICK_CURRENT_POSITION = "Current Position"
+    STEPPER_BRICK_STACK_INPUT_VOLTAGE = "Stack Input Voltage"
+    STEPPER_BRICK_EXTERNAL_INPUT_VOLTAGE = "External Input Voltage"
+    STEPPER_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
+    STEPPER_BRICK_SNYC_RECT = "Sync Rect"
+    FUNCTION_NAME[STEPPER_BRICK + STEPPER_BRICK_SNYC_RECT] = "is_sync_rect"
 
 '''
 /*---------------------------------------------------------------------------
