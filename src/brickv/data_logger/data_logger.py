@@ -116,20 +116,24 @@ class DataLogger(threading.Thread):
         '''
         This function creates the actual objects for each device out of the configuration
         '''
-        simple_devices = self._configuration._simple_devices
-        complex_devices = self._configuration._complex_devices
-        special_devices = self._configuration._special_devices
-        
+        #simple_devices = self._configuration._simple_devices
+        #complex_devices = self._configuration._complex_devices
+        #special_devices = self._configuration._special_devices
+        device_list = self._configuration._devices
         # start the timers
         try:
+            for i in range(0, len(device_list)):
+                loggable_devices.DeviceImpl(device_list[i], self).start_timer()
+
+            """
             for i in range(0, len(simple_devices)):
                 loggable_devices.SimpleDevice(simple_devices[i], self).start_timer()
-             
+
             for i in range(0, len(complex_devices)):
                 loggable_devices.ComplexDevice(complex_devices[i], self).start_timer()
-         
+
             for i in range(0, len(special_devices)):
-                (special_devices[i][loggable_devices.Identifier.DEVICE_CLASS](special_devices[i], self)).start_timer()
+                (special_devices[i][loggable_devices.Identifier.DEVICE_CLASS](special_devices[i], self)).start_timer()"""
 
         except Exception as exc:
             if str(exc) == "substring not found":
