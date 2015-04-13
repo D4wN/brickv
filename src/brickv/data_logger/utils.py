@@ -84,8 +84,7 @@ class CSVData(object):
             self.timestamp = CSVData._get_timestamp()
         else:
             self.timestamp = time_stamp
-        
-    @staticmethod
+
     def _get_timestamp():
         """
         Adds a timestamp in ISO 8601 standard, with ms
@@ -105,8 +104,7 @@ class CSVData(object):
         ts += utc_string
 
         return ts
-        
-    @staticmethod
+
     def _time_utc_offset():
         if time.localtime(time.time()).tm_isdst and time.daylight:
             return -time.altzone / (60 * 60)
