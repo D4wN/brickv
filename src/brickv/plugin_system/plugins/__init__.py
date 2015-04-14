@@ -1,5 +1,7 @@
+from brickv.plugin_system.plugins.ac_current import device_class as ac_current
 from brickv.plugin_system.plugins.accelerometer import device_class as accelerometer
 from brickv.plugin_system.plugins.ambient_light import device_class as ambient_light
+from brickv.plugin_system.plugins.ambient_light_v2 import device_class as ambient_light_v2
 from brickv.plugin_system.plugins.analog_in import device_class as analog_in
 from brickv.plugin_system.plugins.analog_in_v2 import device_class as analog_in_v2
 from brickv.plugin_system.plugins.analog_out import device_class as analog_out
@@ -19,6 +21,8 @@ from brickv.plugin_system.plugins.hall_effect import device_class as hall_effect
 from brickv.plugin_system.plugins.heart_rate import device_class as heart_rate
 from brickv.plugin_system.plugins.humidity import device_class as humidity
 from brickv.plugin_system.plugins.imu import device_class as imu
+from brickv.plugin_system.plugins.imu_v2 import device_class as imu_v2
+from brickv.plugin_system.plugins.industrial_analog_out import device_class as industrial_analog_out
 from brickv.plugin_system.plugins.industrial_digital_in_4 import device_class as industrial_digital_in_4
 from brickv.plugin_system.plugins.industrial_digital_out_4 import device_class as industrial_digital_out_4
 from brickv.plugin_system.plugins.industrial_dual_0_20ma import device_class as industrial_dual_0_20ma
@@ -59,8 +63,10 @@ from brickv.plugin_system.plugins.voltage import device_class as voltage
 from brickv.plugin_system.plugins.voltage_current import device_class as voltage_current
 
 device_classes = [
+    ac_current,
     accelerometer,
     ambient_light,
+    ambient_light_v2,
     analog_in,
     analog_in_v2,
     analog_out,
@@ -80,6 +86,8 @@ device_classes = [
     heart_rate,
     humidity,
     imu,
+    imu_v2,
+    industrial_analog_out,
     industrial_digital_in_4,
     industrial_digital_out_4,
     industrial_dual_0_20ma,

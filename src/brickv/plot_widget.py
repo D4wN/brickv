@@ -300,16 +300,26 @@ class YScale(Scale):
         painter.restore()
 
 class Plot(QWidget):
-    def __init__(self, parent, y_scale_title_text, plots):
+    def __init__(self, parent, y_scale_title_text, plots, scales_visible=True,
+                 curve_outer_border_visible=True, curve_motion_granularity=10,
+                 canvas_color=QColor(245, 245, 245)):
         QWidget.__init__(self, parent)
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.plots = plots
+        self.scales_visible = scales_visible
         self.history_length_x = 20 # seconds
-        self.curve_outer_border = 5 # px, fixed
+
+        if curve_outer_border_visible:
+            self.curve_outer_border = 5 # px, fixed
+        else:
+            self.curve_outer_border = 0 # px, fixed
+
+        self.curve_motion_granularity = curve_motion_granularity
         self.curve_to_scale = 8 # px, fixed
         self.cross_hair_visible = False
+        self.canvas_color = canvas_color
 
         self.tick_text_font = self.font()
 
@@ -343,20 +353,29 @@ class Plot(QWidget):
         painter = QPainter(self)
         width = self.width()
         height = self.height()
-        curve_width = width - self.y_scale.total_width - self.curve_to_scale - self.curve_outer_border
-        curve_height = height - self.y_scale_height_offset - self.x_scale.total_height - self.curve_to_scale
+
+        if self.scales_visible:
+            curve_width = width - self.y_scale.total_width - self.curve_to_scale - self.curve_outer_border
+            curve_height = height - self.y_scale_height_offset - self.x_scale.total_height - self.curve_to_scale
+        else:
+            curve_width = width - self.curve_outer_border - self.curve_outer_border
+            curve_height = height - self.curve_outer_border - self.curve_outer_border
 
         if DEBUG:
             painter.fillRect(0, 0, width, height, Qt.green)
 
         # fill canvas
-        canvas_x = self.y_scale.total_width + self.curve_to_scale - self.curve_outer_border
-        canvas_y = self.y_scale_height_offset - self.curve_outer_border
+        if self.scales_visible:
+            canvas_x = self.y_scale.total_width + self.curve_to_scale - self.curve_outer_border
+            canvas_y = self.y_scale_height_offset - self.curve_outer_border
+        else:
+            canvas_x = 0
+            canvas_y = 0
+
         canvas_width = self.curve_outer_border + curve_width + self.curve_outer_border
         canvas_height = self.curve_outer_border + curve_height + self.curve_outer_border
 
-        painter.fillRect(canvas_x, canvas_y, canvas_width, canvas_height,
-                         QColor(245, 245, 245))
+        painter.fillRect(canvas_x, canvas_y, canvas_width, canvas_height, self.canvas_color)
 
         # draw cross hair at cursor position
         if self.cross_hair_visible:
@@ -371,14 +390,14 @@ class Plot(QWidget):
                 painter.drawLine(p_x, canvas_y, p_x, canvas_y + canvas_height - 1)
 
         # draw canvas border
-        painter.setPen(QColor(190, 190, 190))
-        painter.drawRect(canvas_x, canvas_y, canvas_width - 1, canvas_height - 1) # -1 to accommodate the 1px width of the border
-
-        painter.setPen(Qt.black)
+        if self.curve_outer_border > 0:
+            painter.setPen(QColor(190, 190, 190))
+            painter.drawRect(canvas_x, canvas_y, canvas_width - 1, canvas_height - 1) # -1 to accommodate the 1px width of the border
+            painter.setPen(Qt.black)
 
         if DEBUG:
-            painter.fillRect(self.y_scale.total_width + self.curve_to_scale,
-                             self.y_scale_height_offset,
+            painter.fillRect(canvas_x + self.curve_outer_border,
+                             canvas_y + self.curve_outer_border,
                              curve_width,
                              curve_height,
                              Qt.cyan)
@@ -390,18 +409,25 @@ class Plot(QWidget):
         factor_x = float(curve_width) / self.history_length_x
         factor_y = float(curve_height - 1) / max(y_max_scale - y_min_scale, EPSILON) # -1 to accommodate the 1px width of the curve
 
-        self.draw_x_scale(painter, factor_x)
-        self.draw_y_scale(painter, curve_height, factor_y)
+        if self.scales_visible:
+            self.draw_x_scale(painter, factor_x)
+            self.draw_y_scale(painter, curve_height, factor_y)
 
         # draw curves
-        if self.x_min != None:
-            painter.save()
-            painter.translate(self.y_scale.total_width + self.curve_to_scale,
-                              self.y_scale_height_offset + curve_height - 1) # -1 to accommodate the 1px width of the curve
-            painter.scale(1, -1)
-
+        if self.x_min != None and self.x_max != None:
             x_min = self.x_min
+            x_max = self.x_max
             drawLine = painter.drawLine
+
+            if self.scales_visible:
+                curve_x_offset = 0
+            else:
+                curve_x_offset = round((self.history_length_x - (x_max - x_min)) * factor_x)
+
+            painter.save()
+            painter.translate(canvas_x + self.curve_outer_border + curve_x_offset,
+                              canvas_y + self.curve_outer_border + curve_height - 1) # -1 to accommodate the 1px width of the curve
+            painter.scale(1, -1)
 
             for c in range(len(self.curves_x)):
                 if not self.curves_visible[c]:
@@ -473,6 +499,9 @@ class Plot(QWidget):
         if self.x_min == None:
             self.x_min = x
 
+        if self.x_max == None:
+            self.x_max = x
+
         if self.curves_visible[c]:
             if self.y_min == None:
                 self.y_min = y
@@ -490,6 +519,9 @@ class Plot(QWidget):
         if self.curves_x_min[c] == None:
             self.curves_x_min[c] = x
 
+        if self.curves_x_max[c] == None:
+            self.curves_x_max[c] = x
+
         if self.curves_y_min[c] == None:
             self.curves_y_min[c] = y
         else:
@@ -500,27 +532,37 @@ class Plot(QWidget):
         else:
             self.curves_y_max[c] = max(self.curves_y_max[c], y)
 
-        if len(self.curves_x[c]) > 0 and (self.curves_x[c][-1] - self.curves_x[c][0]) >= self.history_length_x:
-            self.curves_x[c] = self.curves_x[c][10:] # remove first second
-            self.curves_y[c] = self.curves_y[c][10:] # remove first second
+        if len(self.curves_x[c]) > 0:
+            if (self.curves_x[c][-1] - self.curves_x[c][0]) >= self.history_length_x:
+                self.curves_x[c] = self.curves_x[c][self.curve_motion_granularity:]
+                self.curves_y[c] = self.curves_y[c][self.curve_motion_granularity:]
 
-            if len(self.curves_x[c]) > 0:
-                self.curves_x_min[c] = self.curves_x[c][0]
+                if len(self.curves_x[c]) > 0:
+                    self.curves_x_min[c] = self.curves_x[c][0]
+                else:
+                    self.curves_x_min[c] = None
+
+                if len(self.curves_x[c]) > 0:
+                    self.curves_x_max[c] = self.curves_x[c][-1]
+                else:
+                    self.curves_x_max[c] = None
+
+                self.curves_y_min[c] = min(self.curves_y[c])
+                self.curves_y_max[c] = max(self.curves_y[c])
+
+                self.update_x_min_max_y_min_max()
             else:
-                self.curves_x_min[c] = None
-
-            self.curves_y_min[c] = min(self.curves_y[c])
-            self.curves_y_max[c] = max(self.curves_y[c])
-
-            self.update_x_min_y_min_max()
+                self.curves_x_max[c] = self.curves_x[c][-1]
+                self.x_max = min(self.curves_x_max)
 
         if self.curves_visible[c] and (last_y_min != self.y_min or last_y_max != self.y_max):
             self.update_y_min_max_scale()
 
         self.update()
 
-    def update_x_min_y_min_max(self):
+    def update_x_min_max_y_min_max(self):
         self.x_min = min(self.curves_x_min)
+        self.x_max = min(self.curves_x_max)
 
         if sum(map(int, self.curves_visible)) > 0:
             self.y_min = min([curve_y_min for k, curve_y_min in enumerate(self.curves_y_min) if self.curves_visible[k]])
@@ -609,7 +651,7 @@ class Plot(QWidget):
 
         self.curves_visible[c] = show
 
-        self.update_x_min_y_min_max()
+        self.update_x_min_max_y_min_max()
 
         if last_y_min != self.y_min or last_y_max != self.y_max:
             self.update_y_min_max_scale()
@@ -621,9 +663,11 @@ class Plot(QWidget):
         self.curves_x = [] # per curve x values
         self.curves_y = [] # per curve y values
         self.curves_x_min = [] # per curve minimum x value
+        self.curves_x_max = [] # per curve maximum x value
         self.curves_y_min = [] # per curve minimum y value
         self.curves_y_max = [] # per curve maximum y value
         self.x_min = None # minimum x value over all curves
+        self.x_max = None # maximum x value over all curves
         self.y_min = None # minimum y value over all curves
         self.y_max = None # maximum y value over all curves
         self.y_type = None
@@ -633,19 +677,23 @@ class Plot(QWidget):
             self.curves_x.append([])
             self.curves_y.append([])
             self.curves_x_min.append(None)
+            self.curves_x_max.append(None)
             self.curves_y_min.append(None)
             self.curves_y_max.append(None)
 
         self.update()
 
 class PlotWidget(QWidget):
-    def __init__(self, y_scale_title_text, plots, clear_button=None, parent=None):
+    def __init__(self, y_scale_title_text, plots, clear_button=None, parent=None,
+                 scales_visible=True, curve_outer_border_visible=True,
+                 curve_motion_granularity=10, canvas_color=QColor(245, 245, 245)):
         QWidget.__init__(self, parent)
 
         self.setMinimumSize(300, 250)
 
         self.stop = True
-        self.plot = Plot(self, y_scale_title_text, plots)
+        self.plot = Plot(self, y_scale_title_text, plots, scales_visible,
+                         curve_outer_border_visible, curve_motion_granularity, canvas_color)
         self.set_fixed_y_scale = self.plot.set_fixed_y_scale
         self.plot_buttons = []
         self.first_show = True
@@ -728,6 +776,7 @@ class PlotWidget(QWidget):
 
                     plot_button.setMinimumSize(size)
 
+    # internal
     def add_new_data(self):
         if self.stop:
             return
@@ -740,6 +789,7 @@ class PlotWidget(QWidget):
 
         self.counter += 1
 
+    # internal
     def clear_clicked(self):
         self.plot.clear_graph()
         self.counter = 0
