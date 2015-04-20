@@ -11,3 +11,18 @@ src/brickv/frozen_images.py
 src/build_data/linux/brickv/usr/share/brickv
 src/build_data/linux/brick-flash-cmd/usr/bin
 src/MANIFEST.in
+.project
+.pydevproject
+.settings/org.eclipse.core.resources.prefs
+.externalToolBuilders/brickv Python Builder.launch
+brickv.config
+brickv.creator
+brickv.creator.user
+brickv.files
+brickv.includes
+src/brickv/data_logger/*.ini
+src/brickv/data_logger/*.cfg
+src/brickv/data_logger/*.csv
+src/brickv/data_logger/*.log
+.settings/org.eclipse.ltk.core.refactoring.prefs
+*.idea
