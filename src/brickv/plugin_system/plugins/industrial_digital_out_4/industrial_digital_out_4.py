@@ -22,14 +22,13 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from brickv.plugin_system.plugin_base import PluginBase
-from brickv.bindings.bricklet_industrial_digital_out_4 import BrickletIndustrialDigitalOut4
-from brickv.async_call import async_call
-
 from PyQt4.QtCore import Qt, pyqtSignal, QTimer
 
+from brickv.plugin_system.plugin_base import PluginBase
 from brickv.plugin_system.plugins.industrial_digital_out_4.ui_industrial_digital_out_4 import Ui_IndustrialDigitalOut4
-from brickv.bmp_to_pixmap import bmp_to_pixmap
+from brickv.bindings.bricklet_industrial_digital_out_4 import BrickletIndustrialDigitalOut4
+from brickv.async_call import async_call
+from brickv.load_pixmap import load_masked_pixmap
 
 class IndustrialDigitalOut4(PluginBase, Ui_IndustrialDigitalOut4):
     qtcb_monoflop = pyqtSignal(int, int)
@@ -41,8 +40,8 @@ class IndustrialDigitalOut4(PluginBase, Ui_IndustrialDigitalOut4):
         
         self.ido4 = self.device
         
-        self.gnd_pixmap = bmp_to_pixmap('plugin_system/plugins/industrial_digital_out_4/dio_gnd.bmp')
-        self.vcc_pixmap = bmp_to_pixmap('plugin_system/plugins/industrial_digital_out_4/dio_vcc.bmp')
+        self.gnd_pixmap = load_masked_pixmap('plugin_system/plugins/industrial_digital_out_4/dio_gnd.bmp')
+        self.vcc_pixmap = load_masked_pixmap('plugin_system/plugins/industrial_digital_out_4/dio_vcc.bmp')
         
         self.pin_buttons = [self.b0, self.b1, self.b2, self.b3, self.b4, self.b5, self.b6, self.b7, self.b8, self.b9, self.b10, self.b11, self.b12, self.b13, self.b14, self.b15]
         self.pin_button_icons = [self.b0_icon, self.b1_icon, self.b2_icon, self.b3_icon, self.b4_icon, self.b5_icon, self.b6_icon, self.b7_icon, self.b8_icon, self.b9_icon, self.b10_icon, self.b11_icon, self.b12_icon, self.b13_icon, self.b14_icon, self.b15_icon]

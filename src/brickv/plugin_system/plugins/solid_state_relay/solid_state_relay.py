@@ -22,15 +22,14 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
+from PyQt4.QtCore import pyqtSignal, QTimer
+
 from brickv.plugin_system.plugin_base import PluginBase
+from brickv.plugin_system.plugins.solid_state_relay.ui_solid_state_relay import Ui_SolidStateRelay
 from brickv.bindings import ip_connection
 from brickv.bindings.bricklet_solid_state_relay import BrickletSolidStateRelay
 from brickv.async_call import async_call
-
-from PyQt4.QtCore import pyqtSignal, QTimer
-
-from brickv.plugin_system.plugins.solid_state_relay.ui_solid_state_relay import Ui_SolidStateRelay
-from brickv.bmp_to_pixmap import bmp_to_pixmap
+from brickv.load_pixmap import load_masked_pixmap
 
 class SolidStateRelay(PluginBase, Ui_SolidStateRelay):
     qtcb_monoflop = pyqtSignal(bool)
@@ -52,8 +51,8 @@ class SolidStateRelay(PluginBase, Ui_SolidStateRelay):
         self.monoflop = False
         self.timebefore = 500
         
-        self.a_pixmap = bmp_to_pixmap('plugin_system/plugins/solid_state_relay/relay_a.bmp')
-        self.b_pixmap = bmp_to_pixmap('plugin_system/plugins/solid_state_relay/relay_b.bmp')
+        self.a_pixmap = load_masked_pixmap('plugin_system/plugins/solid_state_relay/relay_a.bmp')
+        self.b_pixmap = load_masked_pixmap('plugin_system/plugins/solid_state_relay/relay_b.bmp')
 
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update)

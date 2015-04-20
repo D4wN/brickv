@@ -21,14 +21,15 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from brickv.plugin_system.plugin_base import PluginBase
-from brickv.plot_widget import PlotWidget
-from brickv.bindings.bricklet_ambient_light_v2 import BrickletAmbientLightV2
-from brickv.async_call import async_call
-from brickv.utils import CallbackEmulator
-
-from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QLabel, QPainter, QColor, QBrush, QFrame, QComboBox
 from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QVBoxLayout, QHBoxLayout, QLabel, QPainter, \
+                        QColor, QBrush, QFrame, QComboBox
+
+from brickv.plugin_system.plugin_base import PluginBase
+from brickv.bindings.bricklet_ambient_light_v2 import BrickletAmbientLightV2
+from brickv.plot_widget import PlotWidget
+from brickv.async_call import async_call
+from brickv.callback_emulator import CallbackEmulator
 
 class AmbientLightFrame(QFrame):
     def __init__(self, parent = None):
@@ -156,6 +157,19 @@ class AmbientLightV2(PluginBase):
     def cb_illuminance(self, illuminance):
         self.current_value = illuminance/100.0
         self.illuminance_label.setText(illuminance)
+        
+        max_illuminance = 60000
+        i = self.range_combo.currentIndex()
+        if i == 0:
+            max_illuminance = 6400000
+        elif i == 1:
+            max_illuminance = 3200000
+        elif i == 2:
+            max_illuminance = 1600000
+        elif i == 3:
+            max_illuminance = 800000
+        elif i == 4:
+            max_illuminance = 130000
 
-        value = illuminance*255/64000
+        value = illuminance*255/max_illuminance
         self.alf.set_color(value, value, value)
