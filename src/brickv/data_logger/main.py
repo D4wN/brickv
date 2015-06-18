@@ -1,4 +1,4 @@
-# MAIN DATA_LOGGER PROGRAMM
+# MAIN DATA_LOGGER PROGRAM
 import argparse  # command line argument parser
 import os
 import signal

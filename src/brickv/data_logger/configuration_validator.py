@@ -55,7 +55,7 @@ class ConfigurationReader(object):
             return
 
         if pathToConfig is not None:
-            self.filenName = pathToConfig
+            self.fileName = pathToConfig
             self._read_json_config_file()
 
         if configuration is not None:
@@ -68,9 +68,8 @@ class ConfigurationReader(object):
         validator._error_count += self._readConfigErr
         validator.validate()
 
-
     def _read_json_config_file(self):
-        with codecs.open(self.filenName, 'r', 'UTF-8') as content_file:
+        with codecs.open(self.fileName, 'r', 'UTF-8') as content_file:
             try:
                 json_structure = json.load(content_file)
             except ValueError as e:
@@ -117,7 +116,6 @@ class ConfigurationValidator(object):
         file_size = self.json_config._general[self.CR.GENERAL_LOG_FILE_SIZE]
 
         self._log_space_counter = LogSpaceCounter(file_count, file_size)
-
 
     def validate(self):
         '''
@@ -278,6 +276,7 @@ class ConfigurationValidator(object):
                                                                 tier_array=["values"],
                                                                 msg="invalid interval " + str(interval)))
                         # TODO: Add sub value check here
+                        # TODO: Calc logtime values
 
     def validate_xively_section(self):
         '''
