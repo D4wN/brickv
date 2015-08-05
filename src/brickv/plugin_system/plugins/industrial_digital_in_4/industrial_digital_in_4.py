@@ -2,7 +2,7 @@
 """
 Industrial Digital In 4 Plugin
 Copyright (C) 2012 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 industrial_digital_in_4.py: Industrial Digital In 4 Plugin Implementation
 
@@ -22,18 +22,16 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
+from PyQt4.QtCore import Qt
+
 from brickv.plugin_system.plugin_base import PluginBase
-from PyQt4.QtCore import Qt, pyqtSignal
-from brickv.async_call import async_call
-
 from brickv.plugin_system.plugins.industrial_digital_in_4.ui_industrial_digital_in_4 import Ui_IndustrialDigitalIn4
-
 from brickv.bindings.bricklet_industrial_digital_in_4 import BrickletIndustrialDigitalIn4
-from brickv.bmp_to_pixmap import bmp_to_pixmap
+from brickv.async_call import async_call
+from brickv.callback_emulator import CallbackEmulator
+from brickv.load_pixmap import load_masked_pixmap
         
 class IndustrialDigitalIn4(PluginBase, Ui_IndustrialDigitalIn4):
-    qtcb_interrupt = pyqtSignal(int, int)
-    
     def __init__(self, *args):
         PluginBase.__init__(self, BrickletIndustrialDigitalIn4, *args)
 
@@ -41,8 +39,8 @@ class IndustrialDigitalIn4(PluginBase, Ui_IndustrialDigitalIn4):
         
         self.idi4 = self.device
         
-        self.gnd_pixmap = bmp_to_pixmap('plugin_system/plugins/industrial_digital_in_4/dio_gnd.bmp')
-        self.vcc_pixmap = bmp_to_pixmap('plugin_system/plugins/industrial_digital_in_4/dio_vcc.bmp')
+        self.gnd_pixmap = load_masked_pixmap('plugin_system/plugins/industrial_digital_in_4/dio_gnd.bmp')
+        self.vcc_pixmap = load_masked_pixmap('plugin_system/plugins/industrial_digital_in_4/dio_vcc.bmp')
         
         self.pin_buttons = [self.b0, self.b1, self.b2, self.b3, self.b4, self.b5, self.b6, self.b7, self.b8, self.b9, self.b10, self.b11, self.b12, self.b13, self.b14, self.b15]
         self.pin_button_icons = [self.b0_icon, self.b1_icon, self.b2_icon, self.b3_icon, self.b4_icon, self.b5_icon, self.b6_icon, self.b7_icon, self.b8_icon, self.b9_icon, self.b10_icon, self.b11_icon, self.b12_icon, self.b13_icon, self.b14_icon, self.b15_icon]
@@ -59,10 +57,10 @@ class IndustrialDigitalIn4(PluginBase, Ui_IndustrialDigitalIn4):
         
         self.available_ports = 0
         async_call(self.idi4.get_available_for_group, None, self.get_available_for_group_aysnc, self.increase_error_count)
-        
-        self.qtcb_interrupt.connect(self.cb_interrupt)
-        self.idi4.register_callback(self.idi4.CALLBACK_INTERRUPT,
-                                    self.qtcb_interrupt.emit)
+
+        self.cbe_value = CallbackEmulator(self.idi4.get_value,
+                                          self.cb_value,
+                                          self.increase_error_count)
         
         self.set_group.clicked.connect(self.set_group_clicked)
         
@@ -77,10 +75,10 @@ class IndustrialDigitalIn4(PluginBase, Ui_IndustrialDigitalIn4):
         async_call(self.idi4.get_debounce_period, None, self.debounce_time.setValue, self.increase_error_count)
         async_call(self.idi4.get_value, None, self.show_new_value, self.increase_error_count)
         self.reconfigure_everything()
-        async_call(self.idi4.set_interrupt, 0xFFFF, None, self.increase_error_count)
+        self.cbe_value.set_period(50)
 
     def stop(self):
-        async_call(self.idi4.set_interrupt, 0, None, self.increase_error_count)
+        self.cbe_value.set_period(0)
 
     def destroy(self):
         pass
@@ -179,7 +177,7 @@ class IndustrialDigitalIn4(PluginBase, Ui_IndustrialDigitalIn4):
         self.idi4.set_group(group)
         self.reconfigure_everything()
     
-    def cb_interrupt(self, interrupt_mask, value_mask):
+    def cb_value(self, value_mask):
         self.show_new_value(value_mask)
         
     def debounce_go_clicked(self):

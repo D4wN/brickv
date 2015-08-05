@@ -137,6 +137,7 @@ class REDTabSettingsNetwork(QtGui.QWidget, Ui_REDTabSettingsNetwork):
         self.pbutton_net_wireless_scan.clicked.connect(self.slot_pbutton_net_wireless_scan_clicked)
         self.pbutton_net_conf_refresh.clicked.connect(self.slot_network_conf_refresh_clicked)
         self.pbutton_net_connect.clicked.connect(self.slot_network_connect_clicked)
+        self.pbutton_net_conf_change_hostname.clicked.connect(self.slot_change_hostname_clicked)
 
         # Network fields
         self.address_configuration_gui(False)
@@ -152,6 +153,10 @@ class REDTabSettingsNetwork(QtGui.QWidget, Ui_REDTabSettingsNetwork):
 
     def tab_on_focus(self):
         self.is_tab_on_focus = True
+
+        # python-reconfigure is available since image version 1.7
+        self.pbutton_net_conf_change_hostname.setDisabled(self.image_version.number < (1, 7))
+        self.label_net_conf_change_hostname_hint.setVisible(self.image_version.number < (1, 7))
 
         if self.image_version.number < (1, 4) or not self.service_state.ap:
             self.ap_mode_disabled()
@@ -188,8 +193,19 @@ class REDTabSettingsNetwork(QtGui.QWidget, Ui_REDTabSettingsNetwork):
 
     def ap_tree_model_clear_add_item(self, item):
         self.ap_tree_model.removeRows(0, self.ap_tree_model.rowCount())
-        if item:
-            self.ap_tree_model.appendRow([item])
+
+        if not item:
+            return
+
+        list_items = [item]
+
+        for i in range(self.ap_tree_model.columnCount() - 1):
+            _item = QtGui.QStandardItem('')
+            _item.setEnabled(False)
+            _item.setSelectable(False)
+            list_items.append(_item)
+
+        self.ap_tree_model.appendRow(list_items)
 
     def cb_settings_network_status(self, result):
         self.network_stat_refresh_timer.stop()
@@ -1154,6 +1170,61 @@ class REDTabSettingsNetwork(QtGui.QWidget, Ui_REDTabSettingsNetwork):
                        REDFile.FLAG_TRUNCATE, 0o500, 0, 0),
                        lambda x: cb_open(config, write_wired_settings, x, iname_previous),
                        cb_open_error)
+
+    def slot_change_hostname_clicked(self):
+        def cb_settings_network_change_hostname(result):
+            self.show_please_wait(WORKING_STATE_DONE)
+
+            if not self.is_tab_on_focus:
+                return
+
+            if result.exit_code != 0:
+                err_msg = 'Error occured while changing hostname.'
+
+                if result.stderr:
+                    err_msg = err_msg + '\n\n' + unicode(result.stderr)
+
+                QtGui.QMessageBox.critical(get_main_window(),
+                                           'Settings | Network',
+                                           err_msg)
+
+            self.slot_network_conf_refresh_clicked()
+
+        hostname_old = self.label_net_hostname.text()
+        input_dialog_hostname = QtGui.QInputDialog()
+        input_dialog_hostname.setInputMode(QtGui.QInputDialog.TextInput)
+        hostname_new, ok = input_dialog_hostname.getText(get_main_window(),
+                                                     'Change Hostname',
+                                                     'Hostname:',
+                                                     QtGui.QLineEdit.Normal,
+                                                     self.label_net_hostname.text())
+        if not ok or not hostname_new:
+            return
+
+        if hostname_old == hostname_new:
+            return
+
+        # Checking for non ASCII characters
+        try:
+            hostname_new.encode('ascii')
+        except:
+            QtGui.QMessageBox.critical(get_main_window(),
+                                       'Settings | Network',
+                                       'Hostname contains non ASCII characters.')
+            return
+
+        # Checking for blank spaces
+        if ' ' in hostname_new:
+            QtGui.QMessageBox.critical(get_main_window(),
+                                       'Settings | Network',
+                                       'Hostname contains blank spaces.')
+            return
+
+        self.show_please_wait(WORKING_STATE_REFRESH)
+
+        self.script_manager.execute_script('settings_network_change_hostname',
+                                           cb_settings_network_change_hostname,
+                                           [hostname_old, hostname_new])
 
     def slot_cbox_net_intf_current_idx_changed(self, idx):
         interface_name = self.cbox_net_intf.itemData(idx, INTERFACE_NAME_USER_ROLE)

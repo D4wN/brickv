@@ -22,15 +22,14 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
+from PyQt4.QtCore import pyqtSignal, QTimer
+
 from brickv.plugin_system.plugin_base import PluginBase
+from brickv.plugin_system.plugins.dual_relay.ui_dual_relay import Ui_DualRelay
 from brickv.bindings import ip_connection
 from brickv.bindings.bricklet_dual_relay import BrickletDualRelay
 from brickv.async_call import async_call
-
-from PyQt4.QtCore import pyqtSignal, QTimer
-
-from brickv.plugin_system.plugins.dual_relay.ui_dual_relay import Ui_DualRelay
-from brickv.bmp_to_pixmap import bmp_to_pixmap
+from brickv.load_pixmap import load_masked_pixmap
 
 class DualRelay(PluginBase, Ui_DualRelay):
     qtcb_monoflop = pyqtSignal(int, bool)
@@ -60,10 +59,10 @@ class DualRelay(PluginBase, Ui_DualRelay):
         self.r1_timebefore = 500
         self.r2_timebefore = 500
         
-        self.a1_pixmap = bmp_to_pixmap('plugin_system/plugins/dual_relay/relay_a1.bmp')
-        self.a2_pixmap = bmp_to_pixmap('plugin_system/plugins/dual_relay/relay_a2.bmp')
-        self.b1_pixmap = bmp_to_pixmap('plugin_system/plugins/dual_relay/relay_b1.bmp')
-        self.b2_pixmap = bmp_to_pixmap('plugin_system/plugins/dual_relay/relay_b2.bmp')
+        self.a1_pixmap = load_masked_pixmap('plugin_system/plugins/dual_relay/relay_a1.bmp')
+        self.a2_pixmap = load_masked_pixmap('plugin_system/plugins/dual_relay/relay_a2.bmp')
+        self.b1_pixmap = load_masked_pixmap('plugin_system/plugins/dual_relay/relay_b1.bmp')
+        self.b2_pixmap = load_masked_pixmap('plugin_system/plugins/dual_relay/relay_b2.bmp')
 
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update)

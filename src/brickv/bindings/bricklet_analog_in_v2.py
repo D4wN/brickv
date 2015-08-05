@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-03-06.      #
+# This file was automatically generated on 2015-07-28.      #
 #                                                           #
-# Bindings Version 2.1.4                                    #
+# Bindings Version 2.1.5                                    #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
-# to the generator git on tinkerforge.com                   #
+# to the generators git repository on tinkerforge.com       #
 #############################################################
-
-#### __DEVICE_IS_NOT_RELEASED__ ####
 
 try:
     from collections import namedtuple
@@ -30,11 +28,11 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletAnalogInV2(Device):
     """
-    Device for sensing voltages between 0 and 42V
+    Measures DC voltage between 0V and 42V
     """
 
     DEVICE_IDENTIFIER = 251
-    DEVICE_DISPLAY_NAME = 'Analog In 2.0 Bricklet'
+    DEVICE_DISPLAY_NAME = 'Analog In Bricklet 2.0'
 
     CALLBACK_VOLTAGE = 15
     CALLBACK_ANALOG_VALUE = 16
@@ -233,7 +231,7 @@ class BrickletAnalogInV2(Device):
 
     def set_moving_average(self, average):
         """
-        Sets the length of a `moving averaging <http://en.wikipedia.org/wiki/Moving_average>`__
+        Sets the length of a `moving averaging <https://en.wikipedia.org/wiki/Moving_average>`__
         for the moisture value.
         
         Setting the length to 1 will turn the averaging off. With less
@@ -247,7 +245,7 @@ class BrickletAnalogInV2(Device):
 
     def get_moving_average(self):
         """
-        Returns the length moving average as set by :func:`SetMovingAverage`.
+        Returns the length of the moving average as set by :func:`SetMovingAverage`.
         """
         return self.ipcon.send_request(self, BrickletAnalogInV2.FUNCTION_GET_MOVING_AVERAGE, (), '', 'B')
 

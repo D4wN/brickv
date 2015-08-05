@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-  
 """
-Current Plugin
+Current25 Plugin
 Copyright (C) 2011-2012 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
-current.py: Current Plugin Implementation
+current25.py: Current25 Plugin Implementation
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License 
@@ -22,15 +22,15 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
+from PyQt4.QtCore import pyqtSignal, Qt
+from PyQt4.QtGui import QVBoxLayout, QLabel, QPushButton, QHBoxLayout
+
 from brickv.plugin_system.plugin_base import PluginBase
 from brickv.bindings import ip_connection
 from brickv.bindings.bricklet_current25 import BrickletCurrent25
-from brickv.async_call import async_call
-
 from brickv.plot_widget import PlotWidget
-
-from PyQt4.QtGui import QVBoxLayout, QLabel, QPushButton, QHBoxLayout
-from PyQt4.QtCore import pyqtSignal, Qt
+from brickv.async_call import async_call
+from brickv.callback_emulator import CallbackEmulator
 
 class CurrentLabel(QLabel):
     def setText(self, text):
@@ -38,7 +38,6 @@ class CurrentLabel(QLabel):
         super(CurrentLabel, self).setText(text)
     
 class Current25(PluginBase):
-    qtcb_current = pyqtSignal(int)
     qtcb_over = pyqtSignal()
     
     def __init__(self, *args):
@@ -46,9 +45,9 @@ class Current25(PluginBase):
         
         self.cur = self.device
         
-        self.qtcb_current.connect(self.cb_current)
-        self.cur.register_callback(self.cur.CALLBACK_CURRENT,
-                                   self.qtcb_current.emit) 
+        self.cbe_current = CallbackEmulator(self.cur.get_current,
+                                            self.cb_current,
+                                            self.increase_error_count)
         
         self.qtcb_over.connect(self.cb_over)
         self.cur.register_callback(self.cur.CALLBACK_OVER_CURRENT,
@@ -82,12 +81,12 @@ class Current25(PluginBase):
 
     def start(self):
         async_call(self.cur.get_current, None, self.cb_current, self.increase_error_count)
-        async_call(self.cur.set_current_callback_period, 100, None, self.increase_error_count)
+        self.cbe_current.set_period(100)
         
         self.plot_widget.stop = False
         
     def stop(self):
-        async_call(self.cur.set_current_callback_period, 0, None, self.increase_error_count)
+        self.cbe_current.set_period(0)
         
         self.plot_widget.stop = True
 

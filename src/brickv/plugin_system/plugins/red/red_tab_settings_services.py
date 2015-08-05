@@ -47,6 +47,7 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
         self.chkbox_ap.stateChanged.connect(self.service_config_changed)
         self.chkbox_server_monitoring.stateChanged.connect(self.service_config_changed)
         self.chkbox_openhab.stateChanged.connect(self.service_config_changed)
+        self.chkbox_mobile_internet.stateChanged.connect(self.service_config_changed)
         self.pbutton_services_save.clicked.connect(self.slot_pbutton_services_save_clicked)
 
     def tab_on_focus(self):
@@ -57,7 +58,8 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
         self.chkbox_ap.setEnabled(True)
         self.chkbox_server_monitoring.setEnabled(True)
         self.chkbox_openhab.setEnabled(True)
-        self.pbutton_services_save.setText('Save')
+        self.chkbox_mobile_internet.setEnabled(True)
+        self.pbutton_services_save.setText('Save and Reboot')
         self.pbutton_services_save.setEnabled(False)
 
         self.chkbox_gpu.setChecked(self.service_state.gpu)
@@ -67,6 +69,7 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
         self.chkbox_ap.setChecked(self.service_state.ap)
         self.chkbox_server_monitoring.setChecked(self.service_state.servermonitoring)
         self.chkbox_openhab.setChecked(self.service_state.openhab)
+        self.chkbox_mobile_internet.setChecked(self.service_state.mobileinternet)
 
         if self.image_version.number < (1, 4):
             self.chkbox_gpu.setText('GPU (Image Version >= 1.4 required)')
@@ -93,6 +96,10 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
             self.chkbox_openhab.setText('openHAB (Image Version >= 1.6 required)')
             self.chkbox_openhab.setEnabled(False)
 
+        if self.image_version.number < (1, 7):
+            self.chkbox_mobile_internet.setText('Mobile Internet (Image Version >= 1.7 required)')
+            self.chkbox_mobile_internet.setEnabled(False)
+
     def tab_off_focus(self):
         pass
 
@@ -101,6 +108,7 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
 
     def cb_settings_services_apply(self, result):
         def done():
+            get_main_window().setEnabled(True)
             self.chkbox_gpu.setEnabled(True)
             self.chkbox_desktopenv.setEnabled(True)
             self.chkbox_webserver.setEnabled(True)
@@ -108,18 +116,25 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
             self.chkbox_ap.setEnabled(True)
             self.chkbox_server_monitoring.setEnabled(True)
             self.chkbox_openhab.setEnabled(True)
+            self.chkbox_mobile_internet.setEnabled(True)
 
-            self.pbutton_services_save.setText('Save')
+            self.pbutton_services_save.setText('Save and Reboot')
             self.pbutton_services_save.setEnabled(True)
-
-        if not report_script_result(result, 'Settings | Services', 'Error saving services status'):
-            done()
-            return
 
         def cb_restart_reboot_shutdown(result):
             if not report_script_result(result, 'Settings | Services', 'Error rebooting RED Brick'):
                 done()
                 return
+
+        if not report_script_result(result, 'Settings | Services', 'Error saving services status'):
+            done()
+            return
+
+        get_main_window().setEnabled(True)
+        
+        QtGui.QMessageBox.information(get_main_window(),
+                                      'Settings | Services',
+                                      'Saved configuration successfully, will now reboot RED Brick.')
 
         self.script_manager.execute_script('restart_reboot_shutdown',
                                            cb_restart_reboot_shutdown, ['1'])
@@ -137,6 +152,7 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
         state['ap']               = self.chkbox_ap.isChecked()
         state['servermonitoring'] = self.chkbox_server_monitoring.isChecked()
         state['openhab']          = self.chkbox_openhab.isChecked()
+        state['mobileinternet']   = self.chkbox_mobile_internet.isChecked()
 
         self.chkbox_gpu.setEnabled(False)
         self.chkbox_desktopenv.setEnabled(False)
@@ -145,9 +161,12 @@ class REDTabSettingsServices(QtGui.QWidget, Ui_REDTabSettingsServices):
         self.chkbox_ap.setEnabled(False)
         self.chkbox_server_monitoring.setEnabled(False)
         self.chkbox_openhab.setEnabled(False)
+        self.chkbox_mobile_internet.setEnabled(False)
 
         self.pbutton_services_save.setText('Saving...')
         self.pbutton_services_save.setEnabled(False)
+
+        get_main_window().setEnabled(False)
 
         self.script_manager.execute_script('settings_services',
                                            self.cb_settings_services_apply,

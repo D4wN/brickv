@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-03-06.      #
+# This file was automatically generated on 2015-07-28.      #
 #                                                           #
-# Bindings Version 2.1.4                                    #
+# Bindings Version 2.1.5                                    #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
-# to the generator git on tinkerforge.com                   #
+# to the generators git repository on tinkerforge.com       #
 #############################################################
 
 try:
@@ -27,7 +27,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletSoundIntensity(Device):
     """
-    Device for sensing sound intensity
+    Measures sound intensity
     """
 
     DEVICE_IDENTIFIER = 238
@@ -79,7 +79,7 @@ class BrickletSoundIntensity(Device):
         Returns the current sound intensity. The value has a range of
         0 to 4095.
         
-        The value corresponds to the `upper envelop <http://en.wikipedia.org/wiki/Envelope_(waves)>`__
+        The value corresponds to the `upper envelop <https://en.wikipedia.org/wiki/Envelope_(waves)>`__
         of the signal of the microphone capsule.
         
         If you want to get the intensity periodically, it is recommended to use the

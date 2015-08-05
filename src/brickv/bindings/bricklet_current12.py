@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-03-06.      #
+# This file was automatically generated on 2015-07-28.      #
 #                                                           #
-# Bindings Version 2.1.4                                    #
+# Bindings Version 2.1.5                                    #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
-# to the generator git on tinkerforge.com                   #
+# to the generators git repository on tinkerforge.com       #
 #############################################################
 
 try:
@@ -28,7 +28,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletCurrent12(Device):
     """
-    Device for sensing current of up to 12.5A
+    Measures AC/DC current between -12.5A and +12.5A
     """
 
     DEVICE_IDENTIFIER = 23

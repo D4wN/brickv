@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 brickv (Brick Viewer)
-Copyright (C) 2012-2013 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2012-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 samba.py: Atmel SAM-BA flash protocol implementation
 
@@ -92,7 +92,7 @@ else:
 
 #### skip here for brick-flash-cmd ####
 
-CHIPID_CIDR = 0x400e0740
+CHIPID_CIDR = 0x400E0740
 
 ATSAM3SxB = 0x89
 ATSAM3SxC = 0x8A
@@ -129,8 +129,13 @@ RSTC_CR_EXTRST  = 0b1000
 RSTC_MR_URSTEN  = 0b0001
 RSTC_MR_URSTIEN = 0b1000
 
-RSTC_CR_FEY = 0xA5
-RSTC_MR_FEY = 0xA5
+RSTC_CR_KEY        = 0xA5
+RSTC_CR_KEY_OFFSET = 24
+
+RSTC_MR_KEY        = 0xA5
+RSTC_MR_KEY_OFFSET = 24
+
+RSTC_MR_ERSTL_OFFSET = 8
 
 # http://www.varsanofiev.com/inside/at91_sam_ba.htm
 # http://sourceforge.net/apps/mediawiki/lejos/index.php?title=Documentation:SAM-BA
@@ -311,10 +316,12 @@ class SAMBA(object):
             page_num_offset = (ic_relative_address - ic_prefix_length) / self.flash_page_size
             self.verify_pages(imu_calibration_pages, page_num_offset, 'IMU calibration', True)
 
-        # Set Boot-from-Flash bit
-        self.wait_for_flash_ready('before setting Boot-from-Flash bit')
+        # Set Boot-from-Flash flag
+        self.reset_progress('Setting Boot-from-Flash flag', 0)
+
+        self.wait_for_flash_ready('before setting Boot-from-Flash flag')
         self.write_flash_command(EEFC_FCR_FCMD_SGPB, 1)
-        self.wait_for_flash_ready('after setting Boot-from-Flash bit')
+        self.wait_for_flash_ready('after setting Boot-from-Flash flag')
 
         # Boot
         try:
@@ -462,9 +469,11 @@ class SAMBA(object):
             raise SAMBAException('Protocol error while writing to address 0x%08X' % address)
 
     def reset(self):
+        self.reset_progress('Triggering Brick reset', 0)
+
         try:
-            self.write_uint32(RSTC_MR, (RSTC_MR_FEY << 24) | (10 << 8) | RSTC_MR_URSTEN | RSTC_MR_URSTIEN)
-            self.write_uint32(RSTC_CR, (RSTC_CR_FEY << 24) | RSTC_CR_EXTRST | RSTC_CR_PERRST | RSTC_CR_PROCRST)
+            self.write_uint32(RSTC_MR, (RSTC_MR_KEY << RSTC_MR_KEY_OFFSET) | (10 << RSTC_MR_ERSTL_OFFSET) | RSTC_MR_URSTEN)
+            self.write_uint32(RSTC_CR, (RSTC_CR_KEY << RSTC_CR_KEY_OFFSET) | RSTC_CR_EXTRST | RSTC_CR_PERRST | RSTC_CR_PROCRST)
         except:
             raise SAMBAException('Write error while triggering reset')
 

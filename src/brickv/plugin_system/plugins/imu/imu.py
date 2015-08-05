@@ -2,7 +2,7 @@
 """
 IMU Plugin
 Copyright (C) 2010-2012 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 imu.py: IMU Plugin implementation
 
@@ -22,18 +22,16 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-#import logging
+from PyQt4.QtCore import Qt, QTimer
+from PyQt4.QtGui import QLabel, QVBoxLayout, QSizePolicy, QAction
 
 from brickv.plugin_system.plugin_base import PluginBase
+from brickv.plugin_system.plugins.imu.ui_imu import Ui_IMU
+from brickv.plugin_system.plugins.imu.calibrate_window import CalibrateWindow
 from brickv.bindings.brick_imu import BrickIMU
 from brickv.async_call import async_call
 from brickv.plot_widget import PlotWidget
-
-from PyQt4.QtGui import QLabel, QVBoxLayout, QSizePolicy
-from PyQt4.QtCore import Qt, QTimer
-
-from brickv.plugin_system.plugins.imu.ui_imu import Ui_IMU
-from brickv.plugin_system.plugins.imu.calibrate_window import CalibrateWindow
+from brickv.callback_emulator import CallbackEmulator
 
 class IMU(PluginBase, Ui_IMU):
     def __init__(self, *args):
@@ -66,12 +64,18 @@ class IMU(PluginBase, Ui_IMU):
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_data)
 
-        self.imu.register_callback(self.imu.CALLBACK_ALL_DATA,
-                                   self.all_data_callback)
-        self.imu.register_callback(self.imu.CALLBACK_ORIENTATION,
-                                   self.orientation_callback)
-        self.imu.register_callback(self.imu.CALLBACK_QUATERNION,
-                                   self.quaternion_callback)
+        self.cbe_all_data = CallbackEmulator(self.imu.get_all_data,
+                                             self.all_data_callback,
+                                             self.increase_error_count,
+                                             use_data_signal=False)
+        self.cbe_orientation = CallbackEmulator(self.imu.get_orientation,
+                                                self.orientation_callback,
+                                                self.increase_error_count,
+                                                use_data_signal=False)
+        self.cbe_quaternion = CallbackEmulator(self.imu.get_quaternion,
+                                               self.quaternion_callback,
+                                               self.increase_error_count,
+                                               use_data_signal=False)
 
         # Import IMUGLWidget here, not global. If globally included we get
         # 'No OpenGL_accelerate module loaded: No module named OpenGL_accelerate'
@@ -140,14 +144,19 @@ in the image above, then press "Save Orientation".""")
         self.calibrate = None
         self.alive = True
 
+        if self.firmware_version >= (1, 0, 7):
+            reset = QAction('Reset', self)
+            reset.triggered.connect(lambda: self.imu.reset())
+            self.set_actions(reset)
+
     def start(self):
         if not self.alive:
             return
 
         self.gl_layout.activate()
-        async_call(self.imu.set_all_data_period, 100, None, self.increase_error_count)
-        async_call(self.imu.set_orientation_period, 100, None, self.increase_error_count)
-        async_call(self.imu.set_quaternion_period, 50, None, self.increase_error_count)
+        self.cbe_all_data.set_period(100)
+        self.cbe_orientation.set_period(100)
+        self.cbe_quaternion.set_period(50)
         self.update_timer.start(50)
 
         async_call(self.imu.get_convergence_speed, None, self.speed_spinbox.setValue, self.increase_error_count)
@@ -164,24 +173,14 @@ in the image above, then press "Save Orientation".""")
         self.tem_plot_widget.stop = True
 
         self.update_timer.stop()
-        async_call(self.imu.set_all_data_period, 0, None, self.increase_error_count)
-        async_call(self.imu.set_orientation_period, 0, None, self.increase_error_count)
-        async_call(self.imu.set_quaternion_period, 0, None, self.increase_error_count)
+        self.cbe_all_data.set_period(0)
+        self.cbe_orientation.set_period(0)
+        self.cbe_quaternion.set_period(0)
 
     def destroy(self):
         self.alive = False
         if self.calibrate:
             self.calibrate.close()
-
-    def has_reset_device(self):
-        return self.firmware_version >= (1, 0, 7)
-
-    def reset_device(self):
-        if self.has_reset_device():
-            self.imu.reset()
-
-    def is_brick(self):
-        return True
 
     def get_url_part(self):
         return 'imu'
@@ -190,7 +189,8 @@ in the image above, then press "Save Orientation".""")
     def has_device_identifier(device_identifier):
         return device_identifier == BrickIMU.DEVICE_IDENTIFIER
 
-    def all_data_callback(self, acc_x, acc_y, acc_z, mag_x, mag_y, mag_z, gyr_x, gyr_y, gyr_z, tem):
+    def all_data_callback(self, data):
+        acc_x, acc_y, acc_z, mag_x, mag_y, mag_z, gyr_x, gyr_y, gyr_z, tem = data
         self.acc_x = acc_x
         self.acc_y = acc_y
         self.acc_z = acc_z
@@ -202,13 +202,15 @@ in the image above, then press "Save Orientation".""")
         self.gyr_z = gyr_z
         self.tem = tem
 
-    def quaternion_callback(self, qua_x, qua_y, qua_z, qua_w):
+    def quaternion_callback(self, data):
+        qua_x, qua_y, qua_z, qua_w = data
         self.qua_x = qua_x
         self.qua_y = qua_y
         self.qua_z = qua_z
         self.qua_w = qua_w
 
-    def orientation_callback(self, roll, pitch, yaw):
+    def orientation_callback(self, data):
+        roll, pitch, yaw = data
         self.roll = roll
         self.pitch = pitch
         self.yaw = yaw

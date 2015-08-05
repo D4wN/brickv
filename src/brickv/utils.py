@@ -2,7 +2,7 @@
 """
 brickv (Brick Viewer)
 Copyright (C) 2011 Bastian Nordmeyer <bastian@tinkerforge.com>
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 utils.py: General Utilites
 

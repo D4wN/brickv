@@ -1,13 +1,19 @@
 *.pyc
 ui_*.py
-_scripts.py
 *.py_minified
 *.py_prepared
+.project
+.pydevproject
 src/build
 src/dist
+.settings
+# keep generated plugin_images.py ignored even after it was renamed to frozen_images.py
 src/brickv/plugin_images.py
+src/brickv/frozen_images.py
+src/brickv/plugin_system/plugins/red/script_data.py
 src/build_data/linux/brickv/usr/share/brickv
 src/build_data/linux/brick-flash-cmd/usr/bin
+src/MANIFEST.in
 .project
 .pydevproject
 .settings/org.eclipse.core.resources.prefs
@@ -21,3 +27,5 @@ src/brickv/data_logger/*.ini
 src/brickv/data_logger/*.cfg
 src/brickv/data_logger/*.csv
 src/brickv/data_logger/*.log
+.settings/org.eclipse.ltk.core.refactoring.prefs
+*.idea
