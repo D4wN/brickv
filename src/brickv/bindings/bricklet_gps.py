@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-04-10.      #
+# This file was automatically generated on 2015-07-14.      #
 #                                                           #
 # Bindings Version 2.1.4                                    #
 #                                                           #
@@ -31,7 +31,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletGPS(Device):
     """
-    Device for receiving GPS position
+    Determine position, velocity and altitude using GPS
     """
 
     DEVICE_IDENTIFIER = 222
@@ -118,7 +118,7 @@ class BrickletGPS(Device):
         PDOP, HDOP and VDOP are the dilution of precision (DOP) values. They specify
         the additional multiplicative effect of GPS satellite geometry on GPS 
         precision. See 
-        `here <http://en.wikipedia.org/wiki/Dilution_of_precision_(GPS)>`__
+        `here <https://en.wikipedia.org/wiki/Dilution_of_precision_(GPS)>`__
         for more information. The values are give in hundredths.
         
         EPE is the "Estimated Position Error". The EPE is given in cm. This is not the

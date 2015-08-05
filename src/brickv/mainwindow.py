@@ -27,7 +27,7 @@ from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, \
                         QPushButton, QHBoxLayout, QVBoxLayout, \
                         QLabel, QFrame, QSpacerItem, QSizePolicy, \
                         QStandardItemModel, QStandardItem, QToolButton, \
-                        QLineEdit, QCursor, QMenu, QToolButton
+                        QLineEdit, QCursor, QMenu, QToolButton, QAction
 from brickv.ui_mainwindow import Ui_MainWindow
 from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
@@ -63,7 +63,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.setWindowTitle("Brick Viewer " + config.BRICKV_VERSION)
 
-        self.tree_view_model_labels = ['Name', 'UID', 'FW Version']
+        self.tree_view_model_labels = ['Name', 'UID', 'Position', 'FW Version']
         self.tree_view_model = QStandardItemModel(self)
         self.tree_view.setModel(self.tree_view_model)
         self.tree_view.doubleClicked.connect(self.item_double_clicked)
@@ -158,7 +158,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             
         self.exit_brickv()
 
-    def exit_brickv(self, signl=None, frme=None):
+    def exit_brickv(self, signal=None, frame=None):
         if self.current_device_info is not None:
             self.current_device_info.plugin.stop_plugin()
             self.current_device_info.plugin.destroy_plugin()
@@ -167,8 +167,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         config.set_host_infos(self.host_infos)
 
         self.do_disconnect()
-        
-        if signl != None and frme != None:
+
+        if signal != None and frame != None:
             print("Received SIGINT or SIGTERM, shutting down.")
             sys.exit()
 
@@ -453,27 +453,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         layout.addLayout(info_bar)
 
-        if device_info.plugin.is_brick():
-            button = QPushButton('Reset')
+        # actions
+        actions = device_info.plugin.get_actions()
 
-            if device_info.plugin.has_reset_device():
-                button.clicked.connect(device_info.plugin.reset_device)
+        if actions != None:
+            if type(actions) == QAction:
+                button = QPushButton(actions.text())
+                button.clicked.connect(actions.trigger)
             else:
-                drop_down = device_info.plugin.has_drop_down()
-                if len(drop_down) > 1:
-                    button = QToolButton()
-                    button.setText(drop_down[0])
-                    button.setPopupMode(QToolButton.InstantPopup)
-                    button.setToolButtonStyle(Qt.ToolButtonTextOnly)
-                    button.setArrowType(Qt.DownArrow)
-                    button.setAutoRaise(True)
-                    button.triggered.connect(device_info.plugin.drop_down_triggered)
-                    menu = QMenu(drop_down[0])
-                    button.setMenu(menu)
-                    for action in drop_down[1:]:
-                        menu.addAction(action)
-                else:
-                    button.setDisabled(True)
+                button = QToolButton()
+                button.setText(actions[0])
+                button.setPopupMode(QToolButton.InstantPopup)
+                button.setToolButtonStyle(Qt.ToolButtonTextOnly)
+                button.setArrowType(Qt.DownArrow)
+                button.setAutoRaise(True)
+
+                menu = QMenu(actions[0])
+                button.setMenu(menu)
+
+                for action in actions[1]:
+                    menu.addAction(action)
 
             info_bar.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding))
             info_bar.addWidget(button)
@@ -546,6 +545,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if enumeration_type in [IPConnection.ENUMERATION_TYPE_AVAILABLE,
                                 IPConnection.ENUMERATION_TYPE_CONNECTED]:
             device_info = infos.get_info(uid)
+            something_changed_ref = [False]
 
             if device_info == None:
                 if device_identifier == BrickMaster.DEVICE_IDENTIFIER:
@@ -557,24 +557,34 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     device_info = infos.BrickletInfo()
                 else:
                     device_info = infos.BrickInfo()
+                    something_changed_ref[0] = True
 
-            device_info.uid = uid
-            device_info.connected_uid = connected_uid
-            device_info.position = position
-            device_info.hardware_version = hardware_version
-            device_info.firmware_version_installed = firmware_version
-            device_info.device_identifier = device_identifier
-            device_info.protocol_version = 2
-            device_info.enumeration_type = enumeration_type
+            def set_device_info_value(name, value):
+                if getattr(device_info, name) != value:
+                    setattr(device_info, name, value)
+                    something_changed_ref[0] = True
+
+            set_device_info_value('uid', uid)
+            set_device_info_value('connected_uid', connected_uid)
+            set_device_info_value('position', position)
+            set_device_info_value('hardware_version', hardware_version)
+            set_device_info_value('firmware_version_installed', firmware_version)
+            set_device_info_value('device_identifier', device_identifier)
+            set_device_info_value('protocol_version', 2)
+            set_device_info_value('enumeration_type', enumeration_type)
 
             if device_info.type == 'bricklet':
                 for brick_info in infos.get_brick_infos():
                     if brick_info.uid == device_info.connected_uid:
-                        brick_info.bricklets[position] = device_info
+                        if brick_info.bricklets[position] != device_info:
+                            brick_info.bricklets[position] = device_info
+                            something_changed_ref[0] = True
             elif device_info.type == 'brick':
                 for bricklet_info in infos.get_bricklet_infos():
                     if bricklet_info.connected_uid == device_info.uid:
-                        device_info.bricklets[bricklet_info.position] = bricklet_info
+                        if device_info.bricklets[bricklet_info.position] != bricklet_info:
+                            device_info.bricklets[bricklet_info.position] = bricklet_info
+                            something_changed_ref[0] = True
 
             if device_info.plugin == None:
                 plugin = self.plugin_manager.get_plugin(device_identifier, self.ipcon,
@@ -589,6 +599,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 device_info.tab_window = self.create_tab_window(device_info, connected_uid, position)
                 device_info.tab_window.setWindowFlags(Qt.Widget)
                 device_info.tab_window.tab()
+
+                something_changed_ref[0] = True
+
+            if something_changed_ref[0]:
+                self.update_tree_view()
         elif enumeration_type == IPConnection.ENUMERATION_TYPE_DISCONNECTED:
             for device_info in infos.get_device_infos():
                 if device_info.uid == uid:
@@ -600,7 +615,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         if device_info.bricklets[port] and device_info.bricklets[port].uid == uid:
                             device_info.bricklets[port] = None
 
-        self.update_tree_view()
+            self.update_tree_view()
 
     def hack_to_remove_red_brick_tab(self, red_brick_uid):
         for device_info in infos.get_device_infos():
@@ -703,9 +718,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def set_tree_view_defaults(self):
         self.tree_view_model.setHorizontalHeaderLabels(self.tree_view_model_labels)
         self.tree_view.expandAll()
-        self.tree_view.setColumnWidth(0, 260)
-        self.tree_view.setColumnWidth(1, 75)
+        self.tree_view.setColumnWidth(0, 250)
+        self.tree_view.setColumnWidth(1, 85)
         self.tree_view.setColumnWidth(2, 85)
+        self.tree_view.setColumnWidth(3, 90)
         self.tree_view.setExpandsOnDoubleClick(False)
         self.tree_view.setSortingEnabled(True)
         self.tree_view.header().setSortIndicator(0, Qt.AscendingOrder)
@@ -768,6 +784,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for info in infos.get_brick_infos():
             parent = [QStandardItem(info.name),
                       QStandardItem(info.uid),
+                      QStandardItem(info.position.upper()),
                       QStandardItem('.'.join(map(str, info.firmware_version_installed)))]
 
             for item in parent:
@@ -779,6 +796,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 if info.bricklets[port] and info.bricklets[port].protocol_version == 2:
                     child = [QStandardItem(port.upper() + ': ' + info.bricklets[port].name),
                              QStandardItem(info.bricklets[port].uid),
+                             QStandardItem(info.bricklets[port].position.upper()),
                              QStandardItem('.'.join(map(str, info.bricklets[port].firmware_version_installed)))]
                     for item in child:
                         item.setFlags(item.flags() & ~Qt.ItemIsEditable)

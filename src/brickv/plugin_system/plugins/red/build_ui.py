@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 
 def system(command):
     if os.system(command) != 0:
@@ -10,6 +11,8 @@ system("pyuic4 -o ui_red.py ui/red.ui")
 system("pyuic4 -o ui_red_tab_overview.py ui/red_tab_overview.ui")
 system("pyuic4 -o ui_red_tab_settings.py ui/red_tab_settings.ui")
 system("pyuic4 -o ui_red_tab_settings_network.py ui/red_tab_settings_network.ui")
+system("pyuic4 -o ui_red_tab_settings_mobile_internet.py ui/red_tab_settings_mobile_internet.ui")
+system("pyuic4 -o ui_red_tab_settings_mobile_internet_provider_preset_dialog.py ui/red_tab_settings_mobile_internet_provider_preset_dialog.ui")
 system("pyuic4 -o ui_red_tab_settings_ap.py ui/red_tab_settings_ap.ui")
 system("pyuic4 -o ui_red_tab_settings_ap_dhcp_leases_dialog.py ui/red_tab_settings_ap_dhcp_leases_dialog.ui")
 system("pyuic4 -o ui_red_tab_settings_server_monitoring.py ui/red_tab_settings_server_monitoring.ui")
@@ -70,3 +73,8 @@ system("pyuic4 -o ui_program_page_upload.py ui/program_page_upload.ui")
 system("pyuic4 -o ui_program_page_download.py ui/program_page_download.ui")
 
 system("python build_scripts.py")
+
+if sys.platform.startswith("linux"):
+    system("python build_serviceproviders.py")
+else:
+    print("Skipping build_serviceproviders.py")

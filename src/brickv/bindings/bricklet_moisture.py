@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-04-10.      #
+# This file was automatically generated on 2015-07-14.      #
 #                                                           #
 # Bindings Version 2.1.4                                    #
 #                                                           #
@@ -27,7 +27,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletMoisture(Device):
     """
-    Device for sensing Moisture
+    Measures soil moisture
     """
 
     DEVICE_IDENTIFIER = 232
@@ -158,7 +158,7 @@ class BrickletMoisture(Device):
 
     def set_moving_average(self, average):
         """
-        Sets the length of a `moving averaging <http://en.wikipedia.org/wiki/Moving_average>`__ 
+        Sets the length of a `moving averaging <https://en.wikipedia.org/wiki/Moving_average>`__ 
         for the moisture value.
         
         Setting the length to 0 will turn the averaging completely off. With less

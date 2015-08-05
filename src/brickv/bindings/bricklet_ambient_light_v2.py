@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-04-10.      #
+# This file was automatically generated on 2015-07-13.      #
 #                                                           #
 # Bindings Version 2.1.4                                    #
 #                                                           #
@@ -30,7 +30,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletAmbientLightV2(Device):
     """
-    Device for sensing Ambient Light
+    Measures ambient light up to 64000lux
     """
 
     DEVICE_IDENTIFIER = 259
@@ -98,8 +98,8 @@ class BrickletAmbientLightV2(Device):
     def get_illuminance(self):
         """
         Returns the illuminance of the ambient light sensor. The value
-        has a range of 0 to 9000 and is given in Lux/10, i.e. a value
-        of 4500 means that an illuminance of 450 Lux is measured.
+        has a range of 0 to 6400000 and is given in 1/100 Lux, i.e. a value
+        of 45000 means that an illuminance of 450 Lux is measured.
         
         If you want to get the illuminance periodically, it is recommended to use the
         callback :func:`Illuminance` and set the period with 
@@ -175,7 +175,13 @@ class BrickletAmbientLightV2(Device):
 
     def set_configuration(self, illuminance_range, integration_time):
         """
-        TODO
+        Sets the configuration. It is possible to configure an illuminance range
+        between 0-600lux and 0-64000lux and an integration time between 50ms and 400ms.
+        
+        A smaller illuminance range increases the resolution of the data. An
+        increase in integration time will result in less noise on the data.
+        
+        The default values are 0-8000lux illuminance range and 200ms integration time.
         """
         self.ipcon.send_request(self, BrickletAmbientLightV2.FUNCTION_SET_CONFIGURATION, (illuminance_range, integration_time), 'B B', '')
 

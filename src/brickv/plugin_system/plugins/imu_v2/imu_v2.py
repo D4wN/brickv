@@ -23,8 +23,8 @@ Boston, MA 02111-1307, USA.
 """
 
 from PyQt4.QtCore import Qt, QTimer
-from PyQt4.QtGui import QLabel, QVBoxLayout, QColor, QPalette, \
-                        QFrame, QPainter, QBrush, QDialog
+from PyQt4.QtGui import QVBoxLayout, QColor, QPalette, QFrame, QPainter, \
+                        QBrush, QDialog, QAction
 
 from brickv.plugin_system.plugin_base import PluginBase
 from brickv.plugin_system.plugins.imu_v2.ui_imu_v2 import Ui_IMUV2
@@ -41,7 +41,7 @@ class Calibration(QDialog, Ui_Calibration):
         self.setupUi(self)
 
         self.text_browser.setHtml("""
-<p><b>General:</b> The IMU does continous calibration during usage.
+<p><b>General:</b> The IMU does continous self-calibration during usage.
 It is not necessary to start a specific calibration process.</p>
 <p>Accelerometer and gyroscope are factory calibrated and are less susceptible
 to external disturbances. As a result the offsets can be seen as negligble and
@@ -88,7 +88,7 @@ during stabilization.</p>""")
         async_call(self.imu.save_calibration, None, self.async_save_calibration, self.parent.increase_error_count)
         
     def async_save_calibration(self, calibration_done):
-        #print "calibration_done", calibration_done
+        # TODO: Show user that calibration is done/not done?
         pass
         
     def closeEvent(self, event):
@@ -235,6 +235,10 @@ class IMUV2(PluginBase, Ui_IMUV2):
         self.alive = True
         self.callback_counter = 0
 
+        reset = QAction('Reset', self)
+        reset.triggered.connect(lambda: self.imu.reset())
+        self.set_actions(reset)
+
     def start(self):
         if not self.alive:
             return
@@ -255,15 +259,6 @@ class IMUV2(PluginBase, Ui_IMUV2):
         self.alive = False
         if self.calibration:
             self.calibration.close()
-
-    def has_reset_device(self):
-        return True
-
-    def reset_device(self):
-        self.imu.reset()
-
-    def is_brick(self):
-        return True
 
     def get_url_part(self):
         return 'imu_v2'

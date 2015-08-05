@@ -22,7 +22,7 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from PyQt4.QtGui import QErrorMessage, QInputDialog
+from PyQt4.QtGui import QErrorMessage, QInputDialog, QAction
 from PyQt4.QtCore import QTimer, Qt, pyqtSignal
 
 from brickv.plugin_system.plugin_base import PluginBase
@@ -32,6 +32,7 @@ from brickv.bindings import ip_connection
 from brickv.bindings.brick_dc import BrickDC
 from brickv.async_call import async_call
 from brickv.callback_emulator import CallbackEmulator
+from brickv.slider_spin_syncer import SliderSpinSyncer
 
 class DC(PluginBase, Ui_DC):
     qtcb_velocity_reached = pyqtSignal(int)
@@ -57,19 +58,19 @@ class DC(PluginBase, Ui_DC):
         self.update_counter = 0
         
         self.full_brake_time = 0
-        
-        self.velocity_slider.sliderReleased.connect(self.velocity_slider_released)
-        self.velocity_slider.valueChanged.connect(self.velocity_spin.setValue)
-        self.velocity_spin.editingFinished.connect(self.velocity_spin_finished)
-        
-        self.acceleration_slider.sliderReleased.connect(self.acceleration_slider_released)
-        self.acceleration_slider.valueChanged.connect(self.acceleration_spin.setValue)
-        self.acceleration_spin.editingFinished.connect(self.acceleration_spin_finished)
-        
-        self.frequency_slider.sliderReleased.connect(self.frequency_slider_released)
-        self.frequency_slider.valueChanged.connect(self.frequency_spin.setValue)
-        self.frequency_spin.editingFinished.connect(self.frequency_spin_finished)
-        
+
+        self.velocity_syncer = SliderSpinSyncer(self.velocity_slider,
+                                                self.velocity_spin,
+                                                self.velocity_changed)
+
+        self.acceleration_syncer = SliderSpinSyncer(self.acceleration_slider,
+                                                    self.acceleration_spin,
+                                                    self.acceleration_changed)
+
+        self.frequency_syncer = SliderSpinSyncer(self.frequency_slider,
+                                                 self.frequency_spin,
+                                                 self.frequency_changed)
+
         self.radio_mode_brake.toggled.connect(self.brake_value_changed)
         self.radio_mode_coast.toggled.connect(self.coast_value_changed)
         
@@ -100,6 +101,11 @@ class DC(PluginBase, Ui_DC):
                                                      self.update_velocity,
                                                      self.increase_error_count)
 
+        if self.firmware_version >= (1, 1, 3):
+            reset = QAction('Reset', self)
+            reset.triggered.connect(lambda: self.dc.reset())
+            self.set_actions(reset)
+
 #        if self.firmware_version >= (2, 0, 1):
 #            self.enable_encoder_checkbox.stateChanged.connect(self.enable_encoder_state_changed)
 #            self.encoder_show()
@@ -119,16 +125,6 @@ class DC(PluginBase, Ui_DC):
 
     def destroy(self):
         pass
-
-    def has_reset_device(self):
-        return self.firmware_version >= (1, 1, 3)
-
-    def reset_device(self):
-        if self.has_reset_device():
-            self.dc.reset()
-
-    def is_brick(self):
-        return True
 
     def get_url_part(self):
         return 'dc'
@@ -323,50 +319,20 @@ class DC(PluginBase, Ui_DC):
         async_call(self.dc.get_external_input_voltage, None, self.external_input_voltage_update, self.increase_error_count)
         async_call(self.dc.get_minimum_voltage, None, self.minimum_voltage_update, self.increase_error_count)
         async_call(self.dc.get_current_consumption, None, self.current_consumption_update, self.increase_error_count)
-        
-    def acceleration_slider_released(self):
-        value = self.acceleration_slider.value()
-        self.acceleration_spin.setValue(value)
+
+    def acceleration_changed(self, value):
         try:
             self.dc.set_acceleration(value)
         except ip_connection.Error:
             return
-        
-    def acceleration_spin_finished(self):
-        value = self.acceleration_spin.value()
-        self.acceleration_slider.setValue(value)
-        try:
-            self.dc.set_acceleration(value)
-        except ip_connection.Error:
-            return
-        
-    def velocity_slider_released(self):
-        value = self.velocity_slider.value()
-        self.velocity_spin.setValue(value)
+
+    def velocity_changed(self, value):
         try:
             self.dc.set_velocity(value)
         except ip_connection.Error:
             return
-        
-    def velocity_spin_finished(self):
-        value = self.velocity_spin.value()
-        self.velocity_slider.setValue(value)
-        try:
-            self.dc.set_velocity(value)
-        except ip_connection.Error:
-            return
-        
-    def frequency_slider_released(self):
-        value = self.frequency_slider.value()
-        self.frequency_spin.setValue(value)
-        try:
-            self.dc.set_pwm_frequency(value)
-        except ip_connection.Error:
-            return
-        
-    def frequency_spin_finished(self):
-        value = self.frequency_spin.value()
-        self.frequency_slider.setValue(value)
+
+    def frequency_changed(self, value):
         try:
             self.dc.set_pwm_frequency(value)
         except ip_connection.Error:

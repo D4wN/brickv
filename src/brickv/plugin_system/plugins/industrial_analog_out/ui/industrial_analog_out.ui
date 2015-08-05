@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>778</width>
-    <height>185</height>
+    <width>782</width>
+    <height>187</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -178,6 +178,9 @@
        <property name="maximum">
         <number>10000</number>
        </property>
+       <property name="pageStep">
+        <number>1000</number>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -187,6 +190,9 @@
       <widget class="QSpinBox" name="spin_voltage">
        <property name="maximum">
         <number>10000</number>
+       </property>
+       <property name="singleStep">
+        <number>100</number>
        </property>
       </widget>
      </item>
@@ -217,6 +223,9 @@
        <property name="maximum">
         <number>20000</number>
        </property>
+       <property name="pageStep">
+        <number>1000</number>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -229,6 +238,9 @@
        </property>
        <property name="maximum">
         <number>20000</number>
+       </property>
+       <property name="singleStep">
+        <number>100</number>
        </property>
       </widget>
      </item>
@@ -286,12 +298,12 @@
       <widget class="QComboBox" name="box_voltage_range">
        <item>
         <property name="text">
-         <string>0V-5V</string>
+         <string>0-5V</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>0V-10V</string>
+         <string>0-10V</string>
         </property>
        </item>
       </widget>
@@ -307,17 +319,17 @@
       <widget class="QComboBox" name="box_current_range">
        <item>
         <property name="text">
-         <string>4mA-20mA</string>
+         <string>4-20mA</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>0mA-20mA</string>
+         <string>0-20mA</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>0mA-24mA</string>
+         <string>0-24mA</string>
         </property>
        </item>
       </widget>

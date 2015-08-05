@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-04-10.      #
+# This file was automatically generated on 2015-07-13.      #
 #                                                           #
 # Bindings Version 2.1.4                                    #
 #                                                           #
@@ -61,7 +61,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickRED(Device):
     """
-    Device for executing user programs standalone
+    Executes user programs and controls other Bricks/Bricklets standalone
     """
 
     DEVICE_IDENTIFIER = 17
@@ -136,6 +136,36 @@ class BrickRED(Device):
     FUNCTION_REMOVE_CUSTOM_PROGRAM_OPTION = 64
     FUNCTION_GET_IDENTITY = 255
 
+    ERROR_CODE_SUCCESS = 0
+    ERROR_CODE_UNKNOWN_ERROR = 1
+    ERROR_CODE_INVALID_OPERATION = 2
+    ERROR_CODE_OPERATION_ABORTED = 3
+    ERROR_CODE_INTERNAL_ERROR = 4
+    ERROR_CODE_UNKNOWN_SESSION_ID = 5
+    ERROR_CODE_NO_FREE_SESSION_ID = 6
+    ERROR_CODE_UNKNOWN_OBJECT_ID = 7
+    ERROR_CODE_NO_FREE_OBJECT_ID = 8
+    ERROR_CODE_OBJECT_IS_LOCKED = 9
+    ERROR_CODE_NO_MORE_DATA = 10
+    ERROR_CODE_WRONG_LIST_ITEM_TYPE = 11
+    ERROR_CODE_PROGRAM_IS_PURGED = 12
+    ERROR_CODE_INVALID_PARAMETER = 128
+    ERROR_CODE_NO_FREE_MEMORY = 129
+    ERROR_CODE_NO_FREE_SPACE = 130
+    ERROR_CODE_ACCESS_DENIED = 121
+    ERROR_CODE_ALREADY_EXISTS = 132
+    ERROR_CODE_DOES_NOT_EXIST = 133
+    ERROR_CODE_INTERRUPTED = 134
+    ERROR_CODE_IS_DIRECTORY = 135
+    ERROR_CODE_NOT_A_DIRECTORY = 136
+    ERROR_CODE_WOULD_BLOCK = 137
+    ERROR_CODE_OVERFLOW = 138
+    ERROR_CODE_BAD_FILE_DESCRIPTOR = 139
+    ERROR_CODE_OUT_OF_RANGE = 140
+    ERROR_CODE_NAME_TOO_LONG = 141
+    ERROR_CODE_INVALID_SEEK = 142
+    ERROR_CODE_NOT_SUPPORTED = 143
+    ERROR_CODE_TOO_MANY_OPEN_FILES = 144
     OBJECT_TYPE_STRING = 0
     OBJECT_TYPE_LIST = 1
     OBJECT_TYPE_FILE = 2
@@ -855,7 +885,7 @@ class BrickRED(Device):
 
     def get_program_scheduler_state(self, program_id, session_id):
         """
-        FIXME: message is currently vaild in error-occurred state only
+        FIXME: message is currently valid in error-occurred state only
         """
         return GetProgramSchedulerState(*self.ipcon.send_request(self, BrickRED.FUNCTION_GET_PROGRAM_SCHEDULER_STATE, (program_id, session_id), 'H H', 'B B Q H'))
 

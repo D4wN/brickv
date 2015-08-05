@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-04-10.      #
+# This file was automatically generated on 2015-07-13.      #
 #                                                           #
 # Bindings Version 2.1.4                                    #
 #                                                           #
@@ -40,7 +40,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickMaster(Device):
     """
-    Device for controlling Stacks and four Bricklets
+    Basis to build stacks and has 4 Bricklet ports
     """
 
     DEVICE_IDENTIFIER = 13
@@ -123,6 +123,9 @@ class BrickMaster(Device):
     FUNCTION_GET_ETHERNET_AUTHENTICATION_SECRET = 74
     FUNCTION_SET_WIFI_AUTHENTICATION_SECRET = 75
     FUNCTION_GET_WIFI_AUTHENTICATION_SECRET = 76
+    FUNCTION_ENABLE_STATUS_LED = 238
+    FUNCTION_DISABLE_STATUS_LED = 239
+    FUNCTION_IS_STATUS_LED_ENABLED = 240
     FUNCTION_GET_PROTOCOL1_BRICKLET_NAME = 241
     FUNCTION_GET_CHIP_TEMPERATURE = 242
     FUNCTION_RESET = 243
@@ -261,6 +264,9 @@ class BrickMaster(Device):
         self.response_expected[BrickMaster.FUNCTION_GET_ETHERNET_AUTHENTICATION_SECRET] = BrickMaster.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickMaster.FUNCTION_SET_WIFI_AUTHENTICATION_SECRET] = BrickMaster.RESPONSE_EXPECTED_FALSE
         self.response_expected[BrickMaster.FUNCTION_GET_WIFI_AUTHENTICATION_SECRET] = BrickMaster.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickMaster.FUNCTION_ENABLE_STATUS_LED] = BrickMaster.RESPONSE_EXPECTED_FALSE
+        self.response_expected[BrickMaster.FUNCTION_DISABLE_STATUS_LED] = BrickMaster.RESPONSE_EXPECTED_FALSE
+        self.response_expected[BrickMaster.FUNCTION_IS_STATUS_LED_ENABLED] = BrickMaster.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickMaster.FUNCTION_GET_PROTOCOL1_BRICKLET_NAME] = BrickMaster.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickMaster.FUNCTION_GET_CHIP_TEMPERATURE] = BrickMaster.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickMaster.FUNCTION_RESET] = BrickMaster.RESPONSE_EXPECTED_FALSE
@@ -622,7 +628,7 @@ class BrickMaster(Device):
         The values are stored in the EEPROM and only applied on startup. That means
         you have to restart the Master Brick after configuration.
         
-        It is recommended to use the Brick Viewer to set the WIFI encryption.
+        It is recommended to use the Brick Viewer to set the Wi-Fi encryption.
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_WIFI_ENCRYPTION, (encryption, key, key_index, eap_options, ca_certificate_length, client_certificate_length, private_key_length), 'B 50s B B H H H', '')
 
@@ -654,8 +660,8 @@ class BrickMaster(Device):
 
     def refresh_wifi_status(self):
         """
-        Refreshes the WIFI status (see :func:`GetWifiStatus`). To read the status
-        of the WIFI module, the Master Brick has to change from data mode to
+        Refreshes the Wi-Fi status (see :func:`GetWifiStatus`). To read the status
+        of the Wi-Fi module, the Master Brick has to change from data mode to
         command mode and back. This transaction and the readout itself is
         unfortunately time consuming. This means, that it might take some ms
         until the stack with attached WIFI Extension reacts again after this
@@ -715,7 +721,7 @@ class BrickMaster(Device):
 
     def get_wifi_buffer_info(self):
         """
-        Returns informations about the WIFI receive buffer. The WIFI
+        Returns informations about the Wi-Fi receive buffer. The Wi-Fi
         receive buffer has a max size of 1500 byte and if data is transfered
         too fast, it might overflow.
         
@@ -762,7 +768,7 @@ class BrickMaster(Device):
 
     def set_long_wifi_key(self, key):
         """
-        Sets a long WIFI key (up to 63 chars, at least 8 chars) for WPA encryption.
+        Sets a long Wi-Fi key (up to 63 chars, at least 8 chars) for WPA encryption.
         This key will be used
         if the key in :func:`SetWifiEncryption` is set to "-". In the old protocol,
         a payload of size 63 was not possible, so the maximum key length was 50 chars.
@@ -770,7 +776,7 @@ class BrickMaster(Device):
         With the new protocol this is possible, since we didn't want to break API,
         this function was added additionally.
         
-        .. versionadded:: 2.0.2~(Firmware)
+        .. versionadded:: 2.0.2$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_LONG_WIFI_KEY, (key,), '64s', '')
 
@@ -778,7 +784,7 @@ class BrickMaster(Device):
         """
         Returns the encryption key as set by :func:`SetLongWifiKey`.
         
-        .. versionadded:: 2.0.2~(Firmware)
+        .. versionadded:: 2.0.2$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_LONG_WIFI_KEY, (), '', '64s')
 
@@ -789,7 +795,7 @@ class BrickMaster(Device):
         
         Setting an empty String will restore the default hostname.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_WIFI_HOSTNAME, (hostname,), '16s', '')
 
@@ -799,7 +805,7 @@ class BrickMaster(Device):
         
         An empty String means, that the default hostname is used.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_WIFI_HOSTNAME, (), '', '16s')
 
@@ -813,7 +819,7 @@ class BrickMaster(Device):
         
         The default value is 0.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_STACK_CURRENT_CALLBACK_PERIOD, (period,), 'I', '')
 
@@ -821,7 +827,7 @@ class BrickMaster(Device):
         """
         Returns the period as set by :func:`SetCurrentCallbackPeriod`.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_STACK_CURRENT_CALLBACK_PERIOD, (), '', 'I')
 
@@ -835,7 +841,7 @@ class BrickMaster(Device):
         
         The default value is 0.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_STACK_VOLTAGE_CALLBACK_PERIOD, (period,), 'I', '')
 
@@ -843,7 +849,7 @@ class BrickMaster(Device):
         """
         Returns the period as set by :func:`SetStackVoltageCallbackPeriod`.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_STACK_VOLTAGE_CALLBACK_PERIOD, (), '', 'I')
 
@@ -857,7 +863,7 @@ class BrickMaster(Device):
         
         The default value is 0.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_USB_VOLTAGE_CALLBACK_PERIOD, (period,), 'I', '')
 
@@ -865,7 +871,7 @@ class BrickMaster(Device):
         """
         Returns the period as set by :func:`SetUSBVoltageCallbackPeriod`.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_USB_VOLTAGE_CALLBACK_PERIOD, (), '', 'I')
 
@@ -887,7 +893,7 @@ class BrickMaster(Device):
         
         The default value is ('x', 0, 0).
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_STACK_CURRENT_CALLBACK_THRESHOLD, (option, min, max), 'c H H', '')
 
@@ -895,7 +901,7 @@ class BrickMaster(Device):
         """
         Returns the threshold as set by :func:`SetStackCurrentCallbackThreshold`.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         return GetStackCurrentCallbackThreshold(*self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_STACK_CURRENT_CALLBACK_THRESHOLD, (), '', 'c H H'))
 
@@ -917,7 +923,7 @@ class BrickMaster(Device):
         
         The default value is ('x', 0, 0).
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_STACK_VOLTAGE_CALLBACK_THRESHOLD, (option, min, max), 'c H H', '')
 
@@ -925,7 +931,7 @@ class BrickMaster(Device):
         """
         Returns the threshold as set by :func:`SetStackVoltageCallbackThreshold`.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         return GetStackVoltageCallbackThreshold(*self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_STACK_VOLTAGE_CALLBACK_THRESHOLD, (), '', 'c H H'))
 
@@ -947,7 +953,7 @@ class BrickMaster(Device):
         
         The default value is ('x', 0, 0).
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_USB_VOLTAGE_CALLBACK_THRESHOLD, (option, min, max), 'c H H', '')
 
@@ -955,7 +961,7 @@ class BrickMaster(Device):
         """
         Returns the threshold as set by :func:`SetUSBVoltageCallbackThreshold`.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         return GetUSBVoltageCallbackThreshold(*self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_USB_VOLTAGE_CALLBACK_THRESHOLD, (), '', 'c H H'))
 
@@ -977,7 +983,7 @@ class BrickMaster(Device):
         
         The default value is 100.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_DEBOUNCE_PERIOD, (debounce,), 'I', '')
 
@@ -985,7 +991,7 @@ class BrickMaster(Device):
         """
         Returns the debounce period as set by :func:`SetDebouncePeriod`.
         
-        .. versionadded:: 2.0.5~(Firmware)
+        .. versionadded:: 2.0.5$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_DEBOUNCE_PERIOD, (), '', 'I')
 
@@ -994,7 +1000,7 @@ class BrickMaster(Device):
         Returns *true* if a Ethernet Extension is available to be used by the Master
         Brick.
         
-        .. versionadded:: 2.1.0~(Firmware)
+        .. versionadded:: 2.1.0$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_IS_ETHERNET_PRESENT, (), '', '?')
 
@@ -1024,7 +1030,7 @@ class BrickMaster(Device):
         
         It is recommended to use the Brick Viewer to set the Ethernet configuration.
         
-        .. versionadded:: 2.1.0~(Firmware)
+        .. versionadded:: 2.1.0$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_ETHERNET_CONFIGURATION, (connection, ip, subnet_mask, gateway, port), 'B 4B 4B 4B H', '')
 
@@ -1032,7 +1038,7 @@ class BrickMaster(Device):
         """
         Returns the configuration as set by :func:`SetEthernetConfiguration`.
         
-        .. versionadded:: 2.1.0~(Firmware)
+        .. versionadded:: 2.1.0$nbsp;(Firmware)
         """
         return GetEthernetConfiguration(*self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_ETHERNET_CONFIGURATION, (), '', 'B 4B 4B 4B H'))
 
@@ -1048,7 +1054,7 @@ class BrickMaster(Device):
         
         ``hostname`` is the currently used hostname.
         
-        .. versionadded:: 2.1.0~(Firmware)
+        .. versionadded:: 2.1.0$nbsp;(Firmware)
         """
         return GetEthernetStatus(*self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_ETHERNET_STATUS, (), '', '6B 4B 4B 4B I I 32s'))
 
@@ -1061,7 +1067,7 @@ class BrickMaster(Device):
         
         The current hostname can be discovered with :func:`GetEthernetStatus`.
         
-        .. versionadded:: 2.1.0~(Firmware)
+        .. versionadded:: 2.1.0$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_ETHERNET_HOSTNAME, (hostname,), '32s', '')
 
@@ -1073,7 +1079,7 @@ class BrickMaster(Device):
         
         The MAC address can be read out again with :func:`GetEthernetStatus`.
         
-        .. versionadded:: 2.1.0~(Firmware)
+        .. versionadded:: 2.1.0$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_ETHERNET_MAC_ADDRESS, (mac_address,), '6B', '')
 
@@ -1094,7 +1100,7 @@ class BrickMaster(Device):
         
         The default values are 3 for the socket connections and 4280 for the port.
         
-        .. versionadded:: 2.2.0~(Firmware)
+        .. versionadded:: 2.2.0$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_ETHERNET_WEBSOCKET_CONFIGURATION, (sockets, port), 'B H', '')
 
@@ -1102,7 +1108,7 @@ class BrickMaster(Device):
         """
         Returns the configuration as set by :func:`SetEthernetConfiguration`.
         
-        .. versionadded:: 2.2.0~(Firmware)
+        .. versionadded:: 2.2.0$nbsp;(Firmware)
         """
         return GetEthernetWebsocketConfiguration(*self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_ETHERNET_WEBSOCKET_CONFIGURATION, (), '', 'B H'))
 
@@ -1121,7 +1127,7 @@ class BrickMaster(Device):
         
         The default value is an empty string (authentication disabled).
         
-        .. versionadded:: 2.2.0~(Firmware)
+        .. versionadded:: 2.2.0$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_ETHERNET_AUTHENTICATION_SECRET, (secret,), '64s', '')
 
@@ -1129,7 +1135,7 @@ class BrickMaster(Device):
         """
         Returns the authentication secret as set by :func:`SetEthernetAuthenticationSecret`.
         
-        .. versionadded:: 2.2.0~(Firmware)
+        .. versionadded:: 2.2.0$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_ETHERNET_AUTHENTICATION_SECRET, (), '', '64s')
 
@@ -1148,7 +1154,7 @@ class BrickMaster(Device):
         
         The default value is an empty string (authentication disabled).
         
-        .. versionadded:: 2.2.0~(Firmware)
+        .. versionadded:: 2.2.0$nbsp;(Firmware)
         """
         self.ipcon.send_request(self, BrickMaster.FUNCTION_SET_WIFI_AUTHENTICATION_SECRET, (secret,), '64s', '')
 
@@ -1156,9 +1162,43 @@ class BrickMaster(Device):
         """
         Returns the authentication secret as set by :func:`SetWifiAuthenticationSecret`.
         
-        .. versionadded:: 2.2.0~(Firmware)
+        .. versionadded:: 2.2.0$nbsp;(Firmware)
         """
         return self.ipcon.send_request(self, BrickMaster.FUNCTION_GET_WIFI_AUTHENTICATION_SECRET, (), '', '64s')
+
+    def enable_status_led(self):
+        """
+        Enables the status LED.
+        
+        The status LED is the blue LED next to the USB connector. If enabled is is
+        on and it flickers if data is transfered. If disabled it is always off.
+        
+        The default state is enabled.
+        
+        .. versionadded:: 2.3.2$nbsp;(Firmware)
+        """
+        self.ipcon.send_request(self, BrickMaster.FUNCTION_ENABLE_STATUS_LED, (), '', '')
+
+    def disable_status_led(self):
+        """
+        Disables the status LED.
+        
+        The status LED is the blue LED next to the USB connector. If enabled is is
+        on and it flickers if data is transfered. If disabled it is always off.
+        
+        The default state is enabled.
+        
+        .. versionadded:: 2.3.2$nbsp;(Firmware)
+        """
+        self.ipcon.send_request(self, BrickMaster.FUNCTION_DISABLE_STATUS_LED, (), '', '')
+
+    def is_status_led_enabled(self):
+        """
+        Returns *true* if the status LED is enabled, *false* otherwise.
+        
+        .. versionadded:: 2.3.2$nbsp;(Firmware)
+        """
+        return self.ipcon.send_request(self, BrickMaster.FUNCTION_IS_STATUS_LED_ENABLED, (), '', '?')
 
     def get_protocol1_bricklet_name(self, port):
         """

@@ -7,6 +7,7 @@ from brickv.plugin_system.plugins.analog_in_v2 import device_class as analog_in_
 from brickv.plugin_system.plugins.analog_out import device_class as analog_out
 from brickv.plugin_system.plugins.analog_out_v2 import device_class as analog_out_v2
 from brickv.plugin_system.plugins.barometer import device_class as barometer
+from brickv.plugin_system.plugins.co2 import device_class as co2
 from brickv.plugin_system.plugins.color import device_class as color
 from brickv.plugin_system.plugins.current12 import device_class as current12
 from brickv.plugin_system.plugins.current25 import device_class as current25
@@ -15,6 +16,7 @@ from brickv.plugin_system.plugins.distance_ir import device_class as distance_ir
 from brickv.plugin_system.plugins.distance_us import device_class as distance_us
 from brickv.plugin_system.plugins.dual_button import device_class as dual_button
 from brickv.plugin_system.plugins.dual_relay import device_class as dual_relay
+from brickv.plugin_system.plugins.dust_detector import device_class as dust_detector
 from brickv.plugin_system.plugins.gas_detector import device_class as gas_detector
 from brickv.plugin_system.plugins.gps import device_class as gps
 from brickv.plugin_system.plugins.hall_effect import device_class as hall_effect
@@ -43,6 +45,9 @@ from brickv.plugin_system.plugins.moisture import device_class as moisture
 from brickv.plugin_system.plugins.motion_detector import device_class as motion_detector
 from brickv.plugin_system.plugins.multi_touch import device_class as multi_touch
 from brickv.plugin_system.plugins.nfc_rfid import device_class as nfc_rfid
+from brickv.plugin_system.plugins.oled_128x64 import device_class as oled_128x64
+from brickv.plugin_system.plugins.oled_64x48 import device_class as oled_64x48
+from brickv.plugin_system.plugins.ozone import device_class as ozone
 from brickv.plugin_system.plugins.piezo_buzzer import device_class as piezo_buzzer
 from brickv.plugin_system.plugins.piezo_speaker import device_class as piezo_speaker
 from brickv.plugin_system.plugins.ptc import device_class as ptc
@@ -72,6 +77,7 @@ device_classes = [
     analog_out,
     analog_out_v2,
     barometer,
+    co2,
     color,
     current12,
     current25,
@@ -80,6 +86,7 @@ device_classes = [
     distance_us,
     dual_button,
     dual_relay,
+    dust_detector,
     gas_detector,
     gps,
     hall_effect,
@@ -108,6 +115,9 @@ device_classes = [
     motion_detector,
     multi_touch,
     nfc_rfid,
+    oled_128x64,
+    oled_64x48,
+    ozone,
     piezo_buzzer,
     piezo_speaker,
     ptc,

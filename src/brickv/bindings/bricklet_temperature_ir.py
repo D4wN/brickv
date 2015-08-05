@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-04-10.      #
+# This file was automatically generated on 2015-07-14.      #
 #                                                           #
 # Bindings Version 2.1.4                                    #
 #                                                           #
@@ -28,7 +28,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletTemperatureIR(Device):
     """
-    Device for non-contact temperature sensing
+    Measures contactless object temperature between -70°C and +380°C
     """
 
     DEVICE_IDENTIFIER = 217
@@ -117,7 +117,7 @@ class BrickletTemperatureIR(Device):
         on the surface of the object.
         
         The temperature of different materials is dependent on their `emissivity 
-        <http://en.wikipedia.org/wiki/Emissivity>`__. The emissivity of the material
+        <https://en.wikipedia.org/wiki/Emissivity>`__. The emissivity of the material
         can be set with :func:`SetEmissivity`.
         
         If you want to get the object temperature periodically, it is recommended 
@@ -128,7 +128,7 @@ class BrickletTemperatureIR(Device):
 
     def set_emissivity(self, emissivity):
         """
-        Sets the `emissivity <http://en.wikipedia.org/wiki/Emissivity>`__ that is
+        Sets the `emissivity <https://en.wikipedia.org/wiki/Emissivity>`__ that is
         used to calculate the surface temperature as returned by 
         :func:`GetObjectTemperature`. 
         

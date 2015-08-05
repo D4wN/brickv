@@ -154,6 +154,10 @@ class REDTabSettingsNetwork(QtGui.QWidget, Ui_REDTabSettingsNetwork):
     def tab_on_focus(self):
         self.is_tab_on_focus = True
 
+        # python-reconfigure is available since image version 1.7
+        self.pbutton_net_conf_change_hostname.setDisabled(self.image_version.number < (1, 7))
+        self.label_net_conf_change_hostname_hint.setVisible(self.image_version.number < (1, 7))
+
         if self.image_version.number < (1, 4) or not self.service_state.ap:
             self.ap_mode_disabled()
         else:
@@ -189,8 +193,19 @@ class REDTabSettingsNetwork(QtGui.QWidget, Ui_REDTabSettingsNetwork):
 
     def ap_tree_model_clear_add_item(self, item):
         self.ap_tree_model.removeRows(0, self.ap_tree_model.rowCount())
-        if item:
-            self.ap_tree_model.appendRow([item])
+
+        if not item:
+            return
+
+        list_items = [item]
+
+        for i in range(self.ap_tree_model.columnCount() - 1):
+            _item = QtGui.QStandardItem('')
+            _item.setEnabled(False)
+            _item.setSelectable(False)
+            list_items.append(_item)
+
+        self.ap_tree_model.appendRow(list_items)
 
     def cb_settings_network_status(self, result):
         self.network_stat_refresh_timer.stop()
@@ -1173,11 +1188,13 @@ class REDTabSettingsNetwork(QtGui.QWidget, Ui_REDTabSettingsNetwork):
                                            'Settings | Network',
                                            err_msg)
 
+            self.slot_network_conf_refresh_clicked()
+
         hostname_old = self.label_net_hostname.text()
         input_dialog_hostname = QtGui.QInputDialog()
         input_dialog_hostname.setInputMode(QtGui.QInputDialog.TextInput)
         hostname_new, ok = input_dialog_hostname.getText(get_main_window(),
-                                                     'Settings | Network',
+                                                     'Change Hostname',
                                                      'Hostname:',
                                                      QtGui.QLineEdit.Normal,
                                                      self.label_net_hostname.text())

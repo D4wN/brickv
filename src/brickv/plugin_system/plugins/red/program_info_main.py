@@ -66,7 +66,8 @@ from brickv.async_call import async_call
 from brickv.utils import get_main_window, get_home_path
 
 class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
-    name_changed = pyqtSignal()
+    name_changed = pyqtSignal(object)
+    status_changed = pyqtSignal(object)
 
     def __init__(self, session, script_manager, image_version, executable_versions, program):
         QWidget.__init__(self)
@@ -82,11 +83,16 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
 
         self.last_upload_files_wizard_directory = get_home_path()
 
-        self.program.scheduler_state_changed_callback = self.scheduler_state_changed
-        self.program.process_spawned_callback         = self.process_spawned
+        self.program.scheduler_state_changed_callback      = self.scheduler_state_changed
+        self.program.lite_scheduler_state_changed_callback = self.lite_scheduler_state_changed
+        self.program.process_spawned_callback              = self.process_spawned
+        self.program.lite_process_spawned_callback         = self.lite_process_spawned
 
         if self.program.last_spawned_process != None:
             self.program.last_spawned_process.state_changed_callback = self.process_state_changed
+
+        if self.program.last_spawned_lite_process != None:
+            self.program.last_spawned_lite_process.state_changed_callback = self.lite_process_state_changed
 
         self.first_show_event            = True
         self.tab_is_alive                = True
@@ -103,6 +109,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.button_refresh.clicked.connect(self.refresh_info)
 
         self.button_start_program.clicked.connect(self.start_program)
+        self.button_exit_process.clicked.connect(self.exit_process)
         self.button_kill_process.clicked.connect(self.kill_process)
         self.button_continue_schedule.clicked.connect(self.continue_schedule)
         self.button_send_stdin_pipe_input.clicked.connect(self.send_stdin_pipe_input)
@@ -191,13 +198,24 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
     def scheduler_state_changed(self, program):
         self.update_ui_state()
 
+    def lite_scheduler_state_changed(self, program):
+        self.status_changed.emit(self.program)
+
     def process_spawned(self, program):
         self.program.last_spawned_process.state_changed_callback = self.process_state_changed
 
         self.update_ui_state()
 
+    def lite_process_spawned(self, program):
+        self.program.last_spawned_lite_process.state_changed_callback = self.lite_process_state_changed
+
+        self.status_changed.emit(self.program)
+
     def process_state_changed(self, process):
         self.update_ui_state()
+
+    def lite_process_state_changed(self, process):
+        self.status_changed.emit(self.program)
 
     def close_all_dialogs(self):
         self.tab_is_alive = False
@@ -366,6 +384,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
             self.label_last_scheduler_message.setText('None')
 
         self.set_widget_enabled(self.button_start_program, not any_refresh_in_progress and not process_running)
+        self.set_widget_enabled(self.button_exit_process, not any_refresh_in_progress and process_running)
         self.set_widget_enabled(self.button_kill_process, not any_refresh_in_progress and process_running)
         self.set_widget_enabled(self.button_continue_schedule, not any_refresh_in_progress and scheduler_stopped and self.program.start_mode != REDProgram.START_MODE_NEVER)
 
@@ -497,7 +516,14 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
                                  u'Could not start program [{0}]:\n\n{1}'
                                  .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), e))
 
-    # FIXME: either send SIGINT before SIGKILL, or add a dedicated button for SIGINT
+    def exit_process(self):
+        if self.program.last_spawned_process != None:
+            try:
+                self.program.last_spawned_process.kill(REDProcess.SIGNAL_TERMINATE)
+            except (Error, REDError) as e:
+                QMessageBox.critical(get_main_window(), 'Exit Error',
+                                     u'Could not exit current process of program [{0}]:\n\n{1}'
+                                     .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), e))
     def kill_process(self):
         if self.program.last_spawned_process != None:
             try:
@@ -571,7 +597,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         if self.edit_general_wizard.exec_() == QDialog.Accepted:
             page.apply_program_changes()
             self.refresh_info()
-            self.name_changed.emit()
+            self.name_changed.emit(self.program)
 
         self.edit_general_wizard = None
 
