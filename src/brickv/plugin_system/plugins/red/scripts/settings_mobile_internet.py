@@ -39,14 +39,14 @@ conf['DNSprobeDomain'] = 'google.com'
 conf['DNSprobeCycle'] = 600
 conf['writeStats'] = False
 conf['printMsg'] = False
-conf['logMsg'] = True
+conf['logMsg'] = False
 conf['logFile'] = '/var/log/umtskeeper.log'
 '''
 
 TAG_CONFIG_SAKIS_OPERATORS = "conf['sakisOperators']"
 TAG_PARAM_SIM_PIN = 'SIM_PIN'
 TAG_PARAM_DIAL = 'DIAL'
-TAG_PARAM_APN = 'APN'
+TAG_PARAM_APN = 'FORCE_APN'
 TAG_PARAM_APN_USER = 'APN_USER'
 TAG_PARAM_APN_PASS = 'APN_PASS'
 TAG_PARAM_USBMODEM = 'USBMODEM'
@@ -241,8 +241,8 @@ def prepare_test_command_and_umtskeeper_configuration(usb_modem,
                                                       sim_pin):
     command_test_connection = ''
     configuration_umtskeeper = ''
-    sakis_operators = '''DIAL="{0}" APN="{1}" APN_USER="{2}" APN_PASS="{3}" OTHER="USBMODEM" USBMODEM="{4}"'''
-    sakis_operators_sim_pin = '''SIM_PIN="{0}" DIAL="{1}" APN="{2}" APN_USER="{3}" APN_PASS="{4}" OTHER="USBMODEM" USBMODEM="{5}"'''
+    sakis_operators = '''DIAL="{0}" FORCE_APN="{1}" APN_USER="{2}" APN_PASS="{3}" OTHER="USBMODEM" USBMODEM="{4}"'''
+    sakis_operators_sim_pin = '''SIM_PIN="{0}" DIAL="{1}" FORCE_APN="{2}" APN_USER="{3}" APN_PASS="{4}" OTHER="USBMODEM" USBMODEM="{5}"'''
 
     if sim_pin:
         command_test_connection_args = ' connect --nostorage --pppd --nofix --console ' +\
