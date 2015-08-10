@@ -52,6 +52,7 @@ def string_to_class(string):
 
 class SpecialDevices(object):
 
+    #GPS
     def get_gps_coordinates(device):
         if device.get_status()[0] == GPS.FIX_NO_FIX:
             raise Exception('No fix')
@@ -73,6 +74,7 @@ class SpecialDevices(object):
             return device.get_motion()
     get_gps_motion = staticmethod(get_gps_motion)
 
+    #PTC
     def get_ptc_temperature(device):
         if not device.is_sensor_connected():
             raise Exception('No sensor')
@@ -534,7 +536,7 @@ class AbstractDevice(object):
 
 '''
 /*---------------------------------------------------------------------------
-                                SimpleDevice
+                                DeviceImpl
  ---------------------------------------------------------------------------*/
  '''
 class DeviceImpl(AbstractDevice):
