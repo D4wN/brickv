@@ -55,7 +55,7 @@ class ConfigurationReader(object):
             return
 
         if pathToConfig is not None:
-            self.filenName = pathToConfig
+            self.fileName = pathToConfig
             self._read_json_config_file()
 
         if configuration is not None:
@@ -68,9 +68,8 @@ class ConfigurationReader(object):
         validator._error_count += self._readConfigErr
         validator.validate()
 
-
     def _read_json_config_file(self):
-        with codecs.open(self.filenName, 'r', 'UTF-8') as content_file:
+        with codecs.open(self.fileName, 'r', 'UTF-8') as content_file:
             try:
                 json_structure = json.load(content_file)
             except ValueError as e:
@@ -98,8 +97,6 @@ class ConfigurationReader(object):
                                 ConfigurationValidator
  ---------------------------------------------------------------------------*/
 """
-
-
 class ConfigurationValidator(object):
     '''
     This class validates the (json) configuration file
@@ -118,7 +115,6 @@ class ConfigurationValidator(object):
 
         self._log_space_counter = LogSpaceCounter(file_count, file_size)
 
-
     def validate(self):
         '''
         This function performs the validation of the various sections of the json
@@ -133,12 +129,13 @@ class ConfigurationValidator(object):
         EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")
 
         logging_time = self._log_space_counter.calculate_time()
-        EventLogger.info("Logging time until old data will be overwritten.")
-        EventLogger.info("Days: " + str(logging_time[0]) +
-                         " Hours: " + str(logging_time[1]) +
-                         " Minutes: " + str(logging_time[2]) +
-                         " Seconds: " + str(logging_time[3]))
-        EventLogger.info("About " + str(int(self._log_space_counter.lines_per_second + 0.5)) + " lines per second.")
+        if self._log_space_counter.file_size != 0:
+            EventLogger.info("Logging time until old data will be overwritten.")
+            EventLogger.info("Days: " + str(logging_time[0]) +
+                             " Hours: " + str(logging_time[1]) +
+                             " Minutes: " + str(logging_time[2]) +
+                             " Seconds: " + str(logging_time[3]))
+        EventLogger.info("Will write about " + str(int(self._log_space_counter.lines_per_second + 0.5)) + " lines per second into the log-file.")
 
         if self._error_count != 0:
             raise DataLoggerException(DataLoggerException.DL_FAILED_VALIDATION, "Validation process found some errors")
@@ -264,6 +261,7 @@ class ConfigurationValidator(object):
             blueprint_values = blueprint[ldi.DEVICE_VALUES]
             # values
             for device_value in device_values:
+                logged_values = 0
                 if device_value not in blueprint_values:
                     EventLogger.critical(
                         self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
@@ -277,7 +275,25 @@ class ConfigurationValidator(object):
                             self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
                                                                 tier_array=["values"],
                                                                 msg="invalid interval " + str(interval)))
-                        # TODO: Add sub value check here
+                    # subvalue
+                    try:
+                        subvalues = device_values[device_value][ldi.DEVICE_DEFINITIONS_SUBVALUES]
+                        for value in subvalues:
+                            if not type(subvalues[value]) == bool:
+                                EventLogger.critical(
+                                self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                                                                    tier_array=["values"],
+                                                                    msg="invalid type " + str(value)))
+                            else:
+                                if subvalues[value] == True:
+                                    logged_values += 1
+
+                    except KeyError:
+                        if interval > 0:
+                            logged_values += 1
+
+                    if interval > 0:
+                        self._log_space_counter.add_lines_per_second(interval / 1000 * logged_values)
 
     def validate_xively_section(self):
         '''
@@ -319,14 +335,11 @@ class ConfigurationValidator(object):
                                 LogSpaceCounter
  ---------------------------------------------------------------------------*/
 """
-
-
 class LogSpaceCounter(object):
     '''
     This class provides functions to count the average lines per second
-    in the log file
+    which will be written into the log file
     '''
-    # TODO: Re-Write this class
     def __init__(self, file_count, file_size):
         '''
         file_count -- the amount of logfiles
@@ -337,6 +350,9 @@ class LogSpaceCounter(object):
 
         self.lines_per_second = 0.0
 
+    def add_lines_per_second(self, lines):
+        self.lines_per_second += lines
+
     def calculate_time(self):
         '''
         This function calculates the time where the logger can
@@ -344,7 +360,7 @@ class LogSpaceCounter(object):
         
         18k lines -> 1MB
         '''
-        if self.lines_per_second <= 0:
+        if self.lines_per_second <= 0 or self.file_size == 0:
             return 0, 0, 0, 0
 
         max_available_space = (self.file_count + 1) * ((self.file_size / 1024.0) / 1024.0)
@@ -369,8 +385,6 @@ class LogSpaceCounter(object):
                                 Configuration
  ---------------------------------------------------------------------------*/
 """
-
-
 class Configuration():
     '''
     This class contains the information out of the json configuration file split by the
