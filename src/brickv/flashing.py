@@ -108,8 +108,10 @@ class FlashingWindow(QDialog, Ui_Flashing):
 
         infos.get_infos_changed_signal().connect(self.update_bricks)
 
-        self.update_tool_label.hide()
-        self.no_connection_label.hide()
+        self.label_update_tool.hide()
+        self.label_no_update_connection.hide()
+        self.label_no_firmware_connection.hide()
+        self.label_no_plugin_connection.hide()
 
         self.refresh_serial_ports()
 
@@ -243,14 +245,19 @@ class FlashingWindow(QDialog, Ui_Flashing):
     def refresh_firmware_info(self, url_part, latest_version):
         name = url_part
 
-        if name in ['dc', 'imu']:
+        if name.endswith('_v2'):
+            name = name.replace('_v2', '_2.0')
+
+        if name in ['dc', 'imu', 'imu_2.0']:
             name = name.upper()
-        else:
-            words = name.split('_')
-            parts = []
-            for word in words:
-                parts.append(word[0].upper() + word[1:])
-            name = ' '.join(parts)
+
+        words = name.split('_')
+        parts = []
+
+        for word in words:
+            parts.append(word[0].upper() + word[1:])
+
+        name = ' '.join(parts)
 
         firmware_info = infos.FirmwareInfo()
         firmware_info.name = name
@@ -262,7 +269,10 @@ class FlashingWindow(QDialog, Ui_Flashing):
     def refresh_plugin_info(self, url_part, latest_version):
         name = url_part
 
-        if name in ['gps', 'ptc']:
+        if name.endswith('_v2'):
+            name = name.replace('_v2', '_2.0')
+
+        if name in ['gps', 'ptc', 'rs232']:
             name = name.upper()
         elif name.startswith('lcd_'):
             name = name.replace('lcd_', 'LCD_')
@@ -276,8 +286,6 @@ class FlashingWindow(QDialog, Ui_Flashing):
             name = name.replace('_us', '_US')
         elif name.startswith('led_'):
             name = name.replace('led_', 'LED_')
-        elif name.endswith('_v2'):
-            name = name.replace('_v2', '_2.0')
 
         words = name.split('_')
         parts = []
@@ -685,6 +693,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
             return
 
         brick_info = self.brick_infos[index]
+        first_index = None
 
         for key in sorted(brick_info.bricklets.keys()):
             bricklet_info = brick_info.bricklets[key]
@@ -692,8 +701,14 @@ class FlashingWindow(QDialog, Ui_Flashing):
             if bricklet_info is None:
                 self.combo_port.addItem(key.upper())
             else:
+                if first_index == None:
+                    first_index = self.combo_port.count()
+
                 name = '{0}: {1}'.format(key.upper(), bricklet_info.get_combo_item())
                 self.combo_port.addItem(name, bricklet_info.url_part)
+
+        if first_index != None:
+            self.combo_port.setCurrentIndex(first_index)
 
         self.update_ui_state()
 
@@ -1028,19 +1043,20 @@ class FlashingWindow(QDialog, Ui_Flashing):
         }
 
         progress = self.create_progress_bar('Discovering')
-        okay = True
 
         try:
-            urllib2.urlopen(FIRMWARE_URL, timeout=10).read()
-            self.no_connection_label.hide()
+            urllib2.urlopen("http://tinkerforge.com", timeout=10).read()
+            self.label_no_update_connection.hide()
+            self.label_no_firmware_connection.hide()
+            self.label_no_plugin_connection.hide()
         except urllib2.URLError:
-            okay = False
             progress.cancel()
-            self.no_connection_label.show()
+            self.label_no_update_connection.show()
+            self.label_no_firmware_connection.show()
+            self.label_no_plugin_connection.show()
             return
 
-        if okay:
-            self.refresh_latest_version_info(progress)
+        self.refresh_latest_version_info(progress)
 
         def get_color_for_device(device):
             if device.firmware_version_installed >= device.firmware_version_latest:
@@ -1153,9 +1169,9 @@ class FlashingWindow(QDialog, Ui_Flashing):
 
                 color, update = get_color_for_device(device_info)
                 if update:
-                    self.update_tool_label.show()
+                    self.label_update_tool.show()
                 else:
-                    self.update_tool_label.hide()
+                    self.label_update_tool.hide()
 
                 for item in parent:
                     item.setFlags(item.flags() & ~Qt.ItemIsEditable)
@@ -1169,6 +1185,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
             # out false-positive protocol1 errors that were detected due to
             # fast USB unplug
             t = 200
+
         QTimer.singleShot(t, lambda: self.refresh_updates_clicked_second_step(is_update, items, protocol1_errors))
 
     def refresh_updates_clicked_second_step(self, is_update, items, protocol1_errors):

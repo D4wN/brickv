@@ -65,6 +65,14 @@ class ConfigFile(object):
         self.tab.update_ui_state()
 
     def set_content(self, content):
+        # FIXME: QPlainTextEdit does not preserve the original line endings, but
+        #        converts all line endings to \n. this results in a difference
+        #        between self.content and the content stored in the QPlainTextEdit
+        #        even if the user did not edit the content. avoid this problem
+        #        by converting all line endings to \n before setting the content
+        #        of the QPlainTextEdit
+        content = content.replace('\r\n', '\n')
+
         if self.content == None:
             self.edit.setPlainText(content)
 
@@ -95,7 +103,7 @@ class REDTabSettingsOpenHAB(QWidget, Ui_REDTabSettingsOpenHAB):
         self.action_in_progress  = False
         self.configs             = [
             ConfigFile('openhab.cfg', '/etc/openhab/configurations/openhab.cfg', self, deletable=False),
-            ConfigFile('logback.xml', '/etc/openhab/configurations/logback.xml', self, deletable=False)
+            ConfigFile('logback.xml', '/etc/openhab/logback.xml', self, deletable=False)
         ]
 
         self.recreate_widgets()
@@ -147,6 +155,7 @@ class REDTabSettingsOpenHAB(QWidget, Ui_REDTabSettingsOpenHAB):
         self.button_refresh.setEnabled(not self.action_in_progress)
         self.button_new.setEnabled(not self.action_in_progress)
         self.button_delete.setEnabled(not self.action_in_progress and config.deletable)
+        self.stacked_container.setEnabled(not self.action_in_progress)
         self.button_discard.setEnabled(not self.action_in_progress and config.modified)
         self.button_apply.setEnabled(not self.action_in_progress and config.modified)
 

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-03-06.      #
+# This file was automatically generated on 2015-07-28.      #
 #                                                           #
-# Bindings Version 2.1.4                                    #
+# Bindings Version 2.1.5                                    #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
-# to the generator git on tinkerforge.com                   #
+# to the generators git repository on tinkerforge.com       #
 #############################################################
 
 #### __DEVICE_IS_NOT_RELEASED__ ####
@@ -29,7 +29,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletGasDetector(Device):
     """
-    Device for sensing different gases
+    Measures concentration of different gases
     """
 
     DEVICE_IDENTIFIER = 252
@@ -59,6 +59,8 @@ class BrickletGasDetector(Device):
     THRESHOLD_OPTION_INSIDE = 'i'
     THRESHOLD_OPTION_SMALLER = '<'
     THRESHOLD_OPTION_GREATER = '>'
+    DETECTOR_TYPE_0 = 0
+    DETECTOR_TYPE_1 = 1
 
     def __init__(self, uid, ipcon):
         """
@@ -92,7 +94,9 @@ class BrickletGasDetector(Device):
 
     def get_value(self):
         """
-        TODO
+        Returns a value between 0 and 4095. 
+        
+        See `here <TODO>`__ for more information about the measurements.
         
         If you want to get the value periodically, it is recommended 
         to use the callback :func:`Value` and set the period with 
@@ -168,8 +172,8 @@ class BrickletGasDetector(Device):
 
     def set_moving_average(self, average):
         """
-        Sets the length of a `moving averaging <http://en.wikipedia.org/wiki/Moving_average>`__ 
-        for the value value.
+        Sets the length of a `moving averaging <https://en.wikipedia.org/wiki/Moving_average>`__
+        for the measured value.
         
         Setting the length to 1 will turn the averaging off. With less
         averaging, there is more noise on the data.
@@ -188,31 +192,44 @@ class BrickletGasDetector(Device):
 
     def set_detector_type(self, detector_type):
         """
-        TODO
+        Sets the detector type.
+        
+        The following types are currently supported.
+        
+        * Type 0: MQ2 and MQ5
+        * Type 1: MQ3
+        
+        The detector type is written to the EEPROM of the Bricklet, so it only has
+        to be set once.
+        
+        You can use the Brick Viewer to set the detector type, so you likely
+        don't need to use this function in your source code.
+        
+        The default detector type is 0.
         """
         self.ipcon.send_request(self, BrickletGasDetector.FUNCTION_SET_DETECTOR_TYPE, (detector_type,), 'B', '')
 
     def get_detector_type(self):
         """
-        TODO
+        Returns the detector type as set by :func:`SetDetectorType`.
         """
         return self.ipcon.send_request(self, BrickletGasDetector.FUNCTION_GET_DETECTOR_TYPE, (), '', 'B')
 
     def heater_on(self):
         """
-        TODO
+        Turns the internal heater on.
         """
         self.ipcon.send_request(self, BrickletGasDetector.FUNCTION_HEATER_ON, (), '', '')
 
     def heater_off(self):
         """
-        TODO
+        Turns the internal heater off.
         """
         self.ipcon.send_request(self, BrickletGasDetector.FUNCTION_HEATER_OFF, (), '', '')
 
     def is_heater_on(self):
         """
-        TODO
+        Returns *true* if the heater is on, *false* otherwise.
         """
         return self.ipcon.send_request(self, BrickletGasDetector.FUNCTION_IS_HEATER_ON, (), '', '?')
 

@@ -22,12 +22,12 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
+from PyQt4.QtGui import QVBoxLayout, QLabel, QHBoxLayout, QSpinBox, QComboBox
+
 from brickv.plugin_system.plugin_base import PluginBase
 from brickv.bindings import ip_connection
 from brickv.bindings.bricklet_analog_out import BrickletAnalogOut
 from brickv.async_call import async_call
-
-from PyQt4.QtGui import QVBoxLayout, QLabel, QHBoxLayout, QSpinBox, QComboBox
 
 class AnalogOut(PluginBase):
     def __init__(self, *args):
@@ -65,7 +65,7 @@ class AnalogOut(PluginBase):
         layout.addStretch()
         
         self.voltage_box.editingFinished.connect(self.voltage_finished)
-        self.mode_combo.activated.connect(self.mode_changed)
+        self.mode_combo.currentIndexChanged.connect(self.mode_changed)
         
     def start(self):
         async_call(self.ao.get_voltage, None, self.voltage_box.setValue, self.increase_error_count)

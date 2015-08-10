@@ -230,6 +230,27 @@ class Constants(object):
         except ValueError:
             return Constants.DEFAULT_DELPHI_START_MODE
 
+    # must match item order in combo_build_system on Delphi/Lazarus page
+    DELPHI_BUILD_SYSTEM_FPCMAKE  = 0
+    DELPHI_BUILD_SYSTEM_LAZBUILD = 1
+
+    delphi_build_system_api_names = {
+        DELPHI_BUILD_SYSTEM_FPCMAKE:  'fpcmake',
+        DELPHI_BUILD_SYSTEM_LAZBUILD: 'lazbuild'
+    }
+
+    delphi_build_system_display_names = {
+        DELPHI_BUILD_SYSTEM_FPCMAKE:  'fpcmake',
+        DELPHI_BUILD_SYSTEM_LAZBUILD: 'lazbuild'
+    }
+
+    @staticmethod
+    def get_delphi_build_system(delphi_build_system_api_name):
+        try:
+            return get_key_from_value(Constants.delphi_build_system_api_names, delphi_build_system_api_name)
+        except ValueError:
+            return Constants.DEFAULT_DELPHI_BUILD_SYSTEM
+
     # must match item order in combo_start_mode on Java page
     JAVA_START_MODE_MAIN_CLASS = 0
     JAVA_START_MODE_JAR_FILE   = 1
@@ -565,6 +586,7 @@ class Constants(object):
     DEFAULT_C_START_MODE          = C_START_MODE_EXECUTABLE
     DEFAULT_CSHARP_START_MODE     = CSHARP_START_MODE_EXECUTABLE
     DEFAULT_DELPHI_START_MODE     = DELPHI_START_MODE_EXECUTABLE
+    DEFAULT_DELPHI_BUILD_SYSTEM   = DELPHI_BUILD_SYSTEM_FPCMAKE
     DEFAULT_JAVA_START_MODE       = JAVA_START_MODE_MAIN_CLASS
     DEFAULT_JAVASCRIPT_FLAVOR     = JAVASCRIPT_FLAVOR_BROWSER
     DEFAULT_JAVASCRIPT_START_MODE = JAVASCRIPT_START_MODE_SCRIPT_FILE
@@ -1444,3 +1466,60 @@ def get_file_display_size(size):
         return '%.1f kiB' % (size / 1024.0)
     else:
         return '%.1f MiB' % (size / 1048576.0)
+
+
+def has_program_start_mode_web_interface(program):
+    language_api_name               = program.cast_custom_option_value('language', unicode, '<unknown>')
+    php_start_mode_web_interface    = False
+    python_start_mode_web_interface = False
+    javascript_flavor_browser       = False
+
+    if language_api_name == 'php':
+        php_start_mode_api_name      = program.cast_custom_option_value('php.start_mode', unicode, '<unknown>')
+        php_start_mode               = Constants.get_php_start_mode(php_start_mode_api_name)
+        php_start_mode_web_interface = php_start_mode == Constants.PHP_START_MODE_WEB_INTERFACE
+    elif language_api_name == 'python':
+        python_start_mode_api_name      = program.cast_custom_option_value('python.start_mode', unicode, '<unknown>')
+        python_start_mode               = Constants.get_python_start_mode(python_start_mode_api_name)
+        python_start_mode_web_interface = python_start_mode == Constants.PYTHON_START_MODE_WEB_INTERFACE
+    elif language_api_name == 'javascript':
+        javascript_flavor_api_name = program.cast_custom_option_value('javascript.flavor', unicode, '<unknown>')
+        javascript_flavor          = Constants.get_javascript_flavor(javascript_flavor_api_name)
+        javascript_flavor_browser  = javascript_flavor == Constants.JAVASCRIPT_FLAVOR_BROWSER
+
+    return php_start_mode_web_interface or python_start_mode_web_interface or javascript_flavor_browser
+
+
+def get_program_short_status(program):
+    if has_program_start_mode_web_interface(program):
+        return 'N/A'
+
+    process = program.last_spawned_lite_process
+
+    if process != None:
+        if process.state == REDProcess.STATE_RUNNING:
+            return 'Running'
+        elif process.state == REDProcess.STATE_ERROR:
+            if program.lite_scheduler_state == REDProgram.SCHEDULER_STATE_RUNNING:
+                return 'Scheduled'
+            else:
+                return 'Error'
+        elif process.state == REDProcess.STATE_EXITED:
+            if program.lite_scheduler_state == REDProgram.SCHEDULER_STATE_RUNNING:
+                return 'Scheduled'
+            else:
+                return 'Exited'
+        elif process.state == REDProcess.STATE_KILLED:
+            if program.lite_scheduler_state == REDProgram.SCHEDULER_STATE_RUNNING:
+                return 'Scheduled'
+            else:
+                return 'Killed'
+        elif process.state == REDProcess.STATE_STOPPED:
+            return 'Suspended'
+        else:
+            return 'Unknown'
+    else:
+        if program.lite_scheduler_state == REDProgram.SCHEDULER_STATE_RUNNING:
+            return 'Scheduled'
+        else:
+            return 'Stopped'

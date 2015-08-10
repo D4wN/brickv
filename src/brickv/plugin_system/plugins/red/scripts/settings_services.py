@@ -74,7 +74,8 @@ if command == 'CHECK':
                        'splashscreen'     : None,
                        'ap'               : None,
                        'servermonitoring' : None,
-                       'openhab'          : None}
+                       'openhab'          : None,
+                       'mobileinternet'   : None}
 
         for script in init_script_list_list:
             script_stat = script.split('<==>')
@@ -93,6 +94,7 @@ if command == 'CHECK':
         return_dict['gpu'] = not os.path.isfile('/etc/modprobe.d/mali-blacklist.conf')
         return_dict['ap'] = os.path.isfile('/etc/tf_ap_enabled')
         return_dict['servermonitoring'] = os.path.isfile('/etc/tf_server_monitoring_enabled')
+        return_dict['mobileinternet'] = os.path.isfile('/etc/tf_mobile_internet_enabled')
 
         sys.stdout.write(json.dumps(return_dict, separators=(',', ':')))
         exit(0)
@@ -179,9 +181,19 @@ elif command == 'APPLY':
             if os.system('/bin/systemctl disable wicd') != 0:
                 exit(12)
 
+            if os.path.isfile('/etc/network/interfaces.ap'):
+                os.rename('/etc/network/interfaces.ap', '/etc/network/interfaces')
+
             if os.path.isfile('/etc/xdg/autostart/wicd-tray.desktop'):
                 os.rename('/etc/xdg/autostart/wicd-tray.desktop',
                           '/etc/xdg/autostart/wicd-tray.desktop.block')
+            
+            if os.path.isfile('/etc/systemd/system/tf_setup_ap_nat.service') and \
+               os.path.isfile('/etc/systemd/system/tf_setup_ap_nat.timer'):
+                    os.system('/bin/systemctl start /etc/systemd/system/tf_setup_ap_nat.service &> /dev/null')
+                    os.system('/bin/systemctl start /etc/systemd/system/tf_setup_ap_nat.timer &> /dev/null')
+                    os.system('/bin/systemctl enable /etc/systemd/system/tf_setup_ap_nat.service &> /dev/null')
+                    os.system('/bin/systemctl enable /etc/systemd/system/tf_setup_ap_nat.timer &> /dev/null')
 
         else:
             if os.path.isfile('/etc/tf_ap_enabled'):
@@ -202,6 +214,13 @@ elif command == 'APPLY':
             if os.path.isfile('/etc/xdg/autostart/wicd-tray.desktop.block'):
                 os.rename('/etc/xdg/autostart/wicd-tray.desktop.block',
                           '/etc/xdg/autostart/wicd-tray.desktop')
+
+            if os.path.isfile('/etc/systemd/system/tf_setup_ap_nat.service') and \
+               os.path.isfile('/etc/systemd/system/tf_setup_ap_nat.timer'):
+                    os.system('/bin/systemctl stop /etc/systemd/system/tf_setup_ap_nat.service &> /dev/null')
+                    os.system('/bin/systemctl stop /etc/systemd/system/tf_setup_ap_nat.timer &> /dev/null')
+                    os.system('/bin/systemctl disable /etc/systemd/system/tf_setup_ap_nat.service &> /dev/null')
+                    os.system('/bin/systemctl disable /etc/systemd/system/tf_setup_ap_nat.timer &> /dev/null')
 
         if apply_dict['servermonitoring']:
             if not apply_dict['webserver']:
@@ -227,12 +246,27 @@ elif command == 'APPLY':
         else:
             if os.system('/bin/systemctl disable openhab') != 0:
                 exit(20)
+        
+        if apply_dict['mobileinternet']:
+            with open('/etc/tf_mobile_internet_enabled', 'w') as fd_ap_enabled:
+                pass
+
+            if os.path.isfile('/etc/systemd/system/tf_mobile_internet.service'):
+                if os.system('/bin/systemctl enable tf_mobile_internet') != 0:
+                    exit(21)
+        else:
+            if os.path.isfile('/etc/tf_mobile_internet_enabled'):
+                os.remove('/etc/tf_mobile_internet_enabled')
+
+            if os.path.isfile('/etc/systemd/system/tf_mobile_internet.service'):
+                if os.system('/bin/systemctl disable tf_mobile_internet') != 0:
+                    exit(22)
 
         exit(0)
 
     except Exception as e:
         sys.stderr.write(unicode(e).encode('utf-8'))
-        exit(21)
+        exit(23)
 
 else:
     sys.stderr.write(u'Invalid parameters'.encode('utf-8'))

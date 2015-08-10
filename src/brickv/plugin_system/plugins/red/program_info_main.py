@@ -66,7 +66,8 @@ from brickv.async_call import async_call
 from brickv.utils import get_main_window, get_home_path
 
 class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
-    name_changed = pyqtSignal()
+    name_changed = pyqtSignal(object)
+    status_changed = pyqtSignal(object)
 
     def __init__(self, session, script_manager, image_version, executable_versions, program):
         QWidget.__init__(self)
@@ -82,11 +83,16 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
 
         self.last_upload_files_wizard_directory = get_home_path()
 
-        self.program.scheduler_state_changed_callback = self.scheduler_state_changed
-        self.program.process_spawned_callback         = self.process_spawned
+        self.program.scheduler_state_changed_callback      = self.scheduler_state_changed
+        self.program.lite_scheduler_state_changed_callback = self.lite_scheduler_state_changed
+        self.program.process_spawned_callback              = self.process_spawned
+        self.program.lite_process_spawned_callback         = self.lite_process_spawned
 
         if self.program.last_spawned_process != None:
             self.program.last_spawned_process.state_changed_callback = self.process_state_changed
+
+        if self.program.last_spawned_lite_process != None:
+            self.program.last_spawned_lite_process.state_changed_callback = self.lite_process_state_changed
 
         self.first_show_event            = True
         self.tab_is_alive                = True
@@ -103,6 +109,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.button_refresh.clicked.connect(self.refresh_info)
 
         self.button_start_program.clicked.connect(self.start_program)
+        self.button_exit_process.clicked.connect(self.exit_process)
         self.button_kill_process.clicked.connect(self.kill_process)
         self.button_continue_schedule.clicked.connect(self.continue_schedule)
         self.button_send_stdin_pipe_input.clicked.connect(self.send_stdin_pipe_input)
@@ -191,13 +198,24 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
     def scheduler_state_changed(self, program):
         self.update_ui_state()
 
+    def lite_scheduler_state_changed(self, program):
+        self.status_changed.emit(self.program)
+
     def process_spawned(self, program):
         self.program.last_spawned_process.state_changed_callback = self.process_state_changed
 
         self.update_ui_state()
 
+    def lite_process_spawned(self, program):
+        self.program.last_spawned_lite_process.state_changed_callback = self.lite_process_state_changed
+
+        self.status_changed.emit(self.program)
+
     def process_state_changed(self, process):
         self.update_ui_state()
+
+    def lite_process_state_changed(self, process):
+        self.status_changed.emit(self.program)
 
     def close_all_dialogs(self):
         self.tab_is_alive = False
@@ -257,9 +275,11 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         async_call(refresh_async, None, cb_success, cb_error)
 
     def update_ui_state(self):
-        if self.program_refresh_in_progress or \
-           self.widget_logs.refresh_in_progress or \
-           self.widget_files.refresh_in_progress:
+        any_refresh_in_progress = self.program_refresh_in_progress or \
+                                  self.widget_logs.refresh_in_progress or \
+                                  self.widget_files.refresh_in_progress
+
+        if any_refresh_in_progress:
             self.progress.setVisible(True)
             self.button_refresh.setText('Refreshing...')
             self.set_edit_buttons_enabled(False)
@@ -287,31 +307,10 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.label_first_upload.setText(timestamp_to_date_at_time(first_upload))
         self.label_last_edit.setText(timestamp_to_date_at_time(last_edit))
 
-        php_start_mode_web_interface    = False
-        python_start_mode_web_interface = False
-        javascript_flavor_browser       = False
-
-        if language_api_name == 'php':
-            php_start_mode_api_name      = self.program.cast_custom_option_value('php.start_mode', unicode, '<unknown>')
-            php_start_mode               = Constants.get_php_start_mode(php_start_mode_api_name)
-            php_start_mode_web_interface = php_start_mode == Constants.PHP_START_MODE_WEB_INTERFACE
-        elif language_api_name == 'python':
-            python_start_mode_api_name      = self.program.cast_custom_option_value('python.start_mode', unicode, '<unknown>')
-            python_start_mode               = Constants.get_python_start_mode(python_start_mode_api_name)
-            python_start_mode_web_interface = python_start_mode == Constants.PYTHON_START_MODE_WEB_INTERFACE
-        elif language_api_name == 'javascript':
-            javascript_flavor_api_name = self.program.cast_custom_option_value('javascript.flavor', unicode, '<unknown>')
-            javascript_flavor          = Constants.get_javascript_flavor(javascript_flavor_api_name)
-            javascript_flavor_browser  = javascript_flavor == Constants.JAVASCRIPT_FLAVOR_BROWSER
-
-        show_status    = not php_start_mode_web_interface and not python_start_mode_web_interface and not javascript_flavor_browser
-        show_logs      = not php_start_mode_web_interface and not python_start_mode_web_interface and not javascript_flavor_browser
-        show_arguments = not php_start_mode_web_interface and not python_start_mode_web_interface and not javascript_flavor_browser
-        show_stdio     = not php_start_mode_web_interface and not python_start_mode_web_interface and not javascript_flavor_browser
-        show_schedule  = not php_start_mode_web_interface and not python_start_mode_web_interface and not javascript_flavor_browser
+        start_mode_web_interface = has_program_start_mode_web_interface(self.program)
 
         # status
-        self.group_status.setVisible(show_status)
+        self.group_status.setVisible(not start_mode_web_interface)
 
         process_running = False
 
@@ -342,7 +341,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
                 self.label_program_current_state.setText('Not running, last run was killed (signal: {0}) on {1}'
                                                          .format(self.program.last_spawned_process.exit_code, date_at_time))
             elif self.program.last_spawned_process.state == REDProcess.STATE_STOPPED:
-                self.label_program_current_state.setText('Stopped on {0}'.format(date_at_time)) # FIXME: show continue button?
+                self.label_program_current_state.setText('Suspended on {0}'.format(date_at_time)) # FIXME: show resume button?
 
             self.label_last_program_start.setText(timestamp_to_date_at_time(self.program.last_spawned_timestamp))
         else:
@@ -363,16 +362,19 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         else:
             self.label_last_scheduler_message.setText('None')
 
-        self.set_widget_enabled(self.button_start_program, not process_running)
-        self.set_widget_enabled(self.button_kill_process, process_running)
-        self.set_widget_enabled(self.button_continue_schedule, scheduler_stopped and self.program.start_mode != REDProgram.START_MODE_NEVER)
+        self.set_widget_enabled(self.button_start_program, not any_refresh_in_progress and not process_running)
+        self.set_widget_enabled(self.button_exit_process, not any_refresh_in_progress and process_running)
+        self.set_widget_enabled(self.button_kill_process, not any_refresh_in_progress and process_running)
+        self.set_widget_enabled(self.button_continue_schedule, not any_refresh_in_progress and scheduler_stopped and self.program.start_mode != REDProgram.START_MODE_NEVER)
 
         # logs
-        self.group_logs.setVisible(show_logs)
+        self.group_logs.setVisible(not start_mode_web_interface)
 
+        self.widget_logs.any_refresh_in_progress = any_refresh_in_progress
         self.widget_logs.update_ui_state()
 
         # files
+        self.widget_files.any_refresh_in_progress = any_refresh_in_progress
         self.widget_files.update_ui_state()
 
         # language
@@ -396,7 +398,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
                 self.current_language_action = language_action
 
         # arguments
-        self.group_arguments.setVisible(show_arguments)
+        self.group_arguments.setVisible(not start_mode_web_interface)
 
         arguments = []
         editable_arguments_offset = max(self.program.cast_custom_option_value('editable_arguments_offset', int, 0), 0)
@@ -419,7 +421,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.label_environment.setText('\n'.join(environment))
 
         # stdio
-        self.group_stdio.setVisible(show_stdio)
+        self.group_stdio.setVisible(not start_mode_web_interface)
 
         stdin_redirection_pipe  = self.program.stdin_redirection  == REDProgram.STDIO_REDIRECTION_PIPE
         stdin_redirection_file  = self.program.stdin_redirection  == REDProgram.STDIO_REDIRECTION_FILE
@@ -433,8 +435,8 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         self.label_stdin_file_title.setVisible(stdin_redirection_file)
         self.label_stdin_file.setVisible(stdin_redirection_file)
 
-        self.set_widget_enabled(self.edit_stdin_pipe_input, process_running)
-        self.set_widget_enabled(self.button_send_stdin_pipe_input, process_running)
+        self.set_widget_enabled(self.edit_stdin_pipe_input, not any_refresh_in_progress and process_running)
+        self.set_widget_enabled(self.button_send_stdin_pipe_input, not any_refresh_in_progress and process_running)
 
         if stdin_redirection_file:
             self.label_stdin_file.setText(self.program.stdin_file_name)
@@ -454,7 +456,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
             self.label_stderr_file.setText(self.program.stderr_file_name)
 
         # schedule
-        self.group_schedule.setVisible(show_schedule)
+        self.group_schedule.setVisible(not start_mode_web_interface)
 
         start_mode_never    = self.program.start_mode == REDProgram.START_MODE_NEVER
         start_mode_always   = self.program.start_mode == REDProgram.START_MODE_ALWAYS
@@ -493,7 +495,14 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
                                  u'Could not start program [{0}]:\n\n{1}'
                                  .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), e))
 
-    # FIXME: either send SIGINT before SIGKILL, or add a dedicated button for SIGINT
+    def exit_process(self):
+        if self.program.last_spawned_process != None:
+            try:
+                self.program.last_spawned_process.kill(REDProcess.SIGNAL_TERMINATE)
+            except (Error, REDError) as e:
+                QMessageBox.critical(get_main_window(), 'Exit Error',
+                                     u'Could not exit current process of program [{0}]:\n\n{1}'
+                                     .format(self.program.cast_custom_option_value('name', unicode, '<unknown>'), e))
     def kill_process(self):
         if self.program.last_spawned_process != None:
             try:
@@ -567,7 +576,7 @@ class ProgramInfoMain(QWidget, Ui_ProgramInfoMain):
         if self.edit_general_wizard.exec_() == QDialog.Accepted:
             page.apply_program_changes()
             self.refresh_info()
-            self.name_changed.emit()
+            self.name_changed.emit(self.program)
 
         self.edit_general_wizard = None
 

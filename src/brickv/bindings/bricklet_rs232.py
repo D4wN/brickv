@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-03-06.      #
+# This file was automatically generated on 2015-07-28.      #
 #                                                           #
-# Bindings Version 2.1.4                                    #
+# Bindings Version 2.1.5                                    #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
-# to the generator git on tinkerforge.com                   #
+# to the generators git repository on tinkerforge.com       #
 #############################################################
-
-#### __DEVICE_IS_NOT_RELEASED__ ####
 
 try:
     from collections import namedtuple
@@ -25,25 +23,55 @@ except ValueError:
     from ip_connection import Device, IPConnection, Error
 
 Read = namedtuple('Read', ['message', 'length'])
+GetConfiguration = namedtuple('Configuration', ['baudrate', 'parity', 'stopbits', 'wordlength', 'hardware_flowcontrol', 'software_flowcontrol'])
 GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardware_version', 'firmware_version', 'device_identifier'])
 
 class BrickletRS232(Device):
     """
-    Device for RS232 communication
+    Communicates with RS232 devices
     """
 
     DEVICE_IDENTIFIER = 254
     DEVICE_DISPLAY_NAME = 'RS232 Bricklet'
 
+    CALLBACK_READ_CALLBACK = 8
 
     FUNCTION_WRITE = 1
     FUNCTION_READ = 2
-    FUNCTION_ENABLE_CALLBACK = 3
-    FUNCTION_IS_CALLBACK_ENABLED = 4
-    FUNCTION_SET_CONFIGURATION = 5
-    FUNCTION_GET_CONFIGURATION = 6
+    FUNCTION_ENABLE_READ_CALLBACK = 3
+    FUNCTION_DISABLE_READ_CALLBACK = 4
+    FUNCTION_IS_READ_CALLBACK_ENABLED = 5
+    FUNCTION_SET_CONFIGURATION = 6
+    FUNCTION_GET_CONFIGURATION = 7
     FUNCTION_GET_IDENTITY = 255
 
+    BAUDRATE_300 = 0
+    BAUDRATE_600 = 1
+    BAUDRATE_1200 = 2
+    BAUDRATE_2400 = 3
+    BAUDRATE_4800 = 4
+    BAUDRATE_9600 = 5
+    BAUDRATE_14400 = 6
+    BAUDRATE_28800 = 7
+    BAUDRATE_38400 = 8
+    BAUDRATE_57600 = 9
+    BAUDRATE_115200 = 10
+    BAUDRATE_230400 = 11
+    PARITY_NONE = 0
+    PARITY_ODD = 1
+    PARITY_EVEN = 2
+    PARITY_FORCED_PARITY_1 = 3
+    PARITY_FORCED_PARITY_0 = 4
+    STOPBITS_1 = 1
+    STOPBITS_2 = 2
+    WORDLENGTH_5 = 5
+    WORDLENGTH_6 = 6
+    WORDLENGTH_7 = 7
+    WORDLENGTH_8 = 8
+    HARDWARE_FLOWCONTROL_OFF = 0
+    HARDWARE_FLOWCONTROL_ON = 1
+    SOFTWARE_FLOWCONTROL_OFF = 0
+    SOFTWARE_FLOWCONTROL_ON = 1
 
     def __init__(self, uid, ipcon):
         """
@@ -54,50 +82,85 @@ class BrickletRS232(Device):
 
         self.api_version = (2, 0, 0)
 
-        self.response_expected[BrickletRS232.FUNCTION_WRITE] = BrickletRS232.RESPONSE_EXPECTED_FALSE
+        self.response_expected[BrickletRS232.FUNCTION_WRITE] = BrickletRS232.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletRS232.FUNCTION_READ] = BrickletRS232.RESPONSE_EXPECTED_ALWAYS_TRUE
-        self.response_expected[BrickletRS232.FUNCTION_ENABLE_CALLBACK] = BrickletRS232.RESPONSE_EXPECTED_FALSE
-        self.response_expected[BrickletRS232.FUNCTION_IS_CALLBACK_ENABLED] = BrickletRS232.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickletRS232.FUNCTION_ENABLE_READ_CALLBACK] = BrickletRS232.RESPONSE_EXPECTED_TRUE
+        self.response_expected[BrickletRS232.FUNCTION_DISABLE_READ_CALLBACK] = BrickletRS232.RESPONSE_EXPECTED_TRUE
+        self.response_expected[BrickletRS232.FUNCTION_IS_READ_CALLBACK_ENABLED] = BrickletRS232.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletRS232.FUNCTION_SET_CONFIGURATION] = BrickletRS232.RESPONSE_EXPECTED_FALSE
-        self.response_expected[BrickletRS232.FUNCTION_GET_CONFIGURATION] = BrickletRS232.RESPONSE_EXPECTED_FALSE
+        self.response_expected[BrickletRS232.FUNCTION_GET_CONFIGURATION] = BrickletRS232.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickletRS232.CALLBACK_READ_CALLBACK] = BrickletRS232.RESPONSE_EXPECTED_ALWAYS_FALSE
         self.response_expected[BrickletRS232.FUNCTION_GET_IDENTITY] = BrickletRS232.RESPONSE_EXPECTED_ALWAYS_TRUE
 
+        self.callback_formats[BrickletRS232.CALLBACK_READ_CALLBACK] = '60c B'
 
     def write(self, message, length):
         """
-        TODO
+        Writes a string of up to 60 characters to the RS232 interface. The string
+        can be binary data, ASCII or similar is not necessary.
+        
+        The length of the string has to be given as an additional parameter.
+        
+        The return value is the number of bytes that could be written.
+        
+        See :func:`SetConfigurations` for configuration possibilities
+        regarding baudrate, parity and so on.
         """
-        self.ipcon.send_request(self, BrickletRS232.FUNCTION_WRITE, (message, length), '60c B', '')
+        return self.ipcon.send_request(self, BrickletRS232.FUNCTION_WRITE, (message, length), '60c B', 'B')
 
     def read(self):
         """
-        TODO
+        Returns the currently buffered message. The maximum length
+        of message is 60. If the length is given as 0, there was no
+        new data available.
+        
+        Instead of polling with this function, you can also use
+        callbacks. See :func:`EnableReadCallback` and :func:`ReadCallback`.
         """
         return Read(*self.ipcon.send_request(self, BrickletRS232.FUNCTION_READ, (), '', '60c B'))
 
-    def enable_callback(self, enable):
+    def enable_read_callback(self):
         """
-        TODO
+        Enables the :func:`ReadCallback`.
+        
+        By default the callback is disabled.
         """
-        self.ipcon.send_request(self, BrickletRS232.FUNCTION_ENABLE_CALLBACK, (enable,), '?', '')
+        self.ipcon.send_request(self, BrickletRS232.FUNCTION_ENABLE_READ_CALLBACK, (), '', '')
 
-    def is_callback_enabled(self):
+    def disable_read_callback(self):
         """
-        TODO
+        Disables the :func:`ReadCallback`.
+        
+        By default the callback is disabled.
         """
-        return self.ipcon.send_request(self, BrickletRS232.FUNCTION_IS_CALLBACK_ENABLED, (), '', '?')
+        self.ipcon.send_request(self, BrickletRS232.FUNCTION_DISABLE_READ_CALLBACK, (), '', '')
 
-    def set_configuration(self, speed, parity, stopbits):
+    def is_read_callback_enabled(self):
         """
-        TODO
+        Returns *true* if the :func:`ReadCallback` is enabled,
+        *false* otherwise.
         """
-        self.ipcon.send_request(self, BrickletRS232.FUNCTION_SET_CONFIGURATION, (speed, parity, stopbits), 'I c B', '')
+        return self.ipcon.send_request(self, BrickletRS232.FUNCTION_IS_READ_CALLBACK_ENABLED, (), '', '?')
 
-    def get_configuration(self, speed, parity, stopbits):
+    def set_configuration(self, baudrate, parity, stopbits, wordlength, hardware_flowcontrol, software_flowcontrol):
         """
-        TODO
+        Sets the configuration for the RS232 communication. Available options:
+        
+        * Baudrate between 300 and 230400 baud.
+        * Parity of none, odd, even or forced parity.
+        * Stopbits can be 1 or 2.
+        * Word length of 5 to 8.
+        * Hard-/Software flow control can each be on or off.
+        
+        The default is: 115200 baud, parity none, 1 stop bit, word length 8, hard-/software flow control off.
         """
-        self.ipcon.send_request(self, BrickletRS232.FUNCTION_GET_CONFIGURATION, (speed, parity, stopbits), 'I c B', '')
+        self.ipcon.send_request(self, BrickletRS232.FUNCTION_SET_CONFIGURATION, (baudrate, parity, stopbits, wordlength, hardware_flowcontrol, software_flowcontrol), 'B B B B B B', '')
+
+    def get_configuration(self):
+        """
+        Returns the configuration as set by :func:`SetConfiguration`.
+        """
+        return GetConfiguration(*self.ipcon.send_request(self, BrickletRS232.FUNCTION_GET_CONFIGURATION, (), '', 'B B B B B B'))
 
     def get_identity(self):
         """
@@ -111,5 +174,11 @@ class BrickletRS232(Device):
         |device_identifier_constant|
         """
         return GetIdentity(*self.ipcon.send_request(self, BrickletRS232.FUNCTION_GET_IDENTITY, (), '', '8s 8s c 3B 3B H'))
+
+    def register_callback(self, id, callback):
+        """
+        Registers a callback with ID *id* to the function *callback*.
+        """
+        self.registered_callbacks[id] = callback
 
 RS232 = BrickletRS232 # for backward compatibility

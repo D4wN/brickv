@@ -2,7 +2,7 @@
 """
 Analog In Plugin
 Copyright (C) 2011-2012 Olaf Lüke <olaf@tinkerforge.com>
-Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2014-2015 Matthias Bolte <matthias@tinkerforge.com>
 
 analog_in.py: Analog In Plugin Implementation
 
@@ -22,13 +22,14 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
-from brickv.plugin_system.plugin_base import PluginBase
-from brickv.plot_widget import PlotWidget
-from brickv.bindings.bricklet_analog_in import BrickletAnalogIn
-from brickv.async_call import async_call
-
+from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QVBoxLayout, QLabel, QHBoxLayout, QComboBox, QSpinBox
-from PyQt4.QtCore import pyqtSignal, Qt
+
+from brickv.plugin_system.plugin_base import PluginBase
+from brickv.bindings.bricklet_analog_in import BrickletAnalogIn
+from brickv.plot_widget import PlotWidget
+from brickv.async_call import async_call
+from brickv.callback_emulator import CallbackEmulator
         
 class VoltageLabel(QLabel):
     def setText(self, text):
@@ -36,17 +37,15 @@ class VoltageLabel(QLabel):
         super(VoltageLabel, self).setText(text)
     
 class AnalogIn(PluginBase):
-    qtcb_voltage = pyqtSignal(int)
-    
     def __init__(self, *args):
         PluginBase.__init__(self, BrickletAnalogIn, *args)
         
         self.ai = self.device
-        
-        self.qtcb_voltage.connect(self.cb_voltage)
-        self.ai.register_callback(self.ai.CALLBACK_VOLTAGE,
-                                  self.qtcb_voltage.emit) 
-        
+
+        self.cbe_voltage = CallbackEmulator(self.ai.get_voltage,
+                                            self.cb_voltage,
+                                            self.increase_error_count)
+
         self.voltage_label = VoltageLabel('Voltage: ')
         
         self.current_value = None
@@ -106,12 +105,12 @@ class AnalogIn(PluginBase):
         if self.firmware_version >= (2, 0, 3):
             async_call(self.ai.get_averaging, None, self.get_averaging_async, self.increase_error_count)
         async_call(self.ai.get_voltage, None, self.cb_voltage, self.increase_error_count)
-        async_call(self.ai.set_voltage_callback_period, 100, None, self.increase_error_count)
+        self.cbe_voltage.set_period(100)
         
         self.plot_widget.stop = False
         
     def stop(self):
-        async_call(self.ai.set_voltage_callback_period, 0, None, self.increase_error_count)
+        self.cbe_voltage.set_period(0)
         
         self.plot_widget.stop = True
 

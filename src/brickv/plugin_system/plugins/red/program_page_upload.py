@@ -28,7 +28,7 @@ from brickv.plugin_system.plugins.red.api import *
 from brickv.plugin_system.plugins.red.program_page import ProgramPage
 from brickv.plugin_system.plugins.red.program_utils import *
 from brickv.plugin_system.plugins.red.ui_program_page_upload import Ui_ProgramPageUpload
-from brickv.utils import get_resources_path
+from brickv.load_pixmap import load_pixmap
 import os
 import posixpath
 import stat
@@ -97,7 +97,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         self.button_start_upload.clicked.connect(self.start_upload)
 
         self.label_replace_icon.clear()
-        self.label_replace_icon.setPixmap(QPixmap(os.path.join(get_resources_path(), 'dialog-warning.png')))
+        self.label_replace_icon.setPixmap(load_pixmap('warning-icon.png'))
 
         self.edit_new_name_checker = MandatoryLineEditChecker(self, self.label_new_name, self.edit_new_name)
 
@@ -356,13 +356,6 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
 
         self.next_step(u'Uploading {0}...'.format(source_path))
 
-        try:
-            self.source_stat = os.stat(source_path)
-            self.source_file = open(source_path, 'rb')
-        except Exception as e:
-            self.upload_error('...error: Could not open source file {0}: {1}', source_path, e)
-            return
-
         self.chunked_uploader = ChunkedUploader(self)
 
         if not self.chunked_uploader.prepare(source_path):
@@ -396,7 +389,7 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         #        the file extension. this does not work if the executable is
         #        cross-compiled and doesn't have the typical Windows file
         #        extensions for executables
-        if (self.source_stat.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)) != 0:
+        if (self.chunked_uploader.source_stat.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)) != 0:
             permissions = 0o755
         else:
             permissions = 0o644
@@ -578,8 +571,12 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
             self.compile_make()
             return
         elif self.language_api_name == 'delphi' and self.get_field('delphi.compile_from_source'):
-            self.compile_fpcmake()
-            return
+            if self.get_field('delphi.build_system') == Constants.DELPHI_BUILD_SYSTEM_FPCMAKE:
+                self.compile_fpcmake()
+                return
+            elif self.get_field('delphi.build_system') == Constants.DELPHI_BUILD_SYSTEM_LAZBUILD:
+                self.compile_lazbuild()
+                return
 
         self.set_schedule()
 
@@ -702,5 +699,43 @@ class ProgramPageUpload(ProgramPage, Ui_ProgramPageUpload):
         working_directory = posixpath.join(self.program.root_directory, 'bin', self.program.working_directory)
 
         self.wizard().script_manager.execute_script('fpcmake_helper', cb_fpcmake_helper, [working_directory] + make_options,
+                                                    max_length=1024*1024, redirect_stderr_to_stdout=True,
+                                                    execute_as_user=True)
+
+    def compile_lazbuild(self):
+        def cb_lazbuild_helper(result):
+            if result == None:
+                self.upload_warning('...warning: Could not execute lazbuild helper script')
+                self.upload_done()
+                return
+
+            if result.stdout == None:
+                self.upload_warning('...warning: Output of lazbuild helper script is not UTF-8 encoded')
+                self.upload_done()
+                return
+
+            stdout_old = result.stdout
+            stdout_new = stdout_old.replace('\n\n\n', '\n')
+
+            while stdout_old != stdout_new:
+                stdout_old = stdout_new
+                stdout_new = stdout_old.replace('\n\n\n', '\n')
+
+            for s in stdout_new.rstrip().split('\n'):
+                self.log(s, pre=True)
+
+            if result.exit_code != 0:
+                self.upload_warning('...warning: Could not compile source code')
+                self.upload_done()
+            else:
+                self.log('...done')
+                self.set_schedule()
+
+        self.next_step('Executing lazbuild...')
+
+        lazbuild_options  = self.wizard().page(Constants.get_language_page(self.language_api_name)).get_lazbuild_options()
+        working_directory = posixpath.join(self.program.root_directory, 'bin', self.program.working_directory)
+
+        self.wizard().script_manager.execute_script('lazbuild_helper', cb_lazbuild_helper, [working_directory] + lazbuild_options,
                                                     max_length=1024*1024, redirect_stderr_to_stdout=True,
                                                     execute_as_user=True)

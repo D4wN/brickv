@@ -32,7 +32,8 @@ from brickv.plugin_system.plugins.red.program_utils import Download, ExpandingPr
 from brickv.plugin_system.plugins.red.ui_program_info_files import Ui_ProgramInfoFiles
 from brickv.plugin_system.plugins.red.script_manager import check_script_result, report_script_result
 from brickv.async_call import async_call
-from brickv.utils import get_main_window, get_resources_path, get_home_path, get_existing_directory
+from brickv.utils import get_main_window, get_home_path, get_existing_directory
+from brickv.load_pixmap import load_pixmap
 import os
 import posixpath
 import json
@@ -158,10 +159,11 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         self.show_download_wizard    = show_download_wizard
         self.bin_directory           = posixpath.join(self.program.root_directory, 'bin')
         self.refresh_in_progress     = False
+        self.any_refresh_in_progress = False # set from ProgramInfoMain.update_ui_state
         self.available_files         = []
         self.available_directories   = []
-        self.folder_icon             = QIcon(os.path.join(get_resources_path(), "folder-icon.png"))
-        self.file_icon               = QIcon(os.path.join(get_resources_path(), "file-icon.png"))
+        self.folder_icon             = QIcon(load_pixmap('folder-icon.png'))
+        self.file_icon               = QIcon(load_pixmap('file-icon.png'))
         self.tree_files_model        = QStandardItemModel(self)
         self.tree_files_model_header = ['Name', 'Size', 'Last Modified']
         self.tree_files_proxy_model  = FilesProxyModel(self)
@@ -186,9 +188,10 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
     def update_ui_state(self):
         selection_count = len(self.tree_files.selectionModel().selectedRows())
 
-        self.set_widget_enabled(self.button_download_files, selection_count > 0)
-        self.set_widget_enabled(self.button_rename_file, selection_count == 1)
-        self.set_widget_enabled(self.button_delete_files, selection_count > 0)
+        self.set_widget_enabled(self.button_upload_files, not self.any_refresh_in_progress)
+        self.set_widget_enabled(self.button_download_files, not self.any_refresh_in_progress and selection_count > 0)
+        self.set_widget_enabled(self.button_rename_file, not self.any_refresh_in_progress and selection_count == 1)
+        self.set_widget_enabled(self.button_delete_files, not self.any_refresh_in_progress and selection_count > 0)
 
     def close_all_dialogs(self):
         pass
@@ -308,7 +311,7 @@ class ProgramInfoFiles(QWidget, Ui_ProgramInfoFiles):
         self.show_download_wizard('files', download_directory, downloads)
 
     def rename_activated_file(self, index):
-        if index.column() == 0:
+        if index.column() == 0 and not self.any_refresh_in_progress:
             mapped_index = self.tree_files_proxy_model.mapToSource(index)
             name_item    = self.tree_files_model.itemFromIndex(mapped_index)
             item_type    = name_item.data(USER_ROLE_ITEM_TYPE)

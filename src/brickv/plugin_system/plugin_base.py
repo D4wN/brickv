@@ -22,6 +22,8 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
 
+import sys
+import traceback
 from PyQt4.QtGui import QWidget
 from brickv.bindings.ip_connection import IPConnection
 
@@ -30,7 +32,8 @@ class PluginBase(QWidget, object):
     PLUGIN_STATE_RUNNING = 1
     PLUGIN_STATE_PAUSED = 2
 
-    def __init__(self, device_class, ipcon, uid, hardware_version, firmware_version, override_base_name=None):
+    def __init__(self, device_class, ipcon, uid, hardware_version,
+                 firmware_version, override_base_name=None):
         QWidget.__init__(self)
 
         self.plugin_state = PluginBase.PLUGIN_STATE_STOPPED
@@ -40,6 +43,7 @@ class PluginBase(QWidget, object):
         self.hardware_version = hardware_version
         self.firmware_version = firmware_version
         self.error_count = 0
+        self.actions = None
 
         if device_class is not None:
             self.base_name = device_class.DEVICE_DISPLAY_NAME
@@ -70,7 +74,8 @@ class PluginBase(QWidget, object):
                 try:
                     self.start()
                 except:
-                    pass
+                    if not hasattr(sys, 'frozen'):
+                        traceback.print_exc()
 
                 self.plugin_state = PluginBase.PLUGIN_STATE_RUNNING
 
@@ -80,7 +85,8 @@ class PluginBase(QWidget, object):
             try:
                 self.stop()
             except:
-                pass
+                if not hasattr(sys, 'frozen'):
+                    traceback.print_exc()
 
         # set the state to stopped even it the plugin was not actually
         # running. this stops a paused plugin from being restarted after
@@ -92,7 +98,8 @@ class PluginBase(QWidget, object):
             try:
                 self.stop()
             except:
-                pass
+                if not hasattr(sys, 'frozen'):
+                    traceback.print_exc()
 
             self.plugin_state = PluginBase.PLUGIN_STATE_PAUSED
 
@@ -101,7 +108,8 @@ class PluginBase(QWidget, object):
             try:
                 self.start()
             except:
-                pass
+                if not hasattr(sys, 'frozen'):
+                    traceback.print_exc()
 
             self.plugin_state = PluginBase.PLUGIN_STATE_RUNNING
 
@@ -110,7 +118,8 @@ class PluginBase(QWidget, object):
         try:
             self.destroy()
         except:
-            pass
+            if not hasattr(sys, 'frozen'):
+                traceback.print_exc()
 
         # before destroying the widgets ensure that all callbacks are
         # unregistered. callbacks a typically bound to Qt slots. the plugin
@@ -162,6 +171,12 @@ class PluginBase(QWidget, object):
             except:
                 pass
 
+    def set_actions(self, actions):
+        self.actions = actions
+
+    def get_actions(self):
+        return self.actions
+
     # To be overridden by inheriting class
     def stop(self):
         pass
@@ -172,22 +187,7 @@ class PluginBase(QWidget, object):
     def destroy(self):
         pass
 
-    def has_reset_device(self):
-        return False
-    
-    def has_drop_down(self):
-        return []
-    
-    def drop_down_triggered(self, action):
-        pass
-    
     def has_custom_version(self, label_version_name, label_version):
-        return False
-
-    def reset_device(self):
-        pass
-
-    def is_brick(self):
         return False
 
     def is_hardware_version_relevant(self):

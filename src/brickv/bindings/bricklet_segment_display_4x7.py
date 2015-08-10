@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-03-06.      #
+# This file was automatically generated on 2015-07-28.      #
 #                                                           #
-# Bindings Version 2.1.4                                    #
+# Bindings Version 2.1.5                                    #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
-# to the generator git on tinkerforge.com                   #
+# to the generators git repository on tinkerforge.com       #
 #############################################################
 
 try:
@@ -27,7 +27,7 @@ GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardw
 
 class BrickletSegmentDisplay4x7(Device):
     """
-    Device for controling four 7-segment displays
+    Four 7-segment displays with switchable colon
     """
 
     DEVICE_IDENTIFIER = 237
@@ -92,11 +92,13 @@ class BrickletSegmentDisplay4x7(Device):
         The *length* of the increment is given in ms.
         
         Example: If you set *from* to 0, *to* to 100, *increment* to 1 and
-        *length* to 1000, a counter that goes from 0 to 100 with 1 second
+        *length* to 1000, a counter that goes from 0 to 100 with one second
         pause between each increment will be started.
         
         The maximum values for *from*, *to* and *increment* is 9999, 
         the minimum value is -999.
+        
+        Using a negative increment allows to count backwards.
         
         You can stop the counter at every time by calling :func:`SetSegments`.
         """
