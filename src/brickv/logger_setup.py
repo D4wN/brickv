@@ -401,80 +401,83 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tree_devices.setSortingEnabled(False)
         
         try:
-            if view_all:
-                try:
-                    try:
-                        blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
-                             
-                    except ValueError as e:
-                        EventLogger.warning("DeviceTree - Cant parse the Blueprint: " + str(e))
-                except Exception as e1:
-                    EventLogger.warning("DeviceTree - Exception: " + str(e1))
-           
-            # counts topLevelItems
-            tree_counter = 0
-            
-            for i in range(0, len(blueprint)):
-                device_items = blueprint[i]
-            
-                for dev_item in device_items:
-                    # counts variables
-                    variable_counter = 0
-                    
-                    # new entry in tree
-                    item_0 = QtGui.QTreeWidgetItem(self.tree_devices)
-                    item_0.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                    self.tree_devices.topLevelItem(tree_counter).setText(0, str(dev_item))
-                    # show uid, when view_all=False
-                    # else show nothing
-                    if view_all:
-                        self.tree_devices.topLevelItem(tree_counter).setText(1, "Enter UID")
-                    
-                    for variable in device_items[dev_item]:
-                        # counts each variable
-                        var_n_counter = 0
-                        
-                        # check if var = uid
-                        if variable == Identifier.DEVICE_UID:
-                            self.tree_devices.topLevelItem(tree_counter).setText(1, str(device_items[dev_item][variable]))
-                            continue
-                        
-                        # new child for the previeous item
-                        item_1 = QtGui.QTreeWidgetItem(item_0)
-                        self.tree_devices.topLevelItem(tree_counter).child(variable_counter).setText(0, str(variable))
-                        
-                        
-                        for var_n in device_items[dev_item][variable]:
-                            # new child of child
-                            item_2 = QtGui.QTreeWidgetItem(item_1)
-                            tmp_item = self.tree_devices.topLevelItem(tree_counter).child(variable_counter).child(var_n_counter)
-                            
-                            if str(var_n) == self.interval_string or str(self.tree_devices.topLevelItem(tree_counter).child(variable_counter).text(0)) == self.exceptional_interval_string:
-                                item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
-                                if str(var_n) == self.interval_string:
-                                    tmp_item.setText(0, self.interval_show)
-                                else:
-                                    tmp_item.setText(0, str(var_n))
-                                tmp_item.setText(1, str(device_items[dev_item][variable][var_n]))
-                                tmp_item.setToolTip(1,"Interval in milliseconds")
-                            else:
-                                item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-                                tmp_item.setText(0, str(var_n))
-                                if device_items[dev_item][variable][var_n]:
-                                    tmp_item.setCheckState(1, QtCore.Qt.Checked)
-                                else:
-                                    tmp_item.setCheckState(1, QtCore.Qt.Unchecked)
-                                tmp_item.setText(1, "")
-                           
-                            
-                            var_n_counter += 1
-                        variable_counter += 1
-                    
-                    if str(self.tree_devices.topLevelItem(tree_counter).text(1)) == "":
-                        self.tree_devices.topLevelItem(tree_counter).setText(1, "Enter UID")
-                                 
-                    tree_counter += 1
-            
+            ##TODO create new algorithm
+
+            ###OLD Tree CREATE
+            # if view_all:
+            #     try:
+            #         try:
+            #             blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
+            #
+            #         except ValueError as e:
+            #             EventLogger.warning("DeviceTree - Cant parse the Blueprint: " + str(e))
+            #     except Exception as e1:
+            #         EventLogger.warning("DeviceTree - Exception: " + str(e1))
+            #
+            # # counts topLevelItems
+            # tree_counter = 0
+            #
+            # for i in range(0, len(blueprint)):
+            #     device_items = blueprint[i]
+            #
+            #     for dev_item in device_items:
+            #         # counts variables
+            #         variable_counter = 0
+            #
+            #         # new entry in tree
+            #         item_0 = QtGui.QTreeWidgetItem(self.tree_devices)
+            #         item_0.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            #         self.tree_devices.topLevelItem(tree_counter).setText(0, str(dev_item))
+            #         # show uid, when view_all=False
+            #         # else show nothing
+            #         if view_all:
+            #             self.tree_devices.topLevelItem(tree_counter).setText(1, "Enter UID")
+            #
+            #         for variable in device_items[dev_item]:
+            #             # counts each variable
+            #             var_n_counter = 0
+            #
+            #             # check if var = uid
+            #             if variable == Identifier.DEVICE_UID:
+            #                 self.tree_devices.topLevelItem(tree_counter).setText(1, str(device_items[dev_item][variable]))
+            #                 continue
+            #
+            #             # new child for the previeous item
+            #             item_1 = QtGui.QTreeWidgetItem(item_0)
+            #             self.tree_devices.topLevelItem(tree_counter).child(variable_counter).setText(0, str(variable))
+            #
+            #
+            #             for var_n in device_items[dev_item][variable]:
+            #                 # new child of child
+            #                 item_2 = QtGui.QTreeWidgetItem(item_1)
+            #                 tmp_item = self.tree_devices.topLevelItem(tree_counter).child(variable_counter).child(var_n_counter)
+            #
+            #                 if str(var_n) == self.interval_string or str(self.tree_devices.topLevelItem(tree_counter).child(variable_counter).text(0)) == self.exceptional_interval_string:
+            #                     item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled)
+            #                     if str(var_n) == self.interval_string:
+            #                         tmp_item.setText(0, self.interval_show)
+            #                     else:
+            #                         tmp_item.setText(0, str(var_n))
+            #                     tmp_item.setText(1, str(device_items[dev_item][variable][var_n]))
+            #                     tmp_item.setToolTip(1,"Interval in milliseconds")
+            #                 else:
+            #                     item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            #                     tmp_item.setText(0, str(var_n))
+            #                     if device_items[dev_item][variable][var_n]:
+            #                         tmp_item.setCheckState(1, QtCore.Qt.Checked)
+            #                     else:
+            #                         tmp_item.setCheckState(1, QtCore.Qt.Unchecked)
+            #                     tmp_item.setText(1, "")
+            #
+            #
+            #                 var_n_counter += 1
+            #             variable_counter += 1
+            #
+            #         if str(self.tree_devices.topLevelItem(tree_counter).text(1)) == "":
+            #             self.tree_devices.topLevelItem(tree_counter).setText(1, "Enter UID")
+            #
+            #         tree_counter += 1
+            #
             EventLogger.debug("Device Tree created.")
             
         except Exception as e:

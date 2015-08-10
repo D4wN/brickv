@@ -26,94 +26,123 @@ class GuiConfigHandler(object):
         Loads the config as json and converts all devices into the blueprint part.
         Returns the blueprint of the devices.
         """
+
+
+
         try:
             GuiConfigHandler.clear_blueprint()
-            GuiConfigHandler.simple_device_blueprints(device_json[Identifier.SIMPLE_DEVICE])
-            GuiConfigHandler.complex_device_blueprints(device_json[Identifier.COMPLEX_DEVICE])
-            GuiConfigHandler.special_device_blueprints(device_json[Identifier.SPECIAL_DEVICE])
+            #TODO new blueprints from DEVICE
+
+
+            GuiConfigHandler.create_device_blueprint(device_json[Identifier.DEVICES])
+            #GuiConfigHandler.device_blueprint.append(tmp)
+
+
+            #GuiConfigHandler.simple_device_blueprints(device_json[Identifier.SIMPLE_DEVICE])
+            #GuiConfigHandler.complex_device_blueprints(device_json[Identifier.COMPLEX_DEVICE])
+            #GuiConfigHandler.special_device_blueprints(device_json[Identifier.SPECIAL_DEVICE])
             
         except Exception as e:
-            EventLogger.warning("Devices could be fully loaded! -> " + str(e))
+            EventLogger.warning("Devices could not be fully loaded! -> " + str(e))
         
         return GuiConfigHandler.device_blueprint
-    
-    def clear_blueprint():
+
+    def clear_blueprint(fixme=None): #FIXME error without parameter?!
         """
         Resets the current blueprints save in device_blueprint.
         """
         GuiConfigHandler.device_blueprint = None
         GuiConfigHandler.device_blueprint = []
-    
-    def complex_device_blueprints(complex_devices):
-        """
-        Converts complex devices into their blueprint couterpart.
-        """
-        # CLASS_NAME=dev[Identifier.DEVICE_NAME]
-        for dev in complex_devices:
-            dev_name = dev[Identifier.DEVICE_NAME]
-            # t1
-            tmp = {}
-            tmp[dev_name] = {}
-            
-            for var in dev[Identifier.DEVICE_VALUES]:
-                interval = dev[Identifier.DEVICE_VALUES][var][Identifier.DEVICE_VALUES_INTERVAL]
-                vars = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_NAME]
-                bools = dev[Identifier.DEVICE_VALUES][var][Identifier.COMPLEX_DEVICE_VALUES_BOOL]
-                                
-                tmp[dev_name][var] = {}
-                tmp[dev_name][var]["_" + Identifier.DEVICE_VALUES_INTERVAL] = interval
-                 
-                for v in range(0, len(vars)):
-                    tmp[dev_name][var][vars[v]] = bools[v]
-                
-            # add UID
-            tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
 
-            GuiConfigHandler.device_blueprint.append(tmp)
-    
-    def simple_device_blueprints(simple_devices):
-        """
-        Converts simple devices into their blueprint couterpart.
-        """
-        for dev in simple_devices:
-            dev_name = dev[Identifier.DEVICE_NAME]
-            # t1
-            tmp = {}
-            tmp[dev_name] = {}
-            
-            for var in dev[Identifier.DEVICE_VALUES]:
-                interval = dev[Identifier.DEVICE_VALUES][var][Identifier.DEVICE_VALUES_INTERVAL]
-                
-                tmp[dev_name][var] = {}
-                tmp[dev_name][var]["_" + Identifier.DEVICE_VALUES_INTERVAL] = interval
-                
-            # add UID
-            tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
-            
-            GuiConfigHandler.device_blueprint.append(tmp)
+    def create_device_blueprint(devices):
+        import copy
+        EventLogger.debug("DEVICES:\n" + str(devices))
 
-    def special_device_blueprints(special_devices):
-        """
-        Converts special devices into their blueprint couterpart.
-        """
-        for dev in special_devices:
-            dev_name = dev[Identifier.DEVICE_NAME]
-            # t1
-            tmp = {}
-            tmp[dev_name] = {}
-            tmp[dev_name][Identifier.SPECIAL_DEVICE_BOOL] = {}
-            tmp[dev_name][Identifier.SPECIAL_DEVICE_VALUE] = {}
-            
-            for var in dev[Identifier.SPECIAL_DEVICE_BOOL]:
-                tmp[dev_name][Identifier.SPECIAL_DEVICE_BOOL][var] = dev[Identifier.SPECIAL_DEVICE_BOOL][var]
-             
-            for var in dev[Identifier.SPECIAL_DEVICE_VALUE]:
-                tmp[dev_name][Identifier.SPECIAL_DEVICE_VALUE][var] = dev[Identifier.SPECIAL_DEVICE_VALUE][var]
-              
-            # add UID
-            tmp[dev_name][Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
-            
-            GuiConfigHandler.device_blueprint.append(tmp)
+
+
+        for dev in devices:
+            bp_dev = None #Blueprint Device
+
+            #check for blueprint KEY(DEVICE_DEFINITIONS)
+            if Identifier.DEVICE_DEFINITIONS.has_key(dev[Identifier.DEVICE_NAME]):
+                bp_dev = copy.deepcopy(Identifier.DEVICE_DEFINITIONS[dev[Identifier.DEVICE_NAME]])
+                #remove unused entries(class)
+                del bp_dev[Identifier.DEVICE_CLASS]
+
+                #add new entries(name, uid)
+                bp_dev[Identifier.DEVICE_NAME] = dev[Identifier.DEVICE_NAME]
+                bp_dev[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
+
+                #add/remove entries for values
+                for val in bp_dev[Identifier.DEVICE_VALUES]:
+
+                    #remove getter
+                    del bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_GETTER]
+
+                    #add interval, check if exists
+                    if val in bp_dev[Identifier.DEVICE_VALUES]:
+                        #check for NO device values
+                        if not val in dev[Identifier.DEVICE_VALUES]:
+                            #create necessary structures for the checks
+                            dev[Identifier.DEVICE_VALUES][val] = {}
+                            dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
+
+                        if Identifier.DEVICE_VALUES_INTERVAL in dev[Identifier.DEVICE_VALUES][val]:
+                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL]
+                        else:
+                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0
+
+                        #subvalues
+
+                        if bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
+                            bp_sub_values = bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+
+                            #delete subvalues old entries
+                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
+
+                            for i in range(0, len(bp_sub_values)):
+                                #check sub_val for bool
+                                sub_val = bp_sub_values[i]
+
+                                #check if list in list #FIXME multi layer? sub_sub_sub_....
+                                if type(sub_val) == list:
+                                    for j in range(0, len(sub_val)):
+                                        sub_sub_val = sub_val[j]
+
+                                        if sub_sub_val in dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]:
+                                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val]
+                                        else:
+                                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = False
+                                    continue
+
+                                if sub_val in dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]:
+                                    bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val]
+                                else:
+                                    bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = False
+
+                        else:
+                            del bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+
+                    else:
+                        bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0 # Default Value for Interval
+
+
+
+
+                    #else: #ignore subvals
+
+
+
+                EventLogger.debug(str(bp_dev))
+                print str(bp_dev)
+
+            else:
+                EventLogger.warning("No Device Definition found in Config for Device Name: " +str(dev[Identifier.DEVICE_NAME]) + "! Device will be ignored!")
+
+
+
+
+        #GuiConfigHandler.device_blueprint.append(tmp)
 
     def create_config_file(Ui_Logger):
         """
@@ -330,11 +359,10 @@ class GuiConfigHandler(object):
 
     load_devices = staticmethod(load_devices)
     clear_blueprint = staticmethod(clear_blueprint)
-    complex_device_blueprints = staticmethod(complex_device_blueprints)
-    simple_device_blueprints = staticmethod(simple_device_blueprints)
-    special_device_blueprints = staticmethod(special_device_blueprints)
+    create_device_blueprint = staticmethod(create_device_blueprint)
     create_config_file = staticmethod(create_config_file)
     create_general_section = staticmethod(create_general_section)
     get_simple_blueprint = staticmethod(get_simple_blueprint)
     get_single_device_bluprint = staticmethod(get_single_device_bluprint)
+
     
