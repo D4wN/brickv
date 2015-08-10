@@ -17,7 +17,7 @@
       "uid": "oxv",
       "values": {
         "Color": {
-            "interval": 0,
+            "interval": 1000,
             "subvalues": {
                 "Red" : true,
                 "Green" : false,
@@ -26,11 +26,17 @@
             }
         },
         "Illuminance": {
-        "interval": 0
+        "interval": 1000
         },
         "Color Temperature": {
-        "interval": 0
+        "interval": 1000
         }
+      }
+    },
+    {
+      "name": "Color Bricklet",
+      "uid": "oxv",
+      "values": {
       }
     },
     {
@@ -58,7 +64,7 @@
       "uid": "fa1",
       "values": {
         "Altitude": {
-            "interval": 1000,
+            "interval": 0,
             "subvalues": {
                 "Altitude" : true,
                 "Geoidal Separation" : true
@@ -92,7 +98,7 @@
             }
         },
         "Status": {
-            "interval": 1000,
+            "interval": 0,
             "subvalues": {
                 "Fix" : true,
                 "Satellites View" : true,
