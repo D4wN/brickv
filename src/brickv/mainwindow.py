@@ -167,8 +167,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         config.set_host_infos(self.host_infos)
 
         self.do_disconnect()
-
-        if signal != None and frame != None:
+        
+        if signl != None and frme != None:
             print("Received SIGINT or SIGTERM, shutting down.")
             sys.exit()
 
