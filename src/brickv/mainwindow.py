@@ -158,7 +158,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             
         self.exit_brickv()
 
-    def exit_brickv(self, signal=None, frame=None):
+    def exit_brickv(self, signl=None, frme=None):
         if self.current_device_info is not None:
             self.current_device_info.plugin.stop_plugin()
             self.current_device_info.plugin.destroy_plugin()
