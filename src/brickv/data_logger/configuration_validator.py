@@ -121,11 +121,9 @@ class ConfigurationValidator(object):
         configuration file
         '''
         EventLogger.info("Started configuration file validation")
-
         self.validate_general_section()
         self.validate_xively_section()
         self.validate_devices_section()
-
         EventLogger.info("Validation ends with [" + str(self._error_count) + "] errors")
 
         logging_time = self._log_space_counter.calculate_time()
@@ -232,8 +230,6 @@ class ConfigurationValidator(object):
                 self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_CONSOLE],
                                              msg="should be a boolean"))
 
-            # TODO: Check free disk space of the destination
-
     def validate_devices_section(self):
         '''
             This function validates the devices out of the configuration file
@@ -279,17 +275,17 @@ class ConfigurationValidator(object):
                     try:
                         subvalues = device_values[device_value][ldi.DEVICE_DEFINITIONS_SUBVALUES]
                         for value in subvalues:
-                            if not type(subvalues[value]) == bool:
+                            if not type(subvalues[value]) == bool: # type check for validation
                                 EventLogger.critical(
                                 self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
                                                                     tier_array=["values"],
                                                                     msg="invalid type " + str(value)))
                             else:
-                                if subvalues[value] == True:
+                                if subvalues[value] == True:    # value check for "lines per second" calculation
                                     logged_values += 1
 
                     except KeyError:
-                        if interval > 0:
+                        if interval > 0: # just one value to log
                             logged_values += 1
 
                     if interval > 0:
