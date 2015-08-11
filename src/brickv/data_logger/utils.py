@@ -100,8 +100,8 @@ class CSVData(object):
         else:
             utc_string = "+%02d:00" % (utc,)
             
-        ts = '{:%Y-%m-%dT%H:%M:%S}'.format(t)
-        ts += utc_string
+        ts = '{:%Y-%m-%dT%H:%M:%S.%f}'.format(t)
+        ts = ts[:len(ts)-3] + utc_string
 
         return ts
 
