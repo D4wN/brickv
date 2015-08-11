@@ -126,7 +126,6 @@ class Identifier(object):
     # ##Devices
     # core 2.0 new identifier
     DEVICES = "DEVICES"
-
     
     # config list access strings
     DEVICE_NAME = "name"

@@ -304,10 +304,9 @@ class ConfigurationValidator(object):
         '''
         Returns True if 'string_value' is of type basestring and has at least a size of
         'min_length'
+        Moved to Utilities.is_valid_string
         '''
-        if not isinstance(string_value, basestring) or len(string_value) < min_length:
-            return False
-        return True
+        return Utilities.is_valid_string(string_value, min_length)
 
     def _is_valid_interval(self, integer_value, min_value=0):
         '''
