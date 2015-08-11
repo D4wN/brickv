@@ -243,6 +243,16 @@ class Utilities(object):
 
     check_file_path_exists = staticmethod(check_file_path_exists)
 
+    def is_valid_string(string_value, min_length=0):
+        '''
+        Returns True if 'string_value' is of type basestring and has at least a size of
+        'min_length'
+        '''
+        if not isinstance(string_value, basestring) or len(string_value) < min_length:
+            return False
+        return True
+
+    is_valid_string = staticmethod(is_valid_string)
 
 '''
 /*---------------------------------------------------------------------------
