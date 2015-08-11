@@ -35,6 +35,8 @@ class GuiConfigHandler(object):
 
 
             GuiConfigHandler.create_device_blueprint(device_json[Identifier.DEVICES])
+
+
             #GuiConfigHandler.device_blueprint.append(tmp)
 
 
@@ -120,8 +122,9 @@ class GuiConfigHandler(object):
                                 else:
                                     bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = False
 
-                        else:
-                            del bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+                        #FIXME Sub Value Problem fixed for add_tree_item?
+                        #else:
+                        #    del bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
 
                     else:
                         bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0 # Default Value for Interval
@@ -133,16 +136,13 @@ class GuiConfigHandler(object):
 
 
 
-                EventLogger.debug(str(bp_dev))
-                print str(bp_dev)
+                #EventLogger.debug(str(bp_dev))
+                #print str(bp_dev)
 
             else:
                 EventLogger.warning("No Device Definition found in Config for Device Name: " +str(dev[Identifier.DEVICE_NAME]) + "! Device will be ignored!")
 
-
-
-
-        #GuiConfigHandler.device_blueprint.append(tmp)
+            GuiConfigHandler.device_blueprint.append(bp_dev)
 
     def create_config_file(Ui_Logger):
         """
