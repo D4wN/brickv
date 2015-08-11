@@ -77,7 +77,7 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         
         if self._add_data:
             #add device
-            dev = GuiConfigHandler.get_single_device_bluprint(focused_item.text(0))
+            dev = GuiConfigHandler.get_single_device_blueprint(focused_item.text(0))
             
             if dev is None:
                 return
