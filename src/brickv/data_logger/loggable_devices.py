@@ -595,7 +595,7 @@ class DeviceImpl(AbstractDevice):
                                 self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i]), value[i], timestamp))
                         except Exception as e:
                             value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
-                            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i][k]), value[i][k], timestamp))
+                            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i]), value[i], timestamp))
                             return
                     else:
                         for k in range(len(subvalue_names[i])):
