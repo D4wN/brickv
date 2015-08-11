@@ -35,10 +35,10 @@ class ConfigurationReader(object):
     XIVELY_API_KEY = "api_key"
     XIVELY_UPLOAD_RATE = "upload_rate"
 
-    DEVICES_SECTION = "DEVICES"
+    DEVICES_SECTION = "DEVICES" #TODO get from loggable_devices.Identification.DEVICES
 
-    __NAME_KEY = "name"
-    __UID_KEY = "uid"
+    __NAME_KEY = "name"         #TODO get from loggable_devices.Identification
+    __UID_KEY = "uid"           #TODO get from loggable_devices.Identification
 
     def __init__(self, pathToConfig=None, configuration=None):
         '''
