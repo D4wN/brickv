@@ -163,14 +163,14 @@ class ConfigurationValidator(object):
         host = global_section[self.CR.GENERAL_HOST]
         if not host.lower() == 'localhost' and not is_valid_ip_format(host):
             EventLogger.critical(
-                self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_HOST],
+                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_HOST],
                                              msg="host should be 'localhost' or an valid ip-address"))
 
         # self.CR.GENERAL_PORT port number
         port = global_section[self.CR.GENERAL_PORT]
-        if not self._is_valid_string(port, 1) and not (port > 0 and port <= 65535):
+        if not self._is_valid_string(port, 1) and not (0 < port <= 65535):
             EventLogger.critical(
-                self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PORT],
+                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PORT],
                                              msg="port should be an integer 0-65535"))
 
         # --- Datalog file ---------------------------------------------  
@@ -178,32 +178,32 @@ class ConfigurationValidator(object):
         # self.CR.GENERAL_LOG_TO_FILE should be a string and a valid path
         if not type(global_section[self.CR.GENERAL_LOG_TO_FILE]) == bool:
             EventLogger.critical(
-                self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_TO_FILE],
+                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_TO_FILE],
                                              msg="should be a boolean"))
         else:
-            if global_section[self.CR.GENERAL_LOG_TO_FILE] == True:
+            if global_section[self.CR.GENERAL_LOG_TO_FILE]:
                 if not Utilities.check_file_path_exists(global_section[self.CR.GENERAL_PATH_TO_FILE]):
                     EventLogger.critical(
-                        self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PATH_TO_FILE],
+                        self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PATH_TO_FILE],
                                                      msg="path is not reachable"))
 
 
         # self.CR.GENERAL_PATH_TO_FILE
         if not self._is_valid_string(global_section[self.CR.GENERAL_PATH_TO_FILE], 1):
             EventLogger.critical(
-                self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PATH_TO_FILE],
+                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PATH_TO_FILE],
                                              msg="should be a path to the file where the data will be saved"))
 
         # self.CR.GENERAL_LOG_COUNT and GENERAL_LOG_FILE_SIZE
         count = global_section[self.CR.GENERAL_LOG_COUNT]
         if not isinstance(count, int) and (not isinstance(count, float)):
             EventLogger.critical(
-                self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_COUNT],
+                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_COUNT],
                                              msg="should be a int or float"))
         size = global_section[self.CR.GENERAL_LOG_FILE_SIZE]
         if not isinstance(size, int) and (not isinstance(size, float)):
             EventLogger.critical(
-                self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_FILE_SIZE],
+                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_FILE_SIZE],
                                              msg="should be a int or float"))
 
         # --- Eventlog file ---------------------------------------------    
@@ -211,23 +211,23 @@ class ConfigurationValidator(object):
         # self.CR.GENERAL_EVENTLOG_PATH should be a string and a valid path
         if not type(global_section[self.CR.GENERAL_EVENTLOG_TO_FILE]) == bool:
             EventLogger.critical(
-                self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_FILE],
+                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_FILE],
                                              msg="should be a boolean"))
         else:
-            if global_section[self.CR.GENERAL_EVENTLOG_TO_FILE] == True:
+            if global_section[self.CR.GENERAL_EVENTLOG_TO_FILE]:
                 if not self._is_valid_string(global_section[self.CR.GENERAL_EVENTLOG_PATH], 1):
-                    EventLogger.critical(self._generate_error_message(
+                    EventLogger.critical(self._generate_device_error_message(uid="",
                         tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_PATH],
                         msg="should be a path to the event file"))
                 else:
                     if not Utilities.check_file_path_exists(global_section[self.CR.GENERAL_EVENTLOG_PATH]):
-                        EventLogger.critical(self._generate_error_message(
+                        EventLogger.critical(self._generate_device_error_message(uid="",
                             tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_PATH],
                             msg="path is not reachable"))
 
         if not type(global_section[self.CR.GENERAL_EVENTLOG_TO_CONSOLE]) == bool:
             EventLogger.critical(
-                self._generate_error_message(tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_CONSOLE],
+                self._generate_device_error_message(uid="", tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_CONSOLE],
                                              msg="should be a boolean"))
 
     def validate_devices_section(self):
@@ -281,7 +281,7 @@ class ConfigurationValidator(object):
                                                                     tier_array=["values"],
                                                                     msg="invalid type " + str(value)))
                             else:
-                                if subvalues[value] == True:    # value check for "lines per second" calculation
+                                if subvalues[value]:    # value check for "lines per second" calculation
                                     logged_values += 1
 
                     except KeyError:
@@ -380,7 +380,7 @@ class LogSpaceCounter(object):
                                 Configuration
  ---------------------------------------------------------------------------*/
 """
-class Configuration():
+class Configuration:
     '''
     This class contains the information out of the json configuration file split by the
     different categories/sections.
