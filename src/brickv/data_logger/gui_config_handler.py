@@ -251,8 +251,6 @@ class GuiConfigHandler(object):
         Returns a single blueprint for a given device_name.
         Used to add a device from the DeviceDialog.
         """
-        print device_name
-
         dev = None
         try:
             import copy
@@ -275,9 +273,9 @@ class GuiConfigHandler(object):
                         if type(sub_val) == list:
                             for j in range(0, len(sub_val)):
                                 sub_sub_val = sub_val[j]
-                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = False;
+                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = False
                         else:
-                            dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = False;
+                            dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = False
 
             #add name & uid
             dev[Identifier.DEVICE_NAME] = device_name

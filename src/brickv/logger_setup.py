@@ -257,19 +257,22 @@ class LoggerWindow(QDialog, Ui_Logger):
         if self.logger_device_dialog is None:
             self.logger_device_dialog = LoggerDeviceDialog(self)
             
-        blueprint = Identifier.DEVICE_DEFINITIONS
-        self.logger_device_dialog.init_dialog(blueprint, True)
+        #blueprint = Identifier.DEVICE_DEFINITIONS
+        self.logger_device_dialog.init_dialog()
         self.logger_device_dialog.show()
     
     def btn_remove_device_clicked(self):
         """
-            Opens the DeviceDialog in Remove-Mode.
+            Removes selected Device
         """
-        if self.logger_device_dialog is None:
-            self.logger_device_dialog = LoggerDeviceDialog(self)
-        
-        self.logger_device_dialog.init_dialog(GuiConfigHandler.get_simple_blueprint(self), False)
-        self.logger_device_dialog.show()
+        #TODO implement remove features
+        EventLogger.warning("REMOVE DEVICE CURRENTLY NOT IMPLEMENTED!")
+
+        # if self.logger_device_dialog is None:
+        #     self.logger_device_dialog = LoggerDeviceDialog(self)
+        #
+        # self.logger_device_dialog.init_dialog(GuiConfigHandler.get_simple_blueprint(self), False)
+        # self.logger_device_dialog.show()
 
     def btn_clear_table_clicked(self):
         """
