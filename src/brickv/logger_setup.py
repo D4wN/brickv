@@ -79,6 +79,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.combo_console_level.currentIndexChanged.connect(self.combo_console_level_changed)
         self.btn_add_device.clicked.connect(self.btn_add_device_clicked)
         self.btn_remove_device.clicked.connect(self.btn_remove_device_clicked)
+        self.btn_remove_all_devices.clicked.connect(self.btn_remove_all_devices_clicked)
         
         self.tab_widget.currentChanged.connect(self.tab_reset_warning)
         self.btn_clear_tabel.clicked.connect(self.btn_clear_table_clicked)
@@ -260,7 +261,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         #blueprint = Identifier.DEVICE_DEFINITIONS
         self.logger_device_dialog.init_dialog()
         self.logger_device_dialog.show()
-    
+
     def btn_remove_device_clicked(self):
         """
             Removes selected Device
@@ -273,6 +274,9 @@ class LoggerWindow(QDialog, Ui_Logger):
         #
         # self.logger_device_dialog.init_dialog(GuiConfigHandler.get_simple_blueprint(self), False)
         # self.logger_device_dialog.show()
+
+    def btn_remove_all_devices_clicked(self):
+        self.tree_devices.clear()
 
     def btn_clear_table_clicked(self):
         """
