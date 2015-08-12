@@ -6,6 +6,7 @@ from PyQt4 import QtGui, QtCore
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
 from PyQt4.QtCore import Qt
 from brickv import infos
+from data_logger.loggable_devices import Identifier
 
 
 class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
@@ -22,6 +23,7 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         
         self.setupUi(self)
         self.signal_initialization()
+
         
     def signal_initialization(self):
         """
@@ -30,8 +32,11 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         self.tree_device_list.itemDoubleClicked.connect(self._tree_on_double_click)
         self.btn_action_device.clicked.connect(self._btn_action_device_clicked)
         self.checkbox_fast_mode.stateChanged.connect(self._checkbox_fast_mode_checked)
-        
-    
+
+        self.combo_add_device("")
+        self.combo_devices.highlighted[str].connect(self.combo_add_device)
+
+
     def init_dialog(self, blueprint, add_data = True):
         """
             Set the current Dialog. Add or Remove are the two
@@ -76,7 +81,7 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
             return
         
         if self._add_data:
-            #add device
+             #add device
             dev = GuiConfigHandler.get_single_device_blueprint(focused_item.text(0))
             
             if dev is None:
@@ -84,6 +89,7 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
             
             suggested_uid = "Enter UID"
             for device_info in infos.get_device_infos():
+                print device_info.name
                 if focused_item.text(0) in device_info.name:
                     suggested_uid = device_info.uid
                     break
@@ -129,3 +135,16 @@ class LoggerDeviceDialog(QDialog,Ui_DeviceDialog):
         
         self.tree_device_list.sortItems ( 0, QtCore.Qt.AscendingOrder)
         self.tree_device_list.setSortingEnabled(True)
+
+    def combo_add_device(self, text):
+        self.combo_devices.clear()
+
+        # connected devices
+        for device_info in infos.get_device_infos():
+            if device_info.name in Identifier.DEVICE_DEFINITIONS:
+                self.combo_devices.addItem(device_info.name + "[" +device_info.uid+ "]")
+
+        self.combo_devices.insertSeparator(self.combo_devices.count() + 1)
+        # list of all devices
+        for device in Identifier.DEVICE_DEFINITIONS:
+            self.combo_devices.addItem(device)
