@@ -550,7 +550,7 @@ class DeviceImpl(AbstractDevice):
         self.device_definition = Identifier.DEVICE_DEFINITIONS[self.device_name]
         device_class = self.device_definition[Identifier.DEVICE_CLASS]
         self.device = device_class(self.device_uid, self.datalogger.ipcon)
-        self.identifier = self.device_name #TODO change to number?
+        self.identifier = self.device_name
 
         self.__name__ = Identifier.DEVICES+":"+str(self.device_name)
 
