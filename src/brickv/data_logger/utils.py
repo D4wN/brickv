@@ -219,6 +219,18 @@ class Utilities(object):
             
     parse_to_bool = staticmethod(parse_to_bool)
 
+    def parse_device_name(device_name):
+        tmp = device_name.split("[")
+        if len(tmp) == 1:
+            return  tmp[0], None
+
+        device = tmp[0][:len(tmp[0]) -1]
+        uid = tmp[1][:len(tmp[1]) -1]
+
+        return device, uid
+
+    parse_device_name = staticmethod(parse_device_name)
+
     def replace_right(source, target, replacement, replacements=None):
         return replacement.join(source.rsplit(target, replacements))
     
