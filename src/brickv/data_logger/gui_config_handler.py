@@ -291,7 +291,7 @@ class GuiConfigHandler(object):
         return dev
 
     load_devices = staticmethod(load_devices)
-    clear_blueprint = staticmethod(clear_blueprint)
+    #clear_blueprint = staticmethod(clear_blueprint)
     create_device_blueprint = staticmethod(create_device_blueprint)
     create_config_file = staticmethod(create_config_file)
     create_general_section = staticmethod(create_general_section)
