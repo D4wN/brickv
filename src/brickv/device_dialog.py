@@ -57,9 +57,6 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
         self.close()
 
     def _btn_add_all_devices_clicked(self):
-        #TODO check if devices are allready in list
-        #add all missing devices from list
-
         cur_dev = GuiConfigHandler.get_simple_blueprint(self.Ui_Logger)
         connected_devices = infos.get_device_infos()
         if len(connected_devices) <= 0:
@@ -70,9 +67,6 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
                     tmp = {}
                     tmp [device_info.name] = device_info.uid
                     con_dev.append(tmp)
-
-        print "CUR: " + str(cur_dev)
-        print "CON: " + str(con_dev)
 
         for dev in con_dev:
             for key in dev.keys():
