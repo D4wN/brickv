@@ -32,7 +32,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         self._gui_job = None
         EventLogger.add_logger(self._gui_logger)
         
-        self.interval_string = "_interval" #TODO check varaibales
+        self.interval_string = "_interval" #TODO check variables
         self.interval_show = "interval"
         self.exceptional_interval_string = "special_values"
         #FIXME better way to find interval and uids?!
@@ -213,7 +213,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         from brickv.data_logger.configuration_validator import ConfigurationReader
         self.update_setup_tab(config_json[ConfigurationReader.GENERAL_SECTION])
         
-        # TODO add other informations
+        # TODO add other information
         # xively
 
     def btn_set_logfile_clicked(self):
@@ -254,7 +254,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         if self.logger_device_dialog is None:
             self.logger_device_dialog = LoggerDeviceDialog(self)
             
-        blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
+        blueprint = Identifier.DEVICE_DEFINITIONS #TODO check this json.loads(GuiConfigHandler.all_devices_blueprint)
         self.logger_device_dialog.init_dialog(blueprint, True)
         self.logger_device_dialog.show()
     
@@ -405,7 +405,7 @@ class LoggerWindow(QDialog, Ui_Logger):
 
         try:
             for dev in blueprint:
-                self.add_item_to_tree(dev)
+                self.__add_item_to_tree(dev)
             EventLogger.debug("Device Tree created.")
             
         except Exception as e:
@@ -415,6 +415,21 @@ class LoggerWindow(QDialog, Ui_Logger):
         self.tree_devices.setSortingEnabled(True)
 
     def add_item_to_tree(self, item_blueprint):
+        self.tree_devices.setSortingEnabled(False)
+
+        self.__add_item_to_tree(item_blueprint)
+
+        self.tree_devices.sortItems(0, QtCore.Qt.AscendingOrder)
+        self.tree_devices.setSortingEnabled(True)
+
+    def __add_item_to_tree(self, item_blueprint):
+        """
+        Private function with NO sort = false
+        :param item_blueprint:
+        :return:
+        """
+        print str(item_blueprint)
+
         #counts topLevelItems
         lv0_counter = self.tree_devices.topLevelItemCount()
 
@@ -444,7 +459,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                 #counts sub values in devices
                 sub_Value_counter = 0;
                 for item_sub_value in sub_values:
-                    #lvl2: newe entry (sub_value_name|True/False)
+                    #lvl2: new entry (sub_value_name|True/False)
                     item_2 = QtGui.QTreeWidgetItem(item_1)
                     item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
                     lvl2_item = self.tree_devices.topLevelItem(lv0_counter).child(value_counter).child(sub_Value_counter)
@@ -484,7 +499,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         """
             Tries to parse the input of a tree cell into an
             integer. if its not possible, or below a certain
-            treshhold, it will be set to 0. Only checks cells
+            threshold, it will be set to 0. Only checks cells
             where the first collumn is interval!
         """
         # check for wrong input number in interval

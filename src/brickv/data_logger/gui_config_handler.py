@@ -18,6 +18,7 @@ class GuiConfigHandler(object):
 
     device_blueprint = []
     #blueprint for all supported devices
+    #FIXME remove blueprint from here! new location loggable_devices
     all_devices_blueprint = "[{\"Ambient Light\": {\"Analog Value\": {\"_interval\": 0}, \"Illuminance\": {\"_interval\": 0}}, \"Analog In\": {\"Analog Value\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}, \"Analog Out\": {\"Voltage\": {\"_interval\": 0}}, \"Barometer\": {\"Air Pressure\": {\"_interval\": 0}, \"Altitude\": {\"_interval\": 0}, \"Chip Temperature\": {\"_interval\": 0}}, \"Color\": {\"Color Temperature\": {\"Color Temperature\": true, \"_interval\": 0}, \"Illuminance\": {\"Illuminance\": true, \"_interval\": 0}, \"Rgbc\": {\"b\": true, \"c\": true, \"g\": true, \"r\": true, \"_interval\": 0}}, \"Current 12\": {\"Analog Value\": {\"_interval\": 0}, \"Current\": {\"_interval\": 0}}, \"Current 25\": {\"Analog Value\": {\"_interval\": 0}, \"Current\": {\"_interval\": 0}}, \"DC Brick\": {\"Acceleration\": {\"_interval\": 0}, \"Chip Temperature\": {\"_interval\": 0}, \"Current Consumption\": {\"_interval\": 0}, \"Current Velocity\": {\"_interval\": 0}, \"External Input Voltage\": {\"_interval\": 0}, \"Stack Input Voltage\": {\"_interval\": 0}, \"Velocity\": {\"_interval\": 0}}, \"Distance IR\": {\"Analog Value\": {\"_interval\": 0}, \"Distance\": {\"_interval\": 0}}, \"Distance US\": {\"Distance\": {\"_interval\": 0}}, \"Dual Button\": {\"Buttons\": {\"button_l\": true, \"button_r\": true, \"_interval\": 0}, \"Leds\": {\"led_l\": true, \"led_r\": true, \"_interval\": 0}}, \"Dual Relay\": {\"State\": {\"relay1\": true, \"relay2\": true, \"_interval\": 0}}, \"GPS\": {\"special_bool\": {\"Altitude Value\": true, \"Course\": true, \"Date\": true, \"Epe\": true, \"Ew\": true, \"Fix Status\": true, \"Geoidal Seperation\": true, \"Hdop\": true, \"Latitude\": true, \"Longitude\": true, \"Ns\": true, \"Pdop\": true, \"Satellites Used\": true, \"Satellites View\": true, \"Speed\": true, \"Time\": true, \"Vdop\": true}, \"special_values\": {\"Altitude\": 0, \"Coordinates\": 0, \"Date Time\": 0, \"Motion\": 0}}, \"Hall Effect\": {\"Value\": {\"_interval\": 0}}, \"Humidity\": {\"Analog Value\": {\"_interval\": 0}, \"Humidity\": {\"_interval\": 0}}, \"IO-16\": {\"Port A\": {\"_interval\": 0}, \"Port B\": {\"_interval\": 0}}, \"IO-4\": {\"Value\": {\"_interval\": 0}}, \"Industrial Dual 0 20 mA\": {\"Sensor 0\": {\"_interval\": 0}, \"Sensor 1\": {\"_interval\": 0}}, \"Joystick\": {\"Analog Value\": {\"x\": true, \"y\": true, \"_interval\": 0}, \"Position\": {\"x\": true, \"y\": true, \"_interval\": 0}, \"Pressed\": {\"Pressed\": true, \"_interval\": 0}}, \"LED Strip\": {\"Supply Voltage\": {\"_interval\": 0}}, \"Line\": {\"Reflectivity\": {\"_interval\": 0}}, \"Linear Poti\": {\"Analog Value\": {\"_interval\": 0}, \"Position\": {\"_interval\": 0}}, \"Moisture\": {\"Moisture Value\": {\"_interval\": 0}}, \"Motion Detector\": {\"Motion Detected\": {\"_interval\": 0}}, \"Multi Touch\": {\"Touch State\": {\"_interval\": 0}}, \"PTC\": {\"Resistance\": {\"_interval\": 0}, \"Temperature\": {\"_interval\": 0}}, \"Rotary Encoder\": {\"Count\": {\"_interval\": 0}, \"Pressed\": {\"_interval\": 0}}, \"Rotary Poti\": {\"Analog Value\": {\"_interval\": 0}, \"Position\": {\"_interval\": 0}}, \"Segment Display 4x7\": {\"special_bool\": {\"Brightness\": true, \"Colon\": true, \"Segment 1\": true, \"Segment 2\": true, \"Segment 3\": true, \"Segment 4\": true}, \"special_values\": {\"Counter Value\": 0, \"Segments\": 0}}, \"Solid State Relay\": {\"State\": {\"_interval\": 0}}, \"Sound Intensity\": {\"Intensity\": {\"_interval\": 0}}, \"Stepper Brick\": {\"Current Consumption\": {\"_interval\": 0}, \"Current Position\": {\"_interval\": 0}, \"Current Velocity\": {\"_interval\": 0}, \"External Input Voltage\": {\"_interval\": 0}, \"Remaining Steps\": {\"_interval\": 0}, \"Stack Input Voltage\": {\"_interval\": 0}, \"Steps\": {\"_interval\": 0}, \"Sync Rect\": {\"_interval\": 0}}, \"Temperature\": {\"Temperature\": {\"_interval\": 0}}, \"Temperature IR\": {\"Ambient Temperature\": {\"_interval\": 0}, \"Object Temperature\": {\"_interval\": 0}}, \"Tilt\": {\"State\": {\"_interval\": 0}}, \"Voltage\": {\"Analog Value\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}, \"Voltage Current\": {\"Current\": {\"_interval\": 0}, \"Power\": {\"_interval\": 0}, \"Voltage\": {\"_interval\": 0}}}]"
 
 
@@ -49,7 +50,7 @@ class GuiConfigHandler(object):
             bp_dev = None #Blueprint Device
 
             #check for blueprint KEY(DEVICE_DEFINITIONS)
-            if Identifier.DEVICE_DEFINITIONS.has_key(dev[Identifier.DEVICE_NAME]):
+            if dev[Identifier.DEVICE_NAME] in Identifier.DEVICE_DEFINITIONS:
                 bp_dev = copy.deepcopy(Identifier.DEVICE_DEFINITIONS[dev[Identifier.DEVICE_NAME]])
                 #remove unused entries(class)
                 del bp_dev[Identifier.DEVICE_CLASS]
@@ -230,7 +231,7 @@ class GuiConfigHandler(object):
             devices.append(dev)
         return devices
 
-    def get_simple_blueprint(Ui_Logger):
+    def get_simple_blueprint(Ui_Logger): # TODO rework this one too!
         """
         Returns a very simple bluepirnt version of the current 
         devices in the tree_widget. Is used for the DeviceDialog.
@@ -246,32 +247,53 @@ class GuiConfigHandler(object):
             item = {}
             
             tw_root = tree_widget.topLevelItem(r0)
-            item[str(tw_root.text(0))] = str(tw_root.text(1))
+            item[tw_root.text(0)] = tw_root.text(1)
             
             simple_blueprint.append(item)
         
         return simple_blueprint
 
-    def get_single_device_blueprint(device_name):
+    def get_device_blueprint(device_name):
         """
-        Returns a singel blueprint for a given device_name.
+        Returns a single blueprint for a given device_name.
         Used to add a device from the DeviceDialog.
         """
+        print device_name
+
         dev = None
-        
-        blueprint = json.loads(GuiConfigHandler.all_devices_blueprint)
-        
-        found = False
-        for device_item in blueprint:
-            for i in device_item:
-                if device_name == i:
-                    dev = {}
-                    dev[i] = device_item[i]
-                    found = True
-                    break
-                
-            if found:
-                break
+        try:
+            import copy
+            dev = copy.deepcopy(Identifier.DEVICE_DEFINITIONS[device_name])
+            #delet class & getter
+            del dev[Identifier.DEVICE_CLASS]
+            for val in dev[Identifier.DEVICE_VALUES]:
+                del dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_GETTER]
+                #add interval
+                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0;
+
+                #set default values
+                if dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
+
+                    sub_values = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+                    dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
+                    for i in range(0, len(sub_values)) :
+                        sub_val = sub_values[i]
+                        #check for multi lists
+                        if type(sub_val) == list:
+                            for j in range(0, len(sub_val)):
+                                sub_sub_val = sub_val[j]
+                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = False;
+                        else:
+                            dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = False;
+
+            #add name & uid
+            dev[Identifier.DEVICE_NAME] = device_name
+            dev[Identifier.DEVICE_UID] = "Enter UID"
+
+        except Exception as e:
+            pass
+            # its expected to fail some times
+            #EventLogger.debug("Error in get_device_blueprint("+str(device_name)+"): " + str(e))
         
         return dev
 
@@ -281,7 +303,7 @@ class GuiConfigHandler(object):
     create_config_file = staticmethod(create_config_file)
     create_general_section = staticmethod(create_general_section)
     get_simple_blueprint = staticmethod(get_simple_blueprint)
-    get_single_device_blueprint = staticmethod(get_single_device_blueprint)
+    get_device_blueprint = staticmethod(get_device_blueprint)
     create_device_section = staticmethod(create_device_section)
 
     
