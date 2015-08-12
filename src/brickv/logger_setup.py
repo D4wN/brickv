@@ -266,8 +266,31 @@ class LoggerWindow(QDialog, Ui_Logger):
         """
             Removes selected Device
         """
-        #TODO implement remove features
-        EventLogger.warning("REMOVE DEVICE CURRENTLY NOT IMPLEMENTED!")
+        selectedItem = self.tree_devices.selectedItems()
+
+        for index in range(0, len(selectedItem)):
+            device_name = selectedItem[index].text(0)
+            device_id = selectedItem[index].text(1)
+
+            if selectedItem[index].text(0) not in Identifier.DEVICE_DEFINITIONS:
+                # have to find the parent
+                currentItem = selectedItem[0]
+
+                while True:
+                    if currentItem.parent() is None:
+                        if currentItem.text(0) not in Identifier.DEVICE_DEFINITIONS:
+                            EventLogger.error("Cant remove device: " + selectedItem[index].text(0))
+                            device_name = ""
+                            device_id = ""
+                            break
+                        else:
+                            device_name = currentItem.text(0)
+                            device_id = currentItem.text(1)
+                            break
+                    else:
+                        currentItem = currentItem.parent()
+
+            self.remove_item_from_tree(device_name, device_id)
 
         # if self.logger_device_dialog is None:
         #     self.logger_device_dialog = LoggerDeviceDialog(self)

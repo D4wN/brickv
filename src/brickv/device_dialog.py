@@ -96,6 +96,7 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
             Add or remove the selected device from the list/DataLogger-Config.
         """
         items = self.list_widget.selectedItems()
+        cur_dev = GuiConfigHandler.get_simple_blueprint(self.Ui_Logger)
         for item in items:
             name = item.text()
             if name == self._no_connected_device_string or name == self._list_separator_string:
@@ -107,8 +108,13 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
             if dev is None:
                 EventLogger.debug("DeviceDialog._btn_add_device_clicked: Blueprint("+ str(dev_name) +") was None!")
                 continue
+
             if uid is not None:
+                if self.__is_device_in_list(dev_name, uid, cur_dev):
+                    continue
+                #else
                 dev[Identifier.DEVICE_UID] = uid
+
             else:
                 dev[Identifier.DEVICE_UID] = "Enter UID"
 
