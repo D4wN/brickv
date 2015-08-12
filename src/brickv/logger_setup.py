@@ -6,7 +6,7 @@ import json
 import os
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import Qt #, SIGNAL
 from PyQt4.QtGui import QDialog
 from PyQt4.QtGui import QMessageBox
 
@@ -20,6 +20,7 @@ from brickv.device_dialog import LoggerDeviceDialog
 from brickv.ui_logger_setup import Ui_Logger
 
 
+# noinspection PyProtectedMember,PyCallByClass
 class LoggerWindow(QDialog, Ui_Logger):
     """
         Function and Event handling class for the Ui_Logger.
@@ -31,11 +32,8 @@ class LoggerWindow(QDialog, Ui_Logger):
         self._gui_logger = GUILogger("GUILogger", EventLogger.EVENT_LOG_LEVEL)
         self._gui_job = None
         EventLogger.add_logger(self._gui_logger)
-        
-        self.interval_string = "_interval" #TODO check variables
-        self.interval_show = "interval"
-        self.exceptional_interval_string = "special_values"
-        #FIXME better way to find interval and uids?!
+
+        #FIXME better way to find interval and uids in tree_widget?!
         self.__tree_interval_tooltip = "Interval in milliseconds"
         self.__tree_uid_tooltip = "UID must be at least 3 Character long"
         self.data_logger_thread = None
@@ -43,7 +41,12 @@ class LoggerWindow(QDialog, Ui_Logger):
         
         self.logger_device_dialog = None
 
-        #if self._table_widget is not None:#FIXME rework this like the console_tab
+        # Code Inspector
+        self.host_infos = None
+        self.last_host = None
+        self.host_index_changing = None
+
+        #if self._table_widget is not None:#FIXME rework this like the console_tab <-- what does that mean?!
         #    self.jobs.append()
 
         self.setupUi(self)
@@ -208,7 +211,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         if config_blueprint is None:
             return
         
-        self.create_tree_items(config_blueprint, False)
+        self.create_tree_items(config_blueprint)
         # general_section
         from brickv.data_logger.configuration_validator import ConfigurationReader
         self.update_setup_tab(config_json[ConfigurationReader.GENERAL_SECTION])
@@ -254,7 +257,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         if self.logger_device_dialog is None:
             self.logger_device_dialog = LoggerDeviceDialog(self)
             
-        blueprint = Identifier.DEVICE_DEFINITIONS #TODO check this json.loads(GuiConfigHandler.all_devices_blueprint)
+        blueprint = Identifier.DEVICE_DEFINITIONS
         self.logger_device_dialog.init_dialog(blueprint, True)
         self.logger_device_dialog.show()
     
@@ -295,7 +298,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         for k in od.keys():
             if ll == od[k]:
                 self._gui_logger.level = k
-                break;
+                break
 
     def tab_set(self, tab_index, color, icon=None):
         """
@@ -376,7 +379,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             counter = 0 #TODO better way to set the combo box index?
             for k in od.keys():
                 if ll == k:
-                    break;
+                    break
                 counter += 1
             self.combo_loglevel.setCurrentIndex(counter)
 
@@ -395,7 +398,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             EventLogger.critical("Could not read the General Section of the Config-File! -> " + str(e))
             return
         
-    def create_tree_items(self, blueprint, view_all=False): #FIXME view_all still needed?
+    def create_tree_items(self, blueprint):
         """
             Create the device tree with the given blueprint.
             Shows all possible devices, if the view_all Flag is True.
@@ -434,7 +437,7 @@ class LoggerWindow(QDialog, Ui_Logger):
         lv0_counter = self.tree_devices.topLevelItemCount()
 
         #counts values in devices
-        value_counter = 0;
+        value_counter = 0
 
         #lvl0: new entry(name|UID)
         item_0 = QtGui.QTreeWidgetItem(self.tree_devices)
@@ -457,12 +460,12 @@ class LoggerWindow(QDialog, Ui_Logger):
             sub_values = item_blueprint[Identifier.DEVICE_VALUES][item_value][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
             if sub_values is not None:
                 #counts sub values in devices
-                sub_Value_counter = 0;
+                sub_value_counter = 0
                 for item_sub_value in sub_values:
                     #lvl2: new entry (sub_value_name|True/False)
                     item_2 = QtGui.QTreeWidgetItem(item_1)
                     item_2.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-                    lvl2_item = self.tree_devices.topLevelItem(lv0_counter).child(value_counter).child(sub_Value_counter)
+                    lvl2_item = self.tree_devices.topLevelItem(lv0_counter).child(value_counter).child(sub_value_counter)
                     item_sub_value_value = item_blueprint[Identifier.DEVICE_VALUES][item_value][Identifier.DEVICE_DEFINITIONS_SUBVALUES][item_sub_value]
                     lvl2_item.setText(0, str(item_sub_value))
                     if item_sub_value_value:
@@ -471,7 +474,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                         lvl2_item.setCheckState(1, QtCore.Qt.Unchecked)
                     lvl2_item.setText(1, "")
 
-                    sub_Value_counter += 1;
+                    sub_value_counter += 1
             value_counter += 1
 
     def remove_item_from_tree(self, item_name, item_uid):
@@ -500,7 +503,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             Tries to parse the input of a tree cell into an
             integer. if its not possible, or below a certain
             threshold, it will be set to 0. Only checks cells
-            where the first collumn is interval!
+            where the first column is interval!
         """
         # check for wrong input number in interval
         if column == 1:
@@ -520,7 +523,7 @@ class LoggerWindow(QDialog, Ui_Logger):
     def tree_on_double_click(self, item, column):
         """
             Is called, when a cell in the tree was doubleclicked.
-            Is used to allow the changeing of the interval
+            Is used to allow the changing of the interval
             numbers and UID's but not empty cells.
         """
         edit_flag = (QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
