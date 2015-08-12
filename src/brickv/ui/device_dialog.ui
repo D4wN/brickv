@@ -23,15 +23,8 @@
    <string>Device Dialog</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="1">
-    <widget class="QPushButton" name="btn_action_device">
-     <property name="text">
-      <string>&lt;TEXT&gt;</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2">
-    <spacer name="horizontalSpacer_2">
+   <item row="2" column="0">
+    <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -73,8 +66,15 @@
      </column>
     </widget>
    </item>
-   <item row="2" column="0">
-    <spacer name="horizontalSpacer">
+   <item row="2" column="1">
+    <widget class="QPushButton" name="btn_action_device">
+     <property name="text">
+      <string>&lt;TEXT&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <spacer name="horizontalSpacer_2">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -95,6 +95,9 @@
       <string>Fast Mode</string>
      </property>
     </widget>
+   </item>
+   <item row="3" column="0" colspan="3">
+    <widget class="QComboBox" name="combo_devices"/>
    </item>
   </layout>
  </widget>
