@@ -116,7 +116,11 @@
     </spacer>
    </item>
    <item row="2" column="0" colspan="5">
-    <widget class="QListWidget" name="list_widget"/>
+    <widget class="QListWidget" name="list_widget">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::ExtendedSelection</enum>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

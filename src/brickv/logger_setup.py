@@ -259,7 +259,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             self.logger_device_dialog = LoggerDeviceDialog(self)
             
         #blueprint = Identifier.DEVICE_DEFINITIONS
-        self.logger_device_dialog.init_dialog()
+        self.logger_device_dialog.init_dialog(self)
         self.logger_device_dialog.show()
 
     def btn_remove_device_clicked(self):
@@ -464,8 +464,6 @@ class LoggerWindow(QDialog, Ui_Logger):
         :param item_blueprint:
         :return:
         """
-        print str(item_blueprint)
-
         #counts topLevelItems
         lv0_counter = self.tree_devices.topLevelItemCount()
 

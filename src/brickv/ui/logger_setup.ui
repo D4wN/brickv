@@ -457,6 +457,9 @@
          </item>
          <item row="1" column="0" colspan="6">
           <widget class="QTreeWidget" name="tree_devices">
+           <property name="selectionMode">
+            <enum>QAbstractItemView::ExtendedSelection</enum>
+           </property>
            <property name="uniformRowHeights">
             <bool>true</bool>
            </property>

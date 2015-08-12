@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from PyQt4.QtGui import QDialog, QMessageBox
+from brickv.data_logger.event_logger import EventLogger
+from brickv.data_logger.utils import Utilities
 from brickv.ui_device_dialog import Ui_DeviceDialog
 from PyQt4 import QtGui, QtCore
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
@@ -23,6 +25,7 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
         self._logger_window = parent
         self._no_connected_device_string = "No Connected Devices found"
         self._list_separator_string = "----------------------------------------" #TODO check if needed?
+        self.Ui_Logger = None
 
         self.setupUi(self)
         self.signal_initialization()
@@ -36,10 +39,12 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
         self.btn_add_all_devices.clicked.connect(self._btn_add_all_devices_clicked)
         self.btn_cancel.clicked.connect(self._btn_cancel_clicked)
 
-    def init_dialog(self):
+    def init_dialog(self, Ui_Logger):
         """
            Builds the Tree.
         """
+        self.Ui_Logger = Ui_Logger
+
         connected_devices = infos.get_device_infos()
         if len(connected_devices) <= 0:
             self.btn_add_all_devices.setEnabled(False)
@@ -52,41 +57,62 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
         self.close()
 
     def _btn_add_all_devices_clicked(self):
-        print "Button add all clicked!"
-        #TODO check if devices are allready in list
-        #add all missing devices from list
+        cur_dev = GuiConfigHandler.get_simple_blueprint(self.Ui_Logger)
+        connected_devices = infos.get_device_infos()
+        if len(connected_devices) <= 0:
+            return
+        con_dev = []
+        for device_info in connected_devices:
+                if device_info.name in Identifier.DEVICE_DEFINITIONS:
+                    tmp = {}
+                    tmp [device_info.name] = device_info.uid
+                    con_dev.append(tmp)
+
+        for dev in con_dev:
+            for key in dev.keys():
+                if not self.__is_device_in_list(key, dev[key], cur_dev):
+                    blueprint = GuiConfigHandler.get_device_blueprint(key)
+                    if blueprint is None:
+                        return
+                    blueprint[Identifier.DEVICE_UID] = dev[key]
+                    self._logger_window.add_item_to_tree(blueprint)
+
+    def __is_device_in_list(self, device_name, uid, list_to_check):
+        for dev in list_to_check:
+            for key in dev.keys():
+                if device_name == key and uid == dev[key]:
+                    #device matches -> return True
+                    return True
+        return False
 
     def _btn_add_device_clicked(self, uid=None):
         """
             Add or remove the selected device from the list/DataLogger-Config.
         """
-        return
+        items = self.list_widget.selectedItems()
+        cur_dev = GuiConfigHandler.get_simple_blueprint(self.Ui_Logger)
+        for item in items:
+            name = item.text()
+            if name == self._no_connected_device_string or name == self._list_separator_string:
+                #ignore those
+                continue
 
-        focused_item = self.list_widget.currentItem()
-        if focused_item is None:
-            QMessageBox.information(self, 'No Device', 'No Device selected! Please select a Device first.',
-                                    QMessageBox.Ok)
-            return
+            dev_name, uid = Utilities.parse_device_name(name)
+            dev = GuiConfigHandler.get_device_blueprint(dev_name)
+            if dev is None:
+                EventLogger.debug("DeviceDialog._btn_add_device_clicked: Blueprint("+ str(dev_name) +") was None!")
+                continue
 
-        # add device
-        dev_name = focused_item.text(0)
-        dev = GuiConfigHandler.get_device_blueprint(dev_name)
+            if uid is not None:
+                if self.__is_device_in_list(dev_name, uid, cur_dev):
+                    continue
+                #else
+                dev[Identifier.DEVICE_UID] = uid
 
-        if dev is None:
-            return
+            else:
+                dev[Identifier.DEVICE_UID] = "Enter UID"
 
-        #suggested_uid = "Enter UID"
-        #for device_info in infos.get_device_infos():
-        #    if focused_item.text(0) in device_info.name:
-        #        suggested_uid = device_info.uid
-        #        break
-
-        if uid is not None:
-            dev[Identifier.DEVICE_UID] = uid
-        else:
-            dev[Identifier.DEVICE_UID] = "Enter UID"
-
-        self._logger_window.add_item_to_tree(dev)
+            self._logger_window.add_item_to_tree(dev)
 
     def _create_tree(self, connected_devices=0):
         """
