@@ -21,15 +21,15 @@ from brickv.bindings.bricklet_io16 import IO16
 from brickv.bindings.bricklet_io4 import IO4
 from brickv.bindings.bricklet_joystick import Joystick
 from brickv.bindings.bricklet_led_strip import LEDStrip
-from brickv.bindings.bricklet_line import BrickletLine
-from brickv.bindings.bricklet_linear_poti import BrickletLinearPoti
+from brickv.bindings.bricklet_line import Line
+from brickv.bindings.bricklet_linear_poti import LinearPoti
 from brickv.bindings.bricklet_moisture import Moisture
 from brickv.bindings.bricklet_motion_detector import MotionDetector
 from brickv.bindings.bricklet_multi_touch import MultiTouch
 from brickv.bindings.bricklet_ptc import PTC
 from brickv.bindings.bricklet_rotary_encoder import RotaryEncoder
 from brickv.bindings.bricklet_rotary_poti import RotaryPoti
-from brickv.bindings.bricklet_segment_display_4x7 import BrickletSegmentDisplay4x7
+from brickv.bindings.bricklet_segment_display_4x7 import SegmentDisplay4x7
 from brickv.bindings.bricklet_solid_state_relay import BrickletSolidStateRelay
 from brickv.bindings.bricklet_sound_intensity import BrickletSoundIntensity
 from brickv.bindings.bricklet_temperature import BrickletTemperature
@@ -37,6 +37,7 @@ from brickv.bindings.bricklet_temperature_ir import BrickletTemperatureIR
 from brickv.bindings.bricklet_tilt import BrickletTilt
 from brickv.bindings.bricklet_voltage import BrickletVoltage
 from brickv.bindings.bricklet_voltage_current import BrickletVoltageCurrent
+
 import brickv.bindings.ip_connection as ip_connection
 from brickv.data_logger.event_logger import EventLogger
 import brickv.data_logger.utils as utils
@@ -294,9 +295,8 @@ class Identifier(object):
                 }
             }
         },
-
-        BrickletSegmentDisplay4x7.DEVICE_DISPLAY_NAME: {
-            'class': BrickletSegmentDisplay4x7,
+        SegmentDisplay4x7.DEVICE_DISPLAY_NAME: {
+            'class': SegmentDisplay4x7,
             'values': {
                 'Counter Value': {
                     'getter': lambda device: device.get_counter_value(),
@@ -304,7 +304,196 @@ class Identifier(object):
                 },
                 'Segments': {
                     'getter': lambda device: device.get_segments(),
-                    'subvalues': [['Segm1','Segm2','Segm3','Segm4'],'Brightness','Colon']
+                    'subvalues': [['Segm1', 'Segm2', 'Segm3', 'Segm4'], 'Brightness', 'Colon']
+                }
+            }
+        },
+        DualRelay.DEVICE_DISPLAY_NAME: {
+            'class': DualRelay,
+            'values': {
+                'State': {
+                    'getter': lambda device: device.get_state(),
+                    'subvalues': ['Relay1', 'Relay2']
+                },
+                'Monoflop1': {
+                    'getter': lambda device: device.get_monoflop(1),
+                    'subvalues': ['State', 'Time', 'Time Remaining']
+                },
+                'Monoflop2': {
+                    'getter': lambda device: device.get_monoflop(2),
+                    'subvalues': ['State', 'Time', 'Time Remaining']
+                }
+            }
+        },
+        HallEffect.DEVICE_DISPLAY_NAME:{
+            'class': HallEffect,
+            'values': {
+                'Value': {
+                    'getter': lambda device: device.get_value(),
+                    'subvalues': None
+                }
+            }
+        },
+        Humidity.DEVICE_DISPLAY_NAME:{
+            'class': Humidity,
+            'values': {
+                'Humidity': {
+                    'getter': lambda device: device.get_humidity(),
+                    'subvalues': None
+                },
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': None
+                }
+            }
+        },
+        IndustrialDual020mA.DEVICE_DISPLAY_NAME:{
+            'class': IndustrialDual020mA,
+            'values': {
+                'Current Sensor0': {
+                    'getter': lambda device: device.get_current(0),
+                    'subvalues': None
+                },
+                'Current Sensor1': {
+                    'getter': lambda device: device.get_current(1),
+                    'subvalues': None
+                }
+            }
+        },
+        IO16.DEVICE_DISPLAY_NAME:{
+            'class': IO16,
+            'values': {
+                'Port A': {
+                    'getter': lambda device: device.get_port('a'),
+                    'subvalues': None
+                },
+                'Port B': {
+                    'getter': lambda device: device.get_port('b'),
+                    'subvalues': None
+                }
+            }
+        },
+        IO4.DEVICE_DISPLAY_NAME:{
+            'class': IO4,
+            'values': {
+                'Value': {
+                    'getter': lambda device: device.get_value(),
+                    'subvalues': None
+                }
+            }
+        },
+        Joystick.DEVICE_DISPLAY_NAME:{
+            'class': Joystick,
+            'values': {
+                'Position': {
+                    'getter': lambda device: device.get_position(),
+                    'subvalues': ['X', 'Y']
+                },
+                'Pressed': {
+                    'getter': lambda device: device.is_pressed(),
+                    'subvalues': None
+                },
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': ['X', 'Y']
+                }
+            }
+        },
+        #TODO Bricklet with some big return Arrays (3x16!)
+        LEDStrip.DEVICE_DISPLAY_NAME:{
+            'class': LEDStrip,
+            'values': {
+                'Supply Voltage': {
+                    'getter': lambda device: device.get_supply_voltage(),
+                    'subvalues': None
+                }
+            }
+        },
+        Line.DEVICE_DISPLAY_NAME:{
+            'class': Line,
+            'values': {
+                'Reflectivity': {
+                    'getter': lambda device: device.get_reflectivity(),
+                    'subvalues': None
+                }
+            }
+        },
+        LinearPoti.DEVICE_DISPLAY_NAME:{
+            'class': LinearPoti,
+            'values': {
+                'Position': {
+                    'getter': lambda device: device.get_position(),
+                    'subvalues': None
+                },
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': None
+                }
+            }
+        },
+        Moisture.DEVICE_DISPLAY_NAME:{
+            'class': Moisture,
+            'values': {
+                'Value': {
+                    'getter': lambda device: device.get_moisture_value(),
+                    'subvalues': None
+                }
+            }
+        },
+        MotionDetector.DEVICE_DISPLAY_NAME:{
+            'class': MotionDetector,
+            'values': {
+                'Motion Detected': {
+                    'getter': lambda device: device.get_motion_detected(),
+                    'subvalues': None
+                }
+            }
+        },
+        MultiTouch.DEVICE_DISPLAY_NAME:{
+            'class': CLASS_HERE,
+            'values': {
+                'State': {
+                    'getter': lambda device: device.get_touch_state(),
+                    'subvalues': None
+                }
+            }
+        },
+        PTC.DEVICE_DISPLAY_NAME:{
+            'class': PTC,
+            'values': {
+                'Resistance': {
+                    'getter': lambda device: device.get_resistance(),
+                    'subvalues': None
+                },
+                'Temperature': {
+                    'getter': lambda device: device.get_temperature(),
+                    'subvalues': None
+                }
+            }
+        },
+        RotaryEncoder.DEVICE_DISPLAY_NAME:{
+            'class': RotaryEncoder,
+            'values': {
+                'Count': {
+                    'getter': lambda device: device.get_count(False),
+                    'subvalues': None
+                },
+                'Pressed': {
+                    'getter': lambda device: device.is_pressed(),
+                    'subvalues': None
+                }
+            }
+        },
+        RotaryPoti.DEVICE_DISPLAY_NAME:{
+            'class': RotaryPoti,
+            'values': {
+                'Position': {
+                    'getter': lambda device: device.get_position(),
+                    'subvalues': None
+                },
+                'Analog Value': {
+                    'getter': lambda device: device.get_analog_value(),
+                    'subvalues': None
                 }
             }
         }
@@ -314,82 +503,6 @@ class Identifier(object):
     CLASS_NAME = {}
     VAR_ARGS = {}
     # ##Bricklets
-    DUAL_RELAY = "Dual Relay"
-    DUAL_RELAY_STATE = "State"
-    DUAL_RELAY_1 = "relay1"
-    DUAL_RELAY_2 = "relay2"
-    
-    HALL_EFFECT = "Hall Effect"
-    HALL_EFFECT_VALUE = "Value"
-    
-    HUMIDITY = "Humidity"
-    HUMIDITY_HUMIDITY = "Humidity"
-    HUMIDITY_ANALOG_VALUE = "Analog Value"
-    
-    INDUSTRIAL_DUAL_0_20_MA = "Industrial Dual 0 20 mA"
-    INDUSTRIAL_DUAL_0_20_MA_CURRENT = "Current"
-    INDUSTRIAL_DUAL_0_20_MA_SENSOR_0 = "Sensor 0"
-    FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA + INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = "get_current"
-    VAR_ARGS[INDUSTRIAL_DUAL_0_20_MA + INDUSTRIAL_DUAL_0_20_MA_SENSOR_0] = [0]
-    INDUSTRIAL_DUAL_0_20_MA_SENSOR_1 = "Sensor 1"
-    FUNCTION_NAME[INDUSTRIAL_DUAL_0_20_MA + INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = "get_current"
-    VAR_ARGS[INDUSTRIAL_DUAL_0_20_MA + INDUSTRIAL_DUAL_0_20_MA_SENSOR_1] = [1]
-    
-    IO_16 = "IO-16"
-    CLASS_NAME[IO_16] = "IO16"
-    IO_16_PORTS = "Ports"
-    IO_16_PORT_A = "Port A"
-    FUNCTION_NAME[IO_16 + IO_16_PORT_A] = "get_port"
-    VAR_ARGS[IO_16 + IO_16_PORT_A] = ["a"]
-    IO_16_PORT_B = "Port B"
-    FUNCTION_NAME[IO_16 + IO_16_PORT_B] = "get_port"
-    VAR_ARGS[IO_16 + IO_16_PORT_B] = ["b"]
-    
-    IO_4 = "IO-4"
-    CLASS_NAME[IO_4] = "IO4"
-    IO_4_VALUE = "Value"
-    
-    JOYSTICK = "Joystick"
-    JOYSTICK_POSITION = "Position"
-    JOYSTICK_POSITION_X = "x"
-    JOYSTICK_POSITION_Y = "y"
-    JOYSTICK_ANALOG_VALUE = "Analog Value"
-    JOYSTICK_PRESSED = "Pressed"
-    FUNCTION_NAME[JOYSTICK + JOYSTICK_PRESSED] = "is_pressed"
-    
-    LED_STRIP = "LED Strip"
-    LED_STRIP_SUPPLY_VOLTAGE = "Supply Voltage"
-    
-    LINE = "Line"
-    CLASS_NAME[LINE] = "BrickletLine"
-    LINE_REFLECTIVITY = "Reflectivity"
-    
-    LINEAR_POTI = "Linear Poti"
-    CLASS_NAME[LINEAR_POTI] = "BrickletLinearPoti"
-    LINEAR_POTI_POSITION = "Position"
-    LINEAR_POTI_ANALOG_VALUE = "Analog Value"
-    
-    MOISTURE = "Moisture"
-    MOISTURE_MOISTURE_VALUE = "Moisture Value"
-    
-    MOTION_DETECTOR = "Motion Detector"
-    MOTION_DETECTOR_MOTION_DETECTED = "Motion Detected"
-    
-    MULTI_TOUCH = "Multi Touch"
-    MULTI_TOUCH_TOUCH_STATE = "Touch State"
-    
-    PTC_BRICKLET = "PTC"
-    PTC_BRICKLET_RESISTANCE = "Resistance"
-    PTC_BRICKLET_TEMPERATURE = "Temperature"
-    
-    ROTARY_ENCODER = "Rotary Encoder"
-    ROTARY_ENCODER_COUNT = "Count"
-    ROTARY_ENCODER_PRESSED = "Pressed"
-    FUNCTION_NAME[ROTARY_ENCODER + ROTARY_ENCODER_PRESSED] = "is_pressed"
-    
-    ROTARY_POTI = "Rotary Poti"
-    ROTARY_POTI_POSITION = "Position"
-    ROTARY_POTI_ANALOG_VALUE = "Analog Value"
     
     SOLID_STATE_RELAY = "Solid State Relay"
     CLASS_NAME[SOLID_STATE_RELAY] = "BrickletSolidStateRelay"
