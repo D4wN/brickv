@@ -43,14 +43,6 @@ from brickv.data_logger.event_logger import EventLogger
 import brickv.data_logger.utils as utils
 from collections import namedtuple
 
-
-# import ALL supported bricklets and bricks
-def string_to_class(string):
-    """
-    Parses the correct class from a String.
-    """
-    return reduce(getattr, string.split("."), sys.modules[__name__])
-
 class SpecialDevices(object):
 
     #GPS
@@ -450,7 +442,7 @@ class Identifier(object):
             }
         },
         MultiTouch.DEVICE_DISPLAY_NAME:{
-            'class': CLASS_HERE,
+            'class': MultiTouch,
             'values': {
                 'State': {
                     'getter': lambda device: device.get_touch_state(),
