@@ -273,9 +273,9 @@ class GuiConfigHandler(object):
                         if type(sub_val) == list:
                             for j in range(0, len(sub_val)):
                                 sub_sub_val = sub_val[j]
-                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = False
+                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = True #TODO changed both default values to true!
                         else:
-                            dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = False
+                            dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = True
 
             #add name & uid
             dev[Identifier.DEVICE_NAME] = device_name
