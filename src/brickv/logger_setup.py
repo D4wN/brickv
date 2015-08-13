@@ -267,9 +267,11 @@ class LoggerWindow(QDialog, Ui_Logger):
             Removes selected Device
         """
         selectedItem = self.tree_devices.selectedItems()
-
         for index in range(0, len(selectedItem)):
             try:
+                if selectedItem[index] is None:
+                    continue
+
                 device_name = selectedItem[index].text(0)
                 device_id = selectedItem[index].text(1)
 
@@ -293,13 +295,9 @@ class LoggerWindow(QDialog, Ui_Logger):
 
                 self.remove_item_from_tree(device_name, device_id)
             except Exception as e:
-                EventLogger.error("Cant remove device " + str(e))
+                if not str(e).startswith("wrapped C/C++ object"):
+                    EventLogger.error("Cant remove device: " + str(e)) # was already removed
 
-        # if self.logger_device_dialog is None:
-        #     self.logger_device_dialog = LoggerDeviceDialog(self)
-        #
-        # self.logger_device_dialog.init_dialog(GuiConfigHandler.get_simple_blueprint(self), False)
-        # self.logger_device_dialog.show()
 
     def btn_remove_all_devices_clicked(self):
         self.tree_devices.clear()
@@ -525,9 +523,10 @@ class LoggerWindow(QDialog, Ui_Logger):
                 removed_item = True
                 self.tree_devices.takeTopLevelItem(t0)
                 break
-          
-        if not removed_item:
-            QMessageBox.information(self, 'No Device found?', 'No Device was not found and could not be deleted!', QMessageBox.Ok)
+
+        # can't use this approach because of multiple selection in tree_devices
+        #if not removed_item:
+        #    QMessageBox.information(self, 'No Device found?', 'No Device was not found and could not be deleted!', QMessageBox.Ok)
         
     def tree_on_change(self, item, column):
         """
