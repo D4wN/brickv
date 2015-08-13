@@ -527,13 +527,7 @@ class LoggerWindow(QDialog, Ui_Logger):
             QMessageBox.information(self, 'No Device found?', 'No Device was not found and could not be deleted!', QMessageBox.Ok)
         
     def tree_on_change(self, item, column):
-        """
-            Tries to parse the input of a tree cell into an
-            integer. if its not possible, or below a certain
-            threshold, it will be set to 0. Only checks cells
-            where the first column is interval!
-        """
-        # check for wrong input number in interval
+        # check for wrong input number in interval or uid
         if column == 1:
             # check if tooltip is set
             tt = str(item.toolTip(1))

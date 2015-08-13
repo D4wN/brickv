@@ -87,7 +87,7 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
 
     def _btn_add_device_clicked(self, uid=None):
         """
-            Add or remove the selected device from the list/DataLogger-Config.
+            Add the selected device from the list/DataLogger-Config.
         """
         items = self.list_widget.selectedItems()
         cur_dev = GuiConfigHandler.get_simple_blueprint(self.Ui_Logger)
