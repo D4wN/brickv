@@ -267,36 +267,37 @@ class LoggerWindow(QDialog, Ui_Logger):
             Removes selected Device
         """
         selectedItem = self.tree_devices.selectedItems()
-
         for index in range(0, len(selectedItem)):
-            device_name = selectedItem[index].text(0)
-            device_id = selectedItem[index].text(1)
+            try:
+                if selectedItem[index] is None:
+                    continue
 
-            if selectedItem[index].text(0) not in Identifier.DEVICE_DEFINITIONS:
-                # have to find the parent
-                currentItem = selectedItem[0]
+                device_name = selectedItem[index].text(0)
+                device_id = selectedItem[index].text(1)
 
-                while True:
-                    if currentItem.parent() is None:
-                        if currentItem.text(0) not in Identifier.DEVICE_DEFINITIONS:
-                            EventLogger.error("Cant remove device: " + selectedItem[index].text(0))
-                            device_name = ""
-                            device_id = ""
-                            break
+                if selectedItem[index].text(0) not in Identifier.DEVICE_DEFINITIONS:
+                    # have to find the parent
+                    currentItem = selectedItem[0]
+
+                    while True:
+                        if currentItem.parent() is None:
+                            if currentItem.text(0) not in Identifier.DEVICE_DEFINITIONS:
+                                EventLogger.error("Cant remove device: " + selectedItem[index].text(0))
+                                device_name = ""
+                                device_id = ""
+                                break
+                            else:
+                                device_name = currentItem.text(0)
+                                device_id = currentItem.text(1)
+                                break
                         else:
-                            device_name = currentItem.text(0)
-                            device_id = currentItem.text(1)
-                            break
-                    else:
-                        currentItem = currentItem.parent()
+                            currentItem = currentItem.parent()
 
-            self.remove_item_from_tree(device_name, device_id)
+                self.remove_item_from_tree(device_name, device_id)
+            except Exception as e:
+                if not str(e).startswith("wrapped C/C++ object"):
+                    EventLogger.error("Cant remove device: " + str(e)) # was already removed
 
-        # if self.logger_device_dialog is None:
-        #     self.logger_device_dialog = LoggerDeviceDialog(self)
-        #
-        # self.logger_device_dialog.init_dialog(GuiConfigHandler.get_simple_blueprint(self), False)
-        # self.logger_device_dialog.show()
 
     def btn_remove_all_devices_clicked(self):
         self.tree_devices.clear()
@@ -522,9 +523,10 @@ class LoggerWindow(QDialog, Ui_Logger):
                 removed_item = True
                 self.tree_devices.takeTopLevelItem(t0)
                 break
-          
-        if not removed_item:
-            QMessageBox.information(self, 'No Device found?', 'No Device was not found and could not be deleted!', QMessageBox.Ok)
+
+        # can't use this approach because of multiple selection in tree_devices
+        #if not removed_item:
+        #    QMessageBox.information(self, 'No Device found?', 'No Device was not found and could not be deleted!', QMessageBox.Ok)
         
     def tree_on_change(self, item, column):
         # check for wrong input number in interval or uid
