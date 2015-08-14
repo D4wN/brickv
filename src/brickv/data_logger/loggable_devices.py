@@ -704,7 +704,7 @@ class AbstractDevice(object):
         """
         Representation String of the class. For simple overwiev.
         """
-        return "["+str(self.__name__)+"TODO NEW DEBUG STRING]"
+        return "["+str(self.__name__)+"]"
 
 '''
 /*---------------------------------------------------------------------------
