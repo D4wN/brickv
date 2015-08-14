@@ -585,6 +585,9 @@ class LoggerWindow(QDialog, Ui_Logger):
             SIGNAL function:
             Adds new CSV Data into the Table.
         """
+        #disable sort
+        self.table_widget.setSortingEnabled(False)
+
         row = self.table_widget.rowCount()
         self.table_widget.insertRow(row)
         self.table_widget.setItem(row, 0, QtGui.QTableWidgetItem(str(csv_data.uid)))
@@ -595,3 +598,6 @@ class LoggerWindow(QDialog, Ui_Logger):
 
         if self.checkbox_data_auto_scroll.isChecked():
             self.table_widget.scrollToBottom()
+
+        #enable sort
+        self.table_widget.setSortingEnabled(True)
