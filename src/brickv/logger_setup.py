@@ -58,10 +58,15 @@ class LoggerWindow(QDialog, Ui_Logger):
         '''
         # Login data
         self.host_info_initialization()
+        # GUI LOG LEVEL
         self.combo_log_level_init(self.combo_console_level)
         self.combo_console_level.setCurrentIndex(1) #INFO LEVEL
+        # set loglevel
+        self.combo_console_level_changed()
+
+        # LOGLEVEL FROM CONFIG
         self.combo_log_level_init(self.combo_loglevel)
-        self.combo_console_level.setCurrentIndex(0) #DEBUG LEVEL
+        self.combo_loglevel.setCurrentIndex(0) #DEBUG LEVEL
         
         self.signal_initialization()
            
@@ -102,6 +107,15 @@ class LoggerWindow(QDialog, Ui_Logger):
         od = collections.OrderedDict(sorted(GUILogger._convert_level.items()))
         for k in od.keys():
             combo_widget.addItem(od[k])
+
+        # TODO dynamic way to set GUI LogLevel - not used at the moment!
+        # set index
+        # ll = GUILogger._convert_level[EventLogger.EVENT_LOG_LEVEL]
+        # combo_widget_count = combo_widget.count()
+        # for i in range(0, combo_widget_count):
+        #     if ll == combo_widget.itemText(i):
+        #         combo_widget.setCurrentIndex(i)
+        #         break
 
     def host_info_initialization(self):
         '''

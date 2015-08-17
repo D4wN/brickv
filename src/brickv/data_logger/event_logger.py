@@ -38,6 +38,12 @@ class EventLogger():
 
         return False
 
+    # Does not really work as expected >_>
+    # def get_logger(logger_name):
+    #     if logger_name in EventLogger.__loggers:
+    #         return EventLogger.__loggers.get(logger_name)
+    #     return None
+
     def debug(msg, logger_name=None):
         level = logging.DEBUG
         EventLogger._send_message(level, msg, logger_name)
@@ -77,6 +83,7 @@ class EventLogger():
     # static methods
     add_logger = staticmethod(add_logger)
     remove_logger = staticmethod(remove_logger)
+    # get_logger = staticmethod(get_logger)
     debug = staticmethod(debug)
     info = staticmethod(info)
     warn = staticmethod(warn)

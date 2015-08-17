@@ -83,13 +83,16 @@ def __manage_eventlog(arguments_map):
             FileLogger("FileLogger", EventLogger.EVENT_LOG_LEVEL, EventLogger.EVENT_FILE_LOGGING_PATH))
     if not EventLogger.EVENT_CONSOLE_LOGGING:
         EventLogger.remove_logger("ConsoleLogger")
+    else:
+        EventLogger.remove_logger("ConsoleLogger")
+        EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
 
 
 def main(arguments_map):
     """
     This function initialize the data logger and starts the logging process
     """
-    EventLogger.add_logger(ConsoleLogger("ConsoleLogger", EventLogger.EVENT_LOG_LEVEL))
+    EventLogger.add_logger(ConsoleLogger("ConsoleLogger", 20))#logging.info
 
     configuration = None
     gui_start = False
