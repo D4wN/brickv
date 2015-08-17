@@ -92,7 +92,7 @@ def main(arguments_map):
     try:
         # was started via console
         if CONSOLE_CONFIG_FILE in arguments_map and arguments_map[CONSOLE_CONFIG_FILE] is not None:
-            configuration = ConfigurationReader(pathToConfig=arguments_map[CONSOLE_CONFIG_FILE])
+            configuration = ConfigurationReader(path_to_config=arguments_map[CONSOLE_CONFIG_FILE])
          
         # was started via gui
         elif GUI_CONFIG in arguments_map and arguments_map[GUI_CONFIG] is not None:
@@ -116,7 +116,7 @@ def main(arguments_map):
         else:
             sys.exit(DataLoggerException.DL_CRITICAL_ERROR)
         
-    if configuration._configuration.isEmpty():
+    if configuration._configuration.is_empty():
         EventLogger.error("Configuration is empty")
         return None
         

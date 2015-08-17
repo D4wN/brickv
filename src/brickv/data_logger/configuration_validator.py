@@ -5,7 +5,6 @@
  '''
 import codecs  # ConfigurationReader to read the file in correct encoding
 import json
-import re
 
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.utils import DataLoggerException, Utilities
@@ -35,12 +34,9 @@ class ConfigurationReader(object):
     XIVELY_API_KEY = "api_key"
     XIVELY_UPLOAD_RATE = "upload_rate"
 
-    DEVICES_SECTION = "DEVICES" #TODO get from loggable_devices.Identification.DEVICES
+    DEVICES_SECTION = loggable_devices.Identifier.DEVICES
 
-    __NAME_KEY = "name"         #TODO get from loggable_devices.Identification
-    __UID_KEY = "uid"           #TODO get from loggable_devices.Identification
-
-    def __init__(self, pathToConfig=None, configuration=None):
+    def __init__(self, path_to_config=None, configuration=None):
         '''
         pathToConfig -- path to the json configuration file
         OR
@@ -49,13 +45,13 @@ class ConfigurationReader(object):
         self._configuration = Configuration()
         self._readConfigErr = 0  # Errors which occure during readin
 
-        if pathToConfig is None and configuration is None:
+        if path_to_config is None and configuration is None:
             EventLogger.critical(
                 "ConfigurationReader needs a path to the configuration file or an actual configuration")
             return
 
-        if pathToConfig is not None:
-            self.fileName = pathToConfig
+        if path_to_config is not None:
+            self.fileName = path_to_config
             self._read_json_config_file()
 
         if configuration is not None:
@@ -97,6 +93,8 @@ class ConfigurationReader(object):
                                 ConfigurationValidator
  ---------------------------------------------------------------------------*/
 """
+
+
 class ConfigurationValidator(object):
     '''
     This class validates the (json) configuration file
@@ -133,7 +131,8 @@ class ConfigurationValidator(object):
                              " Hours: " + str(logging_time[1]) +
                              " Minutes: " + str(logging_time[2]) +
                              " Seconds: " + str(logging_time[3]))
-        EventLogger.info("Will write about " + str(int(self._log_space_counter.lines_per_second + 0.5)) + " lines per second into the log-file.")
+        EventLogger.info("Will write about " + str(
+            int(self._log_space_counter.lines_per_second + 0.5)) + " lines per second into the log-file.")
 
         if self._error_count != 0:
             raise DataLoggerException(DataLoggerException.DL_FAILED_VALIDATION, "Validation process found some errors")
@@ -144,91 +143,84 @@ class ConfigurationValidator(object):
         '''
         global_section = self.json_config._general
 
-        def is_valid_ip_format(ip_str):
-            '''
-            This function validates the format of an ip-address and returns true
-            on an valid and false on an invalid format.
-            
-            This function does not check if the ip-address makes any sense
-            e.g '0.0.0.0' is a valid ip-address format
-            '''
-            # FIXME: Add IP6 pattern
-            pattern = r"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b"
-            if re.match(pattern, ip_str):
-                return True
-            else:
-                return False
-
         # self.CR.GENERAL_HOST ip address
         host = global_section[self.CR.GENERAL_HOST]
-        if not host.lower() == 'localhost' and not is_valid_ip_format(host):
+        if host is None or len(host) == 0:
             EventLogger.critical(
-                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_HOST],
-                                             msg="host should be 'localhost' or an valid ip-address"))
+                self._generate_device_error_message(uid="", tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_HOST],
+                                                    msg="invalid host"))
 
         # self.CR.GENERAL_PORT port number
         port = global_section[self.CR.GENERAL_PORT]
-        if not self._is_valid_string(port, 1) and not (0 < port <= 65535):
+        if not Utilities.is_valid_string(port, 1) and not (0 < port <= 65535):
             EventLogger.critical(
-                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PORT],
-                                             msg="port should be an integer 0-65535"))
+                self._generate_device_error_message(uid="", tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PORT],
+                                                    msg="port should be an integer 0-65535"))
 
         # --- Datalog file ---------------------------------------------  
         # self.CR.GENERAL_LOG_TO_FILE should be a bool and if its True then
         # self.CR.GENERAL_LOG_TO_FILE should be a string and a valid path
         if not type(global_section[self.CR.GENERAL_LOG_TO_FILE]) == bool:
             EventLogger.critical(
-                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_TO_FILE],
-                                             msg="should be a boolean"))
+                self._generate_device_error_message(uid="",
+                                                    tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_TO_FILE],
+                                                    msg="should be a boolean"))
         else:
             if global_section[self.CR.GENERAL_LOG_TO_FILE]:
                 if not Utilities.check_file_path_exists(global_section[self.CR.GENERAL_PATH_TO_FILE]):
                     EventLogger.critical(
-                        self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PATH_TO_FILE],
-                                                     msg="path is not reachable"))
-
+                        self._generate_device_error_message(uid="", tier_array=[self.CR.GENERAL_SECTION,
+                                                                                self.CR.GENERAL_PATH_TO_FILE],
+                                                            msg="path is not reachable"))
 
         # self.CR.GENERAL_PATH_TO_FILE
-        if not self._is_valid_string(global_section[self.CR.GENERAL_PATH_TO_FILE], 1):
+        if not Utilities.is_valid_string(global_section[self.CR.GENERAL_PATH_TO_FILE], 1):
             EventLogger.critical(
-                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PATH_TO_FILE],
-                                             msg="should be a path to the file where the data will be saved"))
+                self._generate_device_error_message(uid="",
+                                                    tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_PATH_TO_FILE],
+                                                    msg="should be a path to the file where the data will be saved"))
 
         # self.CR.GENERAL_LOG_COUNT and GENERAL_LOG_FILE_SIZE
         count = global_section[self.CR.GENERAL_LOG_COUNT]
         if not isinstance(count, int) and (not isinstance(count, float)):
             EventLogger.critical(
-                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_COUNT],
-                                             msg="should be a int or float"))
+                self._generate_device_error_message(uid="",
+                                                    tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_COUNT],
+                                                    msg="should be a int or float"))
         size = global_section[self.CR.GENERAL_LOG_FILE_SIZE]
         if not isinstance(size, int) and (not isinstance(size, float)):
             EventLogger.critical(
-                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_FILE_SIZE],
-                                             msg="should be a int or float"))
+                self._generate_device_error_message(uid="",
+                                                    tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_LOG_FILE_SIZE],
+                                                    msg="should be a int or float"))
 
         # --- Eventlog file ---------------------------------------------    
         # self.CR.GENERAL_EVENTLOG_TO_FILE should be a bool and if its True then
         # self.CR.GENERAL_EVENTLOG_PATH should be a string and a valid path
         if not type(global_section[self.CR.GENERAL_EVENTLOG_TO_FILE]) == bool:
             EventLogger.critical(
-                self._generate_device_error_message(uid="",tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_FILE],
-                                             msg="should be a boolean"))
+                self._generate_device_error_message(uid="", tier_array=[self.CR.GENERAL_SECTION,
+                                                                        self.CR.GENERAL_EVENTLOG_TO_FILE],
+                                                    msg="should be a boolean"))
         else:
             if global_section[self.CR.GENERAL_EVENTLOG_TO_FILE]:
-                if not self._is_valid_string(global_section[self.CR.GENERAL_EVENTLOG_PATH], 1):
+                if not Utilities.is_valid_string(global_section[self.CR.GENERAL_EVENTLOG_PATH], 1):
                     EventLogger.critical(self._generate_device_error_message(uid="",
-                        tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_PATH],
-                        msg="should be a path to the event file"))
+                                                                             tier_array=[self.CR.GENERAL_SECTION,
+                                                                                         self.CR.GENERAL_EVENTLOG_PATH],
+                                                                             msg="should be a path to the event file"))
                 else:
                     if not Utilities.check_file_path_exists(global_section[self.CR.GENERAL_EVENTLOG_PATH]):
                         EventLogger.critical(self._generate_device_error_message(uid="",
-                            tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_PATH],
-                            msg="path is not reachable"))
+                                                                                 tier_array=[self.CR.GENERAL_SECTION,
+                                                                                             self.CR.GENERAL_EVENTLOG_PATH],
+                                                                                 msg="path is not reachable"))
 
         if not type(global_section[self.CR.GENERAL_EVENTLOG_TO_CONSOLE]) == bool:
             EventLogger.critical(
-                self._generate_device_error_message(uid="", tier_array=[self.CR.GENERAL_SECTION, self.CR.GENERAL_EVENTLOG_TO_CONSOLE],
-                                             msg="should be a boolean"))
+                self._generate_device_error_message(uid="", tier_array=[self.CR.GENERAL_SECTION,
+                                                                        self.CR.GENERAL_EVENTLOG_TO_CONSOLE],
+                                                    msg="should be a boolean"))
 
     def validate_devices_section(self):
         '''
@@ -248,7 +240,7 @@ class ConfigurationValidator(object):
                 continue  # next device
 
             # uid
-            if not self._is_valid_string(device[ldi.DEVICE_UID], 3):
+            if not Utilities.is_valid_string(device[ldi.DEVICE_UID], 3):
                 EventLogger.critical(
                     self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
                                                         tier_array=["general"], msg="the uid is invalid"))
@@ -275,17 +267,18 @@ class ConfigurationValidator(object):
                     try:
                         subvalues = device_values[device_value][ldi.DEVICE_DEFINITIONS_SUBVALUES]
                         for value in subvalues:
-                            if not type(subvalues[value]) == bool: # type check for validation
+                            if not type(subvalues[value]) == bool:  # type check for validation
                                 EventLogger.critical(
-                                self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
-                                                                    tier_array=["values"],
-                                                                    msg="invalid type " + str(value)))
+                                    self._generate_device_error_message(
+                                        uid=device[loggable_devices.Identifier.DEVICE_UID],
+                                        tier_array=["values"],
+                                        msg="invalid type " + str(value)))
                             else:
-                                if subvalues[value]:    # value check for "lines per second" calculation
+                                if subvalues[value]:  # value check for "lines per second" calculation
                                     logged_values += 1
 
                     except KeyError:
-                        if interval > 0: # just one value to log
+                        if interval > 0:  # just one value to log
                             logged_values += 1
 
                     if interval > 0:
@@ -299,14 +292,6 @@ class ConfigurationValidator(object):
         # xively_section = self.json_config._xively
         EventLogger.info("Xively validation is not yet supported")
         pass
-
-    def _is_valid_string(self, string_value, min_length=0):
-        '''
-        Returns True if 'string_value' is of type basestring and has at least a size of
-        'min_length'
-        Moved to Utilities.is_valid_string
-        '''
-        return Utilities.is_valid_string(string_value, min_length)
 
     def _is_valid_interval(self, integer_value, min_value=0):
         '''
@@ -330,11 +315,14 @@ class ConfigurationValidator(object):
                                 LogSpaceCounter
  ---------------------------------------------------------------------------*/
 """
+
+
 class LogSpaceCounter(object):
     '''
     This class provides functions to count the average lines per second
     which will be written into the log file
     '''
+
     def __init__(self, file_count, file_size):
         '''
         file_count -- the amount of logfiles
@@ -359,9 +347,9 @@ class LogSpaceCounter(object):
             return 0, 0, 0, 0
 
         max_available_space = (self.file_count + 1) * ((self.file_size / 1024.0) / 1024.0)
-        secondsForOneMB = 18000.0 / self.lines_per_second
+        seconds_for_one_MB = 18000.0 / self.lines_per_second
 
-        sec = secondsForOneMB * max_available_space * 1.0
+        sec = seconds_for_one_MB * max_available_space * 1.0
 
         days = int(sec / 86400.0)
         sec -= 86400.0 * days
@@ -380,6 +368,8 @@ class LogSpaceCounter(object):
                                 Configuration
  ---------------------------------------------------------------------------*/
 """
+
+
 class Configuration:
     '''
     This class contains the information out of the json configuration file split by the
@@ -392,7 +382,7 @@ class Configuration:
 
         self._devices = []
 
-    def isEmpty(self):
+    def is_empty(self):
         return True if len(self._general) == 0 else False
 
 
