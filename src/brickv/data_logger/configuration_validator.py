@@ -1,8 +1,8 @@
-'''
+"""
 /*---------------------------------------------------------------------------
                                 ConfigurationReader
  ---------------------------------------------------------------------------*/
- '''
+ """
 import codecs  # ConfigurationReader to read the file in correct encoding
 import json
 
@@ -12,9 +12,9 @@ import loggable_devices
 
 
 class ConfigurationReader(object):
-    '''
+    """
     This class provides the read-in functionality for the Data Logger configuration file
-    '''
+    """
     GENERAL_SECTION = "GENERAL"
     GENERAL_LOG_TO_FILE = "log_to_file"
     GENERAL_PATH_TO_FILE = "path_to_file"
@@ -37,11 +37,11 @@ class ConfigurationReader(object):
     DEVICES_SECTION = loggable_devices.Identifier.DEVICES
 
     def __init__(self, path_to_config=None, configuration=None):
-        '''
+        """
         pathToConfig -- path to the json configuration file
         OR
         configuration -- the configuration itself
-        '''
+        """
         self._configuration = Configuration()
         self._readConfigErr = 0  # Errors which occure during readin
 
@@ -96,9 +96,9 @@ class ConfigurationReader(object):
 
 
 class ConfigurationValidator(object):
-    '''
+    """
     This class validates the (json) configuration file
-    '''
+    """
     MIN_INTERVAL = 0
 
     def __init__(self, config_file):
@@ -114,10 +114,10 @@ class ConfigurationValidator(object):
         self._log_space_counter = LogSpaceCounter(file_count, file_size)
 
     def validate(self):
-        '''
+        """
         This function performs the validation of the various sections of the json
         configuration file
-        '''
+        """
         EventLogger.info("Started configuration file validation")
         self.validate_general_section()
         self.validate_xively_section()
@@ -138,9 +138,9 @@ class ConfigurationValidator(object):
             raise DataLoggerException(DataLoggerException.DL_FAILED_VALIDATION, "Validation process found some errors")
 
     def validate_general_section(self):
-        '''
+        """
         This function validates the general section out of the configuration
-        '''
+        """
         global_section = self.json_config._general
 
         # self.CR.GENERAL_HOST ip address
@@ -223,10 +223,10 @@ class ConfigurationValidator(object):
                                                     msg="should be a boolean"))
 
     def validate_devices_section(self):
-        '''
+        """
             This function validates the devices out of the configuration file
         :return:
-        '''
+        """
         ldi = loggable_devices.Identifier  # alias
         device_definitions = ldi.DEVICE_DEFINITIONS
 
@@ -285,18 +285,17 @@ class ConfigurationValidator(object):
                         self._log_space_counter.add_lines_per_second(interval / 1000 * logged_values)
 
     def validate_xively_section(self):
-        '''
+        """
         This function validates the xively section out of the configuration
-        '''
+        """
         # TODO: implement xively section validation
         # xively_section = self.json_config._xively
-        EventLogger.info("Xively validation is not yet supported")
-        pass
+        EventLogger.warning("Xively validation is not yet supported")
 
     def _is_valid_interval(self, integer_value, min_value=0):
-        '''
+        """
         Returns True if the 'integer_value' is of type integer and is not negative
-        '''
+        """
         if not isinstance(integer_value, int) or integer_value < min_value and integer_value != 0:
             return False
         return True
@@ -318,16 +317,16 @@ class ConfigurationValidator(object):
 
 
 class LogSpaceCounter(object):
-    '''
+    """
     This class provides functions to count the average lines per second
     which will be written into the log file
-    '''
+    """
 
     def __init__(self, file_count, file_size):
-        '''
+        """
         file_count -- the amount of logfiles
         file_size -- the size of each file
-        '''
+        """
         self.file_count = file_count
         self.file_size = file_size
 
@@ -337,12 +336,12 @@ class LogSpaceCounter(object):
         self.lines_per_second += lines
 
     def calculate_time(self):
-        '''
+        """
         This function calculates the time where the logger can
         save data without overwriting old ones.
-        
+
         18k lines -> 1MB
-        '''
+        """
         if self.lines_per_second <= 0 or self.file_size == 0:
             return 0, 0, 0, 0
 
@@ -371,10 +370,10 @@ class LogSpaceCounter(object):
 
 
 class Configuration:
-    '''
+    """
     This class contains the information out of the json configuration file split by the
     different categories/sections.
-    '''
+    """
 
     def __init__(self):
         self._general = {}
@@ -387,11 +386,11 @@ class Configuration:
 
 
 def prevent_key_error(dict_src, key):
-    '''
+    """
     This function returns an empty array if there is no such
     section in the configuration file
     key -- section key
-    '''
+    """
     result = []
     try:
         result = dict_src[key]

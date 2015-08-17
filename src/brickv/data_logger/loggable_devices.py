@@ -1,4 +1,3 @@
-import sys
 # https://docs.google.com/spreadsheets/d/14p6N8rAg8M9Ozr1fmOZePPflvNJmgt0pSAebliDrasI/edit?usp=sharing
 # Documented for Testing and Blueprints
 # Bricklets ############################################################################################################
@@ -58,7 +57,7 @@ from brickv.bindings.bricklet_tilt import Tilt
 from brickv.bindings.bricklet_voltage import Voltage
 from brickv.bindings.bricklet_voltage_current import VoltageCurrent
 # Bricks ###############################################################################################################
-from brickv.bindings.brick_dc import DC #NYI
+from brickv.bindings.brick_dc import DC  # NYI
 # from brickv.bindings.brick_stepper import Stepper #NYI
 
 
@@ -70,6 +69,8 @@ import brickv.data_logger.utils as utils
                                 SpecialDevices
  ---------------------------------------------------------------------------*/
  '''
+
+
 class SpecialDevices(object):
     """
     SpecialDevices are functions for special Bricks/Bricklets. Some Device functions can return different values,
@@ -83,6 +84,7 @@ class SpecialDevices(object):
             raise Exception('No fix')
         else:
             return device.get_coordinates()
+
     get_gps_coordinates = staticmethod(get_gps_coordinates)
 
     def get_gps_altitude(device):
@@ -90,6 +92,7 @@ class SpecialDevices(object):
             raise Exception('No 3D fix')
         else:
             return device.get_altitude()
+
     get_gps_altitude = staticmethod(get_gps_altitude)
 
     def get_gps_motion(device):
@@ -97,6 +100,7 @@ class SpecialDevices(object):
             raise Exception('No fix')
         else:
             return device.get_motion()
+
     get_gps_motion = staticmethod(get_gps_motion)
 
     # PTC
@@ -105,13 +109,17 @@ class SpecialDevices(object):
             raise Exception('No sensor')
         else:
             return device.get_temperature()
+
     get_ptc_temperature = staticmethod(get_ptc_temperature)
+
 
 '''
 /*---------------------------------------------------------------------------
                                 Identifier
  ---------------------------------------------------------------------------*/
  '''
+
+
 class Identifier(object):
     """
         This class is used to identify supported Bricks and Bricklets. The
@@ -121,7 +129,7 @@ class Identifier(object):
     """
     # Devices
     DEVICES = "DEVICES"
-    
+
     # config list access strings
     DEVICE_NAME = "name"
     DEVICE_CLASS = "class"
@@ -615,27 +623,31 @@ class Identifier(object):
         }
     }
 
+
 '''
 /*---------------------------------------------------------------------------
                                 AbstractDevice
  ---------------------------------------------------------------------------*/
  '''
+
+
 class AbstractDevice(object):
     """DEBUG and Inheritance only class"""
+
     def __init__(self, data, datalogger):
         self.datalogger = datalogger
         self.data = data
         self.identifier = None
-        
+
         self.__name__ = "AbstractDevice"
-        
-        
+
+
     def start_timer(self):
         """
         Starts all timer for all loggable variables of the devices.
         """
         EventLogger.debug(self.__str__())
-                
+
     def _try_catch(self, func):
         """
         Creates a simple try-catch for a specific funtion.
@@ -648,28 +660,32 @@ class AbstractDevice(object):
             value = self._exception_msg(e.value, e.description)
             # err = 1
         return value
-    
+
     def _exception_msg(self, value, msg):
         """
         For a uniform creation of Exception messages.
         """
         return "ERROR[" + str(value) + "]: " + str(msg)
-    
+
     def __str__(self):
         """
         Representation String of the class. For simple overwiev.
         """
-        return "["+str(self.__name__)+"]"
+        return "[" + str(self.__name__) + "]"
+
 
 '''
 /*---------------------------------------------------------------------------
                                 DeviceImpl
  ---------------------------------------------------------------------------*/
  '''
+
+
 class DeviceImpl(AbstractDevice):
     """
     A SimpleDevice is every device, which only has funtion with one return value.
     """
+
     def __init__(self, data, datalogger):
         AbstractDevice.__init__(self, data, datalogger)
 
@@ -680,7 +696,7 @@ class DeviceImpl(AbstractDevice):
         self.device = device_class(self.device_uid, self.datalogger.ipcon)
         self.identifier = self.device_name
 
-        self.__name__ = Identifier.DEVICES+":"+str(self.device_name)
+        self.__name__ = Identifier.DEVICES + ":" + str(self.device_name)
 
     def start_timer(self):
         AbstractDevice.start_timer(self)
@@ -699,7 +715,8 @@ class DeviceImpl(AbstractDevice):
         """
 
         getter = self.device_definition[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_DEFINITIONS_GETTER]
-        subvalue_names = self.device_definition[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+        subvalue_names = self.device_definition[Identifier.DEVICE_VALUES][var_name][
+            Identifier.DEVICE_DEFINITIONS_SUBVALUES]
         timestamp = utils.CSVData._get_timestamp()
 
         try:
@@ -707,32 +724,43 @@ class DeviceImpl(AbstractDevice):
         except Exception as e:
             value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
             self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
-            #log_exception(timestamp, value_name, e)
+            # log_exception(timestamp, value_name, e)
             return
 
         try:
-            if subvalue_names == None:
-                #log_value(value_name, value)
-                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
+            if subvalue_names is None:
+                # log_value(value_name, value)
+                self.datalogger.add_to_queue(
+                    utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
             else:
                 subvalue_bool = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
                 for i in range(len(subvalue_names)):
                     if not isinstance(subvalue_names[i], list):
                         try:
                             if subvalue_bool[subvalue_names[i]]:
-                                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i]), value[i], timestamp))
+                                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier,
+                                                                           str(var_name) + "-" + str(subvalue_names[i]),
+                                                                           value[i], timestamp))
                         except Exception as e:
                             value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
-                            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i]), value[i], timestamp))
+                            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier,
+                                                                       str(var_name) + "-" + str(subvalue_names[i]),
+                                                                       value[i], timestamp))
                             return
                     else:
                         for k in range(len(subvalue_names[i])):
                             try:
                                 if subvalue_bool[subvalue_names[i][k]]:
-                                    self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i][k]), value[i][k], timestamp))
+                                    self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier,
+                                                                               str(var_name) + "-" + str(
+                                                                                   subvalue_names[i][k]), value[i][k],
+                                                                               timestamp))
                             except Exception as e:
                                 value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
-                                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, str(var_name)+"-"+str(subvalue_names[i][k]), value[i][k], timestamp))
+                                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier,
+                                                                           str(var_name) + "-" + str(
+                                                                               subvalue_names[i][k]), value[i][k],
+                                                                           timestamp))
                                 return
         except Exception as e:
             value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)

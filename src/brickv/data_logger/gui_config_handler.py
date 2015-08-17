@@ -1,5 +1,4 @@
 import collections
-import json
 
 from brickv.data_logger.event_logger import EventLogger, GUILogger
 from brickv.data_logger.loggable_devices import Identifier
@@ -9,6 +8,8 @@ from brickv.data_logger.loggable_devices import Identifier
                                 GuiConfigHandler
  ---------------------------------------------------------------------------*/
  '''
+
+
 class GuiConfigHandler(object):
     """
         This static class is used to convert a config into a blueprint for the gui and vice versa.
@@ -26,10 +27,10 @@ class GuiConfigHandler(object):
         try:
             GuiConfigHandler.clear_blueprint()
             GuiConfigHandler.create_device_blueprint(device_json[Identifier.DEVICES])
-            
+
         except Exception as e:
             EventLogger.warning("Devices could not be fully loaded! -> " + str(e))
-        
+
         return GuiConfigHandler.device_blueprint
 
     @staticmethod
@@ -44,72 +45,87 @@ class GuiConfigHandler(object):
         import copy
 
         for dev in devices:
-            bp_dev = None #Blueprint Device
+            bp_dev = None  # Blueprint Device
 
-            #check for blueprint KEY(DEVICE_DEFINITIONS)
+            # check for blueprint KEY(DEVICE_DEFINITIONS)
             if dev[Identifier.DEVICE_NAME] in Identifier.DEVICE_DEFINITIONS:
                 bp_dev = copy.deepcopy(Identifier.DEVICE_DEFINITIONS[dev[Identifier.DEVICE_NAME]])
-                #remove unused entries(class)
+                # remove unused entries(class)
                 del bp_dev[Identifier.DEVICE_CLASS]
 
-                #add new entries(name, uid)
+                # add new entries(name, uid)
                 bp_dev[Identifier.DEVICE_NAME] = dev[Identifier.DEVICE_NAME]
                 bp_dev[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
 
-                #add/remove entries for values
+                # add/remove entries for values
                 for val in bp_dev[Identifier.DEVICE_VALUES]:
 
-                    #remove getter
+                    # remove getter
                     del bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_GETTER]
 
-                    #add interval, check if exists
+                    # add interval, check if exists
                     if val in bp_dev[Identifier.DEVICE_VALUES]:
-                        #check for NO device values
+                        # check for NO device values
                         if not val in dev[Identifier.DEVICE_VALUES]:
-                            #create necessary structures for the checks
+                            # create necessary structures for the checks
                             dev[Identifier.DEVICE_VALUES][val] = {}
                             dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
 
                         if Identifier.DEVICE_VALUES_INTERVAL in dev[Identifier.DEVICE_VALUES][val]:
-                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL]
+                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = \
+                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL]
                         else:
                             bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0
 
-                        #subvalues
+                        # subvalues
 
                         if bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
-                            bp_sub_values = bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+                            bp_sub_values = bp_dev[Identifier.DEVICE_VALUES][val][
+                                Identifier.DEVICE_DEFINITIONS_SUBVALUES]
 
-                            #delete subvalues old entries
+                            # delete subvalues old entries
                             bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
 
                             for i in range(0, len(bp_sub_values)):
-                                #check sub_val for bool
+                                # check sub_val for bool
                                 sub_val = bp_sub_values[i]
 
-                                #check if list in list #FIXME multi layer? sub_sub_sub_....
+                                # check if list in list #FIXME multi layer? sub_sub_sub_....
                                 if type(sub_val) == list:
                                     for j in range(0, len(sub_val)):
                                         sub_sub_val = sub_val[j]
 
-                                        if sub_sub_val in dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]:
-                                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val]
+                                        if sub_sub_val in dev[Identifier.DEVICE_VALUES][val][
+                                            Identifier.DEVICE_DEFINITIONS_SUBVALUES]:
+                                            bp_dev[Identifier.DEVICE_VALUES][val][
+                                                Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = \
+                                                dev[Identifier.DEVICE_VALUES][val][
+                                                    Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                                                    sub_sub_val]
                                         else:
-                                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = False
+                                            bp_dev[Identifier.DEVICE_VALUES][val][
+                                                Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = False
                                     continue
 
-                                if sub_val in dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]:
-                                    bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val]
+                                if sub_val in dev[Identifier.DEVICE_VALUES][val][
+                                    Identifier.DEVICE_DEFINITIONS_SUBVALUES]:
+                                    bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                                        sub_val] = \
+                                        dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                                            sub_val]
                                 else:
-                                    bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = False
+                                    bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                                        sub_val] = False
 
                     else:
-                        bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0 # Default Value for Interval
+                        bp_dev[Identifier.DEVICE_VALUES][val][
+                            Identifier.DEVICE_VALUES_INTERVAL] = 0  # Default Value for Interval
 
-                    #else: #ignore subvals
+                        # else: #ignore subvals
 
             else:
-                EventLogger.warning("No Device Definition found in Config for Device Name: " +str(dev[Identifier.DEVICE_NAME]) + "! Device will be ignored!")
+                EventLogger.warning("No Device Definition found in Config for Device Name: " + str(
+                    dev[Identifier.DEVICE_NAME]) + "! Device will be ignored!")
 
             GuiConfigHandler.device_blueprint.append(bp_dev)
 
@@ -125,14 +141,15 @@ class GuiConfigHandler(object):
         # TODO: add xively
         xively_section = {}
 
-        #add device section
+        # add device section
         device_section = GuiConfigHandler.create_device_section(Ui_Logger)
-        
+
         from brickv.data_logger.configuration_validator import ConfigurationReader
+
         config_root[ConfigurationReader.GENERAL_SECTION] = general_section
         config_root[ConfigurationReader.XIVELY_SECTION] = xively_section
         config_root[Identifier.DEVICES] = device_section
-        
+
         return config_root
 
     def create_general_section(Ui_Logger):
@@ -141,9 +158,9 @@ class GuiConfigHandler(object):
         and returns it as a dictonary.
         """
         from brickv.data_logger.configuration_validator import ConfigurationReader
-        
+
         general_section = {}
-        
+
         # host            combo_host              currentText()   : QString
         general_section[ConfigurationReader.GENERAL_HOST] = str(Ui_Logger.combo_host.currentText())
         # port            spinbox_port            value()         : int
@@ -161,20 +178,20 @@ class GuiConfigHandler(object):
         general_section[ConfigurationReader.GENERAL_PATH_TO_FILE] = path_to_file
         general_section[ConfigurationReader.GENERAL_LOG_TO_FILE] = log_to_file
 
-        #logfile path
+        # logfile path
         general_section[ConfigurationReader.GENERAL_EVENTLOG_PATH] = str(Ui_Logger.line_path_to_eventfile.text())
-        #loglevel
+        # loglevel
         ll = Ui_Logger.combo_loglevel.currentText()
         log_level_num = 0
         od = collections.OrderedDict(sorted(GUILogger._convert_level.items()))
         for k in od.keys():
             if ll == od[k]:
                 log_level_num = k
-                break;
+                break
         general_section[ConfigurationReader.GENERAL_EVENTLOG_LEVEL] = log_level_num
-        #log_to_console
+        # log_to_console
         general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_FILE] = Ui_Logger.checkbox_to_file.isChecked()
-        #log_to_file
+        # log_to_file
         general_section[ConfigurationReader.GENERAL_EVENTLOG_TO_CONSOLE] = Ui_Logger.checkbox_to_console.isChecked()
 
         return general_section
@@ -183,30 +200,31 @@ class GuiConfigHandler(object):
         tree_widget = Ui_Logger.tree_devices
         devices = []
 
-        #start lvl0 - basics(name|uid)
+        # start lvl0 - basics(name|uid)
         lvl0_max = tree_widget.topLevelItemCount()
         for lvl0 in range(0, lvl0_max):
             lvl0_item = tree_widget.topLevelItem(lvl0)
-            #create device item
+            # create device item
             dev = {}
             dev_name = lvl0_item.text(0)
             dev[Identifier.DEVICE_NAME] = dev_name
             dev[Identifier.DEVICE_UID] = lvl0_item.text(1)
             dev[Identifier.DEVICE_VALUES] = {}
 
-            #start lvl1 - values(name|interval)
+            # start lvl1 - values(name|interval)
             lvl1_max = lvl0_item.childCount()
             for lvl1 in range(0, lvl1_max):
                 lvl1_item = lvl0_item.child(lvl1)
-                #add device information
+                # add device information
                 value_name = lvl1_item.text(0)
                 dev[Identifier.DEVICE_VALUES][value_name] = {}
                 dev[Identifier.DEVICE_VALUES][value_name][Identifier.DEVICE_VALUES_INTERVAL] = int(lvl1_item.text(1))
 
-                #check in blueprint for subvalues
-                if Identifier.DEVICE_DEFINITIONS[dev_name][Identifier.DEVICE_VALUES][value_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
+                # check in blueprint for subvalues
+                if Identifier.DEVICE_DEFINITIONS[dev_name][Identifier.DEVICE_VALUES][value_name][
+                    Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
                     dev[Identifier.DEVICE_VALUES][value_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
-                    #start lvl2
+                    # start lvl2
                     lvl2_max = lvl1_item.childCount()
                     for lvl2 in range(0, lvl2_max):
                         lvl2_item = lvl1_item.child(lvl2)
@@ -219,7 +237,8 @@ class GuiConfigHandler(object):
                         """
                         if lvl2_item.checkState(1) >= 1:
                             lvl2_item_value = True
-                        dev[Identifier.DEVICE_VALUES][value_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES][lvl2_item.text(0)] = lvl2_item_value
+                        dev[Identifier.DEVICE_VALUES][value_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                            lvl2_item.text(0)] = lvl2_item_value
 
             devices.append(dev)
         return devices
@@ -231,19 +250,19 @@ class GuiConfigHandler(object):
         This blueprint only contains the name and uid of a device.
         """
         simple_blueprint = []
-        
+
         tree_widget = Ui_Logger.tree_devices
-            
+
         r0_max = tree_widget.topLevelItemCount()
-        
+
         for r0 in range(0, r0_max):
             item = {}
-            
+
             tw_root = tree_widget.topLevelItem(r0)
             item[tw_root.text(0)] = tw_root.text(1)
-            
+
             simple_blueprint.append(item)
-        
+
         return simple_blueprint
 
     def get_device_blueprint(device_name):
@@ -254,42 +273,44 @@ class GuiConfigHandler(object):
         dev = None
         try:
             import copy
+
             dev = copy.deepcopy(Identifier.DEVICE_DEFINITIONS[device_name])
-            #delet class & getter
+            # delet class & getter
             del dev[Identifier.DEVICE_CLASS]
             for val in dev[Identifier.DEVICE_VALUES]:
                 del dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_GETTER]
-                #add interval
-                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0;
+                # add interval
+                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0
 
-                #set default values
+                # set default values
                 if dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
 
                     sub_values = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
                     dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
-                    for i in range(0, len(sub_values)) :
+                    for i in range(0, len(sub_values)):
                         sub_val = sub_values[i]
-                        #check for multi lists
+                        # check for multi lists
                         if type(sub_val) == list:
                             for j in range(0, len(sub_val)):
                                 sub_sub_val = sub_val[j]
-                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = True
+                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                                    sub_sub_val] = True
                         else:
                             dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = True
 
-            #add name & uid
+            # add name & uid
             dev[Identifier.DEVICE_NAME] = device_name
             dev[Identifier.DEVICE_UID] = "Enter UID"
 
-        except Exception as e:
+        except Exception:
             pass
             # its expected to fail some times
-            #EventLogger.debug("Error in get_device_blueprint("+str(device_name)+"): " + str(e))
-        
+            # EventLogger.debug("Error in get_device_blueprint("+str(device_name)+"): " + str(e))
+
         return dev
 
     load_devices = staticmethod(load_devices)
-    #clear_blueprint = staticmethod(clear_blueprint)
+    # clear_blueprint = staticmethod(clear_blueprint)
     create_device_blueprint = staticmethod(create_device_blueprint)
     create_config_file = staticmethod(create_config_file)
     create_general_section = staticmethod(create_general_section)
