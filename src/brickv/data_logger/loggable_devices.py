@@ -58,19 +58,26 @@ from brickv.bindings.bricklet_tilt import Tilt
 from brickv.bindings.bricklet_voltage import Voltage
 from brickv.bindings.bricklet_voltage_current import VoltageCurrent
 # Bricks ###############################################################################################################
-# from brickv.bindings.brick_dc import DC #NYI
+from brickv.bindings.brick_dc import DC #NYI
 # from brickv.bindings.brick_stepper import Stepper #NYI
 
 
-# import brickv.bindings.ip_connection as ip_connection #FIXME REMOVE
 from brickv.data_logger.event_logger import EventLogger
 import brickv.data_logger.utils as utils
-from collections import namedtuple
 
-#FIXME refactore?
+'''
+/*---------------------------------------------------------------------------
+                                SpecialDevices
+ ---------------------------------------------------------------------------*/
+ '''
 class SpecialDevices(object):
+    """
+    SpecialDevices are functions for special Bricks/Bricklets. Some Device functions can return different values,
+    depending on different situations, e.g. the GPS Bricklet. If the GPS Bricklet does not have a so called FIX Value,
+    then the function will return an Error instead of the specified return values.
+    """
 
-    #GPS
+    # GPS
     def get_gps_coordinates(device):
         if device.get_status()[0] == GPS.FIX_NO_FIX:
             raise Exception('No fix')
@@ -92,7 +99,7 @@ class SpecialDevices(object):
             return device.get_motion()
     get_gps_motion = staticmethod(get_gps_motion)
 
-    #PTC
+    # PTC
     def get_ptc_temperature(device):
         if not device.is_sensor_connected():
             raise Exception('No sensor')
@@ -107,44 +114,12 @@ class SpecialDevices(object):
  '''
 class Identifier(object):
     """
-        This class is for all identification strings of the bricklets and bricks.
-        It also has function for creating a correct class and function name for
-        the correct device.
-    """
-    
-    # creates a function name from device_name and var_name
-    def create_function_name(device_name, var_name):#FIXME REMOVE
-        """
-        Creates a correct function name(var_name) as String for the appropriate device_name.
-        """
-        if Identifier.FUNCTION_NAME.has_key(device_name + var_name):
-            return Identifier.FUNCTION_NAME[device_name + var_name]
-        return ("get_" + var_name).replace(" ", "_").lower()
-    
-    def create_class_name(device_name):#FIXME REMOVE
-        """
-        Creates the correct class name as String for the appropriate device_name.
-        """
-        if Identifier.CLASS_NAME.has_key(device_name):
-            return Identifier.CLASS_NAME[device_name]
-        return (device_name).replace(" ", "")
-    
-    def create_args(device_name, var_name):#FIXME REMOVE
-        """
-        Creates the correct arguments for the appropriate device_name and var_name.
-        """
-        if Identifier.VAR_ARGS.has_key(device_name + var_name):
-            return Identifier.VAR_ARGS[device_name + var_name]
-        return None
+        This class is used to identify supported Bricks and Bricklets. The
+        DEVICE_DEFINITIONS contains a Blueprint for each supported device.
+        This Blueprint is used in the config file and the GUI.
 
-    #FIXME REMOVE
-    create_function_name = staticmethod(create_function_name)
-    create_class_name = staticmethod(create_class_name)
-    create_args = staticmethod(create_args)
-    #FIXME REMOVE
-    
-    # ##Devices
-    # core 2.0 new identifier
+    """
+    # Devices
     DEVICES = "DEVICES"
     
     # config list access strings
@@ -153,15 +128,15 @@ class Identifier(object):
     DEVICE_UID = "uid"
     DEVICE_VALUES = "values"
     DEVICE_VALUES_INTERVAL = "interval"
-    #Device Definitions Keys
+    # Device Definitions Keys
     DEVICE_DEFINITIONS_GETTER = "getter"
     DEVICE_DEFINITIONS_SUBVALUES = "subvalues"
 
-    #Device Definitons
+    # Device Definitons
     DEVICE_DEFINITIONS = {
         ################################################################################################################
-        #Bricklets Start Here
-
+        # Bricklets Start Here #
+        ########################
         AmbientLight.DEVICE_DISPLAY_NAME: {
             'class': AmbientLight,
             'values': {
@@ -334,7 +309,7 @@ class Identifier(object):
                 }
             }
         },
-        HallEffect.DEVICE_DISPLAY_NAME:{
+        HallEffect.DEVICE_DISPLAY_NAME: {
             'class': HallEffect,
             'values': {
                 'Value': {
@@ -343,7 +318,7 @@ class Identifier(object):
                 }
             }
         },
-        Humidity.DEVICE_DISPLAY_NAME:{
+        Humidity.DEVICE_DISPLAY_NAME: {
             'class': Humidity,
             'values': {
                 'Humidity': {
@@ -356,7 +331,7 @@ class Identifier(object):
                 }
             }
         },
-        IndustrialDual020mA.DEVICE_DISPLAY_NAME:{
+        IndustrialDual020mA.DEVICE_DISPLAY_NAME: {
             'class': IndustrialDual020mA,
             'values': {
                 'Current Sensor0': {
@@ -369,7 +344,7 @@ class Identifier(object):
                 }
             }
         },
-        IO16.DEVICE_DISPLAY_NAME:{
+        IO16.DEVICE_DISPLAY_NAME: {
             'class': IO16,
             'values': {
                 'Port A': {
@@ -382,7 +357,7 @@ class Identifier(object):
                 }
             }
         },
-        IO4.DEVICE_DISPLAY_NAME:{
+        IO4.DEVICE_DISPLAY_NAME: {
             'class': IO4,
             'values': {
                 'Value': {
@@ -391,7 +366,7 @@ class Identifier(object):
                 }
             }
         },
-        Joystick.DEVICE_DISPLAY_NAME:{
+        Joystick.DEVICE_DISPLAY_NAME: {
             'class': Joystick,
             'values': {
                 'Position': {
@@ -408,8 +383,8 @@ class Identifier(object):
                 }
             }
         },
-        #TODO Bricklet with some big return Arrays (3x16!) -> To many subvalues?
-        LEDStrip.DEVICE_DISPLAY_NAME:{
+        # TODO Bricklet with some big return Arrays (3x16!) -> To many subvalues?
+        LEDStrip.DEVICE_DISPLAY_NAME: {
             'class': LEDStrip,
             'values': {
                 'Supply Voltage': {
@@ -418,7 +393,7 @@ class Identifier(object):
                 }
             }
         },
-        Line.DEVICE_DISPLAY_NAME:{
+        Line.DEVICE_DISPLAY_NAME: {
             'class': Line,
             'values': {
                 'Reflectivity': {
@@ -427,7 +402,7 @@ class Identifier(object):
                 }
             }
         },
-        LinearPoti.DEVICE_DISPLAY_NAME:{
+        LinearPoti.DEVICE_DISPLAY_NAME: {
             'class': LinearPoti,
             'values': {
                 'Position': {
@@ -440,7 +415,7 @@ class Identifier(object):
                 }
             }
         },
-        Moisture.DEVICE_DISPLAY_NAME:{
+        Moisture.DEVICE_DISPLAY_NAME: {
             'class': Moisture,
             'values': {
                 'Value': {
@@ -449,7 +424,7 @@ class Identifier(object):
                 }
             }
         },
-        MotionDetector.DEVICE_DISPLAY_NAME:{
+        MotionDetector.DEVICE_DISPLAY_NAME: {
             'class': MotionDetector,
             'values': {
                 'Motion Detected': {
@@ -458,7 +433,7 @@ class Identifier(object):
                 }
             }
         },
-        MultiTouch.DEVICE_DISPLAY_NAME:{
+        MultiTouch.DEVICE_DISPLAY_NAME: {
             'class': MultiTouch,
             'values': {
                 'State': {
@@ -467,7 +442,7 @@ class Identifier(object):
                 }
             }
         },
-        PTC.DEVICE_DISPLAY_NAME:{
+        PTC.DEVICE_DISPLAY_NAME: {
             'class': PTC,
             'values': {
                 'Resistance': {
@@ -480,7 +455,7 @@ class Identifier(object):
                 }
             }
         },
-        RotaryEncoder.DEVICE_DISPLAY_NAME:{
+        RotaryEncoder.DEVICE_DISPLAY_NAME: {
             'class': RotaryEncoder,
             'values': {
                 'Count': {
@@ -493,7 +468,7 @@ class Identifier(object):
                 }
             }
         },
-        RotaryPoti.DEVICE_DISPLAY_NAME:{
+        RotaryPoti.DEVICE_DISPLAY_NAME: {
             'class': RotaryPoti,
             'values': {
                 'Position': {
@@ -601,69 +576,44 @@ class Identifier(object):
                     'subvalues': None
                 }
             }
-        }
+        },
         ################################################################################################################
-        #Bricks Start Here
+        # Bricks Start Here #
+        #####################
+        DC.DEVICE_DISPLAY_NAME: {
+            'class': DC,
+            'values': {
+                'Velocity': {
+                    'getter': lambda device: device.get_velocity(),
+                    'subvalues': None
+                },
+                'Current Velocity': {
+                    'getter': lambda device: device.get_current_velocity(),
+                    'subvalues': None
+                },
+                'Acceleration': {
+                    'getter': lambda device: device.get_acceleration(),
+                    'subvalues': None
+                },
+                'Stack Input Voltage': {
+                    'getter': lambda device: device.get_stack_input_voltage(),
+                    'subvalues': None
+                },
+                'External Input Voltage': {
+                    'getter': lambda device: device.get_external_input_voltage(),
+                    'subvalues': None
+                },
+                'Current Consumption': {
+                    'getter': lambda device: device.get_current_consumption(),
+                    'subvalues': None
+                },
+                'Chip Temperature': {
+                    'getter': lambda device: device.get_chip_temperature(),
+                    'subvalues': None
+                }
+            }
+        }
     }
-    #FIXME REMOVE THIS!
-    # ##Special Identifiers
-    FUNCTION_NAME = {}
-    CLASS_NAME = {}
-    VAR_ARGS = {}
-    # ##Bricklets
-
-    # ##Bricks
-    DC_BRICK = "DC Brick"
-    CLASS_NAME[DC_BRICK] = "DC"
-    DC_BRICK_VELOCITY = "Velocity"
-    DC_BRICK_CURRENT_VELOCITY = "Current Velocity"
-    DC_BRICK_ACCELERATION = "Acceleration"
-    DC_BRICK_STACK_INPUT_VOLTAGE = "Stack Input Voltage"
-    DC_BRICK_EXTERNAL_INTPU_VOLTAGE = "External Input Voltage"
-    DC_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
-    DC_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
-
-    #needs refactoring for namedtuples and api changes!
-#     IMU_BRICK = "IMU Brick"
-#     CLASS_NAME[IMU_BRICK] = "IMU"
-#     IMU_BRICK_ORIENTATION = "Orientation"
-#     IMU_BRICK_ORIENTATION_ROLL = "Roll"
-#     IMU_BRICK_ORIENTATION_YAW = "Yaw"
-#     IMU_BRICK_ORIENTATION_PITCH = "Pitch"
-#     IMU_BRICK_QUATERNION = "Quaternion"
-#     IMU_BRICK_QUATERNION_X = "X"
-#     IMU_BRICK_QUATERNION_Y = "Y"
-#     IMU_BRICK_QUATERNION_Z = "Z"
-#     IMU_BRICK_QUATERNION_W = "W"
-#     IMU_BRICK_ACCELERATION = "Acceleration"
-#     IMU_BRICK_ACCELERATION_X = "X"
-#     IMU_BRICK_ACCELERATION_Y = "Y"
-#     IMU_BRICK_ACCELERATION_Z = "Z"
-#     IMU_BRICK_MAGNETIC_FIELD = "Magnetic Field"
-#     IMU_BRICK_MAGNETIC_FIELD_X = "X"
-#     IMU_BRICK_MAGNETIC_FIELD_Y = "Y"
-#     IMU_BRICK_MAGNETIC_FIELD_Z = "Z"
-#     IMU_BRICK_ANGULAR_VELOCITY = "Angular Velocity"
-#     IMU_BRICK_ANGULAR_VELOCITY_X = "X"
-#     IMU_BRICK_ANGULAR_VELOCITY_Y = "Y"
-#     IMU_BRICK_ANGULAR_VELOCITY_Z = "Z"
-#     IMU_BRICK_IMU_TEMPERATURE = "IMU Temperature"
-#     IMU_BRICK_LEDS = "Leds"
-#     FUNCTION_NAME[IMU_BRICK + IMU_BRICK_LEDS] = "are_leds_on"
-#     IMU_BRICK_CHIP_TEMPERATURE = "Chip Temperature"
-
-    STEPPER_BRICK = "Stepper Brick"
-    CLASS_NAME[STEPPER_BRICK] = "Stepper"
-    STEPPER_BRICK_CURRENT_VELOCITY = "Current Velocity"
-    STEPPER_BRICK_STEPS = "Steps"
-    STEPPER_BRICK_REMAINING_STEPS = "Remaining Steps"
-    STEPPER_BRICK_CURRENT_POSITION = "Current Position"
-    STEPPER_BRICK_STACK_INPUT_VOLTAGE = "Stack Input Voltage"
-    STEPPER_BRICK_EXTERNAL_INPUT_VOLTAGE = "External Input Voltage"
-    STEPPER_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
-    STEPPER_BRICK_SNYC_RECT = "Sync Rect"
-    FUNCTION_NAME[STEPPER_BRICK + STEPPER_BRICK_SNYC_RECT] = "is_sync_rect"
-    #FIXME REMOVE THIS!
 
 '''
 /*---------------------------------------------------------------------------
