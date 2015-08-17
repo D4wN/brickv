@@ -135,37 +135,42 @@ class XivelyJob(AbstractJob):
     '''
     
     def __init__(self, datalogger=None, group=None, name="XivelyJob", args=(), kwargs=None, verbose=None):
-        target = self._job
-        AbstractJob.__init__(self, datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
-        # TODO: implement xively logger
         EventLogger.warning(self._job_name + " Is not supported!")
+        raise Exception("XivelyJob not yet implemented!")
+
+        # TODO: implement xively logger
+        # target = self._job
+        # AbstractJob.__init__(self, datalogger=datalogger, group=group, target=target, name=name, args=args, kwargs=kwargs, verbose=verbose)
+
         
     def _job(self):
-        # TODO: implement xively logger
         EventLogger.warning(self._job_name + " Is not supported!")
-        try:
-            # check for datalogger object
-            if AbstractJob._job(self):
-                return
-    
-            EventLogger.debug(self._job_name + " Started")
-                                   
-            while (True):
-                if not self._datalogger.data_queue[self.name].empty():
-                    # write
-                    csv_data = self._get_data_from_queue()
-                    EventLogger.debug(self._job_name + " -> " + str(csv_data))
-                                              
-                if not self._exit_flag and self._datalogger.data_queue[self.name].empty():
-                    time.sleep(self._datalogger.job_sleep)
-                
-                if self._exit_flag and self._datalogger.data_queue[self.name].empty():
-                    # close job
-                    EventLogger.debug(self._job_name + " Finished")
-                    
-                    self._remove_from_data_queue()
-                    break
-                
-        except Exception as e:
-            EventLogger.critical(self._job_name + " " + str(e))
-            self.stop()
+        raise Exception("XivelyJob._job not yet implemented!")
+
+        # TODO: implement xively logger
+        # try:
+        #     # check for datalogger object
+        #     if AbstractJob._job(self):
+        #         return
+        #
+        #     EventLogger.debug(self._job_name + " Started")
+        #
+        #     while (True):
+        #         if not self._datalogger.data_queue[self.name].empty():
+        #             # write
+        #             csv_data = self._get_data_from_queue()
+        #             EventLogger.debug(self._job_name + " -> " + str(csv_data))
+        #
+        #         if not self._exit_flag and self._datalogger.data_queue[self.name].empty():
+        #             time.sleep(self._datalogger.job_sleep)
+        #
+        #         if self._exit_flag and self._datalogger.data_queue[self.name].empty():
+        #             # close job
+        #             EventLogger.debug(self._job_name + " Finished")
+        #
+        #             self._remove_from_data_queue()
+        #             break
+        #
+        # except Exception as e:
+        #     EventLogger.critical(self._job_name + " " + str(e))
+        #     self.stop()

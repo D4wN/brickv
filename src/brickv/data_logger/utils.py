@@ -45,12 +45,10 @@ class DataLoggerException(Exception):
     DL_MISSING_ARGUMENT = -1  # Missing Arguments in Config File
     DL_FAILED_VALIDATION = -2  # Validation found errors in the configuration file
     DL_CRITICAL_ERROR = -42  # For all other critical errors
-    # TODO: More specific error codes from our DataLogger
     
     def __init__(self, err_code, desc):
         self.value = err_code
         self.description = desc
-    
     
     def __str__(self):
         return repr("ERROR[DL" + str(self.value) + "]: " + str(self.description))

@@ -58,15 +58,16 @@ from brickv.bindings.bricklet_tilt import Tilt
 from brickv.bindings.bricklet_voltage import Voltage
 from brickv.bindings.bricklet_voltage_current import VoltageCurrent
 # Bricks ###############################################################################################################
-from brickv.bindings.brick_dc import DC
-from brickv.bindings.brick_stepper import Stepper
+# from brickv.bindings.brick_dc import DC #NYI
+# from brickv.bindings.brick_stepper import Stepper #NYI
 
 
-import brickv.bindings.ip_connection as ip_connection
+# import brickv.bindings.ip_connection as ip_connection #FIXME REMOVE
 from brickv.data_logger.event_logger import EventLogger
 import brickv.data_logger.utils as utils
 from collections import namedtuple
 
+#FIXME refactore?
 class SpecialDevices(object):
 
     #GPS
@@ -112,7 +113,7 @@ class Identifier(object):
     """
     
     # creates a function name from device_name and var_name
-    def create_function_name(device_name, var_name):
+    def create_function_name(device_name, var_name):#FIXME REMOVE
         """
         Creates a correct function name(var_name) as String for the appropriate device_name.
         """
@@ -120,7 +121,7 @@ class Identifier(object):
             return Identifier.FUNCTION_NAME[device_name + var_name]
         return ("get_" + var_name).replace(" ", "_").lower()
     
-    def create_class_name(device_name):
+    def create_class_name(device_name):#FIXME REMOVE
         """
         Creates the correct class name as String for the appropriate device_name.
         """
@@ -128,17 +129,19 @@ class Identifier(object):
             return Identifier.CLASS_NAME[device_name]
         return (device_name).replace(" ", "")
     
-    def create_args(device_name, var_name):
+    def create_args(device_name, var_name):#FIXME REMOVE
         """
         Creates the correct arguments for the appropriate device_name and var_name.
         """
         if Identifier.VAR_ARGS.has_key(device_name + var_name):
             return Identifier.VAR_ARGS[device_name + var_name]
         return None
-    
+
+    #FIXME REMOVE
     create_function_name = staticmethod(create_function_name)
     create_class_name = staticmethod(create_class_name)
     create_args = staticmethod(create_args)
+    #FIXME REMOVE
     
     # ##Devices
     # core 2.0 new identifier
@@ -405,7 +408,7 @@ class Identifier(object):
                 }
             }
         },
-        #TODO Bricklet with some big return Arrays (3x16!)
+        #TODO Bricklet with some big return Arrays (3x16!) -> To many subvalues?
         LEDStrip.DEVICE_DISPLAY_NAME:{
             'class': LEDStrip,
             'values': {
@@ -602,6 +605,7 @@ class Identifier(object):
         ################################################################################################################
         #Bricks Start Here
     }
+    #FIXME REMOVE THIS!
     # ##Special Identifiers
     FUNCTION_NAME = {}
     CLASS_NAME = {}
@@ -659,6 +663,7 @@ class Identifier(object):
     STEPPER_BRICK_CURRENT_CONSUMPTION = "Current Consumption"
     STEPPER_BRICK_SNYC_RECT = "Sync Rect"
     FUNCTION_NAME[STEPPER_BRICK + STEPPER_BRICK_SNYC_RECT] = "is_sync_rect"
+    #FIXME REMOVE THIS!
 
 '''
 /*---------------------------------------------------------------------------

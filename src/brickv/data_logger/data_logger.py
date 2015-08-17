@@ -48,7 +48,7 @@ class DataLogger(threading.Thread):
         # Thread configuration
         self.jobs = []  # thread hashmap for all running threads/jobs
         self.job_exit_flag = False  # flag for stopping the thread
-        self.job_sleep = 1  # FIXME: quick testing fix (Enahncement -> use condition objects)
+        self.job_sleep = 1  #TODO: Enahncement -> use condition objects
         self.timers = []
         self._gui_job = gui_job
 

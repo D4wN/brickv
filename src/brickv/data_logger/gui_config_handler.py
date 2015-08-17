@@ -32,7 +32,7 @@ class GuiConfigHandler(object):
         
         return GuiConfigHandler.device_blueprint
 
-    @staticmethod #FIXME error without parameter?!
+    @staticmethod
     def clear_blueprint():
         """
         Resets the current blueprints save in device_blueprint.
@@ -273,7 +273,7 @@ class GuiConfigHandler(object):
                         if type(sub_val) == list:
                             for j in range(0, len(sub_val)):
                                 sub_sub_val = sub_val[j]
-                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = True #TODO changed both default values to true!
+                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = True
                         else:
                             dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = True
 

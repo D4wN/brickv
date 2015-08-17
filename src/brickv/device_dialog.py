@@ -23,7 +23,7 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
 
         self._logger_window = parent
         self._no_connected_device_string = "No Connected Devices found"
-        self._list_separator_string = "----------------------------------------" #TODO check if needed?
+        self._list_separator_string = "----------------------------------------"
         self.Ui_Logger = None
 
         self.setupUi(self)
