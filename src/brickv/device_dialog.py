@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from PyQt4.QtGui import QDialog, QMessageBox
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.utils import Utilities
@@ -129,15 +128,20 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
         else:
             for device_info in connected_devices:
                 if device_info.name in Identifier.DEVICE_DEFINITIONS:
-                    list_blueprint.append(device_info.name + " [" +device_info.uid+ "]")
+                    list_blueprint.append(device_info.name + " [" + device_info.uid + "]")
 
         #self.combo_devices.insertSeparator(self.combo_devices.count() + 1)
         list_blueprint.append(self._list_separator_string)
 
         # list of all devices
+        default_devices = []
         for device in Identifier.DEVICE_DEFINITIONS:
-            list_blueprint.append(device)
+            default_devices.append(device)
+        default_devices.sort()
+        for val in default_devices:
+            list_blueprint.append(val)
 
+        #add to list widget
         self.list_widget.clear()
         for dev in list_blueprint:
             self.list_widget.addItem(str(dev))
