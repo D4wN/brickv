@@ -1,5 +1,5 @@
 import sys
-# https://docs.google.com/spreadsheets/d/14p6N8rAg8M9Ozr1fmOZePPflvNJmgt0pSAebliDrasI/edit#gid=0
+# https://docs.google.com/spreadsheets/d/14p6N8rAg8M9Ozr1fmOZePPflvNJmgt0pSAebliDrasI/edit?usp=sharing
 # Documented for Testing and Blueprints
 # Bricklets ############################################################################################################
 # from brickv.bindings.bricklet_accelerometer import Accelerometer #NYI
