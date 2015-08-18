@@ -232,45 +232,45 @@ class ConfigurationValidator(object):
 
         for device in self.json_config._devices:
             # name
-            blueprint = device_definitions[device[ldi.DEVICE_NAME]]
+            blueprint = device_definitions[device[ldi.DD_NAME]]
             if blueprint is None:
                 EventLogger.critical(
-                    self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                    self._generate_device_error_message(uid=device[loggable_devices.Identifier.DD_UID],
                                                         tier_array=["general"], msg="no such device available"))
                 continue  # next device
 
             # uid
-            if not Utilities.is_valid_string(device[ldi.DEVICE_UID], 3):
+            if not Utilities.is_valid_string(device[ldi.DD_UID], 3):
                 EventLogger.critical(
-                    self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                    self._generate_device_error_message(uid=device[loggable_devices.Identifier.DD_UID],
                                                         tier_array=["general"], msg="the uid is invalid"))
 
-            device_values = device[ldi.DEVICE_VALUES]
-            blueprint_values = blueprint[ldi.DEVICE_VALUES]
+            device_values = device[ldi.DD_VALUES]
+            blueprint_values = blueprint[ldi.DD_VALUES]
             # values
             for device_value in device_values:
                 logged_values = 0
                 if device_value not in blueprint_values:
                     EventLogger.critical(
-                        self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                        self._generate_device_error_message(uid=device[loggable_devices.Identifier.DD_UID],
                                                             tier_array=["values"],
                                                             msg="invalid value " + str(device_value)))
                 else:
                     # interval
-                    interval = device_values[device_value][ldi.DEVICE_VALUES_INTERVAL]
+                    interval = device_values[device_value][ldi.DD_VALUES_INTERVAL]
                     if not self._is_valid_interval(interval):
                         EventLogger.critical(
-                            self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                            self._generate_device_error_message(uid=device[loggable_devices.Identifier.DD_UID],
                                                                 tier_array=["values"],
                                                                 msg="invalid interval " + str(interval)))
                     # subvalue
                     try:
-                        subvalues = device_values[device_value][ldi.DEVICE_DEFINITIONS_SUBVALUES]
+                        subvalues = device_values[device_value][ldi.DD_SUBVALUES]
                         for value in subvalues:
                             if not type(subvalues[value]) == bool:  # type check for validation
                                 EventLogger.critical(
                                     self._generate_device_error_message(
-                                        uid=device[loggable_devices.Identifier.DEVICE_UID],
+                                        uid=device[loggable_devices.Identifier.DD_UID],
                                         tier_array=["values"],
                                         msg="invalid type " + str(value)))
                             else:

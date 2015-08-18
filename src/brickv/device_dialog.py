@@ -73,7 +73,7 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
                     blueprint = GuiConfigHandler.get_device_blueprint(key)
                     if blueprint is None:
                         return
-                    blueprint[Identifier.DEVICE_UID] = dev[key]
+                    blueprint[Identifier.DD_UID] = dev[key]
                     self._logger_window.add_item_to_tree(blueprint)
 
     def __is_device_in_list(self, device_name, uid, list_to_check):
@@ -106,10 +106,10 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
                 if self.__is_device_in_list(dev_name, uid, cur_dev):
                     continue
                 # else
-                dev[Identifier.DEVICE_UID] = uid
+                dev[Identifier.DD_UID] = uid
 
             else:
-                dev[Identifier.DEVICE_UID] = "Enter UID"
+                dev[Identifier.DD_UID] = "Enter UID"
 
             self._logger_window.add_item_to_tree(dev)
 

@@ -268,7 +268,6 @@ class LoggerWindow(QDialog, Ui_Logger):
     def __choose_file_dialog(self, msg, filter_string):
         return QtGui.QFileDialog.getSaveFileName(self, msg, os.getcwd(), filter_string)
 
-
     def btn_add_device_clicked(self):
         """
             Opens the DeviceDialog in Add-Mode.
@@ -493,21 +492,21 @@ class LoggerWindow(QDialog, Ui_Logger):
         item_0 = QtGui.QTreeWidgetItem(self.tree_devices)
         item_0.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
         # set name|UID
-        self.tree_devices.topLevelItem(lv0_counter).setText(0, str(item_blueprint[Identifier.DEVICE_NAME]))
-        self.tree_devices.topLevelItem(lv0_counter).setText(1, str(item_blueprint[Identifier.DEVICE_UID]))
+        self.tree_devices.topLevelItem(lv0_counter).setText(0, str(item_blueprint[Identifier.DD_NAME]))
+        self.tree_devices.topLevelItem(lv0_counter).setText(1, str(item_blueprint[Identifier.DD_UID]))
         self.tree_devices.topLevelItem(lv0_counter).setToolTip(1, self.__tree_uid_tooltip)
 
-        for item_value in item_blueprint[Identifier.DEVICE_VALUES]:
+        for item_value in item_blueprint[Identifier.DD_VALUES]:
             # lvl1: new entry(value_name|interval)
             item_1 = QtGui.QTreeWidgetItem(item_0)
             item_1.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            interval = item_blueprint[Identifier.DEVICE_VALUES][item_value][Identifier.DEVICE_VALUES_INTERVAL]
+            interval = item_blueprint[Identifier.DD_VALUES][item_value][Identifier.DD_VALUES_INTERVAL]
             self.tree_devices.topLevelItem(lv0_counter).child(value_counter).setText(0, str(item_value))
             self.tree_devices.topLevelItem(lv0_counter).child(value_counter).setText(1, str(interval))
             self.tree_devices.topLevelItem(lv0_counter).child(value_counter).setToolTip(1, self.__tree_interval_tooltip)
 
             # check sub_values
-            sub_values = item_blueprint[Identifier.DEVICE_VALUES][item_value][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+            sub_values = item_blueprint[Identifier.DD_VALUES][item_value][Identifier.DD_SUBVALUES]
             if sub_values is not None:
                 # counts sub values in devices
                 sub_value_counter = 0
@@ -519,7 +518,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                     lvl2_item = self.tree_devices.topLevelItem(lv0_counter).child(value_counter).child(
                         sub_value_counter)
                     item_sub_value_value = \
-                        item_blueprint[Identifier.DEVICE_VALUES][item_value][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                        item_blueprint[Identifier.DD_VALUES][item_value][Identifier.DD_SUBVALUES][
                             item_sub_value]
                     lvl2_item.setText(0, str(item_sub_value))
                     if item_sub_value_value:
