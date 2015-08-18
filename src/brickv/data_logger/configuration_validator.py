@@ -238,10 +238,10 @@ class ConfigurationValidator(object):
                 continue  # next device
 
             # uid
-            if not Utilities.is_valid_string(device[Idf.DD_UID], 3):
+            if not Utilities.is_valid_string(device[Idf.DD_UID], 3) or device[Idf.DD_UID] == Idf.DD_UID_DEFAULT:
                 EventLogger.critical(
                     self._generate_device_error_message(uid=device[Idf.DD_UID],
-                                                        tier_array=["general"], msg="the uid is invalid"))
+                                                        tier_array=["general"], msg="the uid from '"+device[Idf.DD_NAME]+"' is invalid"))
 
             device_values = device[Idf.DD_VALUES]
             blueprint_values = blueprint[Idf.DD_VALUES]
