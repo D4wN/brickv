@@ -109,7 +109,7 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
                 dev[Identifier.DD_UID] = uid
 
             else:
-                dev[Identifier.DD_UID] = "Enter UID"
+                dev[Identifier.DD_UID] = Identifier.DD_UID_DEFAULT
 
             self._logger_window.add_item_to_tree(dev)
 

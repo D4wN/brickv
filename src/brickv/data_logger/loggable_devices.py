@@ -139,6 +139,8 @@ class Identifier(object):
     DD_GETTER = "getter"
     DD_SUBVALUES = "subvalues"
 
+    DD_UID_DEFAULT = "Enter UID"
+
     # Device Definitons(DD)
     DEVICE_DEFINITIONS = {
         ################################################################################################################
