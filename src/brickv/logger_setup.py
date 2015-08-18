@@ -565,7 +565,7 @@ class LoggerWindow(QDialog, Ui_Logger):
                 elif tt == self.__tree_uid_tooltip:
                     text = item.text(1)
                     if not Utilities.is_valid_string(text, 3):
-                        text = "Enter valid UID"
+                        text = Identifier.DD_UID_DEFAULT
                     item.setText(1, text)
 
     def tree_on_double_click(self, item, column):
