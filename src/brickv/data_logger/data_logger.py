@@ -32,6 +32,7 @@ from brickv.data_logger.job import CSVWriterJob, XivelyJob#, GuiDataJob
 import brickv.data_logger.loggable_devices as loggable_devices
 from brickv.data_logger.utils import DataLoggerException
 import brickv.data_logger.utils as utils
+from brickv.data_logger.loggable_devices import Identifier as Idf
 
 
 class DataLogger(threading.Thread):
@@ -110,15 +111,28 @@ class DataLogger(threading.Thread):
         This function creates the actual objects for each device out of the configuration
         """
         device_list = self._configuration._devices
+
+        wrong_uid_msg = "The following Devices got an invalid UID: "
+        got_wrong_uid_exception = False
+
         # start the timers
         try:
             for i in range(0, len(device_list)):
-                loggable_devices.DeviceImpl(device_list[i], self).start_timer()
+                try:
+                    loggable_devices.DeviceImpl(device_list[i], self).start_timer()
+
+                except Exception as e:
+                    if str(e) == "substring not found":
+                        got_wrong_uid_exception = True
+                        wrong_uid_msg += str(device_list[i][Idf.DD_NAME])+"("+str(device_list[i][Idf.DD_UID])+"), "
+                    else:
+                        # other important exception -> raise
+                        raise e
+
+            if got_wrong_uid_exception:
+                raise Exception(wrong_uid_msg)
 
         except Exception as exc:
-            if str(exc) == "substring not found":
-                # wrong UID -> TODO which device?
-                exc = "Wrong UID! Please check your UID's."
             msg = "A critical error occur: " + str(exc)
             self.stop()
             raise DataLoggerException(DataLoggerException.DL_CRITICAL_ERROR, msg)

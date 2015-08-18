@@ -144,7 +144,6 @@ def main(arguments_map):
 
     except Exception as exc:
         EventLogger.critical(str(exc))
-        traceback.print_exc(file=sys.stdout)
         if gui_start:
             return None
         else:

@@ -49,7 +49,7 @@ class DataLoggerException(Exception):
         self.description = desc
 
     def __str__(self):
-        return repr("ERROR[DL" + str(self.value) + "]: " + str(self.description))
+        return str("ERROR[DL" + str(self.value) + "]: " + str(self.description))
 
 
 '''
