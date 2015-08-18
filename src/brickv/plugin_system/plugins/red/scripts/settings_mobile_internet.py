@@ -5,7 +5,9 @@ import re
 import os
 import sys
 import json
+import time
 import shlex
+import signal
 import serial
 import netifaces
 import subprocess
@@ -54,6 +56,7 @@ TAG_PARAM_USBMODEM = 'USBMODEM'
 SERVICE_SYSTEMD_TF_MOBILE_INTERNET = 'tf_mobile_internet.service'
 FILE_UNIT_TF_MOBILE_INTERNET = '/etc/systemd/system/' + SERVICE_SYSTEMD_TF_MOBILE_INTERNET
 FILE_CONFIG_UMTSKEEPER = '/usr/umtskeeper/umtskeeper.conf'
+FILE_TMP_SAKIS3GNET = '/tmp/sakis3g.3gnet'
 
 BINARY_SAKIS3G = '/usr/umtskeeper/sakis3g'
 BINARY_LSUSB = '/usr/bin/lsusb'
@@ -196,13 +199,32 @@ def killall_processes():
     os.system(' -9 '.join([BINARY_KILLALL, 'umtskeeper sakis3g pppd']) + ' &> /dev/null')
 
 def test_connection(command_test_connection):
-    killall_processes()
+    def remove_tmp_sakis3gnet():
+        if os.path.exists(FILE_TMP_SAKIS3GNET):
+            try:
+                os.remove(FILE_TMP_SAKIS3GNET)
+            except:
+                pass
 
-    if execute_command(shlex.split(command_test_connection)) != 0:
+    killall_processes()
+    remove_tmp_sakis3gnet()
+
+    ret_command_test_connection = execute_command(shlex.split(command_test_connection))
+
+    if ret_command_test_connection != 0:
         killall_processes()
+        remove_tmp_sakis3gnet()
+        sys.stdout.write('ERRORCODE = ' + str(ret_command_test_connection))
+        if ret_command_test_connection == 7 or \
+           ret_command_test_connection == 8 or \
+           ret_command_test_connection == 12 or \
+           ret_command_test_connection == 13 or \
+           ret_command_test_connection == 98:
+                return ret_command_test_connection
         return 2
 
     killall_processes()
+    remove_tmp_sakis3gnet()
 
     return 0
 
@@ -241,10 +263,10 @@ def prepare_test_command_and_umtskeeper_configuration(usb_modem,
                                                       sim_pin):
     command_test_connection = ''
     configuration_umtskeeper = ''
-    sakis_operators = '''DIAL="{0}" FORCE_APN="{1}" APN_USER="{2}" APN_PASS="{3}" OTHER="USBMODEM" USBMODEM="{4}"'''
-    sakis_operators_sim_pin = '''SIM_PIN="{0}" DIAL="{1}" FORCE_APN="{2}" APN_USER="{3}" APN_PASS="{4}" OTHER="USBMODEM" USBMODEM="{5}"'''
+    sakis_operators = '''DIAL="{0}" FORCE_APN="{1}" APN_USER="{2}" APN_PASS="{3}" OTHER="USBMODEM" USBMODEM="{4}" MODEM="{4}"'''
+    sakis_operators_sim_pin = '''SIM_PIN="{0}" DIAL="{1}" FORCE_APN="{2}" APN_USER="{3}" APN_PASS="{4}" OTHER="USBMODEM" USBMODEM="{5}" MODEM="{5}"'''
 
-    if sim_pin:
+    if sim_pin != '':
         command_test_connection_args = ' connect --nostorage --pppd --nofix --console ' +\
             sakis_operators_sim_pin.format(sim_pin,
                                            dial,
@@ -298,26 +320,173 @@ def get_DNS():
 
         return ', '.join(dns_servers)
 
+def find_modem_ports(vid, pid):
+    ports_modem = []
+    id_v = ''
+    id_p = ''
+
+    try:
+        for device_number in os.listdir('/sys/bus/usb/devices'):
+            device_dir = os.path.join('/sys/bus/usb/devices', device_number)
+
+            if not os.path.exists(os.path.join(device_dir, 'idVendor')):
+                continue
+
+            with open(os.path.join(device_dir, 'idVendor')) as idvfh:
+                id_v = idvfh.read().strip()
+
+            if id_v != vid:
+                continue
+
+            with open(os.path.join(device_dir, 'idProduct')) as idpfh:
+                id_p = idpfh.read().strip()
+
+            if id_p != pid:
+                continue
+
+            for subdir in os.listdir(device_dir):
+                if not subdir.startswith(device_number + ':'):
+                    continue
+
+                for subsubdir in os.listdir(os.path.join(device_dir, subdir)):
+                    if not subsubdir.startswith('ttyUSB'):
+                        continue
+
+                    ports_modem.append(os.path.join('/dev', subsubdir))
+    except:
+        pass
+
+    return ports_modem
+
+def get_signal_quality():
+    def close_modem(modem):
+        if modem:
+            modem.close()
+            modem = None
+
+    def handler_timeout_signal(self, signal_number, frame):
+        raise Exception
+
+    lines = []
+    ports_modem = []
+    modem = None
+    signal_quality = None
+
+    if not os.path.exists(FILE_CONFIG_UMTSKEEPER):
+        return signal_quality
+
+    try:
+        with open(FILE_CONFIG_UMTSKEEPER, 'r') as ucfh:
+            lines = ucfh.readlines()
+    except:
+        return signal_quality
+
+    if len(lines) == 0:
+        return signal_quality
+
+    try:
+        for line in lines:
+            if ' MODEM=' not in line:
+                continue
+
+            split_sakisops = line.split(' MODEM=')
+
+            if len(split_sakisops) != 2:
+                continue
+
+            vid_pid = split_sakisops[1].replace('"', '').replace("'", '').strip()
+
+            split_vid_pid = vid_pid.split(':')
+
+            if len(split_vid_pid) != 2:
+                continue
+
+            vid = split_vid_pid[0].strip()
+            pid = split_vid_pid[1].strip()
+
+            if len(vid) != 4 or len(pid) != 4:
+                continue
+
+            ports_modem = find_modem_ports(vid, pid)
+
+            if len(ports_modem) > 0:
+                break
+    except:
+        pass
+
+    if len(ports_modem) == 0:
+        return signal_quality
+
+    signal.signal(signal.SIGALRM, handler_timeout_signal)
+
+    for port in ports_modem:
+        try:
+            close_modem(modem)
+            modem = serial.Serial(port, 9600, timeout = 2, writeTimeout = 2)
+            # Even though pySerial provides read and write timeouts the write timeout
+            # doesn't work if the port is currently being used by some other process.
+            # This is why the timeout signal exception mechanism is used with 4 seconds
+            # timeout.
+            signal.alarm(4)
+            modem.write(b'AT+CSQ\r')
+            signal.alarm(0) # Reset timeout signal if write call returned
+            time.sleep(0.2)
+            at_response = modem.read(32)
+
+            if not at_response:
+                continue
+
+            signal_quality_stripped = at_response.replace('\r', '')\
+                                                 .replace('\n', '')\
+                                                 .replace('OK', '')\
+                                                 .replace(' ', '')\
+                                                 .strip()
+            signal_quality_csq_split = signal_quality_stripped.split('+CSQ:')
+
+            if len(signal_quality_csq_split) != 2:
+                continue
+
+            signal_quality_comma_split = signal_quality_csq_split[1].split(',')
+
+            if len(signal_quality_comma_split) != 2:
+                continue
+
+            signal_quality_raw = signal_quality_comma_split[0]
+
+            if int(signal_quality_raw) > 1 and int(signal_quality_raw) < 10:
+                close_modem(modem)
+                signal_quality = '25%'
+                break
+            elif int(signal_quality_raw) > 9 and int(signal_quality_raw) < 15:
+                close_modem(modem)
+                signal_quality = '50%'
+                break
+            elif int(signal_quality_raw) > 14 and int(signal_quality_raw) < 20:
+                close_modem(modem)
+                signal_quality = '75%'
+                break
+            elif int(signal_quality_raw) > 19 and int(signal_quality_raw) < 31:
+                close_modem(modem)
+                signal_quality = '100%'
+                break
+            else:
+                close_modem(modem)
+                signal_quality = None
+                break
+        except:
+            signal.alarm(0) # Reset timeout signal
+
+    return signal_quality
+
 try:
     # Handle command GET_STATUS
     if ACTION == 'GET_STATUS':
-        p = subprocess.Popen([BINARY_SAKIS3G, 'info'],
-                             stdout = subprocess.PIPE,
-                             stderr = subprocess.PIPE)
-        p_out_str = p.communicate()[0]
-        
-        if p.returncode != 0:
-            exit(1)
- 
-        if not p_out_str:
-            exit(1)
-
-        if 'Not connected' in p_out_str:
+        if not os.path.exists(FILE_TMP_SAKIS3GNET):
             p = subprocess.Popen([BINARY_SYSTEMCTL,
                                   'status',
                                   SERVICE_SYSTEMD_TF_MOBILE_INTERNET],
-                                 stdout = subprocess.PIPE,
-                                 stderr = subprocess.PIPE)
+                                  stdout = subprocess.PIPE,
+                                  stderr = subprocess.PIPE)
             p_out_str = p.communicate()[0]
 
             if p_out_str and \
@@ -327,37 +496,77 @@ try:
             else:
                 dict_status['status'] = 'Not connected'
 
+            dict_status['signal_quality'] = None
             dict_status['interface'] = None
             dict_status['ip'] = None
             dict_status['subnet_mask'] = None
             dict_status['gateway'] = None
             dict_status['dns'] = get_DNS()
             sys.stdout.write(json.dumps(dict_status))
+            exit(0)
 
-        else:
-            for line in p_out_str.splitlines():
-                if SPLIT_SEARCH_OPERATOR in line and len(line.split(SPLIT_SEARCH_OPERATOR)) == 2:
-                    if line.split(SPLIT_SEARCH_OPERATOR)[0] == '':
-                        dict_status['status'] = 'Connected to ' + line.split(SPLIT_SEARCH_OPERATOR)[1]
+        p = subprocess.Popen([BINARY_SAKIS3G, 'info'],
+                             stdout = subprocess.PIPE,
+                             stderr = subprocess.PIPE)
+        p_out_str = p.communicate()[0]
 
-                elif SPLIT_SEARCH_INTERFACE in line and len(line.split(SPLIT_SEARCH_INTERFACE)) == 2:
-                    if line.split(SPLIT_SEARCH_INTERFACE)[0] == '':
-                        dict_status['interface'] = line.split(SPLIT_SEARCH_INTERFACE)[1]
-        
-                elif SPLIT_SEARCH_IP in line and len(line.split(SPLIT_SEARCH_IP)) == 2:
-                    if line.split(SPLIT_SEARCH_IP)[0] == '':
-                        dict_status['ip'] = line.split(SPLIT_SEARCH_IP)[1]
+        if p.returncode != 0:
+            exit(1)
 
-                elif SPLIT_SEARCH_SUBNET_MASK in line and len(line.split(SPLIT_SEARCH_SUBNET_MASK)) == 2:
-                    if line.split(SPLIT_SEARCH_SUBNET_MASK)[0] == '':
-                        dict_status['subnet_mask'] = line.split(SPLIT_SEARCH_SUBNET_MASK)[1]
-            
-                elif SPLIT_SEARCH_GATEWAY in line and len(line.split(SPLIT_SEARCH_GATEWAY)) == 2:
-                    if line.split(SPLIT_SEARCH_GATEWAY)[0] == '':
-                        dict_status['gateway'] = line.split(SPLIT_SEARCH_GATEWAY)[1]
-        
-            dict_status['dns'] = get_DNS() 
+        if not p_out_str:
+            exit(1)
+
+        # The file /tmp/sakis3g.3gnet file might exist when the modem is not connected.
+        # For example when a connected modem is disconnected physically from USB port or got
+        # disconnected from the network and currently in retry phase.
+        if 'Not connected' in p_out_str:
+            _p = subprocess.Popen([BINARY_SYSTEMCTL,
+                                  'status',
+                                  SERVICE_SYSTEMD_TF_MOBILE_INTERNET],
+                                  stdout = subprocess.PIPE,
+                                  stderr = subprocess.PIPE)
+            _p_out_str = _p.communicate()[0]
+
+            if _p_out_str and \
+               'Loaded: loaded' in _p_out_str and \
+               'Active: active' in _p_out_str:
+                    dict_status['status'] = 'Connecting...'
+            else:
+                dict_status['status'] = 'Not connected'
+
+            dict_status['signal_quality'] = None
+            dict_status['interface'] = None
+            dict_status['ip'] = None
+            dict_status['subnet_mask'] = None
+            dict_status['gateway'] = None
+            dict_status['dns'] = get_DNS()
             sys.stdout.write(json.dumps(dict_status))
+            exit(0)
+
+        for line in p_out_str.splitlines():
+            if SPLIT_SEARCH_OPERATOR in line and len(line.split(SPLIT_SEARCH_OPERATOR)) == 2:
+                if line.split(SPLIT_SEARCH_OPERATOR)[0] == '':
+                    dict_status['status'] = 'Connected to ' + line.split(SPLIT_SEARCH_OPERATOR)[1]
+
+            elif SPLIT_SEARCH_INTERFACE in line and len(line.split(SPLIT_SEARCH_INTERFACE)) == 2:
+                if line.split(SPLIT_SEARCH_INTERFACE)[0] == '':
+                    dict_status['interface'] = line.split(SPLIT_SEARCH_INTERFACE)[1]
+
+            elif SPLIT_SEARCH_IP in line and len(line.split(SPLIT_SEARCH_IP)) == 2:
+                if line.split(SPLIT_SEARCH_IP)[0] == '':
+                    dict_status['ip'] = line.split(SPLIT_SEARCH_IP)[1]
+
+            elif SPLIT_SEARCH_SUBNET_MASK in line and len(line.split(SPLIT_SEARCH_SUBNET_MASK)) == 2:
+                if line.split(SPLIT_SEARCH_SUBNET_MASK)[0] == '':
+                    dict_status['subnet_mask'] = line.split(SPLIT_SEARCH_SUBNET_MASK)[1]
+        
+            elif SPLIT_SEARCH_GATEWAY in line and len(line.split(SPLIT_SEARCH_GATEWAY)) == 2:
+                if line.split(SPLIT_SEARCH_GATEWAY)[0] == '':
+                    dict_status['gateway'] = line.split(SPLIT_SEARCH_GATEWAY)[1]
+
+        dict_status['signal_quality'] = get_signal_quality()
+        dict_status['dns'] = get_DNS()
+        sys.stdout.write(json.dumps(dict_status))
 
     # Handle command REFRESH
     elif ACTION == 'REFRESH':

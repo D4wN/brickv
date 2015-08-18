@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import sys
 import json
 import stat
+import shlex
 import socket
 import argparse
+import subprocess
 from pynag import Model
 from sys import argv
 from time import sleep
@@ -328,6 +331,17 @@ Additional Info:\\n\\n$SERVICEOUTPUT$\\n" | \
 -o password={5} \
 -o tls={6}'''
 
+TEMPLATE_TEST_EMAIL = '''/usr/bin/sendemail \
+-f {0} \
+-t {1} \
+-u ** RED-Brick Server Monitoring Test Email ** \
+-m If you received this email message on the target email address then it means \
+that the server monitoring email alert is working on the RED-Brick.\n
+-s {2}:{3} \
+-o username={4} \
+-o password={5} \
+-o tls={6}'''
+
 ACTION = argv[1]
 
 ipcon  = None
@@ -344,6 +358,19 @@ dict_enumerate = {'host'         : None,
                   'temperature'  : [],
                   'humidity'     : [],
                   'ambient_light': []}
+
+_find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
+
+def quote(s):
+    """Return a shell-escaped version of the string *s*."""
+    if not s:
+        return "''"
+    if _find_unsafe(s) is None:
+        return s
+
+    # use single quotes, and put single quotes into double quotes
+    # the string $'b is then quoted as '$'"'"'b'
+    return "'" + s.replace("'", "'\"'\"'") + "'"
 
 def ignore_enumerate_fail():
     global ignore_enumerate_failed_called
@@ -464,33 +491,33 @@ if ACTION == 'GET':
                     dict_return['hosts'][map_args.H] = {'port':map_args.P, 'secret':secret}
 
         for command in Model.Command.objects.filter(command_name = 'tinkerforge-notify-service-by-email'):
-            delims = ['-f ',
-                      '-t ',
-                      '-s ',
-                      '-o username=',
-                      '-o password=',
-                      '-o tls=']
+            arguments = command.command_line.partition('/usr/bin/sendemail')[2]
+            tokens = shlex.split(arguments)
 
-            for d in delims:
-                partitioned = command.command_line.partition(d)
-
-                if len(partitioned) != 3:
-                    break
-
-                if d == '-f ':
-                    dict_email['from'] = partitioned[2].partition(' ')[0]
-                elif d == '-t ':
-                    dict_email['to'] = partitioned[2].partition(' ')[0]
-                elif d == '-s ':
-                    server_port = partitioned[2].partition(' ')[0].split(':')
+            while len(tokens) >= 2:
+                if tokens[0] == '-f':
+                    dict_email['from'] = tokens[1]
+                elif tokens[0] == '-t':
+                    dict_email['to'] = tokens[1]
+                elif tokens[0] == '-s':
+                    server_port = tokens[1].split(':')
                     dict_email['server'] = server_port[0]
                     dict_email['port']   = server_port[1]
-                elif d == '-o username=':
-                    dict_email['username'] = partitioned[2].partition(' ')[0]
-                elif d == '-o password=':
-                    dict_email['password'] = partitioned[2].partition(' ')[0]
-                elif d == '-o tls=':
-                    dict_email['tls'] = partitioned[2].partition(' ')[0]
+                elif tokens[0] == '-o':
+                    if tokens[1].startswith('username='):
+                        dict_email['username'] = tokens[1][len('username='):]
+                    elif tokens[1].startswith('password='):
+                        dict_email['password'] = tokens[1][len('password='):]
+                    elif tokens[1].startswith('tls='):
+                        dict_email['tls'] = tokens[1][len('tls='):]
+                    else:
+                        tokens = tokens[1:]
+                        continue
+                else:
+                    tokens = tokens[1:]
+                    continue
+
+                tokens = tokens[2:]
 
         if len(list_rules) > 0:
             dict_return['rules'] = list_rules
@@ -499,7 +526,8 @@ if ACTION == 'GET':
             dict_return['email'] = dict_email
 
         sys.stdout.write(json.dumps(dict_return))
-    except:
+    except Exception as e:
+        sys.stderr.write(unicode(e))
         exit(1)
 
 elif ACTION == 'APPLY':
@@ -553,21 +581,21 @@ elif ACTION == 'APPLY':
             tf_contact.set_filename(FILE_PATH_TF_NAGIOS_CONFIGURATION)
             tf_contact_group.set_filename(FILE_PATH_TF_NAGIOS_CONFIGURATION)
             tf_command_notify_service.command_name = 'tinkerforge-notify-service-by-email'
-            tf_command_notify_service.command_line = TEMPLATE_COMMAND_LINE_NOTIFY_SERVICE.format(apply_dict['email']['from'],
-                                                                                                 apply_dict['email']['to'],
-                                                                                                 apply_dict['email']['server'],
-                                                                                                 apply_dict['email']['port'],
-                                                                                                 apply_dict['email']['username'],
-                                                                                                 apply_dict['email']['password'],
-                                                                                                 apply_dict['email']['tls'])
+            tf_command_notify_service.command_line = TEMPLATE_COMMAND_LINE_NOTIFY_SERVICE.format(quote(apply_dict['email']['from']),
+                                                                                                 quote(apply_dict['email']['to']),
+                                                                                                 quote(apply_dict['email']['server']),
+                                                                                                 quote(apply_dict['email']['port']),
+                                                                                                 quote(apply_dict['email']['username']),
+                                                                                                 quote(apply_dict['email']['password']),
+                                                                                                 quote(apply_dict['email']['tls']))
             tf_command_notify_host.command_name = 'tinkerforge-notify-host-by-email'
-            tf_command_notify_host.command_line = TEMPLATE_COMMAND_LINE_NOTIFY_HOST.format(apply_dict['email']['from'],
-                                                                                           apply_dict['email']['to'],
-                                                                                           apply_dict['email']['server'],
-                                                                                           apply_dict['email']['port'],
-                                                                                           apply_dict['email']['username'],
-                                                                                           apply_dict['email']['password'],
-                                                                                           apply_dict['email']['tls'])
+            tf_command_notify_host.command_line = TEMPLATE_COMMAND_LINE_NOTIFY_HOST.format(quote(apply_dict['email']['from']),
+                                                                                           quote(apply_dict['email']['to']),
+                                                                                           quote(apply_dict['email']['server']),
+                                                                                           quote(apply_dict['email']['port']),
+                                                                                           quote(apply_dict['email']['username']),
+                                                                                           quote(apply_dict['email']['password']),
+                                                                                           quote(apply_dict['email']['tls']))
             tf_contact.contact_name                  = 'tinkerforge-contact'
             tf_contact.host_notifications_enabled    = '0'
             tf_contact.service_notifications_enabled = '1'
@@ -587,7 +615,8 @@ elif ACTION == 'APPLY':
 
         if os.system('/bin/systemctl restart nagios3') != 0:
             exit(1)
-    except:
+    except Exception as e:
+        sys.stderr.write(unicode(e))
         exit(1)
 
 elif ACTION == 'APPLY_EMPTY':
@@ -600,7 +629,8 @@ elif ACTION == 'APPLY_EMPTY':
 
         if os.system('/bin/systemctl restart nagios3') != 0:
             exit(1)
-    except:
+    except Exception as e:
+        sys.stderr.write(unicode(e))
         exit(1)
 
 elif ACTION == 'GET_LOCALHOST':
@@ -611,7 +641,8 @@ elif ACTION == 'GET_LOCALHOST':
             sys.stdout.write(hostname)
         else:
             exit(1)
-    except:
+    except Exception as e:
+        sys.stderr.write(unicode(e))
         exit(1)
 
 elif ACTION == 'ENUMERATE':
@@ -650,6 +681,46 @@ elif ACTION == 'ENUMERATE':
     except:
         ignore_enumerate_fail()
         exit(0)
+
+elif ACTION == 'TEST_EMAIL':
+    if len(argv) != 3:
+        sys.stderr.write(unicode('Too many or too few arguments provided for sending test email'))
+        exit(1)
+    try:
+        test_email_dict = json.loads(argv[2])
+        test_email_from = test_email_dict['test_email_from']
+        test_email_to = test_email_dict['test_email_to']
+        test_email_server = test_email_dict['test_email_server']
+        test_email_port = test_email_dict['test_email_port']
+        test_email_username = test_email_dict['test_email_username']
+        test_email_password = test_email_dict['test_email_password']
+        test_email_tls = test_email_dict['test_email_tls']
+
+        test_email_cmd = TEMPLATE_TEST_EMAIL.format(quote(test_email_from),
+                                                    quote(test_email_to),
+                                                    quote(test_email_server),
+                                                    quote(test_email_port),
+                                                    quote(test_email_username),
+                                                    quote(test_email_password),
+                                                    quote(test_email_tls))
+
+        p_sendemail = subprocess.Popen(shlex.split(test_email_cmd),
+                                       universal_newlines = True,
+                                       stdout = subprocess.PIPE,
+                                       stderr = subprocess.PIPE)
+        p_sendemail_comm = p_sendemail.communicate()
+
+    except Exception as e:
+        sys.stderr.write(unicode(e))
+        exit(1)
+
+    if p_sendemail.returncode != 0:
+        if p_sendemail_comm[1]:
+            sys.stderr.write(unicode(p_sendemail_comm[1]))
+        else:
+            sys.stderr.write(unicode(p_sendemail_comm[0]))
+        exit(1)
+
 else:
     exit(1)
 

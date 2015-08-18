@@ -42,23 +42,28 @@ EVENT_GUI_CONNECT_CLICKED = 6
 EVENT_GUI_CONNECT_RETURNED = 7
 
 MESSAGEBOX_TITLE = 'Settings | Mobile Internet'
-MESSAGE_ERROR_VALIDATION_NO_MODEM = 'No modem available'
-MESSAGE_ERROR_VALIDATION_APN_EMPTY = 'APN empty'
-MESSAGE_ERROR_VALIDATION_APN_NON_ASCII = 'APN contains non ASCII characters'
-MESSAGE_ERROR_VALIDATION_USERNAME_NON_ASCII = 'Username contains non ASCII characters'
-MESSAGE_ERROR_VALIDATION_PASSWORD_NON_ASCII = 'Password contains non ASCII characters'
-MESSAGE_ERROR_VALIDATION_PIN_EMPTY = 'SIM card PIN empty'
-MESSAGE_ERROR_VALIDATION_PIN_LENGTH = 'SIM card PIN not 4 digits'
-MESSAGE_ERROR_REFERSH = 'Error occurred while refreshing'
-MESSAGE_ERROR_REFERSH_DECODE = 'Error occurred while decoding refresh data'
-MESSAGE_ERROR_STATUS_DECODE = 'Error occurred while decoding status data'
-MESSAGE_ERROR_CONNECT = 'Error occurred while connecting'
-MESSAGE_ERROR_CONNECT_TEST = 'Error occurred while connecting. Make sure the configuration is correct and the modem is registered to the provider network'
-MESSAGE_ERROR_CONNECT_SERVICE_CREATION = 'Error occurred while connecting. systemd service creation failed'
-MESSAGE_ERROR_CONNECT_SERVICE_EXECUTION = 'Error occurred while connecting. systemd service execution failed'
-MESSAGE_INFORMATION_CONNECT_OK = 'Configuration saved and applied successfully'
+MESSAGE_ERROR_VALIDATION_NO_MODEM = 'No modem available.'
+MESSAGE_ERROR_VALIDATION_APN_EMPTY = 'APN empty.'
+MESSAGE_ERROR_VALIDATION_APN_NON_ASCII = 'APN contains non ASCII characters.'
+MESSAGE_ERROR_VALIDATION_USERNAME_NON_ASCII = 'Username contains non ASCII characters.'
+MESSAGE_ERROR_VALIDATION_PASSWORD_NON_ASCII = 'Password contains non ASCII characters.'
+MESSAGE_ERROR_VALIDATION_PIN_LENGTH = 'SIM card PIN not 4 digits.'
+MESSAGE_ERROR_REFERSH = 'Error occurred while refreshing.'
+MESSAGE_ERROR_REFERSH_DECODE = 'Error occurred while decoding refresh data.'
+MESSAGE_ERROR_STATUS_DECODE = 'Error occurred while decoding status data.'
+MESSAGE_ERROR_CONNECT = 'Error occurred while connecting.'
+MESSAGE_ERROR_CONNECT_TEST = 'Error occurred while connecting. Make sure the configuration \
+is correct, the device is working properly, signal is strong enough and the modem is getting enough power. Try unplugging and re-plugging the modem.'
+MESSAGE_ERROR_CONNECT_TEST_PIN = 'Error occurred while connecting. Wrong SIM card PIN.'
+MESSAGE_ERROR_CONNECT_TEST_REGISTER_NETWORK = 'Error occurred while connecting. Could not register to a network. \
+Most probably signal is not strong enough.'
+MESSAGE_ERROR_CONNECT_TEST_DEVICE_UNAVAILABLE = 'Error occurred while connecting. Selected device unavailable. \
+Try unplugging and re-plugging the modem.'
+MESSAGE_ERROR_CONNECT_SERVICE_CREATION = 'Error occurred while connecting. systemd service creation failed.'
+MESSAGE_ERROR_CONNECT_SERVICE_EXECUTION = 'Error occurred while connecting. systemd service execution failed.'
+MESSAGE_INFORMATION_CONNECT_OK = 'Configuration saved and applied successfully.'
 
-INTERVAL_REFRESH_STATUS = 15000 # In milliseconds
+INTERVAL_REFRESH_STATUS = 1000 # In milliseconds
 
 class REDTabSettingsMobileInternet(QtGui.QWidget, Ui_REDTabSettingsMobileInternet):
     def __init__(self):
@@ -230,11 +235,11 @@ class REDTabSettingsMobileInternet(QtGui.QWidget, Ui_REDTabSettingsMobileInterne
 
     def show_working_wait(self, show):
         if show:
-            self.label_mi_working_wait.show()
-            self.pbar_mi_working_wait.show()
+            self.frame_mi_working.show()
+            self.frame_mi_configuration.setEnabled(False)
         else:
-            self.label_mi_working_wait.hide()
-            self.pbar_mi_working_wait.hide()
+            self.frame_mi_working.hide()
+            self.frame_mi_configuration.setEnabled(True)
 
     def cb_settings_mobile_internet_get_status(self, result):
         self.status_refresh_timer.stop()
@@ -261,7 +266,12 @@ class REDTabSettingsMobileInternet(QtGui.QWidget, Ui_REDTabSettingsMobileInterne
             self.label_mi_status_status.setText('-')
         else:
             self.label_mi_status_status.setText(dict_status['status'])
-            
+
+        if not dict_status['signal_quality']:
+            self.label_mi_status_signal_quality.setText('-')
+        else:
+            self.label_mi_status_signal_quality.setText(dict_status['signal_quality'])
+
         if not dict_status['interface']:
             self.label_mi_status_interface.setText('-')
         else:
@@ -297,17 +307,37 @@ class REDTabSettingsMobileInternet(QtGui.QWidget, Ui_REDTabSettingsMobileInterne
                                        MESSAGEBOX_TITLE,
                                        MESSAGE_ERROR_CONNECT_TEST)
             return
-        
+
         if result.exit_code == 3:
             QtGui.QMessageBox.critical(get_main_window(),
                                        MESSAGEBOX_TITLE,
                                        MESSAGE_ERROR_CONNECT_SERVICE_CREATION)
             return
-    
+
         if result.exit_code == 4:
             QtGui.QMessageBox.critical(get_main_window(),
                                        MESSAGEBOX_TITLE,
                                        MESSAGE_ERROR_CONNECT_SERVICE_EXECUTION)
+            return
+
+        if result.exit_code == 7 or \
+           result.exit_code == 8:
+                QtGui.QMessageBox.critical(get_main_window(),
+                                           MESSAGEBOX_TITLE,
+                                           MESSAGE_ERROR_CONNECT_TEST_DEVICE_UNAVAILABLE)
+                return
+
+        if result.exit_code == 12:
+            QtGui.QMessageBox.critical(get_main_window(),
+                                       MESSAGEBOX_TITLE,
+                                       MESSAGE_ERROR_CONNECT_TEST_PIN)
+            return
+
+        if result.exit_code == 13 or \
+           result.exit_code == 98:
+            QtGui.QMessageBox.critical(get_main_window(),
+                                       MESSAGEBOX_TITLE,
+                                       MESSAGE_ERROR_CONNECT_TEST_REGISTER_NETWORK)
             return
 
         if not report_script_result(result, MESSAGEBOX_TITLE, MESSAGE_ERROR_CONNECT):
@@ -409,9 +439,7 @@ class REDTabSettingsMobileInternet(QtGui.QWidget, Ui_REDTabSettingsMobileInterne
         if password and not self.check_ascii(password):
             return False, MESSAGE_ERROR_VALIDATION_PASSWORD_NON_ASCII
 
-        if not self.ledit_mi_sim_card_pin.text():
-            return False, MESSAGE_ERROR_VALIDATION_PIN_EMPTY
-        if len(self.ledit_mi_sim_card_pin.text()) != 4:
+        if len(self.ledit_mi_sim_card_pin.text()) > 0 and len(self.ledit_mi_sim_card_pin.text()) != 4:
             return False, MESSAGE_ERROR_VALIDATION_PIN_LENGTH
 
         return True, None
@@ -448,7 +476,6 @@ class REDTabSettingsMobileInternet(QtGui.QWidget, Ui_REDTabSettingsMobileInterne
             if event == EVENT_GUI_CONNECT_CLICKED:
                 self.pbutton_mi_connect.setText('Connecting...')
 
-            self.gbox_mi_configuration.setEnabled(False)
             self.pbutton_mi_provider_presets.setEnabled(False)
             self.pbutton_mi_refresh.setEnabled(False)
             self.pbutton_mi_connect.setEnabled(False)
@@ -458,7 +485,6 @@ class REDTabSettingsMobileInternet(QtGui.QWidget, Ui_REDTabSettingsMobileInterne
             self.show_working_wait(False)
             self.pbutton_mi_refresh.setText('Refresh')
             self.pbutton_mi_connect.setText('Connect')
-            self.gbox_mi_configuration.setEnabled(True)
             self.pbutton_mi_provider_presets.setEnabled(True)
             self.pbutton_mi_refresh.setEnabled(True)
             self.pbutton_mi_connect.setEnabled(True)
