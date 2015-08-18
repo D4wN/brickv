@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from PyQt4.QtGui import QDialog, QMessageBox
+from PyQt4.QtGui import QDialog # , QMessageBox
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.utils import Utilities
 from brickv.ui_device_dialog import Ui_DeviceDialog
-from PyQt4 import QtGui, QtCore
+# from PyQt4 import QtGui, QtCore
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
 from PyQt4.QtCore import Qt
 from brickv import infos
@@ -62,10 +62,10 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
             return
         con_dev = []
         for device_info in connected_devices:
-                if device_info.name in Identifier.DEVICE_DEFINITIONS:
-                    tmp = {}
-                    tmp [device_info.name] = device_info.uid
-                    con_dev.append(tmp)
+            if device_info.name in Identifier.DEVICE_DEFINITIONS:
+                tmp = {}
+                tmp[device_info.name] = device_info.uid
+                con_dev.append(tmp)
 
         for dev in con_dev:
             for key in dev.keys():
@@ -80,11 +80,11 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
         for dev in list_to_check:
             for key in dev.keys():
                 if device_name == key and uid == dev[key]:
-                    #device matches -> return True
+                    # device matches -> return True
                     return True
         return False
 
-    def _btn_add_device_clicked(self, uid=None):
+    def _btn_add_device_clicked(self):
         """
             Add the selected device from the list/DataLogger-Config.
         """
@@ -93,19 +93,19 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
         for item in items:
             name = item.text()
             if name == self._no_connected_device_string or name == self._list_separator_string:
-                #ignore those
+                # ignore those
                 continue
 
             dev_name, uid = Utilities.parse_device_name(name)
             dev = GuiConfigHandler.get_device_blueprint(dev_name)
             if dev is None:
-                EventLogger.debug("DeviceDialog._btn_add_device_clicked: Blueprint("+ str(dev_name) +") was None!")
+                EventLogger.debug("DeviceDialog._btn_add_device_clicked: Blueprint(" + str(dev_name) + ") was None!")
                 continue
 
             if uid is not None:
                 if self.__is_device_in_list(dev_name, uid, cur_dev):
                     continue
-                #else
+                # else
                 dev[Identifier.DEVICE_UID] = uid
 
             else:
@@ -130,7 +130,7 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
                 if device_info.name in Identifier.DEVICE_DEFINITIONS:
                     list_blueprint.append(device_info.name + " [" + device_info.uid + "]")
 
-        #self.combo_devices.insertSeparator(self.combo_devices.count() + 1)
+        # self.combo_devices.insertSeparator(self.combo_devices.count() + 1)
         list_blueprint.append(self._list_separator_string)
 
         # list of all devices
@@ -141,7 +141,7 @@ class LoggerDeviceDialog(QDialog, Ui_DeviceDialog):
         for val in default_devices:
             list_blueprint.append(val)
 
-        #add to list widget
+        # add to list widget
         self.list_widget.clear()
         for dev in list_blueprint:
             self.list_widget.addItem(str(dev))
