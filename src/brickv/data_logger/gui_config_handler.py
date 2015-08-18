@@ -1,7 +1,7 @@
 import collections
 
 from brickv.data_logger.event_logger import EventLogger, GUILogger
-from brickv.data_logger.loggable_devices import Identifier
+from brickv.data_logger.loggable_devices import Identifier as Idf
 
 '''
 /*---------------------------------------------------------------------------
@@ -26,7 +26,7 @@ class GuiConfigHandler(object):
         """
         try:
             GuiConfigHandler.clear_blueprint()
-            GuiConfigHandler.create_device_blueprint(device_json[Identifier.DEVICES])
+            GuiConfigHandler.create_device_blueprint(device_json[Idf.DEVICES])
 
         except Exception as e:
             EventLogger.warning("Devices could not be fully loaded! -> " + str(e))
@@ -48,43 +48,41 @@ class GuiConfigHandler(object):
             bp_dev = None  # Blueprint Device
 
             # check for blueprint KEY(DEVICE_DEFINITIONS)
-            if dev[Identifier.DEVICE_NAME] in Identifier.DEVICE_DEFINITIONS:
-                bp_dev = copy.deepcopy(Identifier.DEVICE_DEFINITIONS[dev[Identifier.DEVICE_NAME]])
+            if dev[Idf.DD_NAME] in Idf.DEVICE_DEFINITIONS:
+                bp_dev = copy.deepcopy(Idf.DEVICE_DEFINITIONS[dev[Idf.DD_NAME]])
                 # remove unused entries(class)
-                del bp_dev[Identifier.DEVICE_CLASS]
+                del bp_dev[Idf.DD_CLASS]
 
                 # add new entries(name, uid)
-                bp_dev[Identifier.DEVICE_NAME] = dev[Identifier.DEVICE_NAME]
-                bp_dev[Identifier.DEVICE_UID] = dev[Identifier.DEVICE_UID]
+                bp_dev[Idf.DD_NAME] = dev[Idf.DD_NAME]
+                bp_dev[Idf.DD_UID] = dev[Idf.DD_UID]
 
                 # add/remove entries for values
-                for val in bp_dev[Identifier.DEVICE_VALUES]:
+                for val in bp_dev[Idf.DD_VALUES]:
 
                     # remove getter
-                    del bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_GETTER]
+                    del bp_dev[Idf.DD_VALUES][val][Idf.DD_GETTER]
 
                     # add interval, check if exists
-                    if val in bp_dev[Identifier.DEVICE_VALUES]:
+                    if val in bp_dev[Idf.DD_VALUES]:
                         # check for NO device values
-                        if not val in dev[Identifier.DEVICE_VALUES]:
+                        if not val in dev[Idf.DD_VALUES]:
                             # create necessary structures for the checks
-                            dev[Identifier.DEVICE_VALUES][val] = {}
-                            dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
+                            dev[Idf.DD_VALUES][val] = {}
+                            dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES] = {}
 
-                        if Identifier.DEVICE_VALUES_INTERVAL in dev[Identifier.DEVICE_VALUES][val]:
-                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = \
-                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL]
+                        if Idf.DD_VALUES_INTERVAL in dev[Idf.DD_VALUES][val]:
+                            bp_dev[Idf.DD_VALUES][val][Idf.DD_VALUES_INTERVAL] = dev[Idf.DD_VALUES][val][Idf.DD_VALUES_INTERVAL]
                         else:
-                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0
+                            bp_dev[Idf.DD_VALUES][val][Idf.DD_VALUES_INTERVAL] = 0
 
                         # subvalues
 
-                        if bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
-                            bp_sub_values = bp_dev[Identifier.DEVICE_VALUES][val][
-                                Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+                        if bp_dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES] is not None:
+                            bp_sub_values = bp_dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES]
 
                             # delete subvalues old entries
-                            bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
+                            bp_dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES] = {}
 
                             for i in range(0, len(bp_sub_values)):
                                 # check sub_val for bool
@@ -95,37 +93,22 @@ class GuiConfigHandler(object):
                                     for j in range(0, len(sub_val)):
                                         sub_sub_val = sub_val[j]
 
-                                        if sub_sub_val in dev[Identifier.DEVICE_VALUES][val][
-                                            Identifier.DEVICE_DEFINITIONS_SUBVALUES]:
-                                            bp_dev[Identifier.DEVICE_VALUES][val][
-                                                Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = \
-                                                dev[Identifier.DEVICE_VALUES][val][
-                                                    Identifier.DEVICE_DEFINITIONS_SUBVALUES][
-                                                    sub_sub_val]
+                                        if sub_sub_val in dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES]:
+                                            bp_dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES][sub_sub_val] = dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES][sub_sub_val]
                                         else:
-                                            bp_dev[Identifier.DEVICE_VALUES][val][
-                                                Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_sub_val] = False
+                                            bp_dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES][sub_sub_val] = False
                                     continue
 
-                                if sub_val in dev[Identifier.DEVICE_VALUES][val][
-                                    Identifier.DEVICE_DEFINITIONS_SUBVALUES]:
-                                    bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
-                                        sub_val] = \
-                                        dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
-                                            sub_val]
+                                if sub_val in dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES]:
+                                    bp_dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES][sub_val] = dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES][sub_val]
                                 else:
-                                    bp_dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
-                                        sub_val] = False
+                                    bp_dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES][sub_val] = False
 
                     else:
-                        bp_dev[Identifier.DEVICE_VALUES][val][
-                            Identifier.DEVICE_VALUES_INTERVAL] = 0  # Default Value for Interval
-
-                        # else: #ignore subvals
+                        bp_dev[Idf.DD_VALUES][val][Idf.DD_VALUES_INTERVAL] = 0  # Default Value for Interval
 
             else:
-                EventLogger.warning("No Device Definition found in Config for Device Name: " + str(
-                    dev[Identifier.DEVICE_NAME]) + "! Device will be ignored!")
+                EventLogger.warning("No Device Definition found in Config for Device Name: " + str(dev[Idf.DD_NAME]) + "! Device will be ignored!")
 
             GuiConfigHandler.device_blueprint.append(bp_dev)
 
@@ -148,7 +131,7 @@ class GuiConfigHandler(object):
 
         config_root[ConfigurationReader.GENERAL_SECTION] = general_section
         config_root[ConfigurationReader.XIVELY_SECTION] = xively_section
-        config_root[Identifier.DEVICES] = device_section
+        config_root[Idf.DEVICES] = device_section
 
         return config_root
 
@@ -207,9 +190,9 @@ class GuiConfigHandler(object):
             # create device item
             dev = {}
             dev_name = lvl0_item.text(0)
-            dev[Identifier.DEVICE_NAME] = dev_name
-            dev[Identifier.DEVICE_UID] = lvl0_item.text(1)
-            dev[Identifier.DEVICE_VALUES] = {}
+            dev[Idf.DD_NAME] = dev_name
+            dev[Idf.DD_UID] = lvl0_item.text(1)
+            dev[Idf.DD_VALUES] = {}
 
             # start lvl1 - values(name|interval)
             lvl1_max = lvl0_item.childCount()
@@ -217,13 +200,13 @@ class GuiConfigHandler(object):
                 lvl1_item = lvl0_item.child(lvl1)
                 # add device information
                 value_name = lvl1_item.text(0)
-                dev[Identifier.DEVICE_VALUES][value_name] = {}
-                dev[Identifier.DEVICE_VALUES][value_name][Identifier.DEVICE_VALUES_INTERVAL] = int(lvl1_item.text(1))
+                dev[Idf.DD_VALUES][value_name] = {}
+                dev[Idf.DD_VALUES][value_name][Idf.DD_VALUES_INTERVAL] = int(lvl1_item.text(1))
 
                 # check in blueprint for subvalues
-                if Identifier.DEVICE_DEFINITIONS[dev_name][Identifier.DEVICE_VALUES][value_name][
-                    Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
-                    dev[Identifier.DEVICE_VALUES][value_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
+                if Idf.DEVICE_DEFINITIONS[dev_name][Idf.DD_VALUES][value_name][
+                    Idf.DD_SUBVALUES] is not None:
+                    dev[Idf.DD_VALUES][value_name][Idf.DD_SUBVALUES] = {}
                     # start lvl2
                     lvl2_max = lvl1_item.childCount()
                     for lvl2 in range(0, lvl2_max):
@@ -237,7 +220,7 @@ class GuiConfigHandler(object):
                         """
                         if lvl2_item.checkState(1) >= 1:
                             lvl2_item_value = True
-                        dev[Identifier.DEVICE_VALUES][value_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                        dev[Idf.DD_VALUES][value_name][Idf.DD_SUBVALUES][
                             lvl2_item.text(0)] = lvl2_item_value
 
             devices.append(dev)
@@ -274,33 +257,33 @@ class GuiConfigHandler(object):
         try:
             import copy
 
-            dev = copy.deepcopy(Identifier.DEVICE_DEFINITIONS[device_name])
+            dev = copy.deepcopy(Idf.DEVICE_DEFINITIONS[device_name])
             # delet class & getter
-            del dev[Identifier.DEVICE_CLASS]
-            for val in dev[Identifier.DEVICE_VALUES]:
-                del dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_GETTER]
+            del dev[Idf.DD_CLASS]
+            for val in dev[Idf.DD_VALUES]:
+                del dev[Idf.DD_VALUES][val][Idf.DD_GETTER]
                 # add interval
-                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_VALUES_INTERVAL] = 0
+                dev[Idf.DD_VALUES][val][Idf.DD_VALUES_INTERVAL] = 0
 
                 # set default values
-                if dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] is not None:
+                if dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES] is not None:
 
-                    sub_values = dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
-                    dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES] = {}
+                    sub_values = dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES]
+                    dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES] = {}
                     for i in range(0, len(sub_values)):
                         sub_val = sub_values[i]
                         # check for multi lists
                         if type(sub_val) == list:
                             for j in range(0, len(sub_val)):
                                 sub_sub_val = sub_val[j]
-                                dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][
+                                dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES][
                                     sub_sub_val] = True
                         else:
-                            dev[Identifier.DEVICE_VALUES][val][Identifier.DEVICE_DEFINITIONS_SUBVALUES][sub_val] = True
+                            dev[Idf.DD_VALUES][val][Idf.DD_SUBVALUES][sub_val] = True
 
             # add name & uid
-            dev[Identifier.DEVICE_NAME] = device_name
-            dev[Identifier.DEVICE_UID] = "Enter UID"
+            dev[Idf.DD_NAME] = device_name
+            dev[Idf.DD_UID] = "Enter UID"
 
         except Exception:
             pass

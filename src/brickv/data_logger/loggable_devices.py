@@ -125,22 +125,21 @@ class Identifier(object):
         This class is used to identify supported Bricks and Bricklets. The
         DEVICE_DEFINITIONS contains a Blueprint for each supported device.
         This Blueprint is used in the config file and the GUI.
-
     """
     # Devices
     DEVICES = "DEVICES"
 
     # config list access strings
-    DEVICE_NAME = "name"
-    DEVICE_CLASS = "class"
-    DEVICE_UID = "uid"
-    DEVICE_VALUES = "values"
-    DEVICE_VALUES_INTERVAL = "interval"
+    DD_NAME = "name"
+    DD_CLASS = "class"
+    DD_UID = "uid"
+    DD_VALUES = "values"
+    DD_VALUES_INTERVAL = "interval"
     # Device Definitions Keys
-    DEVICE_DEFINITIONS_GETTER = "getter"
-    DEVICE_DEFINITIONS_SUBVALUES = "subvalues"
+    DD_GETTER = "getter"
+    DD_SUBVALUES = "subvalues"
 
-    # Device Definitons
+    # Device Definitons(DD)
     DEVICE_DEFINITIONS = {
         ################################################################################################################
         # Bricklets Start Here #
@@ -623,7 +622,6 @@ class Identifier(object):
         }
     }
 
-
 '''
 /*---------------------------------------------------------------------------
                                 AbstractDevice
@@ -689,10 +687,10 @@ class DeviceImpl(AbstractDevice):
     def __init__(self, data, datalogger):
         AbstractDevice.__init__(self, data, datalogger)
 
-        self.device_name = self.data[Identifier.DEVICE_NAME]
-        self.device_uid = self.data[Identifier.DEVICE_UID]
+        self.device_name = self.data[Identifier.DD_NAME]
+        self.device_uid = self.data[Identifier.DD_UID]
         self.device_definition = Identifier.DEVICE_DEFINITIONS[self.device_name]
-        device_class = self.device_definition[Identifier.DEVICE_CLASS]
+        device_class = self.device_definition[Identifier.DD_CLASS]
         self.device = device_class(self.device_uid, self.datalogger.ipcon)
         self.identifier = self.device_name
 
@@ -701,8 +699,8 @@ class DeviceImpl(AbstractDevice):
     def start_timer(self):
         AbstractDevice.start_timer(self)
 
-        for value in self.data[Identifier.DEVICE_VALUES]:
-            interval = self.data[Identifier.DEVICE_VALUES][value][Identifier.DEVICE_VALUES_INTERVAL]
+        for value in self.data[Identifier.DD_VALUES]:
+            interval = self.data[Identifier.DD_VALUES][value][Identifier.DD_VALUES_INTERVAL]
             func_name = "_timer"
             var_name = value
 
@@ -714,9 +712,9 @@ class DeviceImpl(AbstractDevice):
         In SimpleDevices the get-functions only return one value.
         """
 
-        getter = self.device_definition[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_DEFINITIONS_GETTER]
-        subvalue_names = self.device_definition[Identifier.DEVICE_VALUES][var_name][
-            Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+        getter = self.device_definition[Identifier.DD_VALUES][var_name][Identifier.DD_GETTER]
+        subvalue_names = self.device_definition[Identifier.DD_VALUES][var_name][
+            Identifier.DD_SUBVALUES]
         timestamp = utils.CSVData._get_timestamp()
 
         try:
@@ -733,7 +731,7 @@ class DeviceImpl(AbstractDevice):
                 self.datalogger.add_to_queue(
                     utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
             else:
-                subvalue_bool = self.data[Identifier.DEVICE_VALUES][var_name][Identifier.DEVICE_DEFINITIONS_SUBVALUES]
+                subvalue_bool = self.data[Identifier.DD_VALUES][var_name][Identifier.DD_SUBVALUES]
                 for i in range(len(subvalue_names)):
                     if not isinstance(subvalue_names[i], list):
                         try:

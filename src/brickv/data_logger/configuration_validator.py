@@ -8,7 +8,7 @@ import json
 
 from brickv.data_logger.event_logger import EventLogger
 from brickv.data_logger.utils import DataLoggerException, Utilities
-import loggable_devices
+from brickv.data_logger.loggable_devices import Identifier as Idf
 
 
 class ConfigurationReader(object):
@@ -34,7 +34,7 @@ class ConfigurationReader(object):
     XIVELY_API_KEY = "api_key"
     XIVELY_UPLOAD_RATE = "upload_rate"
 
-    DEVICES_SECTION = loggable_devices.Identifier.DEVICES
+    DEVICES_SECTION = Idf.DEVICES
 
     def __init__(self, path_to_config=None, configuration=None):
         """
@@ -103,7 +103,6 @@ class ConfigurationValidator(object):
 
     def __init__(self, config_file):
         self.CR = ConfigurationReader  # alias for the ConfigurationReader
-        self.ldi = loggable_devices.Identifier  # alias for the loggable_devices.Identifier
 
         self.json_config = config_file
 
@@ -227,50 +226,49 @@ class ConfigurationValidator(object):
             This function validates the devices out of the configuration file
         :return:
         """
-        ldi = loggable_devices.Identifier  # alias
-        device_definitions = ldi.DEVICE_DEFINITIONS
+        device_definitions = Idf.DEVICE_DEFINITIONS
 
         for device in self.json_config._devices:
             # name
-            blueprint = device_definitions[device[ldi.DEVICE_NAME]]
+            blueprint = device_definitions[device[Idf.DD_NAME]]
             if blueprint is None:
                 EventLogger.critical(
-                    self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                    self._generate_device_error_message(uid=device[Idf.DD_UID],
                                                         tier_array=["general"], msg="no such device available"))
                 continue  # next device
 
             # uid
-            if not Utilities.is_valid_string(device[ldi.DEVICE_UID], 3):
+            if not Utilities.is_valid_string(device[Idf.DD_UID], 3):
                 EventLogger.critical(
-                    self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                    self._generate_device_error_message(uid=device[Idf.DD_UID],
                                                         tier_array=["general"], msg="the uid is invalid"))
 
-            device_values = device[ldi.DEVICE_VALUES]
-            blueprint_values = blueprint[ldi.DEVICE_VALUES]
+            device_values = device[Idf.DD_VALUES]
+            blueprint_values = blueprint[Idf.DD_VALUES]
             # values
             for device_value in device_values:
                 logged_values = 0
                 if device_value not in blueprint_values:
                     EventLogger.critical(
-                        self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                        self._generate_device_error_message(uid=device[Idf.DD_UID],
                                                             tier_array=["values"],
                                                             msg="invalid value " + str(device_value)))
                 else:
                     # interval
-                    interval = device_values[device_value][ldi.DEVICE_VALUES_INTERVAL]
+                    interval = device_values[device_value][Idf.DD_VALUES_INTERVAL]
                     if not self._is_valid_interval(interval):
                         EventLogger.critical(
-                            self._generate_device_error_message(uid=device[loggable_devices.Identifier.DEVICE_UID],
+                            self._generate_device_error_message(uid=device[Idf.DD_UID],
                                                                 tier_array=["values"],
                                                                 msg="invalid interval " + str(interval)))
                     # subvalue
                     try:
-                        subvalues = device_values[device_value][ldi.DEVICE_DEFINITIONS_SUBVALUES]
+                        subvalues = device_values[device_value][Idf.DD_SUBVALUES]
                         for value in subvalues:
                             if not type(subvalues[value]) == bool:  # type check for validation
                                 EventLogger.critical(
                                     self._generate_device_error_message(
-                                        uid=device[loggable_devices.Identifier.DEVICE_UID],
+                                        uid=device[Idf.DD_UID],
                                         tier_array=["values"],
                                         msg="invalid type " + str(value)))
                             else:
