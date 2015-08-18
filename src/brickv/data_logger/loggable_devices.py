@@ -623,7 +623,8 @@ class Identifier(object):
         }
     }
 
-
+#Alias - for shorter code rows
+Idf = Identifier
 '''
 /*---------------------------------------------------------------------------
                                 AbstractDevice
