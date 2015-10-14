@@ -1,3 +1,29 @@
+# -*- coding: utf-8 -*-
+"""
+brickv (Brick Viewer)
+Copyright (C) 2012, 2014 Roland Dudko <roland.dudko@gmail.com>
+Copyright (C) 2012, 2014 Marvin Lutz <marvin.lutz.mail@gmail.com>
+
+job.py: Data logger jobs
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
+"""
+
+#### skip here for brick-logger ####
+
 """"
 /*---------------------------------------------------------------------------
                                 Jobs
@@ -8,14 +34,16 @@ import Queue
 import threading
 import time
 
-from brickv.data_logger.event_logger import EventLogger
-from brickv.data_logger.utils import CSVWriter
-
+if 'merged_data_logger_modules' not in globals():
+    from brickv.data_logger.event_logger import EventLogger
+    from brickv.data_logger.utils import CSVWriter
 
 class AbstractJob(threading.Thread):
     def __init__(self, datalogger=None, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
         threading.Thread.__init__(self, group=group, target=target, name=name, args=args, kwargs=kwargs,
                                   verbose=verbose)
+
+        self.daemon = True
         self._exit_flag = False
         self._datalogger = datalogger
         self._job_name = "[Job:" + self.name + "]"
@@ -43,7 +71,7 @@ class AbstractJob(threading.Thread):
         try:
             self._datalogger.data_queue.pop(self.name)
         except KeyError as key_err:
-            EventLogger.warning("Job:" + self.name + " was not ine the DataQueue! -> " + str(key_err))
+            EventLogger.warning("Job:" + self.name + " was not in the DataQueue! -> " + str(key_err))
 
 
 class CSVWriterJob(AbstractJob):
@@ -63,13 +91,12 @@ class CSVWriterJob(AbstractJob):
                 return
 
             EventLogger.debug(self._job_name + " Started")
-            csv_writer = CSVWriter(self._datalogger.default_file_path, self._datalogger.max_file_size,
-                                   self._datalogger.max_file_count)
+            csv_writer = CSVWriter(self._datalogger.csv_file_name)
 
             while True:
                 if not self._datalogger.data_queue[self.name].empty():
                     csv_data = self._get_data_from_queue()
-                    EventLogger.debug(self._job_name + " -> " + str(csv_data))
+                    #EventLogger.debug(self._job_name + " -> " + str(csv_data))
                     if not csv_writer.write_data_row(csv_data):
                         EventLogger.warning(self._job_name + " Could not write csv row!")
 
@@ -121,7 +148,7 @@ class GuiDataJob(AbstractJob, QtCore.QObject):
             while True:
                 if not self._datalogger.data_queue[self.name].empty():
                     csv_data = self._get_data_from_queue()
-                    EventLogger.debug(self._job_name + " -> " + str(csv_data))
+                    #EventLogger.debug(self._job_name + " -> " + str(csv_data))
                     self.emit(QtCore.SIGNAL(GuiDataJob.SIGNAL_NEW_DATA), csv_data)
 
                 if not self._exit_flag and self._datalogger.data_queue[self.name].empty():

@@ -2,6 +2,7 @@
 """
 brickv (Brick Viewer)
 Copyright (C) 2012-2015 Matthias Bolte <matthias@tinkerforge.com>
+Copyright (C) 2015 Olaf Lüke <olaf@tinkerforge.com>
 
 samba.py: Atmel SAM-BA flash protocol implementation
 
@@ -90,7 +91,7 @@ else:
     def get_serial_ports():
         return []
 
-#### skip here for brick-flash-cmd ####
+#### skip here for brick-flash ####
 
 CHIPID_CIDR = 0x400E0740
 
@@ -147,7 +148,7 @@ class SAMBARebootError(SAMBAException):
     pass
 
 class SAMBA(object):
-    def __init__(self, port_name, progress=None):
+    def __init__(self, port_name, progress=None, application_name='Brick Viewer'):
         self.current_mode = None
         self.progress = progress
 
@@ -156,7 +157,7 @@ class SAMBA(object):
         except SerialException as e:
             if '[Errno 13]' in str(e):
                 if sys.platform.startswith('linux'):
-                    raise SAMBAException("No permission to open serial port, try starting Brick Viewer as root")
+                    raise SAMBAException("No permission to open serial port, try starting {0} as root".format(application_name))
                 else:
                     raise SAMBAException("No permission to open serial port")
             else:
@@ -186,15 +187,15 @@ class SAMBA(object):
         else:
             raise SAMBAException('Brick with unknown SAM3S architecture: 0x%08X' % arch)
 
-        self.flash_lockregion_size = self.flash_size / self.flash_lockbit_count
-        self.flash_pages_per_lockregion = self.flash_lockregion_size / self.flash_page_size
+        self.flash_lockregion_size = self.flash_size // self.flash_lockbit_count
+        self.flash_pages_per_lockregion = self.flash_lockregion_size // self.flash_page_size
 
     def change_mode(self, mode):
         if self.current_mode == mode:
             return
 
         try:
-            self.port.write(mode + '#')
+            self.port.write((mode + '#').encode('ascii'))
         except:
             raise SAMBAException('Write error during mode change')
 
@@ -207,7 +208,7 @@ class SAMBA(object):
 
                 if len(response) == 0:
                     raise SAMBAException('Read timeout during mode change')
-                elif response == '>':
+                elif response == b'>':
                     break
         else:
             try:
@@ -217,7 +218,7 @@ class SAMBA(object):
 
             if len(response) == 0:
                 raise SAMBAException('Read timeout during mode change')
-            elif response != '\n\r':
+            elif response != b'\n\r':
                 raise SAMBAException('Protocol error during mode change')
 
         self.current_mode = mode
@@ -243,7 +244,7 @@ class SAMBA(object):
             page = firmware[offset:offset + self.flash_page_size]
 
             if len(page) < self.flash_page_size:
-                page += '\xff' * (self.flash_page_size - len(page))
+                page += b'\xff' * (self.flash_page_size - len(page))
 
             firmware_pages.append(page)
             offset += self.flash_page_size
@@ -254,7 +255,7 @@ class SAMBA(object):
         # Unlock
         for region in range(self.flash_lockbit_count):
             self.wait_for_flash_ready('while unlocking flash pages')
-            page_num = (region * self.flash_page_count) / self.flash_lockbit_count
+            page_num = (region * self.flash_page_count) // self.flash_lockbit_count
             self.write_flash_command(EEFC_FCR_FCMD_CLB, page_num)
 
         self.wait_for_flash_ready('after unlocking flash pages')
@@ -290,13 +291,13 @@ class SAMBA(object):
                 page = prefixed_imu_calibration[offset:offset + self.flash_page_size]
 
                 if len(page) < self.flash_page_size:
-                    page += '\xff' * (self.flash_page_size - len(page))
+                    page += b'\xff' * (self.flash_page_size - len(page))
 
                 imu_calibration_pages.append(page)
                 offset += self.flash_page_size
 
             # Write IMU calibration
-            page_num_offset = (ic_relative_address - ic_prefix_length) / self.flash_page_size
+            page_num_offset = (ic_relative_address - ic_prefix_length) // self.flash_page_size
 
             self.write_pages(imu_calibration_pages, page_num_offset, 'Writing IMU calibration')
 
@@ -305,7 +306,7 @@ class SAMBA(object):
 
         # Lock IMU calibration
         if imu_calibration is not None and lock_imu_calibration_pages:
-            first_page_num = (ic_relative_address - ic_prefix_length) / self.flash_page_size
+            first_page_num = (ic_relative_address - ic_prefix_length) // self.flash_page_size
             self.lock_pages(first_page_num, len(imu_calibration_pages))
 
         # Verify firmware
@@ -313,7 +314,7 @@ class SAMBA(object):
 
         # Verify IMU calibration
         if imu_calibration is not None:
-            page_num_offset = (ic_relative_address - ic_prefix_length) / self.flash_page_size
+            page_num_offset = (ic_relative_address - ic_prefix_length) // self.flash_page_size
             self.verify_pages(imu_calibration_pages, page_num_offset, 'IMU calibration', True)
 
         # Set Boot-from-Flash flag
@@ -383,10 +384,10 @@ class SAMBA(object):
         if (end_page_num % self.flash_pages_per_lockregion) != 0:
             end_page_num += self.flash_pages_per_lockregion - (end_page_num % self.flash_pages_per_lockregion)
 
-        for region in range(start_page_num / self.flash_pages_per_lockregion,
-                            end_page_num / self.flash_pages_per_lockregion):
+        for region in range(start_page_num // self.flash_pages_per_lockregion,
+                            end_page_num // self.flash_pages_per_lockregion):
             self.wait_for_flash_ready('while locking flash pages')
-            page_num = (region * self.flash_page_count) / self.flash_lockbit_count
+            page_num = (region * self.flash_page_count) // self.flash_lockbit_count
             self.write_flash_command(EEFC_FCR_FCMD_SLB, page_num)
 
         self.wait_for_flash_ready('after locking flash pages')
@@ -395,7 +396,7 @@ class SAMBA(object):
         self.change_mode('N')
 
         try:
-            self.port.write('w%X,4#' % address)
+            self.port.write(('w%X,4#' % address).encode('ascii'))
         except:
             raise SAMBAException('Write error while reading from address 0x%08X' % address)
 
@@ -422,7 +423,7 @@ class SAMBA(object):
         self.change_mode('N')
 
         try:
-            self.port.write('W%X,%X#' % (address, value))
+            self.port.write(('W%X,%X#' % (address, value)).encode('ascii'))
         except:
             raise SAMBAException('Write error while writing to address 0x%08X' % address)
 
@@ -430,7 +431,7 @@ class SAMBA(object):
         self.change_mode('T')
 
         try:
-            self.port.write('R%X,%X#' % (address, length))
+            self.port.write(('R%X,%X#' % (address, length)).encode('ascii'))
         except:
             raise SAMBAException('Write error while reading from address 0x%08X' % address)
 
@@ -452,7 +453,7 @@ class SAMBA(object):
 
         try:
             # FIXME: writes '33337777BBBBFFFF' instead of '0123456789ABCDEF'
-            self.port.write('S%X,%X#' % (address, len(bytes_)))
+            self.port.write(('S%X,%X#' % (address, len(bytes_))).encode('ascii'))
             self.port.write(bytes_)
         except:
             raise SAMBAException('Write error while writing to address 0x%08X' % address)
@@ -465,7 +466,7 @@ class SAMBA(object):
         if len(response) == 0:
             raise SAMBAException('Timeout while writing to address 0x%08X' % address)
 
-        if response != '\n\r>':
+        if response != b'\n\r>':
             raise SAMBAException('Protocol error while writing to address 0x%08X' % address)
 
     def reset(self):
@@ -481,7 +482,7 @@ class SAMBA(object):
         self.change_mode('N')
 
         try:
-            self.port.write('G%X#' % address)
+            self.port.write(('G%X#' % address).encode('ascii'))
         except:
             raise SAMBAException('Write error while executing code at address 0x%08X' % address)
 

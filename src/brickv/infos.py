@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 brickv (Brick Viewer)
-Copyright (C) 2012 Olaf Lüke <olaf@tinkerforge.com>
+Copyright (C) 2012-2015 Olaf Lüke <olaf@tinkerforge.com>
 Copyright (C) 2014 Matthias Bolte <matthias@tinkerforge.com>
 
 infos.py: Common information structures for Tools/Bricks/Bricklets
@@ -53,6 +53,14 @@ class ToolInfo(AbstractInfo):
 """.format(self.name, self.firmware_version_installed,
            self.firmware_version_latest, self.url_part)
 
+class ExtensionInfo(AbstractInfo):
+    type = 'extension'
+    name = 'Unknown'
+    extension_type = -1
+
+    def __repr__(self):
+        return self.name
+
 class DeviceInfo(AbstractInfo):
     uid = ''
     connected_uid = ''
@@ -83,6 +91,9 @@ class DeviceInfo(AbstractInfo):
            self.protocol_version, self.url_part,
            self.plugin, self.tab_window)
 
+    def get_combo_item_extension(self):
+        return 'WIFI Extension 2.0 on top of {0} [{1}]'.format(self.name, self.uid)
+
     def get_combo_item(self):
         version_str = get_version_string(self.firmware_version_installed)
 
@@ -98,6 +109,7 @@ class BrickletInfo(DeviceInfo):
     type = 'bricklet'
 
 class BrickInfo(DeviceInfo):
+    can_have_extension = False
     type = 'brick'
 
     def __init__(self):
@@ -119,31 +131,34 @@ class BrickInfo(DeviceInfo):
 """.format(a, b)
 
 class BrickMasterInfo(BrickInfo):
+    can_have_extension = True
     def __init__(self):
         BrickInfo.__init__(self)
 
         self.bricklets = {'a': None, 'b': None, 'c': None, 'd': None}
+        self.extensions = {'ext0': None, 'ext1': None}
 
     def __repr__(self):
-        a = 'Not connected'
-        b = 'Not connected'
+        ext0 = 'No Extension'
+        ext1 = 'No Extension'
         c = 'Not connected'
         d = 'Not connected'
-        if self.bricklets['a'] != None:
-            a = '{0} ({1})'.format(self.bricklets['a'].name, self.bricklets['a'].uid)
-        if self.bricklets['b'] != None:
-            b = '{0} ({1})'.format(self.bricklets['b'].name, self.bricklets['b'].uid)
+        if self.extensions['ext0'] != None:
+            ext0 = self.extensions['ext0'].name
+        if self.extensions['ext1'] != None:
+            ext1 = self.extensions['ext1'].name
         if self.bricklets['c'] != None:
             c = '{0} ({1})'.format(self.bricklets['c'].name, self.bricklets['c'].uid)
         if self.bricklets['d'] != None:
             d = '{0} ({1})'.format(self.bricklets['d'].name, self.bricklets['d'].uid)
 
-        return BrickInfo.__repr__(self) + """  Bricklets:
-   a: {0}
-   b: {1}
-   c: {2}
-   d: {3}
-""".format(a, b, c, d)
+        # Bricklet a and b are already printed by BrickInfo
+        return BrickInfo.__repr__(self) + """   c: {0}
+   d: {1}
+  Extensions:
+   ext0: {2}
+   ext1: {3}
+""".format(c, d, ext0, ext1)
 
 class BrickREDInfo(BrickInfo):
     def __init__(self):

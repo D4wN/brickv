@@ -33,7 +33,7 @@ from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
 from brickv.flashing import FlashingWindow
 from brickv.advanced import AdvancedWindow
-from brickv.logger_setup import LoggerWindow
+from brickv.data_logger.setup_dialog import SetupDialog as DataLoggerWindow
 from brickv.async_call import async_start_thread, async_next_session
 from brickv.bindings.brick_master import BrickMaster
 from brickv.bindings.brick_red import BrickRED
@@ -93,7 +93,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_device_info = None
         self.flashing_window = None
         self.advanced_window = None
-        self.logger_window = None
+        self.data_logger_window = None
         self.delayed_refresh_updates_timer = QTimer()
         self.delayed_refresh_updates_timer.timeout.connect(self.delayed_refresh_updates)
         self.delayed_refresh_updates_timer.setInterval(500)
@@ -107,7 +107,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.button_connect.clicked.connect(self.connect_clicked)
         self.button_flashing.clicked.connect(self.flashing_clicked)
         self.button_advanced.clicked.connect(self.advanced_clicked)
-        self.button_logger.clicked.connect(self.logger_clicked)
+        self.button_data_logger.clicked.connect(self.data_logger_clicked)
         self.plugin_manager = PluginManager()
 
         # host info
@@ -174,13 +174,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def exit_logger(self):
         exitBrickv = True
-        if (self.logger_window is not None) and (self.logger_window.data_logger_thread is not None) and (not self.logger_window.data_logger_thread.stopped):
+        if (self.data_logger_window is not None) and (self.data_logger_window.data_logger_thread is not None) and (not self.data_logger_window.data_logger_thread.stopped):
             quit_msg = "The Data Logger is running. Are you sure you want to exit the program?"
             reply = QMessageBox.question(self, 'Message', 
                      quit_msg, QMessageBox.Yes, QMessageBox.No)
 
             if reply == QMessageBox.Yes:
-                self.logger_window.data_logger_thread.stop()
+                self.data_logger_window.data_logger_thread.stop()
             else:
                 exitBrickv = False
         
@@ -365,11 +365,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.advanced_window.show()
         
-    def logger_clicked(self):
-        if self.logger_window is None:
-            self.logger_window = LoggerWindow(self)
+    def data_logger_clicked(self):
+        if self.data_logger_window is None:
+            self.data_logger_window = DataLoggerWindow(self)
         
-        self.logger_window.show()
+        self.data_logger_window.show()
 
     def connect_clicked(self):
         if self.ipcon.get_connection_state() == IPConnection.CONNECTION_STATE_DISCONNECTED:
@@ -390,13 +390,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.do_disconnect()
 
     def item_double_clicked(self, index):
+        position_index = index.sibling(index.row(), 2)
+
+        if position_index.isValid() and position_index.data().startswith('Ext'):
+                index = index.parent()
+
         uid_index = index.sibling(index.row(), 1)
 
         if uid_index.isValid():
-            uid_text = uid_index.data()
-            self.show_plugin(uid_text)
+            self.show_plugin(uid_index.data())
 
-    def create_tab_window(self, device_info, connected_uid, position):
+    def create_tab_window(self, device_info):
         tab_window = TabWindow(self.tab_widget, device_info.name, self.untab)
         tab_window._info = device_info
         tab_window.set_callback_on_tab(lambda index:
@@ -417,19 +421,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         info_bar.addSpacerItem(QSpacerItem(1, 1, QSizePolicy.Expanding))
 
         # connected uid
-        if connected_uid != '0':
+        if device_info.connected_uid != '0':
             info_bar.addWidget(QLabel('Connected to:'))
 
             button = QToolButton()
-            button.setText(connected_uid)
-            button.clicked.connect(lambda: self.show_plugin(connected_uid))
+            button.setText(device_info.connected_uid)
+            button.clicked.connect(lambda: self.show_plugin(device_info.connected_uid))
 
             info_bar.addWidget(button)
             info_bar.addSpacerItem(QSpacerItem(1, 1, QSizePolicy.Expanding))
 
         # position
         info_bar.addWidget(QLabel('Position:'))
-        info_bar.addWidget(QLabel('{0}'.format(position.upper())))
+        info_bar.addWidget(QLabel('{0}'.format(device_info.position.upper())))
 
         info_bar.addSpacerItem(QSpacerItem(1, 1, QSizePolicy.Expanding))
 
@@ -587,18 +591,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                             something_changed_ref[0] = True
 
             if device_info.plugin == None:
-                plugin = self.plugin_manager.get_plugin(device_identifier, self.ipcon,
-                                                        uid, hardware_version, firmware_version)
+                self.plugin_manager.create_plugin_instance(device_identifier, self.ipcon, device_info)
 
-                device_info.plugin = plugin
-                device_info.name = plugin.name
-                device_info.url_part = plugin.get_url_part()
-
-                infos.add_info(device_info)
-
-                device_info.tab_window = self.create_tab_window(device_info, connected_uid, position)
+                device_info.tab_window = self.create_tab_window(device_info)
                 device_info.tab_window.setWindowFlags(Qt.Widget)
                 device_info.tab_window.tab()
+
+                infos.add_info(device_info)
 
                 something_changed_ref[0] = True
 
@@ -724,7 +723,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.tree_view.setColumnWidth(3, 90)
         self.tree_view.setExpandsOnDoubleClick(False)
         self.tree_view.setSortingEnabled(True)
-        self.tree_view.header().setSortIndicator(0, Qt.AscendingOrder)
+        self.tree_view.header().setSortIndicator(2, Qt.AscendingOrder)
 
     def update_ui_state(self, connection_state=None):
         # FIXME: need to call processEvents() otherwise get_connection_state()
@@ -779,6 +778,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         QApplication.processEvents()
 
     def update_tree_view(self):
+        sis = self.tree_view.header().sortIndicatorSection()
+        sio = self.tree_view.header().sortIndicatorOrder()
+
         self.tree_view_model.clear()
 
         for info in infos.get_brick_infos():
@@ -794,7 +796,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             for port in sorted(info.bricklets):
                 if info.bricklets[port] and info.bricklets[port].protocol_version == 2:
-                    child = [QStandardItem(port.upper() + ': ' + info.bricklets[port].name),
+                    child = [QStandardItem(info.bricklets[port].name),
                              QStandardItem(info.bricklets[port].uid),
                              QStandardItem(info.bricklets[port].position.upper()),
                              QStandardItem('.'.join(map(str, info.bricklets[port].firmware_version_installed)))]
@@ -802,7 +804,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                     parent[0].appendRow(child)
 
+            if info.can_have_extension:
+                extensions = []
+                if info.extensions['ext0'] != None:
+                    extensions.append((info.extensions['ext0'], 'Ext0'))
+                if info.extensions['ext1'] != None:
+                    extensions.append((info.extensions['ext1'], 'Ext1'))
+
+                for extension in extensions:
+                    child = [QStandardItem(extension[0].name),
+                             QStandardItem(''),
+                             QStandardItem(extension[1]),
+                             QStandardItem('')]
+                    for item in child:
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                    parent[0].appendRow(child)
+
         self.set_tree_view_defaults()
+        self.tree_view.header().setSortIndicator(sis, sio)
         self.update_advanced_window()
         self.delayed_refresh_updates_timer.start()
 

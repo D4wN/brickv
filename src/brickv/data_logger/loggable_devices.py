@@ -1,628 +1,2187 @@
-# https://docs.google.com/spreadsheets/d/14p6N8rAg8M9Ozr1fmOZePPflvNJmgt0pSAebliDrasI/edit?usp=sharing
-# Documented for Testing and Blueprints
-# Bricklets ############################################################################################################
-# from brickv.bindings.bricklet_accelerometer import Accelerometer #NYI
-from brickv.bindings.bricklet_ambient_light import AmbientLight
-# from brickv.bindings.bricklet_ambient_light_v2 import AmbientLightV2 #NYI
-from brickv.bindings.bricklet_analog_in import AnalogIn
-# from brickv.bindings.bricklet_analog_in_v2 import AnalogInV2 #NYI
-from brickv.bindings.bricklet_analog_out import AnalogOut
-# from brickv.bindings.bricklet_analog_out_v2 import AnalogOutV2 #NYI
-from brickv.bindings.bricklet_barometer import Barometer
-# from brickv.bindings.bricklet_breakout??? import Breakout??? #NYI
-from brickv.bindings.bricklet_color import Color
-from brickv.bindings.bricklet_current12 import Current12
-from brickv.bindings.bricklet_current25 import Current25
-from brickv.bindings.bricklet_distance_ir import DistanceIR
-from brickv.bindings.bricklet_distance_us import DistanceUS
-from brickv.bindings.bricklet_dual_button import DualButton
-from brickv.bindings.bricklet_dual_relay import DualRelay
-# from brickv.bindings.bricklet_dust_detector import DustDetector #NYI
-from brickv.bindings.bricklet_gps import GPS
-from brickv.bindings.bricklet_hall_effect import HallEffect
-from brickv.bindings.bricklet_humidity import Humidity
-# from brickv.bindings.bricklet_industrial_analog_out import IndustrialAnalogOut #NYI
-# from brickv.bindings.bricklet_industrial_digital_in_4 import IndustrialDigitalIn4 #NYI
-# from brickv.bindings.bricklet_industrial_digital_out_4 import IndustrialDigitalOut4 #NYI
-from brickv.bindings.bricklet_industrial_dual_0_20ma import IndustrialDual020mA
-# from brickv.bindings.bricklet_industrial_dual_analog_in import IndustrialDualAnalogIn #NYI
-# from brickv.bindings.bricklet_industrial_quad_relay import IndustrialQuadRelay #NYI
-from brickv.bindings.bricklet_io16 import IO16
-from brickv.bindings.bricklet_io4 import IO4
-from brickv.bindings.bricklet_joystick import Joystick
-# from brickv.bindings.bricklet_laser_range_finder import LaserRangeFinder #NYI
-# from brickv.bindings.bricklet_lcd_16x2 import LCD16x2 #NYI
-# from brickv.bindings.bricklet_lcd_20x4 import LCD20x4 #NYI
-from brickv.bindings.bricklet_led_strip import LEDStrip
-from brickv.bindings.bricklet_line import Line
-from brickv.bindings.bricklet_linear_poti import LinearPoti
-# from brickv.bindings.bricklet_load_cell import LoadCell #NYI
-from brickv.bindings.bricklet_moisture import Moisture
-from brickv.bindings.bricklet_motion_detector import MotionDetector
-from brickv.bindings.bricklet_multi_touch import MultiTouch
-# from brickv.bindings.bricklet_nfc_rfid import NFCRFID #NYI
-# from brickv.bindings.bricklet_piezo_buzzer import PiezoBuzzer #NYI
-# from brickv.bindings.bricklet_piezo_speaker import PiezoSpeaker #NYI
-from brickv.bindings.bricklet_ptc import PTC
-# from brickv.bindings.bricklet_remote_switch import RemoteSwitch #NYI
-from brickv.bindings.bricklet_rotary_encoder import RotaryEncoder
-from brickv.bindings.bricklet_rotary_poti import RotaryPoti
-# from brickv.bindings.bricklet_rs232 import RS232 #NYI
-from brickv.bindings.bricklet_segment_display_4x7 import SegmentDisplay4x7
-from brickv.bindings.bricklet_solid_state_relay import SolidStateRelay
-from brickv.bindings.bricklet_sound_intensity import SoundIntensity
-from brickv.bindings.bricklet_temperature import Temperature
-from brickv.bindings.bricklet_temperature_ir import TemperatureIR
-from brickv.bindings.bricklet_tilt import Tilt
-from brickv.bindings.bricklet_voltage import Voltage
-from brickv.bindings.bricklet_voltage_current import VoltageCurrent
-# Bricks ###############################################################################################################
-from brickv.bindings.brick_dc import DC  # NYI
-# from brickv.bindings.brick_stepper import Stepper #NYI
+# -*- coding: utf-8 -*-
+"""
+brickv (Brick Viewer)
+Copyright (C) 2012, 2014 Roland Dudko <roland.dudko@gmail.com>
+Copyright (C) 2012, 2014 Marvin Lutz <marvin.lutz.mail@gmail.com>
 
+loggable_devices.py: Util classes for the data logger
 
-from brickv.data_logger.event_logger import EventLogger
-import brickv.data_logger.utils as utils
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-'''
-/*---------------------------------------------------------------------------
-                                SpecialDevices
- ---------------------------------------------------------------------------*/
- '''
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
 
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
+"""
 
-class SpecialDevices(object):
-    """
-    SpecialDevices are functions for special Bricks/Bricklets. Some Device functions can return different values,
-    depending on different situations, e.g. the GPS Bricklet. If the GPS Bricklet does not have a so called FIX Value,
-    then the function will return an Error instead of the specified return values.
-    """
+#### skip here for brick-logger ####
 
-    # GPS
-    def get_gps_coordinates(device):
-        if device.get_status()[0] == GPS.FIX_NO_FIX:
-            raise Exception('No fix')
+import time
+
+if 'merged_data_logger_modules' not in globals():
+    from brickv.bindings.bricklet_accelerometer import BrickletAccelerometer
+    from brickv.bindings.bricklet_ambient_light import BrickletAmbientLight
+    from brickv.bindings.bricklet_ambient_light_v2 import BrickletAmbientLightV2
+    from brickv.bindings.bricklet_analog_in import BrickletAnalogIn
+    from brickv.bindings.bricklet_analog_in_v2 import BrickletAnalogInV2
+    from brickv.bindings.bricklet_analog_out_v2 import BrickletAnalogOutV2
+    from brickv.bindings.bricklet_barometer import BrickletBarometer
+    from brickv.bindings.bricklet_color import BrickletColor
+    from brickv.bindings.bricklet_current12 import BrickletCurrent12
+    from brickv.bindings.bricklet_current25 import BrickletCurrent25
+    from brickv.bindings.bricklet_distance_ir import BrickletDistanceIR
+    from brickv.bindings.bricklet_distance_us import BrickletDistanceUS
+    from brickv.bindings.bricklet_dual_button import BrickletDualButton
+    from brickv.bindings.bricklet_dust_detector import BrickletDustDetector
+    from brickv.bindings.bricklet_gps import BrickletGPS
+    from brickv.bindings.bricklet_hall_effect import BrickletHallEffect
+    from brickv.bindings.bricklet_humidity import BrickletHumidity
+    from brickv.bindings.bricklet_industrial_digital_in_4 import BrickletIndustrialDigitalIn4
+    from brickv.bindings.bricklet_industrial_dual_0_20ma import BrickletIndustrialDual020mA
+    from brickv.bindings.bricklet_industrial_dual_analog_in import BrickletIndustrialDualAnalogIn
+    from brickv.bindings.bricklet_io16 import BrickletIO16
+    from brickv.bindings.bricklet_io4 import BrickletIO4
+    from brickv.bindings.bricklet_joystick import BrickletJoystick
+    # from brickv.bindings.bricklet_laser_range_finder import BrickletLaserRangeFinder #NYI # config: mode, FIXME: special laser handling
+    from brickv.bindings.bricklet_led_strip import BrickletLEDStrip
+    from brickv.bindings.bricklet_line import BrickletLine
+    from brickv.bindings.bricklet_linear_poti import BrickletLinearPoti
+    from brickv.bindings.bricklet_load_cell import BrickletLoadCell
+    from brickv.bindings.bricklet_moisture import BrickletMoisture
+    from brickv.bindings.bricklet_motion_detector import BrickletMotionDetector
+    from brickv.bindings.bricklet_multi_touch import BrickletMultiTouch
+    from brickv.bindings.bricklet_ptc import BrickletPTC
+    from brickv.bindings.bricklet_rotary_encoder import BrickletRotaryEncoder
+    from brickv.bindings.bricklet_rotary_poti import BrickletRotaryPoti
+    # from brickv.bindings.bricklet_rs232 import BrickletRS232 #NYI FIXME: has to use read_callback to get all data
+    from brickv.bindings.bricklet_sound_intensity import BrickletSoundIntensity
+    from brickv.bindings.bricklet_temperature import BrickletTemperature
+    from brickv.bindings.bricklet_temperature_ir import BrickletTemperatureIR
+    from brickv.bindings.bricklet_tilt import BrickletTilt
+    from brickv.bindings.bricklet_voltage import BrickletVoltage
+    from brickv.bindings.bricklet_voltage_current import BrickletVoltageCurrent
+    from brickv.bindings.brick_dc import BrickDC
+    from brickv.bindings.brick_imu import BrickIMU
+    from brickv.bindings.brick_imu_v2 import BrickIMUV2
+    from brickv.bindings.brick_master import BrickMaster
+    from brickv.bindings.brick_servo import BrickServo
+    from brickv.bindings.brick_stepper import BrickStepper
+
+    from brickv.data_logger.event_logger import EventLogger
+    from brickv.data_logger.utils import LoggerTimer, timestamp_to_de, timestamp_to_us, timestamp_to_iso, timestamp_to_unix, CSVData
+else:
+    from tinkerforge.bricklet_accelerometer import BrickletAccelerometer
+    from tinkerforge.bricklet_ambient_light import BrickletAmbientLight
+    from tinkerforge.bricklet_ambient_light_v2 import BrickletAmbientLightV2
+    from tinkerforge.bricklet_analog_in import BrickletAnalogIn
+    from tinkerforge.bricklet_analog_in_v2 import BrickletAnalogInV2
+    from tinkerforge.bricklet_analog_out_v2 import BrickletAnalogOutV2
+    from tinkerforge.bricklet_barometer import BrickletBarometer
+    from tinkerforge.bricklet_color import BrickletColor
+    from tinkerforge.bricklet_current12 import BrickletCurrent12
+    from tinkerforge.bricklet_current25 import BrickletCurrent25
+    from tinkerforge.bricklet_distance_ir import BrickletDistanceIR
+    from tinkerforge.bricklet_distance_us import BrickletDistanceUS
+    from tinkerforge.bricklet_dual_button import BrickletDualButton
+    from tinkerforge.bricklet_dust_detector import BrickletDustDetector
+    from tinkerforge.bricklet_gps import BrickletGPS
+    from tinkerforge.bricklet_hall_effect import BrickletHallEffect
+    from tinkerforge.bricklet_humidity import BrickletHumidity
+    from tinkerforge.bricklet_industrial_digital_in_4 import BrickletIndustrialDigitalIn4
+    from tinkerforge.bricklet_industrial_dual_0_20ma import BrickletIndustrialDual020mA
+    from tinkerforge.bricklet_industrial_dual_analog_in import BrickletIndustrialDualAnalogIn
+    from tinkerforge.bricklet_io16 import BrickletIO16
+    from tinkerforge.bricklet_io4 import BrickletIO4
+    from tinkerforge.bricklet_joystick import BrickletJoystick
+    #from tinkerforge.bricklet_laser_range_finder import BrickletLaserRangeFinder #NYI # config: mode, FIXME: special laser handling
+    from tinkerforge.bricklet_led_strip import BrickletLEDStrip
+    from tinkerforge.bricklet_line import BrickletLine
+    from tinkerforge.bricklet_linear_poti import BrickletLinearPoti
+    from tinkerforge.bricklet_load_cell import BrickletLoadCell
+    from tinkerforge.bricklet_moisture import BrickletMoisture
+    from tinkerforge.bricklet_motion_detector import BrickletMotionDetector
+    from tinkerforge.bricklet_multi_touch import BrickletMultiTouch
+    from tinkerforge.bricklet_ptc import BrickletPTC
+    from tinkerforge.bricklet_rotary_encoder import BrickletRotaryEncoder
+    from tinkerforge.bricklet_rotary_poti import BrickletRotaryPoti
+    #from tinkerforge.bricklet_rs232 import BrickletRS232 #NYI FIXME: has to use read_callback to get all data
+    from tinkerforge.bricklet_sound_intensity import BrickletSoundIntensity
+    from tinkerforge.bricklet_temperature import BrickletTemperature
+    from tinkerforge.bricklet_temperature_ir import BrickletTemperatureIR
+    from tinkerforge.bricklet_tilt import BrickletTilt
+    from tinkerforge.bricklet_voltage import BrickletVoltage
+    from tinkerforge.bricklet_voltage_current import BrickletVoltageCurrent
+    from tinkerforge.brick_dc import BrickDC
+    from tinkerforge.brick_imu import BrickIMU
+    from tinkerforge.brick_imu_v2 import BrickIMUV2
+    from tinkerforge.brick_master import BrickMaster
+    from tinkerforge.brick_servo import BrickServo
+    from tinkerforge.brick_stepper import BrickStepper
+
+def value_to_bits(value, length):
+    bits = []
+
+    for i in range(length):
+        if (value & (1 << i)) != 0:
+            bits.append(1)
         else:
-            return device.get_coordinates()
+            bits.append(0)
 
-    get_gps_coordinates = staticmethod(get_gps_coordinates)
+    return bits
 
-    def get_gps_altitude(device):
-        if device.get_status()[0] != GPS.FIX_3D_FIX:
-            raise Exception('No 3D fix')
-        else:
-            return device.get_altitude()
+# special_* functions are for special Bricks/Bricklets. Some device functions can
+# return different values, depending on different situations, e.g. the GPS Bricklet.
+# If the GPS Bricklet does not have a fix, then the function will return an Error
+# instead of the specified return values.
 
-    get_gps_altitude = staticmethod(get_gps_altitude)
+# BrickletColor
+def special_get_get_illuminance(device):
+    gain, integration_time = device.get_config()
 
-    def get_gps_motion(device):
-        if device.get_status()[0] == GPS.FIX_NO_FIX:
-            raise Exception('No fix')
-        else:
-            return device.get_motion()
+    if gain == BrickletColor.GAIN_1X:
+        gain_factor = 1
+    elif gain == BrickletColor.GAIN_4X:
+        gain_factor = 4
+    elif gain == BrickletColor.GAIN_16X:
+        gain_factor = 16
+    elif gain == BrickletColor.GAIN_60X:
+        gain_factor = 60
 
-    get_gps_motion = staticmethod(get_gps_motion)
+    if integration_time == BrickletColor.INTEGRATION_TIME_2MS:
+        integration_time_factor = 2.4
+    elif integration_time == BrickletColor.INTEGRATION_TIME_24MS:
+        integration_time_factor = 24
+    elif integration_time == BrickletColor.INTEGRATION_TIME_101MS:
+        integration_time_factor = 101
+    elif integration_time == BrickletColor.INTEGRATION_TIME_154MS:
+        integration_time_factor = 154
+    elif integration_time == BrickletColor.INTEGRATION_TIME_700MS:
+        integration_time_factor = 700
 
-    # PTC
-    def get_ptc_temperature(device):
-        if not device.is_sensor_connected():
-            raise Exception('No sensor')
-        else:
-            return device.get_temperature()
+    illuminance = device.get_illuminance()
 
-    get_ptc_temperature = staticmethod(get_ptc_temperature)
+    return int(round(illuminance * 700.0 / float(gain_factor) / float(integration_time_factor), 1) * 10)
 
+# BrickletGPS
+def special_get_gps_coordinates(device):
+    if device.get_status()[0] == BrickletGPS.FIX_NO_FIX:
+        raise Exception('No fix')
+    else:
+        return device.get_coordinates()
 
-'''
-/*---------------------------------------------------------------------------
-                                Identifier
- ---------------------------------------------------------------------------*/
- '''
+def special_get_gps_altitude(device):
+    if device.get_status()[0] != BrickletGPS.FIX_3D_FIX:
+        raise Exception('No 3D fix')
+    else:
+        return device.get_altitude()
 
+def special_get_gps_motion(device):
+    if device.get_status()[0] == BrickletGPS.FIX_NO_FIX:
+        raise Exception('No fix')
+    else:
+        return device.get_motion()
 
-class Identifier(object):
-    """
-        This class is used to identify supported Bricks and Bricklets. The
-        DEVICE_DEFINITIONS contains a Blueprint for each supported device.
-        This Blueprint is used in the config file and the GUI.
-    """
-    # Devices
-    DEVICES = "DEVICES"
+# BrickletMultiTouch
+def special_set_multi_touch_options(device, electrode0, electrode1, electrode2, electrode3,
+                                    electrode4, electrode5, electrode6, electrode7,
+                                    electrode8, electrode9, electrode10, electrode11,
+                                    proximity, electrode_sensitivity):
+    electrode_config = 0
 
-    # config list access strings
-    DD_NAME = "name"
-    DD_CLASS = "class"
-    DD_UID = "uid"
-    DD_VALUES = "values"
-    DD_VALUES_INTERVAL = "interval"
-    # Device Definitions Keys
-    DD_GETTER = "getter"
-    DD_SUBVALUES = "subvalues"
+    if electrode0:
+        electrode_config |= 1 << 0
 
-    DD_UID_DEFAULT = "Enter UID"
+    if electrode1:
+        electrode_config |= 1 << 1
 
-    # Device Definitons(DD)
-    DEVICE_DEFINITIONS = {
-        ################################################################################################################
-        # Bricklets Start Here #
-        ########################
-        AmbientLight.DEVICE_DISPLAY_NAME: {
-            'class': AmbientLight,
-            'values': {
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                },
-                'Illuminance': {
-                    'getter': lambda device: device.get_illuminance(),
-                    'subvalues': None
-                }
+    if electrode2:
+        electrode_config |= 1 << 2
+
+    if electrode3:
+        electrode_config |= 1 << 3
+
+    if electrode4:
+        electrode_config |= 1 << 4
+
+    if electrode5:
+        electrode_config |= 1 << 5
+
+    if electrode6:
+        electrode_config |= 1 << 6
+
+    if electrode7:
+        electrode_config |= 1 << 7
+
+    if electrode8:
+        electrode_config |= 1 << 8
+
+    if electrode9:
+        electrode_config |= 1 << 9
+
+    if electrode10:
+        electrode_config |= 1 << 10
+
+    if electrode11:
+        electrode_config |= 1 << 11
+
+    if proximity:
+        electrode_config |= 1 << 12
+
+    device.set_electrode_config(electrode_config)
+    device.set_electrode_sensitivity(electrode_sensitivity)
+
+# BrickletPTC
+def special_get_ptc_resistance(device):
+    if not device.is_sensor_connected():
+        raise Exception('No sensor')
+    else:
+        return device.get_resistance()
+
+def special_get_ptc_temperature(device):
+    if not device.is_sensor_connected():
+        raise Exception('No sensor')
+    else:
+        return device.get_temperature()
+
+device_specs = {
+    BrickletAccelerometer.DEVICE_DISPLAY_NAME: {
+        'class': BrickletAccelerometer,
+        'values': [
+            {
+                'name': 'Acceleration',
+                'getter': lambda device: device.get_acceleration(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['g/1000', 'g/1000', 'g/1000'],
+                'advanced': False
+            },
+            {
+                'name': 'Temperature',
+                'getter': lambda device: device.get_temperature(),
+                'subvalues': None,
+                'unit': '°C',
+                'advanced': True
             }
-        },
-        AnalogIn.DEVICE_DISPLAY_NAME: {
-            'class': AnalogIn,
-            'values': {
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                },
-                'Voltage': {
-                    'getter': lambda device: device.get_voltage(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, data_rate, full_scale, filter_bandwidth: device.set_configuration(data_rate, full_scale, filter_bandwidth),
+        'options': [
+            {
+                'name': 'Data Rate',
+                'type': 'choice',
+                'values': [('Off', BrickletAccelerometer.DATA_RATE_OFF),
+                           ('3Hz', BrickletAccelerometer.DATA_RATE_3HZ),
+                           ('6Hz', BrickletAccelerometer.DATA_RATE_6HZ),
+                           ('12Hz', BrickletAccelerometer.DATA_RATE_12HZ),
+                           ('25Hz', BrickletAccelerometer.DATA_RATE_25HZ),
+                           ('50Hz', BrickletAccelerometer.DATA_RATE_50HZ),
+                           ('100Hz', BrickletAccelerometer.DATA_RATE_100HZ),
+                           ('400Hz', BrickletAccelerometer.DATA_RATE_400HZ),
+                           ('800Hz', BrickletAccelerometer.DATA_RATE_800HZ),
+                           ('1600Hz', BrickletAccelerometer.DATA_RATE_1600HZ)],
+                'default': '100Hz'
+            },
+            {
+                'name': 'Full Scale',
+                'type': 'choice',
+                'values': [('2g', BrickletAccelerometer.FULL_SCALE_2G),
+                           ('4g', BrickletAccelerometer.FULL_SCALE_4G),
+                           ('6g', BrickletAccelerometer.FULL_SCALE_6G),
+                           ('8g', BrickletAccelerometer.FULL_SCALE_8G),
+                           ('16g', BrickletAccelerometer.FULL_SCALE_16G)],
+                'default': '4g'
+            },
+            {
+                'name': 'Filter Bandwidth',
+                'type': 'choice',
+                'values': [('800Hz', BrickletAccelerometer.FILTER_BANDWIDTH_800HZ),
+                           ('400Hz', BrickletAccelerometer.FILTER_BANDWIDTH_400HZ),
+                           ('200Hz', BrickletAccelerometer.FILTER_BANDWIDTH_200HZ),
+                           ('50Hz', BrickletAccelerometer.FILTER_BANDWIDTH_50HZ)],
+                'default': '200Hz'
             }
-        },
-        AnalogOut.DEVICE_DISPLAY_NAME: {
-            'class': AnalogOut,
-            'values': {
-                'Voltage': {
-                    'getter': lambda device: device.get_voltage(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletAmbientLight.DEVICE_DISPLAY_NAME: {
+        'class': BrickletAmbientLight,
+        'values': [
+            {
+                'name': 'Illuminance',
+                'getter': lambda device: device.get_illuminance(),
+                'subvalues': None,
+                'unit': 'lx/10',
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        Barometer.DEVICE_DISPLAY_NAME: {
-            'class': Barometer,
-            'values': {
-                'Air Pressure': {
-                    'getter': lambda device: device.get_air_pressure(),
-                    'subvalues': None
-                },
-                'Altitude': {
-                    'getter': lambda device: device.get_altitude(),
-                    'subvalues': None
-                },
-                'Chip Temperature': {
-                    'getter': lambda device: device.get_chip_temperature(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletAmbientLightV2.DEVICE_DISPLAY_NAME: {
+        'class': BrickletAmbientLightV2,
+        'values': [
+            {
+                'name': 'Illuminance',
+                'getter': lambda device: device.get_illuminance(),
+                'subvalues': None,
+                'unit': 'lx/100',
+                'advanced': False
             }
-        },
-        Color.DEVICE_DISPLAY_NAME: {
-            'class': Color,
-            'values': {
-                'Color': {
-                    'getter': lambda device: device.get_color(),
-                    'subvalues': ['Red', 'Green', 'Blue', 'Clear']
-                },
-                'Illuminance': {
-                    'getter': lambda device: device.get_illuminance(),
-                    'subvalues': None
-                },
-                'Color Temperature': {
-                    'getter': lambda device: device.get_color_temperature(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, illuminance_range, integration_time: device.set_configuration(illuminance_range, integration_time),
+        'options': [
+            {
+                'name': 'Illuminance Range',
+                'type': 'choice',
+                'values': [('Unlimited', 6), # FIXME: BrickletAmbientLightV2.ILLUMINANCE_RANGE_UNLIMITED
+                           ('64000Lux', BrickletAmbientLightV2.ILLUMINANCE_RANGE_64000LUX),
+                           ('32000Lux', BrickletAmbientLightV2.ILLUMINANCE_RANGE_32000LUX),
+                           ('16000Lux', BrickletAmbientLightV2.ILLUMINANCE_RANGE_16000LUX),
+                           ('8000Lux', BrickletAmbientLightV2.ILLUMINANCE_RANGE_8000LUX),
+                           ('1300Lux', BrickletAmbientLightV2.ILLUMINANCE_RANGE_1300LUX),
+                           ('600Lux', BrickletAmbientLightV2.ILLUMINANCE_RANGE_600LUX)],
+                'default': '8000Lux'
+            },
+            {
+                'name': 'Integration Time',
+                'type': 'choice',
+                'values': [('50ms', BrickletAmbientLightV2.INTEGRATION_TIME_50MS),
+                           ('100ms', BrickletAmbientLightV2.INTEGRATION_TIME_100MS),
+                           ('150ms', BrickletAmbientLightV2.INTEGRATION_TIME_150MS),
+                           ('200ms', BrickletAmbientLightV2.INTEGRATION_TIME_200MS),
+                           ('250ms', BrickletAmbientLightV2.INTEGRATION_TIME_350MS),
+                           ('300ms', BrickletAmbientLightV2.INTEGRATION_TIME_300MS),
+                           ('350ms', BrickletAmbientLightV2.INTEGRATION_TIME_350MS),
+                           ('400ms', BrickletAmbientLightV2.INTEGRATION_TIME_400MS)],
+                'default': '200ms'
             }
-        },
-        Current12.DEVICE_DISPLAY_NAME: {
-            'class': Current12,
-            'values': {
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                },
-                'Current': {
-                    'getter': lambda device: device.get_current(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletAnalogIn.DEVICE_DISPLAY_NAME: {
+        'class': BrickletAnalogIn,
+        'values': [
+            {
+                'name': 'Voltage',
+                'getter': lambda device: device.get_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        Current25.DEVICE_DISPLAY_NAME: {
-            'class': Current25,
-            'values': {
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                },
-                'Current': {
-                    'getter': lambda device: device.get_current(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, voltage_range, average_length: [device.set_range(voltage_range), device.set_averaging(average_length)],
+        'options': [
+            {
+                'name': 'Voltage Range',
+                'type': 'choice',
+                'values': [('Automatic', BrickletAnalogIn.RANGE_AUTOMATIC),
+                           ('3.30V', BrickletAnalogIn.RANGE_UP_TO_3V),
+                           ('6.05V', BrickletAnalogIn.RANGE_UP_TO_6V),
+                           ('10.32V', BrickletAnalogIn.RANGE_UP_TO_10V),
+                           ('36.30V', BrickletAnalogIn.RANGE_UP_TO_36V),
+                           ('45.00V', BrickletAnalogIn.RANGE_UP_TO_45V)],
+                'default': 'Automatic'
+            },
+            {
+                'name': 'Average Length',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': None,
+                'default': 50
             }
-        },
-        DistanceIR.DEVICE_DISPLAY_NAME: {
-            'class': DistanceIR,
-            'values': {
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                },
-                'Distance': {
-                    'getter': lambda device: device.get_distance(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletAnalogInV2.DEVICE_DISPLAY_NAME: {
+        'class': BrickletAnalogInV2,
+        'values': [
+            {
+                'name': 'Voltage',
+                'getter': lambda device: device.get_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        DistanceUS.DEVICE_DISPLAY_NAME: {
-            'class': DistanceUS,
-            'values': {
-                'Distance': {
-                    'getter': lambda device: device.get_distance_value(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, moving_average_length: device.set_moving_average(moving_average_length),
+        'options': [
+            {
+                'name': 'Moving Average Length',
+                'type': 'int',
+                'minimum': 1,
+                'maximum': 50,
+                'suffix': None,
+                'default': 50
             }
-        },
-        DualButton.DEVICE_DISPLAY_NAME: {
-            'class': DualButton,
-            'values': {
-                'Button State': {
-                    'getter': lambda device: device.get_button_state(),
-                    'subvalues': ['Left', 'Right']
-                },
-                'Led State': {
-                    'getter': lambda device: device.get_led_state(),
-                    'subvalues': ['Left', 'Right']
-                }
+        ]
+    },
+    BrickletAnalogOutV2.DEVICE_DISPLAY_NAME: {
+        'class': BrickletAnalogOutV2,
+        'values': [
+            {
+                'name': 'Input Voltage',
+                'getter': lambda device: device.get_input_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
             }
-        },
-        DualRelay.DEVICE_DISPLAY_NAME: {
-            'class': DualRelay,
-            'values': {
-                'State': {
-                    'getter': lambda device: device.get_state(),
-                    'subvalues': ['Relay1', 'Relay2']
-                },
-                'Monoflop1': {
-                    'getter': lambda device: device.get_monoflop(1),
-                    'subvalues': ['State', 'Time', 'Time Remaining']
-                },
-                'Monoflop2': {
-                    'getter': lambda device: device.get_monoflop(2),
-                    'subvalues': ['State', 'Time', 'Time Remaining']
-                }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletBarometer.DEVICE_DISPLAY_NAME: {
+        'class': BrickletBarometer,
+        'values': [
+            {
+                'name': 'Air Pressure',
+                'getter': lambda device: device.get_air_pressure(),
+                'subvalues': None,
+                'unit': 'mbar/1000',
+                'advanced': False
+            },
+            {
+                'name': 'Altitude',
+                'getter': lambda device: device.get_altitude(),
+                'subvalues': None,
+                'unit': 'cm',
+                'advanced': False
+            },
+            {
+                'name': 'Chip Temperature',
+                'getter': lambda device: device.get_chip_temperature(),
+                'subvalues': None,
+                'unit': '°C/100',
+                'advanced': False
             }
-        },
-        GPS.DEVICE_DISPLAY_NAME: {
-            'class': GPS,
-            'values': {
-                'Altitude': {
-                    'getter': SpecialDevices.get_gps_altitude,
-                    'subvalues': ['Altitude', 'Geoidal Separation']
-                },
-                'Coordinates': {
-                    'getter': SpecialDevices.get_gps_coordinates,
-                    'subvalues': ['Latitude', 'NS', 'Longitude', 'EW', 'PDOP', 'HDOP', 'VDOP', 'EPE']
-                },
-                'Date Time': {
-                    'getter': lambda device: device.get_date_time(),
-                    'subvalues': ['Date', 'Time']
-                },
-                'Motion': {
-                    'getter': SpecialDevices.get_gps_motion,
-                    'subvalues': ['Course', 'Speed']
-                },
-                'Status': {
-                    'getter': lambda device: device.get_status(),
-                    'subvalues': ['Fix', 'Satellites View', 'Satellites Used']
-                }
+        ],
+        'options_setter': lambda device, reference_air_pressure, moving_average_length_air_pressure, \
+                                         average_length_air_pressure, average_length_temperature: \
+                          [device.set_reference_air_pressure(reference_air_pressure),
+                           device.set_averaging(moving_average_length_air_pressure,
+                                                average_length_air_pressure,
+                                                average_length_temperature)],
+        'options': [
+            {
+                'name': 'Reference Air Pressure',
+                'type': 'int',
+                'minimum': 10000,
+                'maximum': 1200000,
+                'suffix': ' mbar/1000',
+                'default': 1013250
+            },
+            {
+                'name': 'Moving Average Length (Air Pressure)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 25,
+                'suffix': None,
+                'default': 25
+            },
+            {
+                'name': 'Average Length (Air Pressure)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 10,
+                'suffix': None,
+                'default': 10
+            },
+            {
+                'name': 'Average Length (Temperature)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': None,
+                'default': 10
             }
-        },
-        HallEffect.DEVICE_DISPLAY_NAME: {
-            'class': HallEffect,
-            'values': {
-                'Value': {
-                    'getter': lambda device: device.get_value(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletColor.DEVICE_DISPLAY_NAME: {
+        'class': BrickletColor,
+        'values': [
+            {
+                'name': 'Color',
+                'getter': lambda device: device.get_color(),
+                'subvalues': ['Red', 'Green', 'Blue', 'Clear'],
+                'unit': [None, None, None, None],
+                'advanced': False
+            },
+            {
+                'name': 'Color Temperature',
+                'getter': lambda device: device.get_color_temperature(), # FIXME: saturation handling is missing
+                'subvalues': None,
+                'unit': 'K',
+                'advanced': False
+            },
+            {
+                'name': 'Illuminance',
+                'getter': special_get_get_illuminance, # FIXME: saturation handling is missing
+                'subvalues': None,
+                'unit': 'lx/10',
+                'advanced': False
             }
-        },
-        Humidity.DEVICE_DISPLAY_NAME: {
-            'class': Humidity,
-            'values': {
-                'Humidity': {
-                    'getter': lambda device: device.get_humidity(),
-                    'subvalues': None
-                },
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, gain, integration_time: device.set_config(gain, integration_time),
+        'options': [
+            {
+                'name': 'Gain',
+                'type': 'choice',
+                'values': [('1x', BrickletColor.GAIN_1X),
+                           ('4x', BrickletColor.GAIN_4X),
+                           ('16x', BrickletColor.GAIN_16X),
+                           ('60x', BrickletColor.GAIN_60X)],
+                'default': '60x'
+            },
+            {
+                'name': 'Integration Time',
+                'type': 'choice',
+                'values': [('2.4ms', BrickletColor.INTEGRATION_TIME_2MS),
+                           ('24ms', BrickletColor.INTEGRATION_TIME_24MS),
+                           ('101ms', BrickletColor.INTEGRATION_TIME_101MS),
+                           ('154ms', BrickletColor.INTEGRATION_TIME_154MS),
+                           ('700ms', BrickletColor.INTEGRATION_TIME_700MS)],
+                'default': '154ms'
             }
-        },
-        IndustrialDual020mA.DEVICE_DISPLAY_NAME: {
-            'class': IndustrialDual020mA,
-            'values': {
-                'Current Sensor0': {
-                    'getter': lambda device: device.get_current(0),
-                    'subvalues': None
-                },
-                'Current Sensor1': {
-                    'getter': lambda device: device.get_current(1),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletCurrent12.DEVICE_DISPLAY_NAME: {
+        'class': BrickletCurrent12,
+        'values': [
+            {
+                'name': 'Current',
+                'getter': lambda device: device.get_current(),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        IO16.DEVICE_DISPLAY_NAME: {
-            'class': IO16,
-            'values': {
-                'Port A': {
-                    'getter': lambda device: device.get_port('a'),
-                    'subvalues': None
-                },
-                'Port B': {
-                    'getter': lambda device: device.get_port('b'),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletCurrent25.DEVICE_DISPLAY_NAME: {
+        'class': BrickletCurrent25,
+        'values': [
+            {
+                'name': 'Current',
+                'getter': lambda device: device.get_current(),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        IO4.DEVICE_DISPLAY_NAME: {
-            'class': IO4,
-            'values': {
-                'Value': {
-                    'getter': lambda device: device.get_value(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletDistanceIR.DEVICE_DISPLAY_NAME: {
+        'class': BrickletDistanceIR,
+        'values': [
+            {
+                'name': 'Distance',
+                'getter': lambda device: device.get_distance(),
+                'subvalues': None,
+                'unit': 'mm',
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        Joystick.DEVICE_DISPLAY_NAME: {
-            'class': Joystick,
-            'values': {
-                'Position': {
-                    'getter': lambda device: device.get_position(),
-                    'subvalues': ['X', 'Y']
-                },
-                'Pressed': {
-                    'getter': lambda device: device.is_pressed(),
-                    'subvalues': None
-                },
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': ['X', 'Y']
-                }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletDistanceUS.DEVICE_DISPLAY_NAME: {
+        'class': BrickletDistanceUS,
+        'values': [
+            {
+                'name': 'Distance Value',
+                'getter': lambda device: device.get_distance_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
             }
-        },
-        # TODO Bricklet with some big return Arrays (3x16!) -> To many subvalues?
-        LEDStrip.DEVICE_DISPLAY_NAME: {
-            'class': LEDStrip,
-            'values': {
-                'Supply Voltage': {
-                    'getter': lambda device: device.get_supply_voltage(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, moving_average_length: device.set_moving_average(moving_average_length),
+        'options': [
+            {
+                'name': 'Moving Average Length',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 100,
+                'suffix': None,
+                'default': 20
             }
-        },
-        Line.DEVICE_DISPLAY_NAME: {
-            'class': Line,
-            'values': {
-                'Reflectivity': {
-                    'getter': lambda device: device.get_reflectivity(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletDualButton.DEVICE_DISPLAY_NAME: {
+        'class': BrickletDualButton,
+        'values': [
+            {
+                'name': 'Button State',
+                'getter': lambda device: device.get_button_state(),
+                'subvalues': ['Left', 'Right'],
+                'unit': [None, None], # FIXME: constants?
+                'advanced': False
+            },
+            {
+                'name': 'LED State',
+                'getter': lambda device: device.get_led_state(),
+                'subvalues': ['Left', 'Right'],
+                'unit': [None, None], # FIXME: constants?
+                'advanced': False
             }
-        },
-        LinearPoti.DEVICE_DISPLAY_NAME: {
-            'class': LinearPoti,
-            'values': {
-                'Position': {
-                    'getter': lambda device: device.get_position(),
-                    'subvalues': None
-                },
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletDustDetector.DEVICE_DISPLAY_NAME: {
+        'class': BrickletDustDetector,
+        'values': [
+            {
+                'name': 'Dust Density',
+                'getter': lambda device: device.get_dust_density(),
+                'subvalues': None,
+                'unit': 'µg/m³',
+                'advanced': False
             }
-        },
-        Moisture.DEVICE_DISPLAY_NAME: {
-            'class': Moisture,
-            'values': {
-                'Value': {
-                    'getter': lambda device: device.get_moisture_value(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, moving_average_length: device.set_moving_average(moving_average_length),
+        'options': [
+            {
+                'name': 'Moving Average Length',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 100,
+                'suffix': None,
+                'default': 100
             }
-        },
-        MotionDetector.DEVICE_DISPLAY_NAME: {
-            'class': MotionDetector,
-            'values': {
-                'Motion Detected': {
-                    'getter': lambda device: device.get_motion_detected(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletGPS.DEVICE_DISPLAY_NAME: {
+        'class': BrickletGPS,
+        'values': [
+            {
+                'name': 'Coordinates',
+                'getter': special_get_gps_coordinates,
+                'subvalues': ['Latitude', 'NS', 'Longitude', 'EW', 'PDOP', 'HDOP', 'VDOP', 'EPE'],
+                'unit': ['deg/1000000', None, 'deg/1000000', None, '1/100', '1/100', '1/100', 'cm'],
+                'advanced': False
+            },
+            {
+                'name': 'Altitude',
+                'getter': special_get_gps_altitude,
+                'subvalues': ['Altitude', 'Geoidal Separation'],
+                'unit': ['cm', 'cm'],
+                'advanced': False
+            },
+            {
+                'name': 'Motion',
+                'getter': special_get_gps_motion,
+                'subvalues': ['Course', 'Speed'],
+                'unit': ['deg/100', '10m/h'],
+                'advanced': False
+            },
+            {
+                'name': 'Date Time',
+                'getter': lambda device: device.get_date_time(),
+                'subvalues': ['Date', 'Time'],
+                'unit': ['ddmmyy', 'hhmmss|sss'],
+                'advanced': False
+            },
+            {
+                'name': 'Status',
+                'getter': lambda device: device.get_status(),
+                'subvalues': ['Fix', 'Satellites View', 'Satellites Used'],
+                'unit': [None, None, None], # FIXME: fix constants?
+                'advanced': False
             }
-        },
-        MultiTouch.DEVICE_DISPLAY_NAME: {
-            'class': MultiTouch,
-            'values': {
-                'State': {
-                    'getter': lambda device: device.get_touch_state(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletHallEffect.DEVICE_DISPLAY_NAME: {
+        'class': BrickletHallEffect,
+        'values': [
+            {
+                'name': 'Value',
+                'getter': lambda device: device.get_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            },
+            {
+                'name': 'Edge Count',
+                'getter': lambda device: device.get_edge_count(False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
             }
-        },
-        PTC.DEVICE_DISPLAY_NAME: {
-            'class': PTC,
-            'values': {
-                'Resistance': {
-                    'getter': lambda device: device.get_resistance(),
-                    'subvalues': None
-                },
-                'Temperature': {
-                    'getter': lambda device: device.get_temperature(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, edge_count_type, edge_count_debounce: device.set_edge_count_config(edge_count_type, edge_count_debounce),
+        'options': [
+            {
+                'name': 'Edge Count Type',
+                'type': 'choice',
+                'values': [('Rising', BrickletHallEffect.EDGE_TYPE_RISING),
+                           ('Falling', BrickletHallEffect.EDGE_TYPE_FALLING),
+                           ('Both', BrickletHallEffect.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
             }
-        },
-        RotaryEncoder.DEVICE_DISPLAY_NAME: {
-            'class': RotaryEncoder,
-            'values': {
-                'Count': {
-                    'getter': lambda device: device.get_count(False),
-                    'subvalues': None
-                },
-                'Pressed': {
-                    'getter': lambda device: device.is_pressed(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletHumidity.DEVICE_DISPLAY_NAME: {
+        'class': BrickletHumidity,
+        'values': [
+            {
+                'name': 'Humidity',
+                'getter': lambda device: device.get_humidity(),
+                'subvalues': None,
+                'unit': '%RH/10',
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        RotaryPoti.DEVICE_DISPLAY_NAME: {
-            'class': RotaryPoti,
-            'values': {
-                'Position': {
-                    'getter': lambda device: device.get_position(),
-                    'subvalues': None
-                },
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletIndustrialDigitalIn4.DEVICE_DISPLAY_NAME: {
+        'class': BrickletIndustrialDigitalIn4,
+        'values': [
+            {
+                'name': 'Value',
+                'getter': lambda device: value_to_bits(device.get_value(), 4),
+                'subvalues': ['Pin 0', 'Pin 1', 'Pin 2', 'Pin 3'],
+                'unit': [None, None, None, None],
+                'advanced': False
+            },
+            {
+                'name': 'Edge Count (Pin 0)',
+                'getter': lambda device: device.get_edge_count(0, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            },
+            {
+                'name': 'Edge Count (Pin 1)',
+                'getter': lambda device: device.get_edge_count(1, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            },
+            {
+                'name': 'Edge Count (Pin 2)',
+                'getter': lambda device: device.get_edge_count(2, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            },
+            {
+                'name': 'Edge Count (Pin 3)',
+                'getter': lambda device: device.get_edge_count(3, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        SegmentDisplay4x7.DEVICE_DISPLAY_NAME: {
-            'class': SegmentDisplay4x7,
-            'values': {
-                'Counter Value': {
-                    'getter': lambda device: device.get_counter_value(),
-                    'subvalues': None
-                },
-                'Segments': {
-                    'getter': lambda device: device.get_segments(),
-                    'subvalues': [['Segm1', 'Segm2', 'Segm3', 'Segm4'], 'Brightness', 'Colon']
-                }
+        ],
+        'options_setter': lambda device, edge_count_type_pin0, edge_count_debounce_pin0, \
+                                         edge_count_type_pin1, edge_count_debounce_pin1, \
+                                         edge_count_type_pin2, edge_count_debounce_pin2, \
+                                         edge_count_type_pin3, edge_count_debounce_pin3: \
+                          [device.set_edge_count_config(0b0001, edge_count_type_pin0, edge_count_debounce_pin0),
+                           device.set_edge_count_config(0b0010, edge_count_type_pin1, edge_count_debounce_pin1),
+                           device.set_edge_count_config(0b0100, edge_count_type_pin2, edge_count_debounce_pin2),
+                           device.set_edge_count_config(0b1000, edge_count_type_pin3, edge_count_debounce_pin3)],
+        'options': [
+            {
+                'name': 'Edge Count Type (Pin 0)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIndustrialDigitalIn4.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIndustrialDigitalIn4.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIndustrialDigitalIn4.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin 0)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
+            },
+            {
+                'name': 'Edge Count Type (Pin 1)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIndustrialDigitalIn4.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIndustrialDigitalIn4.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIndustrialDigitalIn4.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin 1)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
+            },
+            {
+                'name': 'Edge Count Type (Pin 2)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIndustrialDigitalIn4.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIndustrialDigitalIn4.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIndustrialDigitalIn4.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin 2)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
+            },
+            {
+                'name': 'Edge Count Type (Pin 3)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIndustrialDigitalIn4.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIndustrialDigitalIn4.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIndustrialDigitalIn4.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin 3)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
             }
-        },
-        SolidStateRelay.DEVICE_DISPLAY_NAME: {
-            'class': SolidStateRelay,
-            'values': {
-                'State': {
-                    'getter': lambda device: device.get_state(),
-                    'subvalues': None
-                },
-                'Monoflop': {
-                    'getter': lambda device: device.get_monoflop(),
-                    'subvalues': ['State', 'Time', 'Time Remaining']
-                }
+        ]
+    },
+    BrickletIndustrialDual020mA.DEVICE_DISPLAY_NAME: {
+        'class': BrickletIndustrialDual020mA,
+        'values': [
+            {
+                'name': 'Current (Sensor 0)',
+                'getter': lambda device: device.get_current(0),
+                'subvalues': None,
+                'unit': 'nA',
+                'advanced': False
+            },
+            {
+                'name': 'Current (Sensor 1)',
+                'getter': lambda device: device.get_current(1),
+                'subvalues': None,
+                'unit': 'nA',
+                'advanced': False
             }
-        },
-        SoundIntensity.DEVICE_DISPLAY_NAME: {
-            'class': SoundIntensity,
-            'values': {
-                'Intensity': {
-                    'getter': lambda device: device.get_intensity(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, sample_rate: device.set_sample_rate(sample_rate),
+        'options': [
+            {
+                'name': 'Sample Rate',
+                'type': 'choice',
+                'values': [('240 SPS', BrickletIndustrialDual020mA.SAMPLE_RATE_240_SPS),
+                           ('60 SPS', BrickletIndustrialDual020mA.SAMPLE_RATE_60_SPS),
+                           ('15 SPS', BrickletIndustrialDual020mA.SAMPLE_RATE_15_SPS),
+                           ('4 SPS', BrickletIndustrialDual020mA.SAMPLE_RATE_4_SPS)],
+                'default': '4 SPS'
             }
-        },
-        Temperature.DEVICE_DISPLAY_NAME: {
-            'class': Temperature,
-            'values': {
-                'Temperature': {
-                    'getter': lambda device: device.get_temperature(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletIndustrialDualAnalogIn.DEVICE_DISPLAY_NAME: {
+        'class': BrickletIndustrialDualAnalogIn,
+        'values': [
+            {
+                'name': 'Voltage (Channel 0)',
+                'getter': lambda device: device.get_voltage(0),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Voltage (Channel 1)',
+                'getter': lambda device: device.get_voltage(1),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'ADC Values',
+                'getter': lambda device: device.get_adc_values(),
+                'subvalues': ['Channel 0', 'Channel 1'],
+                'unit': [None, None],
+                'advanced': True
             }
-        },
-        TemperatureIR.DEVICE_DISPLAY_NAME: {
-            'class': TemperatureIR,
-            'values': {
-                'Ambient Temperature': {
-                    'getter': lambda device: device.get_ambient_temperature(),
-                    'subvalues': None
-                },
-                'Object Temperature': {
-                    'getter': lambda device: device.get_object_temperature(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, sample_rate: device.set_sample_rate(sample_rate),
+        'options': [
+            {
+                'name': 'Sample Rate',
+                'type': 'choice',
+                'values': [('976 SPS', BrickletIndustrialDualAnalogIn.SAMPLE_RATE_976_SPS),
+                           ('488 SPS', BrickletIndustrialDualAnalogIn.SAMPLE_RATE_488_SPS),
+                           ('244 SPS', BrickletIndustrialDualAnalogIn.SAMPLE_RATE_244_SPS),
+                           ('122 SPS', BrickletIndustrialDualAnalogIn.SAMPLE_RATE_122_SPS),
+                           ('61 SPS', BrickletIndustrialDualAnalogIn.SAMPLE_RATE_61_SPS),
+                           ('4 SPS', BrickletIndustrialDualAnalogIn.SAMPLE_RATE_4_SPS),
+                           ('2 SPS', BrickletIndustrialDualAnalogIn.SAMPLE_RATE_2_SPS),
+                           ('1 SPS', BrickletIndustrialDualAnalogIn.SAMPLE_RATE_1_SPS)],
+                'default': '2 SPS'
             }
-        },
-        Tilt.DEVICE_DISPLAY_NAME: {
-            'class': Tilt,
-            'values': {
-                'State': {
-                    'getter': lambda device: device.get_tilt_state(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletIO16.DEVICE_DISPLAY_NAME: {
+        'class': BrickletIO16,
+        'values': [
+            {
+                'name': 'Port A',
+                'getter': lambda device: value_to_bits(device.get_port('a'), 8),
+                'subvalues': ['Pin 0', 'Pin 1', 'Pin 2', 'Pin 3', 'Pin 4', 'Pin 5', 'Pin 6', 'Pin 7'],
+                'unit': [None, None, None, None, None, None, None, None],
+                'advanced': False
+            },
+            {
+                'name': 'Port B',
+                'getter': lambda device: value_to_bits(device.get_port('b'), 8),
+                'subvalues': ['Pin 0', 'Pin 1', 'Pin 2', 'Pin 3', 'Pin 4', 'Pin 5', 'Pin 6', 'Pin 7'],
+                'unit': [None, None, None, None, None, None, None, None],
+                'advanced': False
+            },
+            {
+                'name': 'Edge Count (Pin A0)',
+                'getter': lambda device: device.get_edge_count(0, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            },
+            {
+                'name': 'Edge Count (Pin A1)',
+                'getter': lambda device: device.get_edge_count(1, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        Voltage.DEVICE_DISPLAY_NAME: {
-            'class': Voltage,
-            'values': {
-                'Voltage': {
-                    'getter': lambda device: device.get_voltage(),
-                    'subvalues': None
-                },
-                'Analog Value': {
-                    'getter': lambda device: device.get_analog_value(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, pinA0, pinA1, pinA2, pinA3, pinA4, pinA5, pinA6, pinA7,
+                                         pinB0, pinB1, pinB2, pinB3, pinB4, pinB5, pinB6, pinB7,
+                                         edge_count_type_pinA0, edge_count_debounce_pinA0, \
+                                         edge_count_type_pinA1, edge_count_debounce_pinA1: \
+                          [device.set_port_configuration(*pinA0),
+                           device.set_port_configuration(*pinA1),
+                           device.set_port_configuration(*pinA2),
+                           device.set_port_configuration(*pinA3),
+                           device.set_port_configuration(*pinA4),
+                           device.set_port_configuration(*pinA5),
+                           device.set_port_configuration(*pinA6),
+                           device.set_port_configuration(*pinA7),
+                           device.set_port_configuration(*pinB0),
+                           device.set_port_configuration(*pinB1),
+                           device.set_port_configuration(*pinB2),
+                           device.set_port_configuration(*pinB3),
+                           device.set_port_configuration(*pinB4),
+                           device.set_port_configuration(*pinB5),
+                           device.set_port_configuration(*pinB6),
+                           device.set_port_configuration(*pinB7),
+                           device.set_edge_count_config(0, edge_count_type_pinA0, edge_count_debounce_pinA0),
+                           device.set_edge_count_config(1, edge_count_type_pinA1, edge_count_debounce_pinA1)],
+        'options': [
+            {
+                'name': 'Pin A0',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('a', 0b00000001, 'i', True)),
+                           ('Input', ('a', 0b00000001, 'i', False)),
+                           ('Output High', ('a', 0b00000001, 'o', True)),
+                           ('Output Low', ('a', 0b00000001, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin A1',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('a', 0b00000010, 'i', True)),
+                           ('Input', ('a', 0b00000010, 'i', False)),
+                           ('Output High', ('a', 0b00000010, 'o', True)),
+                           ('Output Low', ('a', 0b00000010, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin A2',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('a', 0b00000100, 'i', True)),
+                           ('Input', ('a', 0b00000100, 'i', False)),
+                           ('Output High', ('a', 0b00000100, 'o', True)),
+                           ('Output Low', ('a', 0b00000100, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin A3',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('a', 0b00001000, 'i', True)),
+                           ('Input', ('a', 0b00001000, 'i', False)),
+                           ('Output High', ('a', 0b00001000, 'o', True)),
+                           ('Output Low', ('a', 0b00001000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin A4',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('a', 0b00010000, 'i', True)),
+                           ('Input', ('a', 0b00010000, 'i', False)),
+                           ('Output High', ('a', 0b00010000, 'o', True)),
+                           ('Output Low', ('a', 0b00010000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin A5',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('a', 0b00100000, 'i', True)),
+                           ('Input', ('a', 0b00100000, 'i', False)),
+                           ('Output High', ('a', 0b00100000, 'o', True)),
+                           ('Output Low', ('a', 0b00100000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin A6',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('a', 0b01000000, 'i', True)),
+                           ('Input', ('a', 0b01000000, 'i', False)),
+                           ('Output High', ('a', 0b01000000, 'o', True)),
+                           ('Output Low', ('a', 0b01000000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin A7',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('a', 0b10000000, 'i', True)),
+                           ('Input', ('a', 0b10000000, 'i', False)),
+                           ('Output High', ('a', 0b10000000, 'o', True)),
+                           ('Output Low', ('a', 0b10000000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin B0',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('b', 0b00000001, 'i', True)),
+                           ('Input', ('b', 0b00000001, 'i', False)),
+                           ('Output High', ('b', 0b00000001, 'o', True)),
+                           ('Output Low', ('b', 0b00000001, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin B1',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('b', 0b00000010, 'i', True)),
+                           ('Input', ('b', 0b00000010, 'i', False)),
+                           ('Output High', ('b', 0b00000010, 'o', True)),
+                           ('Output Low', ('b', 0b00000010, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin B2',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('b', 0b00000100, 'i', True)),
+                           ('Input', ('b', 0b00000100, 'i', False)),
+                           ('Output High', ('b', 0b00000100, 'o', True)),
+                           ('Output Low', ('b', 0b00000100, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin B3',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('b', 0b00001000, 'i', True)),
+                           ('Input', ('b', 0b00001000, 'i', False)),
+                           ('Output High', ('b', 0b00001000, 'o', True)),
+                           ('Output Low', ('b', 0b00001000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin B4',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('b', 0b00010000, 'i', True)),
+                           ('Input', ('b', 0b00010000, 'i', False)),
+                           ('Output High', ('b', 0b00010000, 'o', True)),
+                           ('Output Low', ('b', 0b00010000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin B5',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('b', 0b00100000, 'i', True)),
+                           ('Input', ('b', 0b00100000, 'i', False)),
+                           ('Output High', ('b', 0b00100000, 'o', True)),
+                           ('Output Low', ('b', 0b00100000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin B6',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('b', 0b01000000, 'i', True)),
+                           ('Input', ('b', 0b01000000, 'i', False)),
+                           ('Output High', ('b', 0b01000000, 'o', True)),
+                           ('Output Low', ('b', 0b01000000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin B7',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('b', 0b10000000, 'i', True)),
+                           ('Input', ('b', 0b10000000, 'i', False)),
+                           ('Output High', ('b', 0b10000000, 'o', True)),
+                           ('Output Low', ('b', 0b10000000, 'o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Edge Count Type (Pin A0)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIO16.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIO16.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIO16.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin A0)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
+            },
+            {
+                'name': 'Edge Count Type (Pin A1)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIO16.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIO16.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIO16.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin A1)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
             }
-        },
-        VoltageCurrent.DEVICE_DISPLAY_NAME: {
-            'class': VoltageCurrent,
-            'values': {
-                'Current': {
-                    'getter': lambda device: device.get_current(),
-                    'subvalues': None
-                },
-                'Voltage': {
-                    'getter': lambda device: device.get_voltage(),
-                    'subvalues': None
-                },
-                'Power': {
-                    'getter': lambda device: device.get_power(),
-                    'subvalues': None
-                }
+        ]
+    },
+    BrickletIO4.DEVICE_DISPLAY_NAME: {
+        'class': BrickletIO4,
+        'values': [
+            {
+                'name': 'Value',
+                'getter': lambda device: value_to_bits(device.get_value(), 4),
+                'subvalues': ['Pin 0', 'Pin 1', 'Pin 2', 'Pin 3'],
+                'unit': [None, None, None, None],
+                'advanced': False
+            },
+            {
+                'name': 'Edge Count (Pin 0)',
+                'getter': lambda device: device.get_edge_count(0, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            },
+            {
+                'name': 'Edge Count (Pin 1)',
+                'getter': lambda device: device.get_edge_count(1, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            },
+            {
+                'name': 'Edge Count (Pin 2)',
+                'getter': lambda device: device.get_edge_count(2, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            },
+            {
+                'name': 'Edge Count (Pin 3)',
+                'getter': lambda device: device.get_edge_count(3, False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
             }
-        },
-        ################################################################################################################
-        # Bricks Start Here #
-        #####################
-        DC.DEVICE_DISPLAY_NAME: {
-            'class': DC,
-            'values': {
-                'Velocity': {
-                    'getter': lambda device: device.get_velocity(),
-                    'subvalues': None
-                },
-                'Current Velocity': {
-                    'getter': lambda device: device.get_current_velocity(),
-                    'subvalues': None
-                },
-                'Acceleration': {
-                    'getter': lambda device: device.get_acceleration(),
-                    'subvalues': None
-                },
-                'Stack Input Voltage': {
-                    'getter': lambda device: device.get_stack_input_voltage(),
-                    'subvalues': None
-                },
-                'External Input Voltage': {
-                    'getter': lambda device: device.get_external_input_voltage(),
-                    'subvalues': None
-                },
-                'Current Consumption': {
-                    'getter': lambda device: device.get_current_consumption(),
-                    'subvalues': None
-                },
-                'Chip Temperature': {
-                    'getter': lambda device: device.get_chip_temperature(),
-                    'subvalues': None
-                }
+        ],
+        'options_setter': lambda device, pin0, pin1, pin2, pin3,
+                                         edge_count_type_pin0, edge_count_debounce_pin0, \
+                                         edge_count_type_pin1, edge_count_debounce_pin1, \
+                                         edge_count_type_pin2, edge_count_debounce_pin2, \
+                                         edge_count_type_pin3, edge_count_debounce_pin3: \
+                          [device.set_configuration(0b0001, *pin0),
+                           device.set_configuration(0b0010, *pin1),
+                           device.set_configuration(0b0100, *pin2),
+                           device.set_configuration(0b1000, *pin3),
+                           device.set_edge_count_config(0b0001, edge_count_type_pin0, edge_count_debounce_pin0),
+                           device.set_edge_count_config(0b0010, edge_count_type_pin1, edge_count_debounce_pin1),
+                           device.set_edge_count_config(0b0100, edge_count_type_pin2, edge_count_debounce_pin2),
+                           device.set_edge_count_config(0b1000, edge_count_type_pin3, edge_count_debounce_pin3)],
+        'options': [
+            {
+                'name': 'Pin 0',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('i', True)),
+                           ('Input', ('i', False)),
+                           ('Output High', ('o', True)),
+                           ('Output Low', ('o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin 1',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('i', True)),
+                           ('Input', ('i', False)),
+                           ('Output High', ('o', True)),
+                           ('Output Low', ('o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin 2',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('i', True)),
+                           ('Input', ('i', False)),
+                           ('Output High', ('o', True)),
+                           ('Output Low', ('o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Pin 3',
+                'type': 'choice',
+                'values': [('Input Pull-Up', ('i', True)),
+                           ('Input', ('i', False)),
+                           ('Output High', ('o', True)),
+                           ('Output Low', ('o', False))],
+                'default': 'Input Pull-Up'
+            },
+            {
+                'name': 'Edge Count Type (Pin 0)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIndustrialDigitalIn4.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIndustrialDigitalIn4.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIndustrialDigitalIn4.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin 0)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
+            },
+            {
+                'name': 'Edge Count Type (Pin 1)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIO4.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIO4.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIO4.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin 1)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
+            },
+            {
+                'name': 'Edge Count Type (Pin 2)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIO4.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIO4.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIO4.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin 2)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
+            },
+            {
+                'name': 'Edge Count Type (Pin 3)',
+                'type': 'choice',
+                'values': [('Rising', BrickletIO4.EDGE_TYPE_RISING),
+                           ('Falling', BrickletIO4.EDGE_TYPE_FALLING),
+                           ('Both', BrickletIO4.EDGE_TYPE_BOTH)],
+                'default': 'Rising'
+            },
+            {
+                'name': 'Edge Count Debounce (Pin 3)',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 255,
+                'suffix': ' ms',
+                'default': 100
             }
-        }
+        ]
+    },
+    BrickletJoystick.DEVICE_DISPLAY_NAME: {
+        'class': BrickletJoystick,
+        'values': [
+            {
+                'name': 'Position',
+                'getter': lambda device: device.get_position(),
+                'subvalues': ['X', 'Y'],
+                'unit': [None, None],
+                'advanced': False
+            },
+            {
+                'name': 'Pressed',
+                'getter': lambda device: device.is_pressed(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': ['X', 'Y'],
+                'unit': [None, None],
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletLEDStrip.DEVICE_DISPLAY_NAME: {
+        'class': BrickletLEDStrip,
+        'values': [
+            {
+                'name': 'Supply Voltage',
+                'getter': lambda device: device.get_supply_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletLine.DEVICE_DISPLAY_NAME: {
+        'class': BrickletLine,
+        'values': [
+            {
+                'name': 'Reflectivity',
+                'getter': lambda device: device.get_reflectivity(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletLinearPoti.DEVICE_DISPLAY_NAME: {
+        'class': BrickletLinearPoti,
+        'values': [
+            {
+                'name': 'Position',
+                'getter': lambda device: device.get_position(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletLoadCell.DEVICE_DISPLAY_NAME: {
+        'class': BrickletLoadCell,
+        'values': [
+            {
+                'name': 'Weight',
+                'getter': lambda device: device.get_weight(),
+                'subvalues': None,
+                'unit': 'gram',
+                'advanced': False
+            }
+        ],
+        'options_setter': lambda device, moving_average_length, rate, gain: \
+                          [device.set_moving_average(moving_average_length), device.set_configuration(rate, gain)],
+        'options': [
+            {
+                'name': 'Moving Average Length',
+                'type': 'int',
+                'minimum': 1,
+                'maximum': 40,
+                'suffix': None,
+                'default': 4
+            },
+            {
+                'name': 'Rate',
+                'type': 'choice',
+                'values': [('10Hz', BrickletLoadCell.RATE_10HZ),
+                           ('80Hz', BrickletLoadCell.RATE_80HZ)],
+                'default': '10Hz'
+            },
+            {
+                'name': 'Gain',
+                'type': 'choice',
+                'values': [('128x', BrickletLoadCell.GAIN_128X),
+                           ('64x', BrickletLoadCell.GAIN_64X),
+                           ('32x', BrickletLoadCell.GAIN_32X)],
+                'default': '128x'
+            }
+        ]
+    },
+    BrickletMoisture.DEVICE_DISPLAY_NAME: {
+        'class': BrickletMoisture,
+        'values': [
+            {
+                'name': 'Moisture Value',
+                'getter': lambda device: device.get_moisture_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            }
+        ],
+        'options_setter': lambda device, moving_average_length: device.set_moving_average(moving_average_length),
+        'options': [
+            {
+                'name': 'Moving Average Length',
+                'type': 'int',
+                'minimum': 0,
+                'maximum': 100,
+                'suffix': None,
+                'default': 100
+            }
+        ]
+    },
+    BrickletMotionDetector.DEVICE_DISPLAY_NAME: {
+        'class': BrickletMotionDetector,
+        'values': [
+            {
+                'name': 'Motion Detected',
+                'getter': lambda device: device.get_motion_detected(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletMultiTouch.DEVICE_DISPLAY_NAME: {
+        'class': BrickletMultiTouch,
+        'values': [
+            {
+                'name': 'State',
+                'getter': lambda device: value_to_bits(device.get_touch_state(), 13),
+                'subvalues': ['Electrode 0', 'Electrode 1', 'Electrode 2', 'Electrode 3', 'Electrode 4', 'Electrode 5',
+                              'Electrode 6', 'Electrode 7', 'Electrode 8', 'Electrode 9', 'Electrode 10', 'Electrode 11', 'Proximity'],
+                'unit': [None, None, None, None, None, None, None, None, None, None, None, None, None],
+                'advanced': False
+            }
+        ],
+        'options_setter': special_set_multi_touch_options,
+        'options': [
+            {
+                'name': 'Electrode 0',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 1',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 2',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 3',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 4',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 5',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 6',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 7',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 8',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 9',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 10',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode 11',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Proximity',
+                'type': 'bool',
+                'default': True
+            },
+            {
+                'name': 'Electrode Sensitivity',
+                'type': 'int',
+                'minimum': 5,
+                'maximum': 201,
+                'suffix': None,
+                'default': 181
+            }
+        ]
+    },
+    BrickletPTC.DEVICE_DISPLAY_NAME: {
+        'class': BrickletPTC,
+        'values': [
+            {
+                'name': 'Temperature',
+                'getter': special_get_ptc_temperature,
+                'subvalues': None,
+                'unit': '°C/100',
+                'advanced': False
+            },
+            {
+                'name': 'Resistance',
+                'getter': special_get_ptc_resistance,
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            }
+        ],
+        'options_setter': lambda device, wire_mode: device.set_wire_mode(wire_mode),
+        'options': [
+            {
+                'name': 'Wire Mode',
+                'type': 'choice',
+                'values': [('2-Wire', BrickletPTC.WIRE_MODE_2),
+                           ('3-Wire', BrickletPTC.WIRE_MODE_3),
+                           ('4-Wire', BrickletPTC.WIRE_MODE_4)],
+                'default': '2-Wire'
+            }
+        ]
+    },
+    BrickletRotaryEncoder.DEVICE_DISPLAY_NAME: {
+        'class': BrickletRotaryEncoder,
+        'values': [
+            {
+                'name': 'Count',
+                'getter': lambda device: device.get_count(False),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            },
+            {
+                'name': 'Pressed',
+                'getter': lambda device: device.is_pressed(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletRotaryPoti.DEVICE_DISPLAY_NAME: {
+        'class': BrickletRotaryPoti,
+        'values': [
+            {
+                'name': 'Position',
+                'getter': lambda device: device.get_position(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletSoundIntensity.DEVICE_DISPLAY_NAME: {
+        'class': BrickletSoundIntensity,
+        'values': [
+            {
+                'name': 'Intensity',
+                'getter': lambda device: device.get_intensity(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletTemperature.DEVICE_DISPLAY_NAME: {
+        'class': BrickletTemperature,
+        'values': [
+            {
+                'name': 'Temperature',
+                'getter': lambda device: device.get_temperature(),
+                'subvalues': None,
+                'unit': '°C/100',
+                'advanced': False
+            }
+        ],
+        'options_setter': lambda device, i2c_mode: device.set_i2c_mode(i2c_mode),
+        'options': [
+            {
+                'name': 'I2C Mode',
+                'type': 'choice',
+                'values': [('400kHz', BrickletTemperature.I2C_MODE_FAST),
+                           ('100kHz', BrickletTemperature.I2C_MODE_SLOW)],
+                'default': '400kHz'
+            }
+        ]
+    },
+    BrickletTemperatureIR.DEVICE_DISPLAY_NAME: {
+        'class': BrickletTemperatureIR,
+        'values': [
+            {
+                'name': 'Ambient Temperature',
+                'getter': lambda device: device.get_ambient_temperature(),
+                'subvalues': None,
+                'unit': '°C/10',
+                'advanced': False
+            },
+            {
+                'name': 'Object Temperature',
+                'getter': lambda device: device.get_object_temperature(),
+                'subvalues': None,
+                'unit': '°C/10',
+                'advanced': False
+            }
+        ],
+        'options_setter': lambda device, emissivity: device.set_emissivity(emissivity),
+        'options': [
+            {
+                'name': 'Emissivity',
+                'type': 'int',
+                'minimum': 6553,
+                'maximum': 65535,
+                'suffix': None,
+                'default': 65535
+            }
+        ]
+    },
+    BrickletTilt.DEVICE_DISPLAY_NAME: {
+        'class': BrickletTilt,
+        'values': [
+            {
+                'name': 'State',
+                'getter': lambda device: device.get_tilt_state(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': False
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletVoltage.DEVICE_DISPLAY_NAME: {
+        'class': BrickletVoltage,
+        'values': [
+            {
+                'name': 'Voltage',
+                'getter': lambda device: device.get_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Analog Value',
+                'getter': lambda device: device.get_analog_value(),
+                'subvalues': None,
+                'unit': None,
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickletVoltageCurrent.DEVICE_DISPLAY_NAME: {
+        'class': BrickletVoltageCurrent,
+        'values': [
+            {
+                'name': 'Voltage',
+                'getter': lambda device: device.get_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Current',
+                'getter': lambda device: device.get_current(),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Power',
+                'getter': lambda device: device.get_power(),
+                'subvalues': None,
+                'unit': 'mW',
+                'advanced': False
+            }
+        ],
+        'options_setter': lambda device, average_length, voltage_conversion_time, current_conversion_time: \
+                          device.set_configuration(average_length, voltage_conversion_time, current_conversion_time),
+        'options': [
+            {
+                'name': 'Average Length',
+                'type': 'choice',
+                'values': [('1', BrickletVoltageCurrent.AVERAGING_1),
+                           ('4', BrickletVoltageCurrent.AVERAGING_4),
+                           ('16', BrickletVoltageCurrent.AVERAGING_16),
+                           ('64', BrickletVoltageCurrent.AVERAGING_64),
+                           ('128', BrickletVoltageCurrent.AVERAGING_128),
+                           ('256', BrickletVoltageCurrent.AVERAGING_256),
+                           ('512', BrickletVoltageCurrent.AVERAGING_512),
+                           ('1024', BrickletVoltageCurrent.AVERAGING_1024)],
+                'default': '64'
+            },
+            {
+                'name': 'Voltage Conversion Time',
+                'type': 'choice',
+                'values': [('140µs', 0),
+                           ('204µs', 1),
+                           ('332µs', 2),
+                           ('588µs', 3),
+                           ('1.1ms', 4),
+                           ('2.116ms', 5),
+                           ('4.156ms', 6),
+                           ('8.244ms', 7)],
+                'default': '1.1ms'
+            },
+            {
+                'name': 'Current Conversion Time',
+                'type': 'choice',
+                'values': [('140µs', 0),
+                           ('204µs', 1),
+                           ('332µs', 2),
+                           ('588µs', 3),
+                           ('1.1ms', 4),
+                           ('2.116ms', 5),
+                           ('4.156ms', 6),
+                           ('8.244ms', 7)],
+                'default': '1.1ms'
+            }
+        ]
+    },
+    BrickDC.DEVICE_DISPLAY_NAME: {
+        'class': BrickDC,
+        'values': [
+            {
+                'name': 'Stack Input Voltage',
+                'getter': lambda device: device.get_stack_input_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'External Input Voltage',
+                'getter': lambda device: device.get_external_input_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Current Consumption',
+                'getter': lambda device: device.get_current_consumption(),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Chip Temperature',
+                'getter': lambda device: device.get_chip_temperature(),
+                'subvalues': None,
+                'unit': '°C/10',
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickIMU.DEVICE_DISPLAY_NAME: {
+        'class': BrickIMU,
+        'values': [
+            {
+                'name': 'Orientation',
+                'getter': lambda device: device.get_orientation(),
+                'subvalues': ['Roll', 'Pitch', 'Yaw'],
+                'unit': ['°/100', '°/100', '°/100'],
+                'advanced': False
+            },
+            {
+                'name': 'Quaternion',
+                'getter': lambda device: device.get_quaternion(),
+                'subvalues': ['X', 'Y', 'Z', 'W'],
+                'unit': [None, None, None, None],
+                'advanced': False
+            },
+            {
+                'name': 'Acceleration',
+                'getter': lambda device: device.get_acceleration(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['g/1000', 'g/1000', 'g/1000'],
+                'advanced': True
+            },
+            {
+                'name': 'Magnetic Field',
+                'getter': lambda device: device.get_magnetic_field(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['G/1000', 'G/1000', 'G/1000'],
+                'advanced': True
+            },
+            {
+                'name': 'Angular Velocity',
+                'getter': lambda device: device.get_angular_velocity(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['8/115 °/s', '8/115 °/s', '8/115 °/s'],
+                'advanced': True
+            },
+            {
+                'name': 'IMU Temperature',
+                'getter': lambda device: device.get_imu_temperature(),
+                'subvalues': None,
+                'unit': '°C/100',
+                'advanced': True
+            },
+            {
+                'name': 'All Data',
+                'getter': lambda device: device.get_all_data(),
+                'subvalues': ['Acceleration-X', 'Acceleration-Y', 'Acceleration-Z', 'Acceleration-X', 'Acceleration-Y', 'Acceleration-Z',
+                              'Angular Velocity-X', 'Angular Velocity-Y', 'Angular Velocity-Z', 'IMU Temperature'],
+                'unit': ['g/1000', 'g/1000', 'g/1000', 'G/1000', 'G/1000', 'G/1000', '8/115 °/s', '8/115 °/s', '8/115 °/s', '°C/100'],
+                'advanced': True
+            },
+            {
+                'name': 'Chip Temperature',
+                'getter': lambda device: device.get_chip_temperature(),
+                'subvalues': None,
+                'unit': '°C/10',
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None # FIXME: ranges
+    },
+    BrickIMUV2.DEVICE_DISPLAY_NAME: {
+        'class': BrickIMUV2,
+        'values': [
+            {
+                'name': 'Orientation',
+                'getter': lambda device: device.get_orientation(),
+                'subvalues': ['Heading', 'Roll', 'Pitch'],
+                'unit': ['°/16', '°/16', '°/16'],
+                'advanced': False
+            },
+            {
+                'name': 'Linear Acceleration',
+                'getter': lambda device: device.get_linear_acceleration(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['1/100 m/s²', '1/100 m/s²', '1/100 m/s²'],
+                'advanced': False
+            },
+            {
+                'name': 'Gravity Vector',
+                'getter': lambda device: device.get_gravity_vector(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['1/100 m/s²', '1/100 m/s²', '1/100 m/s²'],
+                'advanced': False
+            },
+            {
+                'name': 'Quaternion',
+                'getter': lambda device: device.get_quaternion(),
+                'subvalues': ['W', 'X', 'Y', 'Z'],
+                'unit': ['1/16383', '1/16383', '1/16383', '1/16383'],
+                'advanced': False
+            },
+            {
+                'name': 'Acceleration',
+                'getter': lambda device: device.get_acceleration(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['1/100 m/s²', '1/100 m/s²', '1/100 m/s²'],
+                'advanced': True
+            },
+            {
+                'name': 'Magnetic Field',
+                'getter': lambda device: device.get_magnetic_field(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['1/16 µT ', '1/16 µT ', '1/16 µT '],
+                'advanced': True
+            },
+            {
+                'name': 'Angular Velocity',
+                'getter': lambda device: device.get_angular_velocity(),
+                'subvalues': ['X', 'Y', 'Z'],
+                'unit': ['1/16 °/s', '1/16 °/s', '1/16 °/s'],
+                'advanced': True
+            },
+            {
+                'name': 'Temperature',
+                'getter': lambda device: device.get_temperature(),
+                'subvalues': None,
+                'unit': '°C/100',
+                'advanced': True
+            },
+            #{
+            #    'name': 'All Data',
+            #    'getter': lambda device: device.get_all_data(),
+            #    'subvalues': # FIXME: nested arrays
+            #    'unit': # FIXME: nested arrays
+            #    'advanced': False
+            #},
+            {
+                'name': 'Chip Temperature',
+                'getter': lambda device: device.get_chip_temperature(),
+                'subvalues': None,
+                'unit': '°C/10',
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None # FIXME: ranges
+    },
+    BrickMaster.DEVICE_DISPLAY_NAME: {
+        'class': BrickMaster,
+        'values': [
+            {
+                'name': 'Stack Voltage',
+                'getter': lambda device: device.get_stack_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Stack Current',
+                'getter': lambda device: device.get_stack_current(),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Chip Temperature',
+                'getter': lambda device: device.get_chip_temperature(),
+                'subvalues': None,
+                'unit': '°C/10',
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickServo.DEVICE_DISPLAY_NAME: {
+        'class': BrickServo,
+        'values': [
+            {
+                'name': 'Servo Current (Servo 0)',
+                'getter': lambda device: device.get_servo_current(0),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Servo Current (Servo 1)',
+                'getter': lambda device: device.get_servo_current(1),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Servo Current (Servo 2)',
+                'getter': lambda device: device.get_servo_current(2),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Servo Current (Servo 3)',
+                'getter': lambda device: device.get_servo_current(3),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Servo Current (Servo 4)',
+                'getter': lambda device: device.get_servo_current(4),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Servo Current (Servo 5)',
+                'getter': lambda device: device.get_servo_current(5),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Servo Current (Servo 6)',
+                'getter': lambda device: device.get_servo_current(6),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Overall Current',
+                'getter': lambda device: device.get_overall_current(),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Stack Input Voltage',
+                'getter': lambda device: device.get_stack_input_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'External Input Voltage',
+                'getter': lambda device: device.get_external_input_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Chip Temperature',
+                'getter': lambda device: device.get_chip_temperature(),
+                'subvalues': None,
+                'unit': '°C/10',
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None
+    },
+    BrickStepper.DEVICE_DISPLAY_NAME: {
+        'class': BrickStepper,
+        'values': [
+            {
+                'name': 'Stack Input Voltage',
+                'getter': lambda device: device.get_stack_input_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'External Input Voltage',
+                'getter': lambda device: device.get_external_input_voltage(),
+                'subvalues': None,
+                'unit': 'mV',
+                'advanced': False
+            },
+            {
+                'name': 'Current Consumption',
+                'getter': lambda device: device.get_current_consumption(),
+                'subvalues': None,
+                'unit': 'mA',
+                'advanced': False
+            },
+            {
+                'name': 'Chip Temperature',
+                'getter': lambda device: device.get_chip_temperature(),
+                'subvalues': None,
+                'unit': '°C/10',
+                'advanced': True
+            }
+        ],
+        'options_setter': None,
+        'options': None
     }
+}
 
 '''
 /*---------------------------------------------------------------------------
@@ -630,17 +2189,14 @@ class Identifier(object):
  ---------------------------------------------------------------------------*/
  '''
 
-
 class AbstractDevice(object):
     """DEBUG and Inheritance only class"""
 
     def __init__(self, data, datalogger):
         self.datalogger = datalogger
         self.data = data
-        self.identifier = None
 
         self.__name__ = "AbstractDevice"
-
 
     def start_timer(self):
         """
@@ -673,13 +2229,11 @@ class AbstractDevice(object):
         """
         return "[" + str(self.__name__) + "]"
 
-
 '''
 /*---------------------------------------------------------------------------
                                 DeviceImpl
  ---------------------------------------------------------------------------*/
  '''
-
 
 class DeviceImpl(AbstractDevice):
     """
@@ -689,24 +2243,52 @@ class DeviceImpl(AbstractDevice):
     def __init__(self, data, datalogger):
         AbstractDevice.__init__(self, data, datalogger)
 
-        self.device_name = self.data[Identifier.DD_NAME]
-        self.device_uid = self.data[Identifier.DD_UID]
-        self.device_definition = Identifier.DEVICE_DEFINITIONS[self.device_name]
-        device_class = self.device_definition[Identifier.DD_CLASS]
+        self.device_name = self.data['name']
+        self.device_uid = self.data['uid']
+        self.device_spec = device_specs[self.device_name]
+        device_class = self.device_spec['class']
         self.device = device_class(self.device_uid, self.datalogger.ipcon)
-        self.identifier = self.device_name
 
-        self.__name__ = Identifier.DEVICES + ":" + str(self.device_name)
+        self.__name__ = "devices:" + str(self.device_name)
 
     def start_timer(self):
         AbstractDevice.start_timer(self)
 
-        for value in self.data[Identifier.DD_VALUES]:
-            interval = self.data[Identifier.DD_VALUES][value][Identifier.DD_VALUES_INTERVAL]
+        for value in self.data['values']:
+            interval = self.data['values'][value]['interval']
             func_name = "_timer"
             var_name = value
 
-            self.datalogger.timers.append(utils.LoggerTimer(interval, func_name, var_name, self))
+            self.datalogger.timers.append(LoggerTimer(interval, func_name, var_name, self))
+
+    def apply_options(self):
+        options_setter = self.device_spec['options_setter']
+        option_specs = self.device_spec['options']
+
+        if options_setter != None and option_specs != None:
+            EventLogger.debug('Applying options for "{0}" with UID "{1}"'.format(self.device_name, self.device_uid))
+
+            args = []
+
+            for option_spec in option_specs:
+                for option_name in self.data['options']:
+                    if option_name == option_spec['name']:
+                        option_value = self.data['options'][option_name]['value']
+
+                        if option_spec['type'] == 'choice':
+                            for option_value_spec in option_spec['values']:
+                                if option_value == option_value_spec[0]:
+                                    args.append(option_value_spec[1])
+                        elif option_spec['type'] == 'int':
+                            args.append(option_value)
+                        elif option_spec['type'] == 'bool':
+                            args.append(option_value)
+
+            try:
+                options_setter(self.device, *tuple(args))
+            except Exception as e:
+                EventLogger.warning('Could not apply options for "{0}" with UID "{1}": {2}'
+                                    .format(self.device_name, self.device_uid, e))
 
     def _timer(self, var_name):
         """
@@ -714,54 +2296,105 @@ class DeviceImpl(AbstractDevice):
         In SimpleDevices the get-functions only return one value.
         """
 
-        getter = self.device_definition[Identifier.DD_VALUES][var_name][Identifier.DD_GETTER]
-        subvalue_names = self.device_definition[Identifier.DD_VALUES][var_name][
-            Identifier.DD_SUBVALUES]
-        timestamp = utils.CSVData._get_timestamp()
+        for value_spec in self.device_spec['values']:
+            if value_spec['name'] == var_name:
+                break
+
+        getter = value_spec['getter']
+        subvalue_names = value_spec['subvalues']
+        unit = value_spec['unit']
+        now = time.time()
+        time_format = self.datalogger._config['data']['time_format']
+
+        if time_format == 'de':
+            timestamp = timestamp_to_de(now)
+        elif time_format == 'us':
+            timestamp = timestamp_to_us(now)
+        elif time_format == 'iso':
+            timestamp = timestamp_to_iso(now)
+        else:
+            timestamp = timestamp_to_unix(now)
 
         try:
             value = getter(self.device)
         except Exception as e:
-            value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
-            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
+            value = self._exception_msg(str(self.device_name) + "-" + str(var_name), e)
+            self.datalogger.add_to_queue(CSVData(timestamp,
+                                                 self.device_name,
+                                                 self.device_uid,
+                                                 var_name,
+                                                 value,
+                                                 ''))
             # log_exception(timestamp, value_name, e)
             return
 
         try:
             if subvalue_names is None:
+                if unit == None:
+                    unit_str = ''
+                else:
+                    unit_str = unit
+
                 # log_value(value_name, value)
-                self.datalogger.add_to_queue(
-                    utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
+                self.datalogger.add_to_queue(CSVData(timestamp,
+                                                     self.device_name,
+                                                     self.device_uid,
+                                                     var_name,
+                                                     value,
+                                                     unit_str))
             else:
-                subvalue_bool = self.data[Identifier.DD_VALUES][var_name][Identifier.DD_SUBVALUES]
+                subvalue_bool = self.data['values'][var_name]['subvalues']
                 for i in range(len(subvalue_names)):
                     if not isinstance(subvalue_names[i], list):
                         try:
                             if subvalue_bool[subvalue_names[i]]:
-                                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier,
-                                                                           str(var_name) + "-" + str(subvalue_names[i]),
-                                                                           value[i], timestamp))
+                                if unit[i] == None:
+                                    unit_str = ''
+                                else:
+                                    unit_str = unit[i]
+                                self.datalogger.add_to_queue(CSVData(timestamp,
+                                                                     self.device_name,
+                                                                     self.device_uid,
+                                                                     str(var_name) + "-" + str(subvalue_names[i]),
+                                                                     value[i],
+                                                                     unit_str))
                         except Exception as e:
-                            value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
-                            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier,
-                                                                       str(var_name) + "-" + str(subvalue_names[i]),
-                                                                       value[i], timestamp))
+                            value = self._exception_msg(str(self.device_name) + "-" + str(var_name), e)
+                            self.datalogger.add_to_queue(CSVData(timestamp,
+                                                                 self.device_name,
+                                                                 self.device_uid,
+                                                                 str(var_name) + "-" + str(subvalue_names[i]),
+                                                                 value[i],
+                                                                 ''))
                             return
                     else:
                         for k in range(len(subvalue_names[i])):
                             try:
                                 if subvalue_bool[subvalue_names[i][k]]:
-                                    self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier,
-                                                                               str(var_name) + "-" + str(
-                                                                                   subvalue_names[i][k]), value[i][k],
-                                                                               timestamp))
+                                    if unit[i][k] == None:
+                                        unit_str = ''
+                                    else:
+                                        unit_str = unit[i][k]
+                                    self.datalogger.add_to_queue(CSVData(timestamp,
+                                                                         self.device_name,
+                                                                         self.device_uid,
+                                                                         str(var_name) + "-" + str(subvalue_names[i][k]),
+                                                                         value[i][k],
+                                                                         unit_str))
                             except Exception as e:
-                                value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
-                                self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier,
-                                                                           str(var_name) + "-" + str(
-                                                                               subvalue_names[i][k]), value[i][k],
-                                                                           timestamp))
+                                value = self._exception_msg(str(self.device_name) + "-" + str(var_name), e)
+                                self.datalogger.add_to_queue(CSVData(timestamp,
+                                                                     self.device_name,
+                                                                     self.device_uid,
+                                                                     str(var_name) + "-" + str(subvalue_names[i][k]),
+                                                                     value[i][k],
+                                                                     ''))
                                 return
         except Exception as e:
-            value = self._exception_msg(str(self.identifier) + "-" + str(var_name), e)
-            self.datalogger.add_to_queue(utils.CSVData(self.device_uid, self.identifier, var_name, value, timestamp))
+            value = self._exception_msg(str(self.device_name) + "-" + str(var_name), e)
+            self.datalogger.add_to_queue(CSVData(timestamp,
+                                                 self.device_name,
+                                                 self.device_uid,
+                                                 var_name,
+                                                 value,
+                                                 ''))

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 brickv (Brick Viewer)
-Copyright (C) 2012, 2014 Roland Dudko  <roland.dudko@gmail.com>
+Copyright (C) 2012, 2014 Roland Dudko <roland.dudko@gmail.com>
 Copyright (C) 2012, 2014 Marvin Lutz <marvin.lutz.mail@gmail.com>
 
-data_logger_util.py: Util classes for the data logger
+utils.py: Util classes for the data logger
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -21,22 +21,49 @@ License along with this program; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
-'''
-/*---------------------------------------------------------------------------
-                                DataLoggerException
- ---------------------------------------------------------------------------*/
- '''
+
+#### skip here for brick-logger ####
 
 import csv  # CSV_Writer
-import datetime  # CSV_Data
+from datetime import datetime  # CSV_Data
 import os  # CSV_Writer
 from shutil import copyfile
 import sys  # CSV_Writer
 from threading import Timer
 import time  # Writer Thread
 
-from brickv.data_logger.event_logger import EventLogger
+if 'merged_data_logger_modules' not in globals():
+    from brickv.data_logger.event_logger import EventLogger
 
+def timestamp_to_de(timestamp):
+    return datetime.fromtimestamp(timestamp).strftime('%d.%m.%Y %H:%M:%S')
+
+def timestamp_to_us(timestamp):
+    return datetime.fromtimestamp(timestamp).strftime('%m/%d/%Y %H:%M:%S')
+
+def timestamp_to_iso(timestamp):
+    """
+    Format a timestamp in ISO 8601 standard
+    ISO 8601 = YYYY-MM-DDThh:mm:ss+tz:tz
+               2014-09-10T14:12:05+02:00
+    """
+
+    if time.localtime().tm_isdst and time.daylight:
+        offset = -time.altzone / 60
+    else:
+        offset = -time.timezone / 60
+
+    tz = '%02d:%02d' % (abs(offset) / 60, abs(offset) % 60)
+
+    if offset < 0:
+        tz = '-' + tz
+    else:
+        tz = '+' + tz
+
+    return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%S') + tz
+
+def timestamp_to_unix(timestamp):
+    return str(int(timestamp))
 
 class DataLoggerException(Exception):
     # Error Codes
@@ -64,63 +91,32 @@ class CSVData(object):
     This class is used as a temporary save spot for all csv relevant data.
     """
 
-    def __init__(self, uid, name, var_name, raw_data, time_stamp=None):
+    def __init__(self, timestamp, name, uid, var_name, raw_data, var_unit):
         """
-        uid      -- uid of the bricklet
-        name     -- DEVICE_IDENTIFIER of the bricklet
-        var_name -- variable name of the logged value
-        raw_data -- the logged value
-
-        The timestamp is added automatically.
+        timestamp -- time data was
+        name      -- display name of Brick(let)
+        uid       -- UID of Brick(let)
+        var_name  -- name of logged value
+        raw_data  -- logged value
+        var_unit  -- unit of logged value
         """
-        self.uid = uid
+        self.timestamp = timestamp # datatime object
         self.name = name
+        self.uid = uid
         self.var_name = var_name
         self.raw_data = raw_data
-        self.timestamp = None
-        if time_stamp is None:
-            self.timestamp = CSVData._get_timestamp()
-        else:
-            self.timestamp = time_stamp
-
-    def _get_timestamp():
-        """
-        Adds a timestamp in ISO 8601 standard, with ms
-        ISO 8061 =  YYYY-MM-DDThh:mm:ss+tz:tz
-                    2014-09-10T14:12:05+02:00
-        """
-        t = datetime.datetime.now()
-        utc = CSVData._time_utc_offset()
-        utc_string = ""
-        if utc < 0:
-            utc *= -1
-            utc_string = "-%02d:00" % (utc,)
-        else:
-            utc_string = "+%02d:00" % (utc,)
-
-        ts = '{:%Y-%m-%dT%H:%M:%S.%f}'.format(t)
-        ts = ts[:len(ts) - 3] + utc_string
-
-        return ts
-
-    @staticmethod
-    def _time_utc_offset():
-        if time.localtime(time.time()).tm_isdst and time.daylight:
-            return -time.altzone / (60 * 60)
-
-        return -time.timezone / (60 * 60)
+        self.var_unit = var_unit
 
     def __str__(self):
         """
         Simple Debug function for easier display of the object.
         """
-        return "[UID=" + str(self.uid) + ";NAME=" + str(self.name) + ";VAR=" + str(self.var_name) + ";RAW=" + str(
-            self.raw_data) + ";TIME=" + str(self.timestamp) + "]"
-
-
-    _get_timestamp = staticmethod(_get_timestamp)
-    # _time_utc_offset = staticmethod(_time_utc_offset)
-
+        return "[TIME=" + str(self.timestamp) + \
+               ";NAME=" + str(self.name) + \
+               ";UID=" + str(self.uid) + \
+               ";VAR=" + str(self.var_name) + \
+               ";RAW=" + str(self.raw_data) + \
+               ";UNIT=" + str(self.var_unit) + "]"
 
 '''
 /*---------------------------------------------------------------------------
@@ -134,15 +130,14 @@ class LoggerTimer(object):
 
     def __init__(self, interval, func_name, var_name, device):
         """
-        interval -- the repeat interval in ms
+        interval -- the repeat interval in seconds
         func -- the function which will be called
         """
         self.exit_flag = False
-        interval /= 1000.0  # for seconds
         if interval < 0:
             interval = 0
 
-        self._interval = interval
+        self._interval = interval # in seconds
         self._func_name = func_name
         self._var_name = var_name
         self._device = device
@@ -285,7 +280,7 @@ class CSVWriter(object):
     a CSV formatted file.
     """
 
-    def __init__(self, file_path, max_file_size=0, max_file_count=1):
+    def __init__(self, file_path, max_file_count=1, max_file_size=0):
         """
         file_path = Path to the csv file
         """
@@ -346,7 +341,8 @@ class CSVWriter(object):
             return
 
         EventLogger.debug("CSVWriter._write_header() - done")
-        self._csv_file.writerow(["UID"] + ["DEVICE_IDENTIFIER"] + ["VAR"] + ["RAW"] + ["TIMESTAMP"])
+        self._csv_file.writerow(["TIME"] + ["NAME"] + ["UID"] + ["VAR"] + ["RAW"] + ["UNIT"])
+        self._raw_file.flush()
 
     def write_data_row(self, csv_data):
         """
@@ -358,8 +354,8 @@ class CSVWriter(object):
         if self._raw_file is None or self._csv_file is None:
             return False
 
-        self._csv_file.writerow(
-            [csv_data.uid] + [csv_data.name] + [csv_data.var_name] + [str(csv_data.raw_data)] + [csv_data.timestamp])
+        self._csv_file.writerow([csv_data.timestamp] + [csv_data.name] + [csv_data.uid] + [csv_data.var_name] + [str(csv_data.raw_data)] + [csv_data.var_unit])
+        self._raw_file.flush()
 
         if self._file_size > 0:
             self._rolling_file()

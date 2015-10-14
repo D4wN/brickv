@@ -1,23 +1,44 @@
+# -*- coding: utf-8 -*-
+"""
+brickv (Brick Viewer)
+Copyright (C) 2012, 2014 Roland Dudko <roland.dudko@gmail.com>
+Copyright (C) 2012, 2014 Marvin Lutz <marvin.lutz.mail@gmail.com>
+
+event_logger.py: Main event logger class
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
+"""
+
+#### skip here for brick-logger ####
+
 """
 /*---------------------------------------------------------------------------
                                 Event Logger
  ---------------------------------------------------------------------------*/
 """
 from PyQt4 import QtCore
-import logging
-import datetime
 from PyQt4.QtCore import SIGNAL
 
+import logging
+from datetime import datetime
 
 class EventLogger():
     """
         Basic EventLogger class.
     """
-
-    EVENT_CONSOLE_LOGGING = True  # for logging to the console
-    EVENT_FILE_LOGGING = True  # for event logging in to a file
-    EVENT_FILE_LOGGING_PATH = "data_logger.log"  # default file path for logging events
-    EVENT_LOG_LEVEL = logging.DEBUG
 
     format = "%(asctime)s - %(levelname)8s - %(message)s"
     __loggers = {}
@@ -79,7 +100,6 @@ class EventLogger():
             for logger in EventLogger.__loggers.values():
                 logger.log(level, msg)
 
-
     # static methods
     add_logger = staticmethod(add_logger)
     remove_logger = staticmethod(remove_logger)
@@ -96,7 +116,7 @@ class EventLogger():
 
 class ConsoleLogger(logging.Logger):
     """
-    This class outputs the logged events to the console
+    This class outputs the logged debug messages to the console
     """
 
     def __init__(self, name, log_level):
@@ -116,10 +136,9 @@ class ConsoleLogger(logging.Logger):
         # add ch to logger
         self.addHandler(ch)
 
-
 class FileLogger(logging.Logger):
     """
-    This class writes the logged events to an LOG file (EventLogger.EVENT_FILE_LOGGING_PATH)
+    This class writes the logged debug messages to a log file
     """
 
     def __init__(self, name, log_level, filename):
@@ -140,20 +159,10 @@ class FileLogger(logging.Logger):
 
         self.info("###### NEW LOGGING SESSION STARTED ######")
 
-
 class GUILogger(logging.Logger, QtCore.QObject):
     """
     This class outputs the logged data to the brickv gui
     """
-
-    # for level as string
-    _convert_level = {}
-    _convert_level[logging.DEBUG] = logging._levelNames.get(logging.DEBUG)  # "DEBUG"
-    _convert_level[logging.INFO] = logging._levelNames.get(logging.INFO)  # "INFO"
-    _convert_level[logging.WARN] = logging._levelNames.get(logging.WARN)  # "WARNING"
-    _convert_level[logging.WARNING] = logging._levelNames.get(logging.WARNING)  # "WARNING"
-    _convert_level[logging.CRITICAL] = logging._levelNames.get(logging.CRITICAL)  # "CRITICAL"
-    _convert_level[logging.ERROR] = logging._levelNames.get(logging.ERROR)  # "ERROR"
 
     _output_format = "{asctime} - <b>{levelname:8}</b> - {message}"
     _output_format_warning = "<font color=\"orange\">{asctime} - <b>{levelname:8}</b> - {message}</font>"
@@ -185,10 +194,9 @@ class GUILogger(logging.Logger, QtCore.QObject):
         self.log(logging.ERROR, msg)
 
     def log(self, level, msg):
-
         if level >= self.level:
-            asctime = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-            levelname = GUILogger._convert_level[level]
+            asctime = '{:%Y-%m-%d %H:%M:%S}'.format(datetime.now())
+            levelname = logging._levelNames.get(level)
 
             if level == logging.WARN or level == logging.WARNING:
                 self.emit(SIGNAL(GUILogger.SIGNAL_NEW_MESSAGE),
