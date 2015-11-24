@@ -33,7 +33,7 @@
       <enum>QTabWidget::West</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>7</number>
      </property>
      <widget class="REDTabOverview" name="tab_overview">
       <attribute name="title">
@@ -68,6 +68,11 @@
      <widget class="REDTabImportExport" name="tab_importexport">
       <attribute name="title">
        <string>Import/Export</string>
+      </attribute>
+     </widget>
+     <widget class="REDTabVision" name="tab_vision">
+      <attribute name="title">
+       <string>Vision</string>
       </attribute>
      </widget>
     </widget>
@@ -115,6 +120,12 @@
    <class>REDTabImportExport</class>
    <extends>QWidget</extends>
    <header location="global">brickv.plugin_system.plugins.red.red_tab_importexport</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>REDTabVision</class>
+   <extends>QWidget</extends>
+   <header location="global">brickv.plugin_system.plugins.red.red_tab_vision</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
