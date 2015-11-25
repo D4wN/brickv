@@ -34,14 +34,13 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt, QRegExp
 from PyQt4.QtGui import QDialog, QMessageBox, QPalette, QStandardItemModel, \
                         QStandardItem, QLineEdit, QSpinBox, QCheckBox, QComboBox, \
-                        QHBoxLayout, QRegExpValidator, QTextCursor, QIcon, QColor, \
-                        QWidget
+                        QSpinBox, QRegExpValidator, QTextCursor, QIcon, QColor
 
 from brickv import config
 from brickv.bindings.ip_connection import BASE58
 from brickv.load_pixmap import load_pixmap
 from brickv.utils import get_save_file_name, get_open_file_name, get_main_window, \
-                         get_home_path, get_resources_path, get_modeless_dialog_flags
+                         get_home_path, get_resources_path
 from brickv.data_logger.event_logger import EventLogger, GUILogger
 from brickv.data_logger.gui_config_handler import GuiConfigHandler
 from brickv.data_logger.job import GuiDataJob
@@ -51,60 +50,30 @@ from brickv.data_logger.device_dialog import DeviceDialog
 from brickv.data_logger.configuration import load_and_validate_config, save_config
 from brickv.data_logger.ui_setup_dialog import Ui_SetupDialog
 
-class IntervalWidget(QWidget):
-    def __init__(self, parent=None):
-        QWidget.__init__(self, parent)
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0,0,0,0)
-
-        self.spinbox = QSpinBox(self)
-        self.combo = QComboBox(self)
-
-        sp = self.spinbox.sizePolicy()
-        sp.setHorizontalStretch(1)
-        self.spinbox.setSizePolicy(sp)
-
-        self.spinbox.setRange(0, (1 << 31) - 1)
-        self.spinbox.setSingleStep(1)
-
-        self.combo.addItem('Seconds')
-        self.combo.addItem('Milliseconds')
-
-        layout.addWidget(self.spinbox)
-        layout.addWidget(self.combo)
-
-    def set_interval(self, interval):
-        if ('%.03f' % interval).endswith('.000'):
-            self.spinbox.setValue(int(interval))
-            self.combo.setCurrentIndex(0)
-        else:
-            self.spinbox.setValue(round(interval * 1000.0))
-            self.combo.setCurrentIndex(1)
-
-    def get_interval(self):
-        if self.combo.currentIndex() == 0:
-            return self.spinbox.value()
-        else:
-            return self.spinbox.value() / 1000.0
-
 # noinspection PyProtectedMember,PyCallByClass
 class SetupDialog(QDialog, Ui_SetupDialog):
     """
         Function and Event handling class for the Ui_SetupDialog.
     """
 
-    def __init__(self, parent, host_infos):
-        QDialog.__init__(self, parent, get_modeless_dialog_flags())
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
 
         self._gui_logger = GUILogger("GUILogger", logging.INFO)
         self._gui_job = None
         EventLogger.add_logger(self._gui_logger)
 
+        # FIXME better way to find interval and uids in tree_widget?!
+        self.__tree_interval_tooltip = "Update interval in seconds"
+        self.__tree_uid_tooltip = "UID cannot be empty"
         self.data_logger_thread = None
         self.tab_debug_warning = False
+
         self.device_dialog = None
-        self.last_host_index = -1
+
+        self.host_infos = None
+        self.last_host = None
+        self.host_index_changing = None
 
         self.setupUi(self)
 
@@ -123,45 +92,23 @@ class SetupDialog(QDialog, Ui_SetupDialog):
         self.tree_devices.setModel(self.model_devices)
         self.tree_devices.setColumnWidth(0, 300)
 
-        self.signal_initialization()
-
-        self.check_authentication.stateChanged.connect(self.authentication_state_changed)
-        self.label_secret.hide()
-        self.edit_secret.hide()
-        self.edit_secret.setEchoMode(QLineEdit.Password)
-        self.check_secret_show.hide()
-        self.check_secret_show.stateChanged.connect(self.secret_show_state_changed)
+        self.widget_initialization()
 
         self.btn_start_logging.setIcon(QIcon(load_pixmap('data_logger/start-icon.png')))
 
-        self.example_timestamp = time.time()
+        timestamp = int(time.time())
+        self.edit_csv_file_name.setText(os.path.join(get_home_path(), 'logger_data_{0}.csv'.format(timestamp)))
+        self.edit_log_file_name.setText(os.path.join(get_home_path(), 'logger_debug_{0}.log'.format(timestamp)))
 
-        self.edit_csv_file_name.setText(os.path.join(get_home_path(), 'logger_data_{0}.csv'.format(int(self.example_timestamp))))
-        self.edit_log_file_name.setText(os.path.join(get_home_path(), 'logger_debug_{0}.log'.format(int(self.example_timestamp))))
+        self.combo_data_time_format.addItem(utils.timestamp_to_de(timestamp) + ' (DD.MM.YYYY HH:MM:SS)', 'de')
+        self.combo_data_time_format.addItem(utils.timestamp_to_us(timestamp) + ' (MM/DD/YYYY HH:MM:SS)', 'us')
+        self.combo_data_time_format.addItem(utils.timestamp_to_iso(timestamp) + ' (ISO 8601)', 'iso')
+        self.combo_data_time_format.addItem(utils.timestamp_to_unix(timestamp) + ' (Unix)', 'unix')
 
-        self.combo_data_time_format.addItem(utils.timestamp_to_de(self.example_timestamp) + ' (DD.MM.YYYY HH:MM:SS)', 'de')
-        self.combo_data_time_format.addItem(utils.timestamp_to_de_msec(self.example_timestamp) + ' (DD.MM.YYYY HH:MM:SS,000)', 'de-msec')
-        self.combo_data_time_format.insertSeparator(self.combo_data_time_format.count())
-        self.combo_data_time_format.addItem(utils.timestamp_to_us(self.example_timestamp) + ' (MM/DD/YYYY HH:MM:SS)', 'us')
-        self.combo_data_time_format.addItem(utils.timestamp_to_us_msec(self.example_timestamp) + ' (MM/DD/YYYY HH:MM:SS.000)', 'us-msec')
-        self.combo_data_time_format.insertSeparator(self.combo_data_time_format.count())
-        self.combo_data_time_format.addItem(utils.timestamp_to_iso(self.example_timestamp) + ' (ISO 8601)', 'iso')
-        self.combo_data_time_format.addItem(utils.timestamp_to_iso_msec(self.example_timestamp) + ' (ISO 8601 + Milliseconds)', 'iso-msec')
-        self.combo_data_time_format.insertSeparator(self.combo_data_time_format.count())
-        self.combo_data_time_format.addItem(utils.timestamp_to_unix(self.example_timestamp) + ' (Unix)', 'unix')
-        self.combo_data_time_format.addItem(utils.timestamp_to_unix_msec(self.example_timestamp) + ' (Unix + Milliseconds)', 'unix-msec')
-        self.combo_data_time_format.insertSeparator(self.combo_data_time_format.count())
-
-        t = utils.timestamp_to_strftime(self.example_timestamp, self.edit_data_time_format_strftime.text())
-        if len(t) == 0:
-            t = '<empty>'
-
-        self.combo_data_time_format.addItem((t + ' (strftime)').decode('utf-8'), 'strftime')
-
-        self.combo_debug_time_format.addItem(utils.timestamp_to_de(self.example_timestamp) + ' (DD.MM.YYYY HH:MM:SS)', 'de')
-        self.combo_debug_time_format.addItem(utils.timestamp_to_us(self.example_timestamp) + ' (MM/DD/YYYY HH:MM:SS)', 'us')
-        self.combo_debug_time_format.addItem(utils.timestamp_to_iso(self.example_timestamp) + ' (ISO 8601)', 'iso')
-        self.combo_debug_time_format.addItem(utils.timestamp_to_unix(self.example_timestamp) + ' (Unix)', 'unix')
+        self.combo_debug_time_format.addItem(utils.timestamp_to_de(timestamp) + ' (DD.MM.YYYY HH:MM:SS)', 'de')
+        self.combo_debug_time_format.addItem(utils.timestamp_to_us(timestamp) + ' (MM/DD/YYYY HH:MM:SS)', 'us')
+        self.combo_debug_time_format.addItem(utils.timestamp_to_iso(timestamp) + ' (ISO 8601)', 'iso')
+        self.combo_debug_time_format.addItem(utils.timestamp_to_unix(timestamp) + ' (Unix)', 'unix')
 
         self.combo_log_level.addItem('Debug', 'debug')
         self.combo_log_level.addItem('Info', 'info')
@@ -177,26 +124,11 @@ class SetupDialog(QDialog, Ui_SetupDialog):
         self.combo_debug_level.addItem('Critical', logging.CRITICAL)
         self.combo_debug_level.setCurrentIndex(1) # info
 
-        for host_info in host_infos:
-            self.combo_host.addItem(host_info.host, (host_info.port, host_info.use_authentication, host_info.secret))
-
-        self._host_index_changed(0)
-
         self.update_ui_state()
 
     def update_ui_state(self):
-        index = self.combo_data_time_format.currentIndex()
-
-        if index > 0:
-            time_format = self.combo_data_time_format.itemData(index)
-        else:
-            time_format = 'unknown'
-
         data_to_csv_file = self.check_data_to_csv_file.isChecked()
         debug_to_log_file = self.check_debug_to_log_file.isChecked()
-
-        self.edit_data_time_format_strftime.setVisible(time_format == 'strftime')
-        self.label_data_time_format_strftime_help.setVisible(time_format == 'strftime')
 
         self.label_csv_file_name.setVisible(data_to_csv_file)
         self.edit_csv_file_name.setVisible(data_to_csv_file)
@@ -208,6 +140,15 @@ class SetupDialog(QDialog, Ui_SetupDialog):
         self.label_log_level.setVisible(debug_to_log_file)
         self.combo_log_level.setVisible(debug_to_log_file)
 
+    def widget_initialization(self):
+        """
+            Sets default values for some widgets
+        """
+        # Login data
+        self.host_info_initialization()
+
+        self.signal_initialization()
+
     def signal_initialization(self):
         """
             Init of all important Signals and connections.
@@ -216,8 +157,6 @@ class SetupDialog(QDialog, Ui_SetupDialog):
         self.btn_start_logging.clicked.connect(self.btn_start_logging_clicked)
         self.btn_save_config.clicked.connect(self.btn_save_config_clicked)
         self.btn_load_config.clicked.connect(self.btn_load_config_clicked)
-        self.combo_data_time_format.currentIndexChanged.connect(self.update_ui_state)
-        self.edit_data_time_format_strftime.textChanged.connect(self.edit_data_time_format_strftime_changed)
         self.check_data_to_csv_file.stateChanged.connect(self.update_ui_state)
         self.check_debug_to_log_file.stateChanged.connect(self.update_ui_state)
         self.btn_browse_csv_file_name.clicked.connect(self.btn_browse_csv_file_name_clicked)
@@ -236,6 +175,22 @@ class SetupDialog(QDialog, Ui_SetupDialog):
                      self.highlight_debug_tab)
 
         self.combo_host.currentIndexChanged.connect(self._host_index_changed)
+        self.spin_port.valueChanged.connect(self._port_changed)
+
+    def host_info_initialization(self):
+        """
+            initialize host by getting information out of brickv.config
+        """
+        self.host_infos = config.get_host_infos(config.HOST_INFO_COUNT)
+        self.host_index_changing = True
+
+        for host_info in self.host_infos:
+            self.combo_host.addItem(host_info.host)
+
+        self.last_host = None
+        self.combo_host.setCurrentIndex(0)
+        self.spin_port.setValue(self.host_infos[0].port)
+        self.host_index_changing = False
 
     def btn_start_logging_clicked(self):
         """
@@ -274,34 +229,6 @@ class SetupDialog(QDialog, Ui_SetupDialog):
         self._gui_job = None
 
         self.btn_start_logging.clicked.connect(self.btn_start_logging_clicked)
-
-    def authentication_state_changed(self, state):
-        visible = state == Qt.Checked
-
-        self.label_secret.setVisible(visible)
-        self.edit_secret.setVisible(visible)
-        self.check_secret_show.setVisible(visible)
-
-    def secret_show_state_changed(self, state):
-        if state == Qt.Checked:
-            self.edit_secret.setEchoMode(QLineEdit.Normal)
-        else:
-            self.edit_secret.setEchoMode(QLineEdit.Password)
-
-    def edit_data_time_format_strftime_changed(self):
-        index = self.combo_data_time_format.findData('strftime')
-
-        if index < 0:
-            return
-
-        t = utils.timestamp_to_strftime(self.example_timestamp, self.edit_data_time_format_strftime.text())
-        if len(t) == 0:
-            t = '<empty>'
-
-        self.combo_data_time_format.setItemText(index, (t + ' (strftime)').decode('utf-8'))
-
-        if self.edit_data_time_format_strftime.isVisible():
-            self.edit_data_time_format_strftime.setFocus()
 
     def btn_save_config_clicked(self):
         filename = get_save_file_name(get_main_window(), 'Save Config',
@@ -428,44 +355,37 @@ class SetupDialog(QDialog, Ui_SetupDialog):
             self.tab_widget.setTabIcon(tab_index, QIcon())
 
     def _host_index_changed(self, i):
-        if self.last_host_index >= 0:
-            self.combo_host.setItemData(self.last_host_index,
-                                        (self.spin_port.value(),
-                                         self.check_authentication.isChecked(),
-                                         self.edit_secret.text()))
-
-        self.last_host_index = i
-
+        """
+            Persists host information changes like in brickv.mainwindow
+            Changes port if the host was changed
+        """
         if i < 0:
             return
 
-        host_info = self.combo_host.itemData(i)
+        self.host_index_changing = True
+        self.spin_port.setValue(self.host_infos[i].port)
+        self.host_index_changing = False
 
-        self.spin_port.setValue(host_info[0])
-        self.check_authentication.setChecked(host_info[1])
-        self.edit_secret.setText(host_info[2])
+    def _port_changed(self, value):
+        """
+            Persists host information changes like in brickv.mainwindow
+        """
+        if self.host_index_changing:
+            return
+
+        i = self.combo_host.currentIndex()
+        if i < 0:
+            return
+
+        self.host_infos[i].port = self.spin_port.value()
 
     def update_setup_tab(self, config):
         EventLogger.debug('Updating setup tab from config')
 
-        name = config['hosts']['default']['name']
-        port = config['hosts']['default']['port']
-        secret = config['hosts']['default']['secret']
-
-        i = self.combo_host.findText(name)
-        if i >= 0:
-            self.combo_host.setCurrentIndex(i)
-        else:
-            self.combo_host.insertItem(0, name, (port, secret != None, secret))
-            self.combo_host.setCurrentIndex(0)
-
-        self.spin_port.setValue(port)
-
-        self.check_authentication.setChecked(secret != None)
-        self.edit_secret.setText(secret if secret != None else '')
+        self.combo_host.setEditText(config['hosts']['default']['name'])
+        self.spin_port.setValue(config['hosts']['default']['port'])
 
         self.combo_data_time_format.setCurrentIndex(max(self.combo_data_time_format.findData(config['data']['time_format']), 0))
-        self.edit_data_time_format_strftime.setText(config['data']['time_format_strftime'].decode('utf-8'))
         self.check_data_to_csv_file.setChecked(config['data']['csv']['enabled'])
         self.edit_csv_file_name.setText(config['data']['csv']['file_name'].decode('utf-8'))
 
@@ -520,8 +440,11 @@ class SetupDialog(QDialog, Ui_SetupDialog):
 
             parent_item.appendRow([value_name_item, value_interval_item])
 
-            spinbox_interval = IntervalWidget()
-            spinbox_interval.set_interval(device['values'][value_spec['name']]['interval'])
+            spinbox_interval = QSpinBox()
+            spinbox_interval.setRange(0, (1 << 31) - 1)
+            spinbox_interval.setSingleStep(1)
+            spinbox_interval.setValue(device['values'][value_spec['name']]['interval'])
+            spinbox_interval.setSuffix(' seconds')
 
             self.tree_devices.setIndexWidget(value_interval_item.index(), spinbox_interval)
 
@@ -615,7 +538,7 @@ class SetupDialog(QDialog, Ui_SetupDialog):
             except ValueError:
                 pass
 
-        self.model_data.appendRow([QStandardItem(csv_data.timestamp.decode('utf-8')),
+        self.model_data.appendRow([QStandardItem(csv_data.timestamp),
                                    QStandardItem(csv_data.name),
                                    QStandardItem(csv_data.uid),
                                    QStandardItem(csv_data.var_name),

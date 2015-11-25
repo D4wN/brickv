@@ -26,11 +26,11 @@ from PyQt4.QtGui import QDialog, QMessageBox
 
 from brickv.plugin_system.plugins.master.ui_extension_type import Ui_ExtensionType
 from brickv.async_call import async_call
-from brickv.utils import get_main_window, get_modeless_dialog_flags
+from brickv.utils import get_main_window
 
 class ExtensionType(QDialog, Ui_ExtensionType):
     def __init__(self, parent):
-        QDialog.__init__(self, parent, get_modeless_dialog_flags())
+        QDialog.__init__(self, parent)
 
         self.setupUi(self)
 

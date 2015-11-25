@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-11-17.      #
+# This file was automatically generated on 2015-08-14.      #
 #                                                           #
-# Bindings Version 2.1.6                                    #
+# Bindings Version 2.1.5                                    #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
@@ -66,7 +66,7 @@ class BrickletVoltage(Device):
         """
         Device.__init__(self, uid, ipcon)
 
-        self.api_version = (2, 0, 1)
+        self.api_version = (2, 0, 0)
 
         self.response_expected[BrickletVoltage.FUNCTION_GET_VOLTAGE] = BrickletVoltage.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletVoltage.FUNCTION_GET_ANALOG_VALUE] = BrickletVoltage.RESPONSE_EXPECTED_ALWAYS_TRUE

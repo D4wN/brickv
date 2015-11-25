@@ -14,8 +14,6 @@ src/brickv/plugin_system/plugins/red/script_data.py
 src/build_data/linux/brickv/usr/share/brickv
 src/build_data/linux/brick-flash-cmd/usr/bin
 src/MANIFEST.in
-src/codesign_identity
-
 .project
 .pydevproject
 .settings/org.eclipse.core.resources.prefs

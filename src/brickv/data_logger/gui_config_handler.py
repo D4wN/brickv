@@ -55,8 +55,7 @@ class GuiConfigHandler(object):
         # store hosts as a dict as preparation for multi-host support. so the
         # config format doesn't have to be changed if multi-host support is added
         hosts = {'default': {'name': setup_dialog.combo_host.currentText(),
-                             'port': setup_dialog.spin_port.value(),
-                             'secret': setup_dialog.edit_secret.text() if setup_dialog.check_authentication.isChecked() else None}}
+                             'port': setup_dialog.spin_port.value()}}
 
         return hosts
 
@@ -66,7 +65,6 @@ class GuiConfigHandler(object):
         and returns it as a dictonary.
         """
         data = {'time_format': setup_dialog.combo_data_time_format.itemData(setup_dialog.combo_data_time_format.currentIndex()),
-                'time_format_strftime': setup_dialog.edit_data_time_format_strftime.text(),
                 'csv': {'enabled': setup_dialog.check_data_to_csv_file.isChecked(),
                         'file_name': setup_dialog.edit_csv_file_name.text()}}
 
@@ -105,7 +103,7 @@ class GuiConfigHandler(object):
                         value_name_item = child_item.child(value_row, 0)
                         value_interval_item = child_item.child(value_row, 1)
 
-                        device['values'][value_name_item.text()] = {'interval': setup_dialog.tree_devices.indexWidget(value_interval_item.index()).get_interval()}
+                        device['values'][value_name_item.text()] = {'interval': setup_dialog.tree_devices.indexWidget(value_interval_item.index()).value()}
                         subvalues = {}
 
                         for subvalue_row in range(value_name_item.rowCount()):

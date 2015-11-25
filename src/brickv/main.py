@@ -30,7 +30,6 @@ sip.setapi('QVariant', 2)
 import os
 import sys
 import logging
-import locale
 
 def prepare_package(package_name):
     # from http://www.py2exe.org/index.cgi/WhereAmI
@@ -89,11 +88,6 @@ class BrickViewer(QApplication):
         return QApplication.notify(self, receiver, event)
 
 def main():
-    try:
-        locale.setlocale(locale.LC_ALL, '')
-    except locale.Error:
-        pass # ignore this as it might fail on Mac OS X, we'll fallback to UTF-8 in that case
-
     argv = sys.argv
 
     if sys.platform == 'win32':
@@ -107,9 +101,6 @@ def main():
         # fix OSX 10.10 font
         # https://bugreports.qt-project.org/browse/QTBUG-40833
         QFont.insertSubstitution('.Helvetica Neue DeskInterface', 'Helvetica Neue')
-        # fix OSX 10.11 font
-        # https://bugreports.qt.io/browse/QTBUG-47206
-        QFont.insertSubstitution('.SF NS Text', 'Helvetica Neue')
 
     brick_viewer = BrickViewer(argv)
     main_window = MainWindow()

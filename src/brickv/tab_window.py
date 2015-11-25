@@ -26,11 +26,10 @@ Boston, MA 02111-1307, USA.
 import os
 
 from PyQt4.QtCore import Qt, pyqtSignal
-from PyQt4.QtGui import QDialog, QAbstractButton, QTabBar, QPainter, \
+from PyQt4.QtGui import QWidget, QAbstractButton, QTabBar, QPainter, \
                         QSizePolicy, QIcon
 
 from brickv.load_pixmap import load_pixmap
-from brickv.utils import get_modeless_dialog_flags
 
 class IconButton(QAbstractButton):
     clicked = pyqtSignal()
@@ -64,7 +63,7 @@ class IconButton(QAbstractButton):
     def set_default_icon(self):
         self.setIcon(self.default_icon)
 
-class TabWindow(QDialog):
+class TabWindow(QWidget):
     """Detachable widget usable in a TabWidget. The widget can be detached
     from the TabWidget by calling untab(), added to it by calling tab(). If tabbed,
     it has a clickable icon visualizing mouseOver events; on click the button_handler
@@ -95,13 +94,13 @@ class TabWindow(QDialog):
                 self.cb_on_untab(index)
 
             self.tab_widget.removeTab(index)
-            self.setWindowFlags(get_modeless_dialog_flags(Qt.Window))
+            self.setWindowFlags(Qt.Window)
             self.setWindowTitle(self.name)
             self.adjustSize()
             self.show()
 
     def tab(self):
-        if self.windowFlags() & get_modeless_dialog_flags(Qt.Window):
+        if self.windowFlags() & Qt.Window:
             self.setWindowFlags(Qt.Widget)
             index = self.tab_widget.addTab(self, self.name)
 

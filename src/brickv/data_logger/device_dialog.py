@@ -35,7 +35,6 @@ from brickv.data_logger.gui_config_handler import GuiConfigHandler
 from PyQt4.QtCore import Qt
 from brickv.bindings.ip_connection import IPConnection
 from brickv.bindings import device_factory
-from brickv.utils import get_modeless_dialog_flags
 
 # noinspection PyTypeChecker
 class DeviceDialog(QDialog, Ui_DeviceDialog):
@@ -46,7 +45,7 @@ class DeviceDialog(QDialog, Ui_DeviceDialog):
     qtcb_connected = pyqtSignal(int)
 
     def __init__(self, parent):
-        QDialog.__init__(self, parent, get_modeless_dialog_flags())
+        QDialog.__init__(self, parent)
 
         self._logger_window = parent
 
@@ -55,7 +54,6 @@ class DeviceDialog(QDialog, Ui_DeviceDialog):
 
         self.host = None
         self.port = None
-        self.secret = None
 
         self.ipcon = IPConnection()
         self.ipcon.register_callback(IPConnection.CALLBACK_CONNECTED,
@@ -90,27 +88,6 @@ class DeviceDialog(QDialog, Ui_DeviceDialog):
         self.available_item.setText(0, 'No devices available at {0}:{1}'.format(self.host, self.port))
 
         self.connected_uids = []
-
-        if self.secret != None:
-            self.ipcon.set_auto_reconnect(False) # don't auto-reconnect on authentication error
-
-            try:
-                self.ipcon.authenticate(self.secret)
-            except:
-                try:
-                    self.ipcon.disconnect()
-                except:
-                    pass
-
-                if connect_reason == IPConnection.CONNECT_REASON_AUTO_RECONNECT:
-                    extra = ' after auto-reconnect'
-                else:
-                    extra = ''
-
-                self.available_item.setText(0, 'Could not authenticate' + extra)
-                return
-
-            self.ipcon.set_auto_reconnect(True)
 
         try:
             self.ipcon.enumerate()
@@ -167,14 +144,6 @@ class DeviceDialog(QDialog, Ui_DeviceDialog):
         self.connected_uids = []
         self.host = self._logger_window.combo_host.currentText()
         self.port = self._logger_window.spin_port.value()
-
-        if self._logger_window.check_authentication.isChecked():
-            try:
-                self.secret = self._logger_window.edit_secret.text().encode('ascii')
-            except:
-                self.secret = None
-        else:
-            self.secret = None
 
         try:
             self.ipcon.connect(self.host, self.port)

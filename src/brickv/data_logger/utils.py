@@ -31,40 +31,21 @@ from shutil import copyfile
 import sys  # CSV_Writer
 from threading import Timer
 import time  # Writer Thread
-import math
-import locale
 
 if 'merged_data_logger_modules' not in globals():
     from brickv.data_logger.event_logger import EventLogger
 
-def utf8_strftime(timestamp, fmt):
-    encoding = locale.getlocale()[1]
-
-    # FIXME: Mac OS X doesn't have LANG set when running from an .app container.
-    # therefore, locale.setlocale() cannot detect the encoding from the environment.
-    # in this case we just default to UTF-8 and hope for the best
-    if encoding == None:
-        encoding = 'utf-8'
-
-    return datetime.fromtimestamp(timestamp).strftime(fmt).decode(encoding).encode('utf-8')
-
 def timestamp_to_de(timestamp):
-    return utf8_strftime(timestamp, '%d.%m.%Y %H:%M:%S')
-
-def timestamp_to_de_msec(timestamp):
-    return timestamp_to_de(timestamp) + ',' + ('%.3f' % math.modf(timestamp)[0])[2:]
+    return datetime.fromtimestamp(timestamp).strftime('%d.%m.%Y %H:%M:%S')
 
 def timestamp_to_us(timestamp):
-    return utf8_strftime(timestamp, '%m/%d/%Y %H:%M:%S')
+    return datetime.fromtimestamp(timestamp).strftime('%m/%d/%Y %H:%M:%S')
 
-def timestamp_to_us_msec(timestamp):
-    return timestamp_to_us(timestamp) + '.' + ('%.3f' % math.modf(timestamp)[0])[2:]
-
-def timestamp_to_iso(timestamp, milli=False):
+def timestamp_to_iso(timestamp):
     """
     Format a timestamp in ISO 8601 standard
-    ISO 8601 = YYYY-MM-DDThh:mm:ss.fff+tz:tz
-               2014-09-10T14:12:05.563+02:00
+    ISO 8601 = YYYY-MM-DDThh:mm:ss+tz:tz
+               2014-09-10T14:12:05+02:00
     """
 
     if time.localtime().tm_isdst and time.daylight:
@@ -79,27 +60,10 @@ def timestamp_to_iso(timestamp, milli=False):
     else:
         tz = '+' + tz
 
-    if milli:
-        ms = '.' + ('%.3f' % math.modf(timestamp)[0])[2:]
-    else:
-        ms = ''
-
-    return utf8_strftime(timestamp, '%Y-%m-%dT%H:%M:%S') + ms + tz
-
-def timestamp_to_iso_msec(timestamp):
-    return timestamp_to_iso(timestamp, True)
+    return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%S') + tz
 
 def timestamp_to_unix(timestamp):
     return str(int(timestamp))
-
-def timestamp_to_unix_msec(timestamp):
-    return '%.3f' % timestamp
-
-def timestamp_to_strftime(timestamp, time_format):
-    try:
-        return utf8_strftime(timestamp, time_format.encode('utf-8'))
-    except Exception as e:
-        return 'Error: ' + str(e).replace('\n', ' ')
 
 class DataLoggerException(Exception):
     # Error Codes
@@ -182,13 +146,11 @@ class LoggerTimer(object):
 
     def _loop(self):
         """Runs the <self._func_name> function every <self._interval> seconds"""
-        start = time.time() # FIXME: use time.monotonic() in Python 3
         getattr(self._device, self._func_name)(self._var_name)
-        elapsed = max(time.time() - start, 0) # FIXME: use time.monotonic() in Python 3
         self.cancel()
         if self.exit_flag:
             return
-        self._t = Timer(max(self._interval - elapsed, 0), self._loop)
+        self._t = Timer(self._interval, self._loop)
         self.start()
 
     def start(self):

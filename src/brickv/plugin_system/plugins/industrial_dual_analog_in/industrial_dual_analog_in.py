@@ -32,7 +32,6 @@ from brickv.bindings.bricklet_industrial_dual_analog_in import BrickletIndustria
 from brickv.plot_widget import PlotWidget
 from brickv.async_call import async_call
 from brickv.callback_emulator import CallbackEmulator
-from brickv.utils import get_modeless_dialog_flags
 from brickv.plugin_system.plugins.industrial_dual_analog_in.ui_calibration import Ui_Calibration
 
 def is_int32(value):
@@ -45,7 +44,7 @@ class VoltageLabel(QLabel):
 
 class Calibration(QDialog, Ui_Calibration):
     def __init__(self, parent):
-        QDialog.__init__(self, parent, get_modeless_dialog_flags())
+        QDialog.__init__(self, parent)
         self.parent = parent
         
         self.values0 = [0]*10

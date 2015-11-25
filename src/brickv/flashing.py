@@ -33,8 +33,7 @@ from PyQt4.QtGui import QApplication, QColor, QDialog, QMessageBox, \
                         QProgressDialog, QStandardItemModel, QStandardItem, QBrush
 from brickv.samba import SAMBA, SAMBAException, SAMBARebootError, get_serial_ports
 from brickv.infos import get_version_string
-from brickv.utils import get_main_window, get_home_path, get_open_file_name, \
-                         get_modeless_dialog_flags
+from brickv.utils import get_main_window, get_home_path, get_open_file_name
 from brickv.esp_flash import ESPROM
 from brickv import infos
 
@@ -89,7 +88,7 @@ class ProgressWrapper(object):
 
 class FlashingWindow(QDialog, Ui_Flashing):
     def __init__(self, parent):
-        QDialog.__init__(self, parent, get_modeless_dialog_flags())
+        QDialog.__init__(self, parent)
 
         self.setupUi(self)
 
@@ -381,8 +380,7 @@ class FlashingWindow(QDialog, Ui_Flashing):
                        'ttyUSB' in port[0] or \
                        'usbmodemfd' in port[0] or \
                        'AT91 USB to Serial Converter' in port[1] or \
-                       'GPS Camera Detect' in port[1] or \
-                       'Bossa Program Port' in port[1]:
+                       'GPS Camera Detect' in port[1]:
                         preferred_index = self.combo_serial_port.count()
 
                 if len(port[1]) > 0 and port[0] != port[1]:

@@ -33,11 +33,10 @@ from brickv.bindings.brick_imu_v2 import BrickIMUV2
 from brickv.async_call import async_call
 from brickv.plot_widget import PlotWidget
 from brickv.callback_emulator import CallbackEmulator
-from brickv.utils import get_modeless_dialog_flags
 
 class Calibration(QDialog, Ui_Calibration):
     def __init__(self, parent):
-        QDialog.__init__(self, parent, get_modeless_dialog_flags())
+        QDialog.__init__(self, parent)
 
         self.setupUi(self)
 
