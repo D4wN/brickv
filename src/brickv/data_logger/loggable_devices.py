@@ -76,7 +76,12 @@ if 'merged_data_logger_modules' not in globals():
     from brickv.bindings.brick_stepper import BrickStepper
 
     from brickv.data_logger.event_logger import EventLogger
-    from brickv.data_logger.utils import LoggerTimer, timestamp_to_de, timestamp_to_us, timestamp_to_iso, timestamp_to_unix, CSVData
+    from brickv.data_logger.utils import LoggerTimer, CSVData, \
+                                         timestamp_to_de, timestamp_to_us, \
+                                         timestamp_to_iso, timestamp_to_unix, \
+                                         timestamp_to_de_msec, timestamp_to_us_msec, \
+                                         timestamp_to_iso_msec, timestamp_to_unix_msec, \
+                                         timestamp_to_strftime
 else:
     from tinkerforge.bricklet_accelerometer import BrickletAccelerometer
     from tinkerforge.bricklet_ambient_light import BrickletAmbientLight
@@ -2305,13 +2310,26 @@ class DeviceImpl(AbstractDevice):
         unit = value_spec['unit']
         now = time.time()
         time_format = self.datalogger._config['data']['time_format']
+        time_format_strftime = self.datalogger._config['data']['time_format_strftime']
 
         if time_format == 'de':
             timestamp = timestamp_to_de(now)
+        elif time_format == 'de-msec':
+            timestamp = timestamp_to_de_msec(now)
         elif time_format == 'us':
             timestamp = timestamp_to_us(now)
+        elif time_format == 'us-msec':
+            timestamp = timestamp_to_us_msec(now)
         elif time_format == 'iso':
             timestamp = timestamp_to_iso(now)
+        elif time_format == 'iso-msec':
+            timestamp = timestamp_to_iso_msec(now)
+        elif time_format == 'unix':
+            timestamp = timestamp_to_unix(now)
+        elif time_format == 'unix-msec':
+            timestamp = timestamp_to_unix_msec(now)
+        elif time_format == 'strftime':
+            timestamp = timestamp_to_strftime(now, time_format_strftime)
         else:
             timestamp = timestamp_to_unix(now)
 
