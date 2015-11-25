@@ -28,6 +28,7 @@ from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, \
                         QLabel, QFrame, QSpacerItem, QSizePolicy, \
                         QStandardItemModel, QStandardItem, QToolButton, \
                         QLineEdit, QCursor, QMenu, QToolButton, QAction
+from brickv.plugin_system.plugins.red.red_tab_vision import TEMP_MAINWINDOW
 from brickv.ui_mainwindow import Ui_MainWindow
 from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.qtcb_disconnected.connect(self.cb_disconnected)
 
         self.ipcon = IPConnection()
+        TEMP_MAINWINDOW.TEMP_IPCON = self.ipcon  # FIXME how do i get the ipcon in one of the tabs? (vision)
         self.ipcon.register_callback(IPConnection.CALLBACK_ENUMERATE,
                                      self.qtcb_enumerate.emit)
         self.ipcon.register_callback(IPConnection.CALLBACK_CONNECTED,
