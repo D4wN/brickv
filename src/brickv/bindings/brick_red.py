@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-07-28.      #
+# This file was automatically generated on 2015-11-25.      #
 #                                                           #
 # Bindings Version 2.1.5                                    #
 #                                                           #
@@ -57,6 +57,19 @@ GetProgramSchedulerState = namedtuple('ProgramSchedulerState', ['error_code', 's
 GetLastSpawnedProgramProcess = namedtuple('LastSpawnedProgramProcess', ['error_code', 'process_id', 'timestamp'])
 GetCustomProgramOptionNames = namedtuple('CustomProgramOptionNames', ['error_code', 'names_list_id'])
 GetCustomProgramOptionValue = namedtuple('CustomProgramOptionValue', ['error_code', 'value_string_id'])
+VisionGetInvFramerate = namedtuple('VisionGetInvFramerate', ['result', 'milliseconds'])
+VisionGetResolution = namedtuple('VisionGetResolution', ['result', 'width', 'height'])
+VisionParameterGet = namedtuple('VisionParameterGet', ['result', 'value'])
+VisionModuleStart = namedtuple('VisionModuleStart', ['result', 'id'])
+VisionModuleGetName = namedtuple('VisionModuleGetName', ['result', 'name'])
+VisionLibsCount = namedtuple('VisionLibsCount', ['result', 'count'])
+VisionLibNamePath = namedtuple('VisionLibNamePath', ['result', 'name', 'path'])
+VisionLibParameterCount = namedtuple('VisionLibParameterCount', ['result', 'count'])
+VisionLibParameterDescribe = namedtuple('VisionLibParameterDescribe', ['result', 'min', 'max', 'default'])
+VisionLibUserLoadPath = namedtuple('VisionLibUserLoadPath', ['result', 'path'])
+VisionLibSystemLoadPath = namedtuple('VisionLibSystemLoadPath', ['result', 'path'])
+VisionLibUserLoadPath = namedtuple('VisionLibUserLoadPath', ['result', 'path'])
+VisionModuleResult = namedtuple('VisionModuleResult', ['result', 'x', 'y', 'width', 'height', 'string'])
 GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardware_version', 'firmware_version', 'device_identifier'])
 
 class BrickRED(Device):
@@ -73,6 +86,8 @@ class BrickRED(Device):
     CALLBACK_PROCESS_STATE_CHANGED = 45
     CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED = 65
     CALLBACK_PROGRAM_PROCESS_SPAWNED = 66
+    CALLBACK_VISION_MODULE = 94
+    CALLBACK_VISION_LIBRARIES = 95
 
     FUNCTION_CREATE_SESSION = 1
     FUNCTION_EXPIRE_SESSION = 2
@@ -134,6 +149,33 @@ class BrickRED(Device):
     FUNCTION_SET_CUSTOM_PROGRAM_OPTION_VALUE = 62
     FUNCTION_GET_CUSTOM_PROGRAM_OPTION_VALUE = 63
     FUNCTION_REMOVE_CUSTOM_PROGRAM_OPTION = 64
+    FUNCTION_VISION_CAMERA_AVAILABLE = 67
+    FUNCTION_VISION_SET_FRAMESIZE = 68
+    FUNCTION_VISION_START_IDLE = 69
+    FUNCTION_VISION_SET_LATENCY = 70
+    FUNCTION_VISION_GET_INV_FRAMERATE = 71
+    FUNCTION_VISION_GET_RESOLUTION = 72
+    FUNCTION_VISION_STOP = 73
+    FUNCTION_VISION_RESTART = 74
+    FUNCTION_VISION_PARAMETER_SET = 75
+    FUNCTION_VISION_PARAMETER_GET = 76
+    FUNCTION_VISION_MODULE_START = 77
+    FUNCTION_VISION_MODULE_STOP = 78
+    FUNCTION_VISION_MODULE_RESTART = 79
+    FUNCTION_VISION_MODULE_REMOVE = 80
+    FUNCTION_VISION_MODULE_GET_NAME = 81
+    FUNCTION_VISION_LIBS_COUNT = 82
+    FUNCTION_VISION_LIB_NAME_PATH = 83
+    FUNCTION_VISION_LIB_PARAMETER_COUNT = 84
+    FUNCTION_VISION_LIB_PARAMETER_DESCRIBE = 85
+    FUNCTION_VISION_LIB_USER_LOAD_PATH = 86
+    FUNCTION_VISION_LIB_SYSTEM_LOAD_PATH = 87
+    FUNCTION_VISION_SET_LIB_USER_LOAD_PATH = 88
+    FUNCTION_VISION_REMOVE_ALL_MODULES = 89
+    FUNCTION_VISION_LIB_USER_LOAD_PATH = 90
+    FUNCTION_VISION_MODULE_RESULT = 91
+    FUNCTION_VISION_SCENE_ADD = 92
+    FUNCTION_VISION_SCENE_REMOVE = 93
     FUNCTION_GET_IDENTITY = 255
 
     ERROR_CODE_SUCCESS = 0
@@ -323,6 +365,35 @@ class BrickRED(Device):
         self.response_expected[BrickRED.FUNCTION_REMOVE_CUSTOM_PROGRAM_OPTION] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
         self.response_expected[BrickRED.CALLBACK_PROGRAM_PROCESS_SPAWNED] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
+        self.response_expected[BrickRED.FUNCTION_VISION_CAMERA_AVAILABLE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_SET_FRAMESIZE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_START_IDLE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_SET_LATENCY] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_GET_INV_FRAMERATE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_GET_RESOLUTION] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_STOP] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_RESTART] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_PARAMETER_SET] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_PARAMETER_GET] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_MODULE_START] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_MODULE_STOP] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_MODULE_RESTART] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_MODULE_REMOVE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_MODULE_GET_NAME] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_LIBS_COUNT] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_LIB_NAME_PATH] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_LIB_PARAMETER_COUNT] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_LIB_PARAMETER_DESCRIBE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_LIB_USER_LOAD_PATH] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_LIB_SYSTEM_LOAD_PATH] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_SET_LIB_USER_LOAD_PATH] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_REMOVE_ALL_MODULES] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_LIB_USER_LOAD_PATH] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_MODULE_RESULT] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_SCENE_ADD] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_SCENE_REMOVE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.CALLBACK_VISION_MODULE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
+        self.response_expected[BrickRED.CALLBACK_VISION_LIBRARIES] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
         self.response_expected[BrickRED.FUNCTION_GET_IDENTITY] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
 
         self.callback_formats[BrickRED.CALLBACK_ASYNC_FILE_READ] = 'H B 60B B'
@@ -331,6 +402,8 @@ class BrickRED(Device):
         self.callback_formats[BrickRED.CALLBACK_PROCESS_STATE_CHANGED] = 'H B Q B'
         self.callback_formats[BrickRED.CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED] = 'H'
         self.callback_formats[BrickRED.CALLBACK_PROGRAM_PROCESS_SPAWNED] = 'H'
+        self.callback_formats[BrickRED.CALLBACK_VISION_MODULE] = 'b i i i i 24s'
+        self.callback_formats[BrickRED.CALLBACK_VISION_LIBRARIES] = '24s 24s 24s'
 
     def create_session(self, lifetime):
         """
@@ -930,6 +1003,168 @@ class BrickRED(Device):
         
         """
         return self.ipcon.send_request(self, BrickRED.FUNCTION_REMOVE_CUSTOM_PROGRAM_OPTION, (program_id, name_string_id), 'H H', 'B')
+
+    def vision_camera_available(self):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_CAMERA_AVAILABLE, (), '', 'h')
+
+    def vision_set_framesize(self, width, height):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_SET_FRAMESIZE, (width, height), 'H H', 'h')
+
+    def vision_start_idle(self):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_START_IDLE, (), '', 'h')
+
+    def vision_set_latency(self, milliseconds):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_SET_LATENCY, (milliseconds,), 'I', 'h')
+
+    def vision_get_inv_framerate(self):
+        """
+        
+        """
+        return VisionGetInvFramerate(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_GET_INV_FRAMERATE, (), '', 'h I'))
+
+    def vision_get_resolution(self):
+        """
+        
+        """
+        return VisionGetResolution(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_GET_RESOLUTION, (), '', 'h H H'))
+
+    def vision_stop(self):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_STOP, (), '', 'h')
+
+    def vision_restart(self):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_RESTART, (), '', 'h')
+
+    def vision_parameter_set(self, id, parameter, value):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_PARAMETER_SET, (id, parameter, value), 'b 24s i', 'h')
+
+    def vision_parameter_get(self, id, parameter):
+        """
+        
+        """
+        return VisionParameterGet(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_PARAMETER_GET, (id, parameter), 'b 24s', 'h i'))
+
+    def vision_module_start(self, name):
+        """
+        
+        """
+        return VisionModuleStart(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_MODULE_START, (name,), '24s', 'h b'))
+
+    def vision_module_stop(self, id):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_MODULE_STOP, (id,), 'b', 'h')
+
+    def vision_module_restart(self, id):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_MODULE_RESTART, (id,), 'b', 'h')
+
+    def vision_module_remove(self, id):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_MODULE_REMOVE, (id,), 'b', 'h')
+
+    def vision_module_get_name(self, id):
+        """
+        
+        """
+        return VisionModuleGetName(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_MODULE_GET_NAME, (id,), 'b', 'h 24s'))
+
+    def vision_libs_count(self):
+        """
+        
+        """
+        return VisionLibsCount(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_LIBS_COUNT, (), '', 'h H'))
+
+    def vision_lib_name_path(self, number):
+        """
+        
+        """
+        return VisionLibNamePath(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_LIB_NAME_PATH, (number,), 'H', 'h 24s 24s'))
+
+    def vision_lib_parameter_count(self, lib):
+        """
+        
+        """
+        return VisionLibParameterCount(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_LIB_PARAMETER_COUNT, (lib,), '24s', 'h H'))
+
+    def vision_lib_parameter_describe(self, lib, count, name):
+        """
+        
+        """
+        return VisionLibParameterDescribe(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_LIB_PARAMETER_DESCRIBE, (lib, count, name), '24s H 24s', 'h i i i'))
+
+    def vision_lib_user_load_path(self):
+        """
+        
+        """
+        return VisionLibUserLoadPath(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_LIB_USER_LOAD_PATH, (), '', 'h 24s'))
+
+    def vision_lib_system_load_path(self):
+        """
+        
+        """
+        return VisionLibSystemLoadPath(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_LIB_SYSTEM_LOAD_PATH, (), '', 'h 24s'))
+
+    def vision_set_lib_user_load_path(self, path):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_SET_LIB_USER_LOAD_PATH, (path,), '24s', 'h')
+
+    def vision_remove_all_modules(self):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_REMOVE_ALL_MODULES, (), '', 'h')
+
+    def vision_lib_user_load_path(self):
+        """
+        
+        """
+        return VisionLibUserLoadPath(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_LIB_USER_LOAD_PATH, (), '', 'h 24s'))
+
+    def vision_module_result(self, module_id):
+        """
+        
+        """
+        return VisionModuleResult(*self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_MODULE_RESULT, (module_id,), 'b', 'h i i i i 24s'))
+
+    def vision_scene_add(self, scene_id, module_id):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_SCENE_ADD, (scene_id, module_id), 'h b', 'h')
+
+    def vision_scene_remove(self, scene_id):
+        """
+        
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_SCENE_REMOVE, (scene_id,), 'h', 'h')
 
     def get_identity(self):
         """
