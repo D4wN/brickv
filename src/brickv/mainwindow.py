@@ -28,7 +28,6 @@ from PyQt4.QtGui import QApplication, QMainWindow, QMessageBox, \
                         QLabel, QFrame, QSpacerItem, QSizePolicy, \
                         QStandardItemModel, QStandardItem, QToolButton, \
                         QLineEdit, QCursor, QMenu, QToolButton, QAction
-from brickv.plugin_system.plugins.red.red_tab_vision import TEMP_MAINWINDOW
 from brickv.ui_mainwindow import Ui_MainWindow
 from brickv.plugin_system.plugin_manager import PluginManager
 from brickv.bindings.ip_connection import IPConnection
