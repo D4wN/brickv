@@ -84,7 +84,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.qtcb_disconnected.connect(self.cb_disconnected)
 
         self.ipcon = IPConnection()
-        TEMP_MAINWINDOW.TEMP_IPCON = self.ipcon  # FIXME how do i get the ipcon in one of the tabs? (vision)
         self.ipcon.register_callback(IPConnection.CALLBACK_ENUMERATE,
                                      self.qtcb_enumerate.emit)
         self.ipcon.register_callback(IPConnection.CALLBACK_CONNECTED,
