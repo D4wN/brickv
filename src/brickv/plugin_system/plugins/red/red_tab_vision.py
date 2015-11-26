@@ -26,14 +26,10 @@ from PyQt4.QtCore import pyqtSignal
 from brickv.bindings.brick_red import BrickRED, RED
 from brickv.bindings.ip_connection import IPConnection
 from brickv.config import HostInfo
-from brickv.plugin_system.plugins.red.api import REDBrick
 
 from brickv.plugin_system.plugins.red.program_utils import ChunkedDownloaderBase
 from brickv.plugin_system.plugins.red.red_tab import REDTab
 from brickv.plugin_system.plugins.red.ui_red_tab_vision import Ui_REDTabVision
-
-class TEMP_MAINWINDOW():  # FIXME how do i get the ipcon in one of the tabs? (vision)
-    TEMP_IPCON = None
 
 class MyDownloader(ChunkedDownloaderBase):
     def __init__(self, widget):
@@ -58,57 +54,33 @@ class MyDownloader(ChunkedDownloaderBase):
 
 class REDTabVision(REDTab, Ui_REDTabVision):
 
-    qtcb_enumerate = pyqtSignal(str, str, 'char', type((0,)), type((0,)), int, int)
-
     def __init__(self):
         REDTab.__init__(self)
-
         self.setupUi(self)
 
         self.downloader = None
         self.red = None
 
-        print str(self.session)
-
-
         self.__init_connections()
-        self.__init_uid()
+
+    def __clear_up(self):
+        self.downloader = None
+        self.red = None
 
     def __init_connections(self):
-        self.qtcb_enumerate.connect(self.cb_enumerate)
-
         self.button_debug_start_motion.clicked.connect(self._button_debug_start_motion_clicked)
         self.button_debug_stop_all.clicked.connect(self._button_debug_stop_all_clicked)
 
-        # self.btn_push.clicked.connect(self._start_download)
-
-    def __init_uid(self):
-        #print str(HostInfo.host) + ":" + str(HostInfo.port)
-        # self.ipcon = IPConnection()  # TODO old_ipcon
-        self.ipcon = TEMP_MAINWINDOW.TEMP_IPCON
-        self.uid = None
-        self.ipcon.register_callback(IPConnection.CALLBACK_ENUMERATE, self.qtcb_enumerate.emit)
-        #self.ipcon.connect(HostInfo.host, HostInfo.port) # TODO old_ipcon
-
-    def cb_enumerate(self, uid, connected_uid, position, hardware_version, firmware_version, device_identifier, enumeration_type):
-        if self.uid is not None:
+    def __init_red(self):
+        # use the session object to get a BrickRED Object
+        if self.red is not None and self.session is not None:
             return
 
-        # if enumeration_type in [IPConnection.ENUMERATION_TYPE_AVAILABLE, IPConnection.ENUMERATION_TYPE_CONNECTED]:
-        #    evice_info = infos.get_info(uid)
+        self.red = self.session._brick
 
-            # device_info == None:
-        print "br:"+str(BrickRED.DEVICE_IDENTIFIER)
-        if device_identifier == BrickRED.DEVICE_IDENTIFIER:
-            print "RedBrick: " + str(uid)
-            self.uid = uid
-            if self.red is None:
-                pass
-                self.red = RED(self.uid, self.ipcon)
-                print "RED Test: API" + str(self.red.api_version)
-            # self.ipcon.disconnect()  # TODO old_ipcon
-        else:
-            print "Other: " + str(uid)
+        print "SESSION _brick : " + str(self.session._brick)
+        print "REDBrick       : " + str(self.red)
+        print "RED Vison      : " + str(self.red.vision_camera_available())
 
     def _button_debug_start_motion_clicked(self):
         pass
@@ -145,10 +117,12 @@ class REDTabVision(REDTab, Ui_REDTabVision):
             #sleep(1)
 
     def tab_on_focus(self):
+        self.__init_red()
         print "tab_on_focus"
 
     def tab_off_focus(self):
         print "tab_off_focus"
 
     def tab_destroy(self):
+        self.__clear_up()
         print "tab_destroy"
