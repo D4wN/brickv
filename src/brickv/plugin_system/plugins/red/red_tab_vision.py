@@ -252,11 +252,6 @@ class REDTabVision(REDTab, Ui_REDTabVision):
 
         result = str(self.red.vision_module_start(md_name))
         print "START_MODULE(" + str(md_name) + ") = " + str(result)
-        print "FIXME and TODO!!!!"
-        # if result.id != 0: #FIXME result = id! sind vertauscht TODO: redapid neu machen!
-        #     return
-
-        #self.vision_callback_list[result.result] = def abc():
 
     def visioncallback(self, id, x, y, width, height, string):
         #TODO: Roland -> callback der nicht funzt
