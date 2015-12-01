@@ -32,6 +32,7 @@ system("pyuic4 -o ui_red_tab_importexport_import.py ui/red_tab_importexport_impo
 system("pyuic4 -o ui_red_tab_importexport_export.py ui/red_tab_importexport_export.ui")
 system("pyuic4 -o ui_red_tab_importexport_systemlogs.py ui/red_tab_importexport_systemlogs.ui")
 system("pyuic4 -o ui_red_tab_vision.py ui/red_tab_vision.ui")
+system("pyuic4 -o ui_vision_page_general.py ui/vision_page_general.ui")
 
 system("pyuic4 -o ui_program_info_main.py ui/program_info_main.ui")
 system("pyuic4 -o ui_program_info_files.py ui/program_info_files.ui")

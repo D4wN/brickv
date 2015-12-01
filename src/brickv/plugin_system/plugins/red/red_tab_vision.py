@@ -21,6 +21,7 @@ License along with this program; if not, write to the
 Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 """
+from collections import OrderedDict
 import os
 from time import sleep
 from PyQt4.QtCore import QTimer
@@ -29,6 +30,8 @@ from brickv.plugin_system.plugins.red.program_utils import ChunkedDownloaderBase
 from brickv.plugin_system.plugins.red.red_tab import REDTab
 from brickv.plugin_system.plugins.red.ui_red_tab_vision import Ui_REDTabVision
 from brickv.async_call import async_call
+from brickv.plugin_system.plugins.red.vision_wizard import VisionWizardContext
+from brickv.plugin_system.plugins.red.vision_wizard_new import VisionWizardNew
 
 class MyDownloader(ChunkedDownloaderBase):
     def __init__(self, widget):
@@ -59,10 +62,12 @@ class REDTabVision(REDTab, Ui_REDTabVision):
 
         self.downloader = None
         self.red = None
+        self.vision_module_list = OrderedDict()
 
         self.first_tab_on_focus  = True
         self.tab_is_alive        = True
         self.refresh_in_progress = False
+        self.new_vision_wizard  = None
 
         self.__init_connections()
         self.update_ui_state()
@@ -71,10 +76,14 @@ class REDTabVision(REDTab, Ui_REDTabVision):
         self.downloader = None
         self.red = None
 
+        if self.new_vision_wizard != None:
+            self.new_vision_wizard.close()
+
     def __init_connections(self):
         self.button_debug_start_motion.clicked.connect(self._button_debug_start_motion_clicked)
         self.button_debug_test_all.clicked.connect(self._button_debug_test_all_clicked)
         self.button_debug_stop_all.clicked.connect(self._button_debug_stop_all_clicked)
+        self.button_new.clicked.connect(self.show_new_vision_wizard)
 
     def __init_red(self):
         # use the session object to get a BrickRED Object
@@ -118,7 +127,7 @@ class REDTabVision(REDTab, Ui_REDTabVision):
     def refresh_vision_programs(self):
         def refresh_async():
             print "Refreshed!"
-            sleep(5)
+            #sleep(5)
             return
 
         def cb_success():
@@ -134,6 +143,44 @@ class REDTabVision(REDTab, Ui_REDTabVision):
         self.update_ui_state()
 
         async_call(refresh_async, None, cb_success, cb_error)
+
+    def __check_result(self, result):
+        if result.result != 0:
+            # FIXME error handling
+            return False
+        return True
+
+    def get_vision_modules(self):
+        if self.red is None:
+            return  # FIXME Error Message
+
+        result = self.red.vision_libs_count()
+        if not self.__check_result(result):
+            print "get_vision_modules::vision_libs_count"
+            return
+        lib_count = result.count
+        print "lib_count = " + str(lib_count)
+
+        # get module names
+        for i in range(0, lib_count):
+            result = self.red.vision_lib_name_path(i)
+            if not self.__check_result(result):
+                print "get_vision_modules::vision_lib_name_path"
+                return
+            self.vision_module_list[result.name] = OrderedDict()
+
+            # get parameter and descriptions
+            para_result = self.red.vision_lib_parameters_count(result.name)
+            if not self.__check_result(para_result):
+                print "get_vision_modules::vision_lib_parameters_count"
+                return
+            for j in range(0, para_result.count):
+                para_desc = self.red.vision_lib_parameter_describe(result.name, j)
+                if not self.__check_result(para_desc):
+                    continue
+                self.vision_module_list[result.name][para_desc.name] = para_desc
+                #print "para_desc = " + str(para_desc)
+        print "module_list = \n" + str(self.vision_module_list)
 
     def _start_download(self):
         if self.downloader is not None:
@@ -165,26 +212,19 @@ class REDTabVision(REDTab, Ui_REDTabVision):
 
     def _button_debug_start_motion_clicked(self):
         print "Start Motion clicked"
-        def cb_vision(a, b, c, d):
-            print "CB: " + str(a) + ", " + str(b) + ", " + str(c) + ", " + str(d)
-
-        self.red.register_callback(self.red.CALLBACK_VISION_MODULE, cb_vision)
-
-        self.tmp_id = self.red.vision_module_start("motion") # brickv.bindings.ip_connection.Error: Got invalid parameter for function 77 (-9)
+        self.get_vision_modules()
 
     def _button_debug_test_all_clicked(self):
         print "Test all clicked"
 
-        # print "IDs: " + str(self.tmp_id)
-
-        # print "vision_camera_available     = " + str(self.red.vision_camera_available())
-        # print "vision_get_inv_framerate    = " + str(self.red.vision_get_inv_framerate())
-        # w, h = self.red.vision_get_resolution()
-        # print "vision_get_resolution       = " + str(w) + " x " + str(h) # struct.error: unpack requires a string argument of length 2
-        # print "vision_libs_count           = " + str(self.red.vision_libs_count()) # brickv.bindings.ip_connection.Error: Got invalid parameter for function 82 (-9)
-        print "vision_lib_user_load_path   = " + str(self.red.vision_lib_user_load_path()) # brickv.bindings.ip_connection.Error: Function 90 is not supported (-10)
-        # print "vision_lib_system_load_path = " + str(self.red.vision_lib_system_load_path()) # brickv.bindings.ip_connection.Error: Function 87 is not supported (-10)
-        # print "" + str(self.red)
+        print "vision_is_valid                  = " + str(self.red.vision_is_valid())
+        print "vision_camera_available          = " + str(self.red.vision_camera_available())
+        print "def vision_get_framesize         = " + str(self.red.vision_get_framesize())
+        print "vision_get_frameperiod           = " + str(self.red.vision_get_frameperiod())
+        print "vision_libs_count                = " + str(self.red.vision_libs_count())
+        print "vision_lib_get_user_prefix       = " + str(self.red.vision_lib_get_user_prefix())
+        print "vision_lib_get_system_load_path  = " + str(self.red.vision_lib_get_system_load_path())
+        print "vision_libs_loaded_count         = " + str(self.red.vision_libs_loaded_count())
         # print "" + str(self.red)
         # print "" + str(self.red)
         # print "" + str(self.red)
@@ -194,3 +234,34 @@ class REDTabVision(REDTab, Ui_REDTabVision):
 
     def _button_debug_stop_all_clicked(self):
         print "Stop all clicked = " + str(self.red.vision_stop())
+
+    def show_new_vision_wizard(self):
+        print "show_new_vision_wizard"
+        self.button_new.setEnabled(False)
+
+        # if self.stacked_container.count() > 1:
+        #     current_widget = self.stacked_container.currentWidget()
+        # else:
+        #     current_widget = None
+        #
+        # if current_widget != None:
+        #     current_widget.set_program_callbacks_enabled(False)
+        #
+        identifiers = []
+        #
+        # for i in range(self.tree_programs.topLevelItemCount()):
+        #     identifiers.append(self.tree_programs.topLevelItem(i).data(0, Qt.UserRole).program.identifier)
+
+        context = VisionWizardContext(self.session, identifiers, self.script_manager, self.image_version)
+
+        self.new_vision_wizard = VisionWizardNew(self, context)
+
+        self.new_vision_wizard.exec_()
+        self.button_new.setEnabled(True) # FIXME temp only
+
+        # if self.new_vision_wizard.upload_successful:
+        #     self.add_program_to_tree(self.new_vision_wizard.program)
+        #     self.tree_programs.topLevelItem(self.tree_programs.topLevelItemCount() - 1).setSelected(True)
+        #
+        #     for i in reversed(range(self.tree_programs.topLevelItemCount() - 1)):
+        #         self.tree_programs.topLevelItem(i).setSelected(False)
