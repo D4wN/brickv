@@ -25,6 +25,7 @@ from collections import OrderedDict
 import os
 from time import sleep
 from PyQt4.QtCore import QTimer
+from brickv.bindings.brick_red import BrickRED
 
 from brickv.plugin_system.plugins.red.program_utils import ChunkedDownloaderBase
 from brickv.plugin_system.plugins.red.red_tab import REDTab
@@ -63,6 +64,7 @@ class REDTabVision(REDTab, Ui_REDTabVision):
         self.downloader = None
         self.red = None
         self.vision_module_list = OrderedDict()
+        self.vision_callback_list = {}
 
         self.first_tab_on_focus  = True
         self.tab_is_alive        = True
@@ -85,12 +87,17 @@ class REDTabVision(REDTab, Ui_REDTabVision):
         self.button_debug_stop_all.clicked.connect(self._button_debug_stop_all_clicked)
         self.button_new.clicked.connect(self.show_new_vision_wizard)
 
+        self.button_debug_print_running_modules.clicked.connect(self._button_debug_print_running_modules)
+        self.button_start_module.clicked.connect(self.button_start_module_clicked)
+
     def __init_red(self):
         # use the session object to get a BrickRED Object
         if self.red is not None and self.session is not None:
             return
 
         self.red = self.session._brick
+        self.red.register_callback(BrickRED.CALLBACK_VISION_MODULE, self.visioncallback)
+
 
         print "SESSION _brick : " + str(self.session._brick)
         print "REDBrick       : " + str(self.red)
@@ -233,7 +240,44 @@ class REDTabVision(REDTab, Ui_REDTabVision):
         # print "" + str(self.red)
 
     def _button_debug_stop_all_clicked(self):
-        print "Stop all clicked = " + str(self.red.vision_stop())
+        #TODO: Roland -> entfernt ALLE module
+        print "Stop all clicked = " + str(self.red.vision_remove_all_modules())
+
+    def button_start_module_clicked(self):
+        #TODO: Roland -> module werden hier gestartet
+        md_name = self.line_module_name.text()
+        if md_name is None:
+            print "button_start_module_clicked::error -> md_name was None!"
+            return
+
+        result = str(self.red.vision_module_start(md_name))
+        print "START_MODULE(" + str(md_name) + ") = " + str(result)
+        print "FIXME and TODO!!!!"
+        # if result.id != 0: #FIXME result = id! sind vertauscht TODO: redapid neu machen!
+        #     return
+
+        #self.vision_callback_list[result.result] = def abc():
+
+    def visioncallback(self, id, x, y, width, height, string):
+        #TODO: Roland -> callback der nicht funzt
+        print "visioncallback", id, x, y, width, height, string
+
+
+    def _button_debug_print_running_modules(self):
+        #TODO: Roland -> printed alle laufenden module
+        ids = ""
+        c = self.red.vision_libs_loaded_count()
+        if not self.__check_result(c):
+            print "_button_debug_print_running_modules::vision_libs_loaded_count"
+            return
+        for i in range(0, c.count):
+            md_id = self.red.vision_module_get_id(i)
+            if not self.__check_result(md_id):
+                #print "_button_debug_print_running_modules::vision_module_get_id"
+                continue
+            ids += str(md_id.id)+","
+
+        print "DEBUG_PRINT_RUNNING_MODULES = " + str(ids)
 
     def show_new_vision_wizard(self):
         print "show_new_vision_wizard"

@@ -110,28 +110,7 @@
      </widget>
      <widget class="QWidget" name="gridLayoutWidget">
       <layout class="QGridLayout" name="debug_gridlayout">
-       <item row="2" column="1" colspan="2">
-        <widget class="QLabel" name="label_running_id">
-         <property name="text">
-          <string>Running IDs:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_global_frames">
-         <property name="text">
-          <string>Global Interval Frames per Second:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="1">
-        <widget class="QPushButton" name="button_options_save">
-         <property name="text">
-          <string>Save</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
+       <item row="8" column="1">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -145,21 +124,72 @@
         </spacer>
        </item>
        <item row="1" column="1">
-        <widget class="QLineEdit" name="line_global_frames">
+        <widget class="QLineEdit" name="line_module_name">
          <property name="text">
-          <string>10</string>
+          <string/>
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
+       <item row="9" column="1">
         <widget class="QPushButton" name="button_debug_start_motion">
          <property name="text">
           <string>DEBUG_START_MOTION</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="1">
-        <spacer name="verticalSpacer_2">
+       <item row="7" column="1">
+        <widget class="QLineEdit" name="line_running_id">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>None</string>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1" colspan="2">
+        <widget class="QLabel" name="label_running_id">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Running IDs:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_module_name">
+         <property name="text">
+          <string>Module Name</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QPushButton" name="button_debug_test_all">
+         <property name="text">
+          <string>DEBUG_TEST_ALL</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPushButton" name="button_start_module">
+         <property name="text">
+          <string>Start Module</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QPushButton" name="button_debug_stop_all">
+         <property name="text">
+          <string>DEBUG_STOP_ALL_MODULESL</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -172,26 +202,9 @@
         </spacer>
        </item>
        <item row="3" column="1">
-        <widget class="QLineEdit" name="line_running_id">
+        <widget class="QPushButton" name="button_debug_print_running_modules">
          <property name="text">
-          <string>None</string>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <widget class="QPushButton" name="button_debug_stop_all">
-         <property name="text">
-          <string>DEBUG_STOP_ALL</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1">
-        <widget class="QPushButton" name="button_debug_test_all">
-         <property name="text">
-          <string>DEBUG_TEST_ALL</string>
+          <string>DEBUG_PRINT_RUNNING_MODULES</string>
          </property>
         </widget>
        </item>
