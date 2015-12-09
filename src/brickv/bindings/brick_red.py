@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2015-11-30.      #
+# This file was automatically generated on 2015-12-09.      #
 #                                                           #
 # Bindings Version 2.1.5                                    #
 #                                                           #
@@ -90,8 +90,8 @@ class BrickRED(Device):
     CALLBACK_PROCESS_STATE_CHANGED = 45
     CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED = 65
     CALLBACK_PROGRAM_PROCESS_SPAWNED = 66
-    CALLBACK_VISION_MODULE = 101
-    CALLBACK_VISION_LIBRARIES = 102
+    CALLBACK_VISION_LIBRARIES = 104
+    CALLBACK_VISION_MODULE = 105
 
     FUNCTION_CREATE_SESSION = 1
     FUNCTION_EXPIRE_SESSION = 2
@@ -155,38 +155,41 @@ class BrickRED(Device):
     FUNCTION_REMOVE_CUSTOM_PROGRAM_OPTION = 64
     FUNCTION_VISION_IS_VALID = 67
     FUNCTION_VISION_CAMERA_AVAILABLE = 68
-    FUNCTION_VISION_GET_FRAMESIZE = 69
-    FUNCTION_VISION_SET_FRAMESIZE = 70
-    FUNCTION_VISION_START_IDLE = 71
-    FUNCTION_VISION_REQUEST_FRAMEPERIOD = 72
-    FUNCTION_VISION_GET_FRAMEPERIOD = 73
-    FUNCTION_VISION_STOP = 74
-    FUNCTION_VISION_RESTART = 75
-    FUNCTION_VISION_NUMERICAL_PARAMETER_SET = 76
-    FUNCTION_VISION_NUMERICAL_PARAMETER_GET = 77
-    FUNCTION_VISION_STRING_PARAMETER_SET = 78
-    FUNCTION_VISION_STRING_PARAMETER_GET = 79
-    FUNCTION_VISION_MODULE_START = 80
-    FUNCTION_VISION_MODULE_STOP = 81
-    FUNCTION_VISION_MODULE_RESTART = 82
-    FUNCTION_VISION_MODULE_REMOVE = 83
-    FUNCTION_VISION_MODULE_GET_NAME = 84
-    FUNCTION_VISION_MODULE_GET_ID = 85
-    FUNCTION_VISION_MODULE_IS_ACTIVE = 86
-    FUNCTION_VISION_LIBS_COUNT = 87
-    FUNCTION_VISION_LIBS_LOADED_COUNT = 88
-    FUNCTION_VISION_LIB_NAME_PATH = 89
-    FUNCTION_VISION_LIB_PARAMETERS_COUNT = 90
-    FUNCTION_VISION_LIB_PARAMETER_DESCRIBE = 91
-    FUNCTION_VISION_LIB_GET_USER_PREFIX = 92
-    FUNCTION_VISION_LIB_SET_USER_PREFIX = 93
-    FUNCTION_VISION_LIB_GET_SYSTEM_LOAD_PATH = 94
-    FUNCTION_VISION_REMOVE_ALL_MODULES = 95
-    FUNCTION_VISION_MODULE_RESULT = 96
-    FUNCTION_VISION_SCENE_START = 97
-    FUNCTION_VISION_SCENE_ADD = 98
-    FUNCTION_VISION_SCENE_REMOVE = 99
-    FUNCTION_VISION_GET_ERROR_DESCRIPTION = 100
+    FUNCTION_VISION_CAMERA_ID_AVAILABLE = 69
+    FUNCTION_VISION_CAMERA_ID_SELECT = 70
+    FUNCTION_VISION_GET_FRAMESIZE = 71
+    FUNCTION_VISION_SET_FRAMESIZE = 72
+    FUNCTION_VISION_START_IDLE = 73
+    FUNCTION_VISION_REQUEST_FRAMEPERIOD = 74
+    FUNCTION_VISION_GET_FRAMEPERIOD = 75
+    FUNCTION_VISION_STOP = 76
+    FUNCTION_VISION_RESTART = 77
+    FUNCTION_VISION_NUMERICAL_PARAMETER_SET = 78
+    FUNCTION_VISION_NUMERICAL_PARAMETER_GET = 79
+    FUNCTION_VISION_STRING_PARAMETER_SET = 80
+    FUNCTION_VISION_STRING_PARAMETER_GET = 81
+    FUNCTION_VISION_MODULE_START = 82
+    FUNCTION_VISION_MODULE_STOP = 83
+    FUNCTION_VISION_MODULE_RESTART = 84
+    FUNCTION_VISION_MODULE_REMOVE = 85
+    FUNCTION_VISION_MODULE_GET_NAME = 86
+    FUNCTION_VISION_MODULE_GET_ID = 87
+    FUNCTION_VISION_MODULE_IS_ACTIVE = 88
+    FUNCTION_VISION_LIBS_COUNT = 89
+    FUNCTION_VISION_LIBS_LOADED_COUNT = 90
+    FUNCTION_VISION_LIB_NAME_PATH = 91
+    FUNCTION_VISION_LIB_PARAMETERS_COUNT = 92
+    FUNCTION_VISION_LIB_PARAMETER_DESCRIBE = 93
+    FUNCTION_VISION_LIB_GET_USER_PREFIX = 94
+    FUNCTION_VISION_LIB_SET_USER_PREFIX = 95
+    FUNCTION_VISION_LIB_GET_SYSTEM_LOAD_PATH = 96
+    FUNCTION_VISION_REMOVE_ALL_MODULES = 97
+    FUNCTION_VISION_MODULE_RESULT = 98
+    FUNCTION_VISION_SCENE_START = 99
+    FUNCTION_VISION_SCENE_ADD = 100
+    FUNCTION_VISION_SCENE_REMOVE = 101
+    FUNCTION_VISION_GET_ERROR_DESCRIPTION = 102
+    FUNCTION_VISION_GET_BUFFERED_RESULT = 103
     FUNCTION_GET_IDENTITY = 255
 
     ERROR_CODE_SUCCESS = 0
@@ -378,6 +381,8 @@ class BrickRED(Device):
         self.response_expected[BrickRED.CALLBACK_PROGRAM_PROCESS_SPAWNED] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
         self.response_expected[BrickRED.FUNCTION_VISION_IS_VALID] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_VISION_CAMERA_AVAILABLE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_CAMERA_ID_AVAILABLE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickRED.FUNCTION_VISION_CAMERA_ID_SELECT] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_VISION_GET_FRAMESIZE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_VISION_SET_FRAMESIZE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_VISION_START_IDLE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
@@ -410,8 +415,9 @@ class BrickRED(Device):
         self.response_expected[BrickRED.FUNCTION_VISION_SCENE_ADD] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_VISION_SCENE_REMOVE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.FUNCTION_VISION_GET_ERROR_DESCRIPTION] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
-        self.response_expected[BrickRED.CALLBACK_VISION_MODULE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
+        self.response_expected[BrickRED.FUNCTION_VISION_GET_BUFFERED_RESULT] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickRED.CALLBACK_VISION_LIBRARIES] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
+        self.response_expected[BrickRED.CALLBACK_VISION_MODULE] = BrickRED.RESPONSE_EXPECTED_ALWAYS_FALSE
         self.response_expected[BrickRED.FUNCTION_GET_IDENTITY] = BrickRED.RESPONSE_EXPECTED_ALWAYS_TRUE
 
         self.callback_formats[BrickRED.CALLBACK_ASYNC_FILE_READ] = 'H B 60B B'
@@ -420,8 +426,8 @@ class BrickRED(Device):
         self.callback_formats[BrickRED.CALLBACK_PROCESS_STATE_CHANGED] = 'H B Q B'
         self.callback_formats[BrickRED.CALLBACK_PROGRAM_SCHEDULER_STATE_CHANGED] = 'H'
         self.callback_formats[BrickRED.CALLBACK_PROGRAM_PROCESS_SPAWNED] = 'H'
-        self.callback_formats[BrickRED.CALLBACK_VISION_MODULE] = 'b i i i i 30s'
         self.callback_formats[BrickRED.CALLBACK_VISION_LIBRARIES] = '30s 30s b'
+        self.callback_formats[BrickRED.CALLBACK_VISION_MODULE] = 'b i i i i 30s'
 
     def create_session(self, lifetime):
         """
@@ -1030,9 +1036,22 @@ class BrickRED(Device):
 
     def vision_camera_available(self):
         """
-        Check if the camera device is available.
+        Check if any camera device is available.
         """
         return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_CAMERA_AVAILABLE, (), '', 'h')
+
+    def vision_camera_id_available(self, device):
+        """
+        Check if a specific camera device is available.
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_CAMERA_ID_AVAILABLE, (device,), 'b', 'h')
+
+    def vision_camera_id_select(self, device):
+        """
+        If several cameras are available, select the preferred one.  If that device
+        is not available, another one may still be used.
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_CAMERA_ID_SELECT, (device,), 'b', 'h')
 
     def vision_get_framesize(self):
         """
@@ -1258,6 +1277,14 @@ class BrickRED(Device):
         and a negative value on error.
         """
         return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_GET_ERROR_DESCRIPTION, (code,), 'h', '30s')
+
+    def vision_get_buffered_result(self):
+        """
+        If any vision method returned 1, the requested operation took too long and is running
+        in the background.  This method can then be called until a different result is
+        returned.
+        """
+        return self.ipcon.send_request(self, BrickRED.FUNCTION_VISION_GET_BUFFERED_RESULT, (), '', 'h')
 
     def get_identity(self):
         """
