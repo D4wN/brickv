@@ -24,7 +24,7 @@ Boston, MA 02111-1307, USA.
 from collections import OrderedDict
 import os
 from time import sleep
-from PyQt4.QtCore import QTimer
+from PyQt4.QtCore import QTimer, QUrl, QUrl
 from brickv.bindings.brick_red import BrickRED
 
 from brickv.plugin_system.plugins.red.program_utils import ChunkedDownloaderBase
@@ -158,6 +158,9 @@ class REDTabVision(REDTab, Ui_REDTabVision):
         return True
 
     def get_vision_modules(self):
+        # TODO temp only
+        # print "vision_lib_set_user_prefix = " + str(self.red.vision_lib_set_user_prefix("/home/tf/tv/"))
+
         if self.red is None:
             return  # FIXME Error Message
 
@@ -188,6 +191,9 @@ class REDTabVision(REDTab, Ui_REDTabVision):
                 self.vision_module_list[result.name][para_desc.name] = para_desc
                 #print "para_desc = " + str(para_desc)
         print "module_list = \n" + str(self.vision_module_list)
+
+        for k, v in self.vision_module_list.items():
+            print k , v
 
     def _start_download(self):
         if self.downloader is not None:
@@ -250,8 +256,59 @@ class REDTabVision(REDTab, Ui_REDTabVision):
             print "button_start_module_clicked::error -> md_name was None!"
             return
 
-        result = str(self.red.vision_module_start(md_name))
+        result = self.red.vision_module_start(md_name)
         print "START_MODULE(" + str(md_name) + ") = " + str(result)
+        # TODO stream temp
+        if md_name == "stream" and result.result == 0:
+            print "starting stream..."
+            #Idea No3 - External Process
+            # for k, v in self.vision_module_list.items():
+            #     # get keys
+            #     for kk, vv in self.vision_module_list[k].items():
+            #         print kk, vv
+            # for kk, vv in self.vision_module_list['stream'].items():
+            #     print kk, vv
+            sleep(1)
+            result_url = self.red.vision_string_parameter_get(result.id, 'url')
+            print str(result_url)
+            stream_path = None
+            if result_url.value != "<inactive>":
+                stream_path = result_url.value
+            else:
+                stream_path = 'rtsp://192.168.0.66:8554/tinkervision'
+            from subprocess import call
+            print "stream_path = " + str(stream_path)
+            #print call(['C://Tools//VLC//vlc', '-vvv', stream_path])
+
+
+
+            # dll problem...
+            # import ctypes
+            #
+            # dll_path = "C://Tools//VLC//libvlc.dll"
+            # if os.path.exists(dll_path):
+            #     my_dll = ctypes.cdll.LoadLibrary(dll_path)
+
+            # FIXME VLC requires -> https://pypi.python.org/pypi/python-vlc
+            # import vlc
+            # self.instance = vlc.Instance()
+            # self.mediaplayer = self.instance.media_player_new()
+            # media = self.instance.media_new('rtsp://192.168.0.66:8554/tinkervision')
+            # self.mediaplayer.set_media(media)
+            # self.mediaplayer.play()
+
+
+
+
+            ### Phonon part old!
+            from PyQt4.phonon import Phonon
+            #media = Phonon.
+                #MediaSource("rtsp://192.168.0.66:8554/tinkervision")
+            # self.media = Phonon.MediaSource(QUrl('rtsp://192.168.0.68:8554/tinkervision'))
+            # #self.media = Phonon.MediaSource('C:\Users\marvi\Desktop\ovm.wmv')
+            # self.phonon_player.show()
+            # self.phonon_player.load(self.media)
+            # self.phonon_player.play()
 
     def visioncallback(self, id, x, y, width, height, string):
         #TODO: Roland -> callback der nicht funzt
