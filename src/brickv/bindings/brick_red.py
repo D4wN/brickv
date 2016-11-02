@@ -13,14 +13,14 @@ try:
     from collections import namedtuple
 except ImportError:
     try:
-        from .ip_connection import namedtuple
+        from tinkerforge.ip_connection import namedtuple
     except ValueError:
-        from ip_connection import namedtuple
+        from tinkerforge.ip_connection import namedtuple
 
 try:
-    from .ip_connection import Device, IPConnection, Error
+    from tinkerforge.ip_connection import Device, IPConnection, Error
 except ValueError:
-    from ip_connection import Device, IPConnection, Error
+    from tinkerforge.ip_connection import Device, IPConnection, Error
 
 CreateSession = namedtuple('CreateSession', ['error_code', 'session_id'])
 AllocateString = namedtuple('AllocateString', ['error_code', 'string_id'])

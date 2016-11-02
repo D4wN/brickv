@@ -311,7 +311,6 @@ class REDTabVision(REDTab, Ui_REDTabVision):
             # self.phonon_player.play()
 
     def visioncallback(self, id, x, y, width, height, string):
-        #TODO: Roland -> callback der nicht funzt
         print "visioncallback", id, x, y, width, height, string
 
 
@@ -325,7 +324,7 @@ class REDTabVision(REDTab, Ui_REDTabVision):
         for i in range(0, c.count):
             md_id = self.red.vision_module_get_id(i)
             if not self.__check_result(md_id):
-                #print "_button_debug_print_running_modules::vision_module_get_id"
+                print "_button_debug_print_running_modules::vision_module_get_id"
                 continue
             ids += str(md_id.id)+","
 
